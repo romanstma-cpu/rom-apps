@@ -37,6 +37,7 @@
     font-family: "Space Grotesk", system-ui, sans-serif;
     font-size: 16px;
     line-height: 1.6;
+    overflow-x: hidden;
   }
 
   a { color: inherit; }
@@ -49,6 +50,8 @@
 
   /* ---------- ticker tape ---------- */
   .tape {
+    position: relative;
+    z-index: 5;
     overflow: hidden;
     border-bottom: 1px solid var(--border);
     background: var(--panel);
@@ -74,13 +77,10 @@
     to { transform: translateX(-50%); }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .tape-inner { animation: none; }
-    html { scroll-behavior: auto; }
-  }
-
   /* ---------- nav ---------- */
   .nav {
+    position: relative;
+    z-index: 5;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -108,11 +108,39 @@
 
   .nav .gh:hover { color: var(--text); }
 
-  /* ---------- hero ---------- */
+  /* ---------- hero with 3D canvas ---------- */
+  .hero-wrap {
+    position: relative;
+    min-height: calc(100svh - 110px);
+    display: flex;
+    align-items: center;
+  }
+
+  #bg3d {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .hero-fade {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 180px;
+    z-index: 1;
+    background: linear-gradient(to bottom, transparent, var(--void));
+    pointer-events: none;
+  }
+
   .hero {
+    position: relative;
+    z-index: 2;
     max-width: 1060px;
+    width: 100%;
     margin: 0 auto;
-    padding: 56px 24px 80px;
+    padding: 40px 24px 90px;
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
     gap: 56px;
@@ -136,6 +164,9 @@
     letter-spacing: -0.5px;
     margin-bottom: 20px;
   }
+
+  h1 .line { display: block; overflow: hidden; }
+  h1 .lw { display: inline-block; }
 
   h1 .grad {
     background: linear-gradient(100deg, var(--violet), var(--pink));
@@ -161,18 +192,20 @@
     font-size: 15px;
     text-decoration: none;
     border: 1px solid var(--border);
+    transition: transform 0.18s ease, filter 0.18s ease, border-color 0.18s ease;
   }
 
   .btn.primary {
     background: linear-gradient(100deg, var(--violet), var(--pink));
     border: none;
     color: #fff;
+    box-shadow: 0 8px 30px -8px rgba(255, 45, 154, 0.5);
   }
 
-  .btn.primary:hover { filter: brightness(1.12); }
+  .btn.primary:hover { filter: brightness(1.12); transform: translateY(-2px); }
 
   .btn.quiet { color: var(--muted); }
-  .btn.quiet:hover { color: var(--text); border-color: var(--muted); }
+  .btn.quiet:hover { color: var(--text); border-color: var(--muted); transform: translateY(-2px); }
 
   .cta-note {
     font-family: var(--mono);
@@ -183,11 +216,12 @@
 
   /* ---------- hero terminal mock ---------- */
   .mock {
-    background: var(--panel);
+    background: color-mix(in srgb, var(--panel) 82%, transparent);
+    backdrop-filter: blur(6px);
     border: 1px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 30px 80px -30px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 30px 80px -30px rgba(124, 58, 237, 0.45);
   }
 
   .mock-bar {
@@ -196,7 +230,7 @@
     gap: 10px;
     padding: 10px 14px;
     border-bottom: 1px solid var(--border);
-    background: var(--panel-2);
+    background: color-mix(in srgb, var(--panel-2) 85%, transparent);
     font-family: var(--mono);
     font-size: 12px;
     color: var(--muted);
@@ -222,7 +256,7 @@
   .mock-body { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   .stat {
-    background: var(--panel-2);
+    background: color-mix(in srgb, var(--panel-2) 85%, transparent);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 12px 14px;
@@ -241,7 +275,7 @@
 
   .mock-log {
     grid-column: 1 / -1;
-    background: var(--panel-2);
+    background: color-mix(in srgb, var(--panel-2) 85%, transparent);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 12px 14px;
@@ -253,8 +287,26 @@
 
   .mock-log .t { color: var(--green); }
 
+  .scroll-hint {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    animation: hint 2.4s ease-in-out infinite;
+  }
+
+  @keyframes hint {
+    0%, 100% { transform: translate(-50%, 0); opacity: 0.7; }
+    50% { transform: translate(-50%, 8px); opacity: 1; }
+  }
+
   /* ---------- board ---------- */
-  .section { max-width: 1060px; margin: 0 auto; padding: 0 24px 90px; }
+  .section { position: relative; z-index: 2; max-width: 1060px; margin: 0 auto; padding: 0 24px 90px; }
 
   .section-label {
     display: flex;
@@ -290,7 +342,10 @@
     padding: 16px 20px;
     border-bottom: 1px solid var(--border);
     background: var(--panel);
+    transition: background 0.2s ease;
   }
+
+  .row:not(.head):hover { background: var(--panel-2); }
 
   .row:last-child { border-bottom: none; }
 
@@ -338,7 +393,10 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 22px;
+    transition: transform 0.25s ease, border-color 0.25s ease;
   }
+
+  .feature:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--violet) 55%, var(--border)); }
 
   .feature h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
   .feature p { color: var(--muted); font-size: 14px; }
@@ -356,6 +414,8 @@
 
   /* ---------- footer ---------- */
   footer {
+    position: relative;
+    z-index: 2;
     border-top: 1px solid var(--border);
     padding: 30px 24px 46px;
   }
@@ -375,6 +435,9 @@
   .foot a { margin-left: auto; color: var(--muted); text-decoration: none; }
   .foot a:hover { color: var(--text); }
 
+  /* ---------- reveal (GSAP sets initial state via .js-anim) ---------- */
+  /* elements start visible; JS hides them first so no-JS users see everything */
+
   /* ---------- responsive ---------- */
   @media (max-width: 880px) {
     .hero { grid-template-columns: 1fr; padding-bottom: 56px; }
@@ -385,6 +448,13 @@
     .row .name { grid-column: 1; }
     .row .ver, .row .size { display: inline; grid-column: 1; }
     .row .btn { grid-column: 2; grid-row: 1 / span 3; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .tape-inner { animation: none; }
+    .scroll-hint { animation: none; }
+    .btn, .feature, .row { transition: none; }
   }
 </style>
 </head>
@@ -411,46 +481,56 @@
   <a class="gh" href="https://github.com/romanstma-cpu/rom-apps" rel="noopener">github ↗</a>
 </nav>
 
-<header class="hero">
-  <div>
-    <div class="eyebrow">Windows apps · free downloads</div>
-    <h1>Small, sharp apps.<br><span class="grad">Download and run.</span></h1>
-    <p>Built by one person. No accounts, no subscriptions, no installers that phone home — each app is a single setup file that does its job and gets out of the way.</p>
-    <div class="cta-row">
-      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download ROM Trader</a>
-      <a class="btn quiet" href="#board">See the board ↓</a>
-    </div>
-    <div class="cta-note">Windows 10/11 · 79 MB · v1.0.0</div>
-  </div>
+<div class="hero-wrap">
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="hero-fade" aria-hidden="true"></div>
 
-  <div class="mock" aria-hidden="true">
-    <div class="mock-bar">
-      <img src="assets/rom-icon.png" alt="">
-      ROM Trader
-      <div class="mock-pills">
-        <span class="pill run">RUNNING</span>
-        <span class="pill dry">DRY-RUN</span>
+  <header class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow js-anim">Windows apps · free downloads</div>
+      <h1>
+        <span class="line"><span class="lw js-word">Small,&nbsp;sharp&nbsp;apps.</span></span>
+        <span class="line"><span class="lw js-word grad">Download&nbsp;and&nbsp;run.</span></span>
+      </h1>
+      <p class="js-anim">Built by one person. No accounts, no subscriptions, no installers that phone home — each app is a single setup file that does its job and gets out of the way.</p>
+      <div class="cta-row js-anim">
+        <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download ROM Trader</a>
+        <a class="btn quiet" href="#board">See the board ↓</a>
+      </div>
+      <div class="cta-note js-anim">Windows 10/11 · 79 MB · v1.0.0</div>
+    </div>
+
+    <div class="mock js-mock" aria-hidden="true">
+      <div class="mock-bar">
+        <img src="assets/rom-icon.png" alt="">
+        ROM Trader
+        <div class="mock-pills">
+          <span class="pill run">RUNNING</span>
+          <span class="pill dry">DRY-RUN</span>
+        </div>
+      </div>
+      <div class="mock-body">
+        <div class="stat"><div class="k">Total balance</div><div class="v">$104.62</div></div>
+        <div class="stat"><div class="k">Session P&L</div><div class="v up">+$4.62</div></div>
+        <div class="mock-log">
+          <div><span class="t">[trade]</span> OPEN KXBTCD 32x YES @ 41c</div>
+          <div><span class="t">[trade]</span> CLOSE KXETH 28x @ 55c (+$1.96, take-profit)</div>
+          <div>[info]&nbsp;&nbsp;scanning 40 markets…</div>
+        </div>
       </div>
     </div>
-    <div class="mock-body">
-      <div class="stat"><div class="k">Total balance</div><div class="v">$104.62</div></div>
-      <div class="stat"><div class="k">Session P&L</div><div class="v up">+$4.62</div></div>
-      <div class="mock-log">
-        <div><span class="t">[trade]</span> OPEN KXBTCD 32x YES @ 41c</div>
-        <div><span class="t">[trade]</span> CLOSE KXETH 28x @ 55c (+$1.96, take-profit)</div>
-        <div>[info]&nbsp;&nbsp;scanning 40 markets…</div>
-      </div>
-    </div>
-  </div>
-</header>
+  </header>
+
+  <div class="scroll-hint" aria-hidden="true">SCROLL ▾</div>
+</div>
 
 <section class="section" id="board">
-  <div class="section-label">THE BOARD</div>
+  <div class="section-label js-anim">THE BOARD</div>
   <div class="board">
     <div class="row head">
       <span>Ticker</span><span>App</span><span>Ver</span><span>Size</span><span>Status</span><span></span>
     </div>
-    <div class="row">
+    <div class="row js-row">
       <span class="ticker">ROMTRADER</span>
       <span class="name"><strong>ROM Trader</strong>Kalshi momentum trading bot with a live dashboard</span>
       <span class="ver">v1.0.0</span>
@@ -458,7 +538,7 @@
       <span class="status live">● LIVE</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download</a>
     </div>
-    <div class="row soon">
+    <div class="row soon js-row">
       <span class="ticker">██████</span>
       <span class="name"><strong>Next app</strong>in development</span>
       <span class="ver">—</span>
@@ -470,22 +550,22 @@
 </section>
 
 <section class="section">
-  <div class="section-label">ROM TRADER</div>
+  <div class="section-label js-anim">ROM TRADER</div>
   <div class="features">
-    <div class="feature">
+    <div class="feature js-card">
       <h3>Momentum engine</h3>
       <p>Scans the most liquid Kalshi markets closing within two hours and rides short-term price moves — take-profit, stop-loss, and reversal exits built in.</p>
     </div>
-    <div class="feature">
+    <div class="feature js-card">
       <h3>Dry-run by default</h3>
       <p>Paper-trades on live market data out of the box. Real orders only happen after you add your own API keys and explicitly switch to live mode.</p>
     </div>
-    <div class="feature">
+    <div class="feature js-card">
       <h3>Nothing extra</h3>
       <p>One 79&nbsp;MB installer. Installs per-user, keeps its data in one folder, uninstalls clean. No account, no background services.</p>
     </div>
   </div>
-  <div class="smartscreen">
+  <div class="smartscreen js-anim">
     <strong>First launch:</strong> Windows SmartScreen may warn about an unknown publisher — the installer isn't code-signed (certificates cost more than these apps do). Click <em>More info → Run anyway</em>. The download always comes from this page's GitHub release, so you can verify exactly what you're getting.
   </div>
 </section>
@@ -497,6 +577,160 @@
     <a href="https://github.com/romanstma-cpu/rom-apps" rel="noopener">source & releases ↗</a>
   </div>
 </footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script type="module">
+  // ---------- 3D candlestick field (Three.js) ----------
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  async function init3D() {
+    const canvas = document.getElementById("bg3d");
+    try {
+      const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js");
+
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x0b0812, 10, 34);
+
+      const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 60);
+      camera.position.set(0, 0.6, 16);
+
+      const VIOLET = new THREE.Color(0x7c3aed);
+      const PINK = new THREE.Color(0xff2d9a);
+
+      // instanced candle bodies + wicks
+      const COUNT = 160;
+      const bodyGeo = new THREE.BoxGeometry(0.34, 1, 0.34);
+      const wickGeo = new THREE.BoxGeometry(0.055, 1, 0.055);
+      const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.92 });
+      const wickMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.6 });
+
+      const bodies = new THREE.InstancedMesh(bodyGeo, mat, COUNT);
+      const wicks = new THREE.InstancedMesh(wickGeo, wickMat, COUNT);
+      scene.add(bodies, wicks);
+
+      const dummy = new THREE.Object3D();
+      const color = new THREE.Color();
+      const seeds = [];
+
+      for (let i = 0; i < COUNT; i++) {
+        const x = (Math.random() - 0.5) * 34;
+        const y = (Math.random() - 0.5) * 16;
+        const z = -Math.random() * 26;
+        const h = 0.5 + Math.random() * 2.2;
+        seeds.push({ x, y, z, h, phase: Math.random() * Math.PI * 2, speed: 0.3 + Math.random() * 0.5 });
+        const t = THREE.MathUtils.clamp((x + 17) / 34 + (Math.random() - 0.5) * 0.25, 0, 1);
+        color.copy(VIOLET).lerp(PINK, t);
+        bodies.setColorAt(i, color);
+        wicks.setColorAt(i, color);
+      }
+      bodies.instanceColor.needsUpdate = true;
+      wicks.instanceColor.needsUpdate = true;
+
+      function place(time) {
+        for (let i = 0; i < COUNT; i++) {
+          const s = seeds[i];
+          const y = s.y + Math.sin(time * s.speed + s.phase) * 0.55;
+          dummy.position.set(s.x, y, s.z);
+          dummy.scale.set(1, s.h, 1);
+          dummy.rotation.set(0, 0, 0);
+          dummy.updateMatrix();
+          bodies.setMatrixAt(i, dummy.matrix);
+          dummy.scale.set(1, s.h + 1.1 + Math.sin(time * 0.7 + s.phase) * 0.2, 1);
+          dummy.updateMatrix();
+          wicks.setMatrixAt(i, dummy.matrix);
+        }
+        bodies.instanceMatrix.needsUpdate = true;
+        wicks.instanceMatrix.needsUpdate = true;
+      }
+
+      // sizing
+      const wrap = canvas.parentElement;
+      function resize() {
+        const w = wrap.clientWidth, h = wrap.clientHeight;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      resize();
+      addEventListener("resize", resize);
+
+      // mouse parallax
+      const target = { x: 0, y: 0.6 };
+      if (!reduceMotion) {
+        addEventListener("pointermove", (e) => {
+          target.x = (e.clientX / innerWidth - 0.5) * 1.6;
+          target.y = 0.6 - (e.clientY / innerHeight - 0.5) * 1.0;
+        });
+      }
+
+      // scroll scrub: camera pushes forward as you scroll into the board
+      const scroll = { z: 16, ry: 0 };
+      if (window.gsap && !reduceMotion) {
+        gsap.registerPlugin(ScrollTrigger);
+        gsap.to(scroll, {
+          z: 9,
+          ry: 0.22,
+          ease: "none",
+          scrollTrigger: { trigger: ".hero-wrap", start: "top top", end: "bottom top", scrub: 0.6 }
+        });
+      }
+
+      // render loop — paused when hero off-screen or tab hidden
+      const clock = new THREE.Clock();
+      let visible = true;
+      new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; }, { threshold: 0 }).observe(wrap);
+
+      if (reduceMotion) {
+        place(0);
+        renderer.render(scene, camera);
+      } else {
+        renderer.setAnimationLoop(() => {
+          if (!visible || document.hidden) return;
+          const t = clock.getElapsedTime();
+          place(t);
+          camera.position.x += (target.x - camera.position.x) * 0.04;
+          camera.position.y += (target.y - camera.position.y) * 0.04;
+          camera.position.z = scroll.z;
+          camera.rotation.y = scroll.ry;
+          renderer.render(scene, camera);
+        });
+      }
+    } catch (e) {
+      canvas.style.display = "none"; // WebGL unavailable — static hero still works
+    }
+  }
+  init3D();
+
+  // ---------- GSAP intro + scroll reveals ----------
+  if (window.gsap && !reduceMotion) {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const intro = gsap.timeline({ defaults: { ease: "power3.out" } });
+    intro.from(".js-word", { yPercent: 115, duration: 0.9, stagger: 0.12 }, 0.1)
+         .from(".js-anim", { y: 24, autoAlpha: 0, duration: 0.7, stagger: 0.08 }, 0.4)
+         .from(".js-mock", { y: 40, autoAlpha: 0, scale: 0.96, duration: 0.9 }, 0.5);
+
+    gsap.utils.toArray(".js-row").forEach((row, i) => {
+      gsap.from(row, {
+        y: 30, autoAlpha: 0, duration: 0.6, delay: i * 0.08, ease: "power2.out",
+        scrollTrigger: { trigger: row, start: "top 88%", toggleActions: "play none none none" }
+      });
+    });
+
+    gsap.from(".js-card", {
+      y: 36, autoAlpha: 0, duration: 0.65, stagger: 0.12, ease: "power2.out",
+      scrollTrigger: { trigger: ".features", start: "top 85%", toggleActions: "play none none none" }
+    });
+
+    // floating mock idle
+    gsap.to(".js-mock", { y: -10, duration: 3.2, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 1.6 });
+  }
+</script>
 
 </body>
 </html>
