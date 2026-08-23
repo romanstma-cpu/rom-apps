@@ -38,7 +38,7 @@
     "name": "ROM Trader",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Windows 10, Windows 11",
-    "softwareVersion": "1.1.2",
+    "softwareVersion": "1.2.0",
     "url": "https://romapps.xyz/",
     "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe",
     "description": "An automated momentum bot for Kalshi prediction markets. Live dashboard, signals feed, strategy presets and risk controls. Dry-run by default.",
@@ -715,7 +715,7 @@
     </div>
     <div class="row js-row">
       <span class="name"><strong>ROM Trader</strong>Kalshi momentum bot — live dashboard, signals feed, risk brakes</span>
-      <span class="ver">v1.1.2</span>
+      <span class="ver">v1.2.0</span>
       <span class="size">100 MB</span>
       <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download</a>
@@ -849,17 +849,17 @@
 
     <div class="feature js-card">
       <h3>Brakes that work</h3>
-      <p>Paper-trades by default — real orders need your own API keys and an explicit switch. Then a daily loss limit that stops the engine on its own, one-click flatten, and a cooldown so it can’t sell and instantly re-buy the same market.</p>
+      <p>Paper-trades by default — real orders need your own API keys and an explicit switch. Then it stops itself: on a daily loss limit, on a run of losses in a row, and outside the hours you allow. Plus one-click flatten and a cooldown so it can’t sell and instantly re-buy the same market.</p>
     </div>
 
     <div class="feature js-card">
-      <h3>Updates itself</h3>
-      <p>Checks for new versions and downloads them in the background — but never installs behind your back. Restarting mid-session would abandon open positions, so it waits until you say so.</p>
+      <h3>Runs in the background</h3>
+      <p>Close the window and it keeps trading from the tray, where stop and close-all also live. Toasts report each open and close, and make a sound only when the engine has stopped itself — the one you actually need to hear. Updates download quietly but never install mid-session, because restarting would abandon open positions.</p>
     </div>
 
     <div class="feature js-card">
       <h3>Open source</h3>
-      <p>On GitHub under MIT, with 117 assertions — including a suite that runs against real Windows credential encryption, because your API key is stored with it. Per-user installer, uninstalls clean: no account, no background services.</p>
+      <p>On GitHub under MIT, with 146 assertions — including suites that run against real Windows credential encryption and drive the running app itself. Per-user installer, uninstalls clean: no account, no background services.</p>
     </div>
   </div>
   <div class="smartscreen js-anim">
