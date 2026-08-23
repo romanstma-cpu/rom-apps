@@ -775,9 +775,10 @@
 
 <script type="module">
   // ---------- hero field ----------
-  // A perspective point-grid rippling on a slow wave. Hand-rolled on a 2D
-  // canvas rather than pulled from Three.js: this is a few hundred bytes of
-  // maths instead of a 263 KB dependency, and it draws faster.
+  // A dot sheet rippling on two crossed waves, in near-orthographic
+  // projection so it fills the hero instead of converging to a vanishing
+  // point. Hand-rolled on a 2D canvas: a few hundred bytes of maths rather
+  // than a 263 KB 3D dependency, and it draws faster.
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function initField() {
@@ -786,65 +787,62 @@
     const ctx = canvas.getContext("2d");
     if (!ctx) { canvas.style.display = "none"; return; }
 
-    const COLS = 104;
-    const ROWS = 44;
-    const SPAN = 30;      // world width
-    const NEAR = 4.2;     // nearest row distance
-    const DEPTH = 33;     // near -> far span
-    const FOV = 330;
+    const COLS = 132;
+    const ROWS = 58;
 
-    // Per-column colour is fixed, so build the strings once instead of
-    // formatting ~4500 of them every frame.
+    // Column tint is fixed, so build the strings once rather than formatting
+    // ~7600 of them every frame.
     const tint = [];
     for (let c = 0; c < COLS; c++) {
       const t = c / (COLS - 1);
       tint.push(
         "rgb(" +
-          Math.round(124 + (255 - 124) * t) + "," +
-          Math.round(58 + (45 - 58) * t) + "," +
-          Math.round(237 + (154 - 237) * t) + ")"
+          Math.round(124 + 131 * t) + "," +
+          Math.round(58 - 13 * t) + "," +
+          Math.round(237 - 83 * t) + ")"
       );
     }
 
-    let w = 0, h = 0, dpr = 1;
+    let w = 0, h = 0;
 
     function resize() {
-      dpr = Math.min(devicePixelRatio || 1, 2);
+      const dpr = Math.min(devicePixelRatio || 1, 2);
       w = wrap.clientWidth;
       h = wrap.clientHeight;
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // Resizing a canvas clears it. With no loop running under reduced
-      // motion nothing would repaint, so draw the frozen frame again.
-      if (reduceMotion) draw(2.1);
+      // Resizing a canvas clears it, and under reduced motion no loop runs to
+      // repaint — so redraw the frozen frame here or the hero goes black.
+      if (reduceMotion) draw(2.4);
     }
 
     function draw(t) {
       ctx.clearRect(0, 0, w, h);
-      const cx = w * 0.5;
-      const cy = h * 0.54;
 
-      for (let r = ROWS - 1; r >= 0; r--) {
-        const z = NEAR + (r / (ROWS - 1)) * DEPTH;
-        const near = 1 - (z - NEAR) / DEPTH;          // 1 near .. 0 far
-        const scale = FOV / z;
-        const alpha = Math.pow(near, 2.1) * 0.9;
-        if (alpha < 0.012) continue;
-        const size = Math.max(1, 2.5 * near + 0.6);
+      for (let r = 0; r < ROWS; r++) {
+        const rt = r / (ROWS - 1);          // 0 far/top .. 1 near/bottom
+        const spread = 0.58 + 0.52 * rt;    // gentle perspective, never a tunnel
+        const baseY = h * (0.06 + rt * 0.92);
+        const amp = h * (0.012 + 0.055 * rt);
+        const alpha = (0.10 + 0.62 * rt) * 0.8;
+        if (alpha < 0.02) continue;
+        const size = 1 + 1.8 * rt;
+        const halfW = w * spread * 0.62;
+
         ctx.globalAlpha = alpha;
 
         for (let c = 0; c < COLS; c++) {
-          const gx = (c / (COLS - 1) - 0.5) * SPAN;
+          const ct = c / (COLS - 1);
+          const x = w * 0.5 + (ct - 0.5) * 2 * halfW;
+          if (x < -6 || x > w + 6) continue;
           const y =
-            Math.sin(gx * 0.40 + t * 0.5 + z * 0.15) * 0.95 +
-            Math.sin(gx * 0.16 - t * 0.29 + z * 0.08) * 0.62;
-          const sx = cx + gx * scale;
-          if (sx < -8 || sx > w + 8) continue;
-          const sy = cy + (y - 1.35) * scale;
-          if (sy < -8 || sy > h + 8) continue;
+            baseY +
+            Math.sin(ct * 7.2 + t * 0.55 + rt * 4.4) * amp +
+            Math.sin(ct * 3.0 - t * 0.38 + rt * 2.1) * amp * 0.58;
+          if (y < -6 || y > h + 6) continue;
           ctx.fillStyle = tint[c];
-          ctx.fillRect(sx, sy, size, size);
+          ctx.fillRect(x, y, size, size);
         }
       }
       ctx.globalAlpha = 1;
@@ -854,7 +852,7 @@
     addEventListener("resize", resize);
 
     if (reduceMotion) {
-      draw(2.1);
+      draw(2.4);
       return;
     }
 
@@ -864,10 +862,9 @@
       { threshold: 0 }
     ).observe(wrap);
 
-    let raf = 0;
     const t0 = performance.now();
     (function loop(now) {
-      raf = requestAnimationFrame(loop);
+      requestAnimationFrame(loop);
       if (!visible || document.hidden) return;
       draw((now - t0) / 1000);
     })(t0);
