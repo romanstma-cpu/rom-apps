@@ -91,6 +91,22 @@ Same structure, with this description:
    binary.
 3. Re-run the checksum step so `SHA256SUMS.txt` describes the signed file.
 
+## Note on secrets in CI
+
+There is deliberately **no `RELEASE_TOKEN`**. The only fine-grained permission
+that can create a GitHub release is "Contents", which also allows pushing
+commits — and this repository is the website. A long-lived token in another
+repo's CI that could rewrite romapps.xyz is a poor trade for saving a click.
+
+Instead, rom-trader publishes its build to its own (public) releases, and the
+"Publish ROM Trader" workflow here mirrors it, re-checking the SHA-256 and
+confirming `latest.yml` agrees with the tag and the real file size on the way
+through. No secret is involved anywhere.
+
+The signing secrets will be different in kind: `CSC_LINK` and
+`CSC_KEY_PASSWORD` belong in rom-trader and rom-convert, where the build runs,
+and they sign artifacts rather than granting write access to anything.
+
 ## If SignPath declines
 
 Azure Artifact Signing (formerly Trusted Signing) is **$9.99/month** on the
