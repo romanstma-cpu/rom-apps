@@ -5,11 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ROM — small, sharp Windows apps</title>
 <meta name="description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
+<link rel="canonical" href="https://romapps.xyz/">
+<meta name="theme-color" content="#0b0812">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="color-scheme" content="dark">
+
+<!-- Social cards need absolute URLs; a relative og:image is silently ignored. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ROM">
+<meta property="og:url" content="https://romapps.xyz/">
 <meta property="og:title" content="ROM — small, sharp Windows apps">
-<meta property="og:description" content="Free Windows apps. Download and run.">
-<meta property="og:image" content="assets/rom-icon.png">
+<meta property="og:description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
+<meta property="og:image" content="https://romapps.xyz/assets/rom-icon.png">
+<meta property="og:image:width" content="256">
+<meta property="og:image:height" content="256">
+<meta property="og:image:alt" content="ROM logo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ROM — small, sharp Windows apps">
+<meta name="twitter:description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
+<meta name="twitter:image" content="https://romapps.xyz/assets/rom-icon.png">
+
 <link rel="icon" type="image/png" href="assets/rom-icon.png">
 <link rel="apple-touch-icon" href="assets/rom-icon.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "ROM Trader",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Windows 10, Windows 11",
+  "softwareVersion": "1.0.0",
+  "url": "https://romapps.xyz/",
+  "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe",
+  "description": "An automated momentum bot for Kalshi prediction markets. Live dashboard, signals feed, strategy presets and risk controls. Dry-run by default.",
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -47,6 +81,28 @@
     outline: 2px solid var(--pink);
     outline-offset: 3px;
     border-radius: 4px;
+  }
+
+  /* Visible only once focused, so keyboard users can jump past the hero. */
+  .skip-link {
+    position: absolute;
+    left: 12px;
+    top: -60px;
+    z-index: 60;
+    padding: 10px 16px;
+    border-radius: 0 0 8px 8px;
+    background: var(--violet);
+    color: #fff;
+    font-size: 14px;
+    text-decoration: none;
+    transition: top 0.15s ease;
+  }
+
+  .skip-link:focus { top: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+    html { scroll-behavior: auto; }
   }
 
   /* ---------- ticker tape ---------- */
@@ -461,6 +517,8 @@
 </head>
 <body>
 
+<a class="skip-link" href="#board">Skip to downloads</a>
+
 <div class="tape" aria-hidden="true">
   <div class="tape-inner">
     <span><span class="tick">ROMTRADER</span> v1.0.0 <span class="up">▲ LIVE</span></span>
@@ -481,6 +539,8 @@
   <span class="wordmark">ROM</span>
   <a class="gh" href="https://github.com/romanstma-cpu/rom-apps" rel="noopener">github ↗</a>
 </nav>
+
+<main id="content">
 
 <div class="hero-wrap">
   <canvas id="bg3d" aria-hidden="true"></canvas>
@@ -525,8 +585,8 @@
   <div class="scroll-hint" aria-hidden="true">SCROLL ▾</div>
 </div>
 
-<section class="section" id="board">
-  <div class="section-label js-anim">THE BOARD</div>
+<section class="section" id="board" aria-labelledby="board-h">
+  <h2 class="section-label js-anim" id="board-h">THE BOARD</h2>
   <div class="board">
     <div class="row head">
       <span>Ticker</span><span>App</span><span>Ver</span><span>Size</span><span>Status</span><span></span>
@@ -550,7 +610,7 @@
     </div>
 
     <div class="row soon js-row">
-      <span class="ticker">██████</span>
+      <span class="ticker" aria-hidden="true">██████</span>
       <span class="name"><strong>Next app</strong>in development</span>
       <span class="ver">—</span>
       <span class="size">—</span>
@@ -560,8 +620,8 @@
   </div>
 </section>
 
-<section class="section">
-  <div class="section-label js-anim">ROM TRADER</div>
+<section class="section" aria-labelledby="trader-h">
+  <h2 class="section-label js-anim" id="trader-h">ROM TRADER</h2>
   <div class="features">
     <div class="feature js-card">
       <h3>Momentum engine</h3>
@@ -600,6 +660,8 @@
   </div>
 </section>
 
+</main>
+
 <footer>
   <div class="foot">
     <img src="assets/rom-icon.png" alt="">
@@ -609,8 +671,8 @@
   </div>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha384-g4NTh/Iv5PPU4xPyhEWqPcwtNXOvdaDI8LLnyYfyNZOjKJeYQyjzQ9X5275eBjpt" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" integrity="sha384-Z3REaz79l2IaAZqJsSABtTbhjgOUYyV3p90XNnAPCSHg3EMTz1fouunq9WZRtj3d" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script type="module">
   // ---------- 3D candlestick field (Three.js) ----------

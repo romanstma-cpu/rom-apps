@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found — ROM</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b0812">
+<meta name="color-scheme" content="dark">
+<link rel="icon" type="image/png" href="/assets/rom-icon.png">
+<link rel="apple-touch-icon" href="/assets/rom-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&family=Space+Grotesk:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --void: #0b0812;
+    --panel: #151020;
+    --border: #2a2140;
+    --text: #ece7f5;
+    --muted: #8d84a3;
+    --violet: #7c3aed;
+    --pink: #ff2d9a;
+    --mono: "IBM Plex Mono", Consolas, monospace;
+  }
+
+  body {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+    background: var(--void);
+    color: var(--text);
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .card { max-width: 520px; }
+
+  img { width: 56px; height: 56px; border-radius: 14px; }
+
+  .code {
+    margin-top: 22px;
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--pink);
+  }
+
+  h1 {
+    font-family: "Unbounded", sans-serif;
+    font-size: clamp(28px, 6vw, 40px);
+    line-height: 1.15;
+    margin: 8px 0 14px;
+  }
+
+  p { color: var(--muted); font-size: 15px; }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 26px;
+  }
+
+  a {
+    padding: 11px 22px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: filter 0.15s;
+  }
+
+  a.primary {
+    background: linear-gradient(135deg, var(--violet), var(--pink));
+    border-color: transparent;
+    color: #fff;
+  }
+
+  a:hover { filter: brightness(1.2); }
+
+  a:focus-visible { outline: 2px solid var(--pink); outline-offset: 3px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img src="/assets/rom-icon.png" alt="ROM logo">
+    <div class="code">ERROR 404</div>
+    <h1>That page doesn't exist.</h1>
+    <p>The link may be out of date, or the file may have moved. Everything ROM publishes is listed on the board.</p>
+    <div class="actions">
+      <a class="primary" href="/">Back to ROM</a>
+      <a href="/#board">See the board</a>
+    </div>
+  </div>
+</body>
+</html>
