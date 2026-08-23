@@ -823,11 +823,26 @@
 
       // sizing
       const wrap = canvas.parentElement;
+
+      // The frozen reduced-motion frame, composed from the near end of the
+      // scroll range so the candles aren't lost in the fog.
+      function drawStatic() {
+        camera.position.set(0, 0.6, 10);
+        camera.rotation.y = 0.18;
+        place(1.4);
+        renderer.render(scene, camera);
+      }
+
       function resize() {
         const w = wrap.clientWidth, h = wrap.clientHeight;
         renderer.setSize(w, h, false);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
+        // setSize reallocates and clears the drawing buffer. With no animation
+        // loop running under reduced motion, nothing would ever redraw it and
+        // the hero would go permanently black on the first resize — which fonts
+        // loading, a scrollbar appearing, or mobile browser chrome all trigger.
+        if (reduceMotion) drawStatic();
       }
       resize();
       addEventListener("resize", resize);
@@ -859,13 +874,7 @@
       new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; }, { threshold: 0 }).observe(wrap);
 
       if (reduceMotion) {
-        // Still draw the field, just frozen. At the default z the candles sit
-        // deep in the fog and the hero reads as an empty black box, so compose
-        // the one static frame from the closer end of the scroll range.
-        camera.position.set(0, 0.6, 10);
-        camera.rotation.y = 0.18;
-        place(1.4);
-        renderer.render(scene, camera);
+        drawStatic();
       } else {
         renderer.setAnimationLoop(() => {
           if (!visible || document.hidden) return;
