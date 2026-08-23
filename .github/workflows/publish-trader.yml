@@ -38,10 +38,19 @@ jobs:
           BASE="https://github.com/romanstma-cpu/rom-trader/releases/download/$TAG"
 
           mkdir -p out && cd out
-          for f in ROM-Trader-Setup.exe ROM-Trader-Setup.exe.blockmap latest.yml SHA256SUMS.txt; do
+          for f in ROM-Trader-Setup.exe latest.yml SHA256SUMS.txt; do
             echo "downloading $f"
             curl -fsSL --retry 3 -O "$BASE/$f"
           done
+
+          # The blockmap only enables differential downloads. Without it the
+          # updater fetches the whole installer, which is slower but correct,
+          # so a missing one must not fail the release.
+          if curl -fsSL --retry 2 -O "$BASE/ROM-Trader-Setup.exe.blockmap"; then
+            echo "blockmap fetched"
+          else
+            echo "::warning::No blockmap in $TAG — updates will download in full."
+          fi
           ls -l
 
       # The point of relaying rather than rebuilding is that the bytes users
@@ -79,15 +88,18 @@ jobs:
         run: |
           set -euo pipefail
           cd out
+          # Only ship the blockmap if the upstream release actually had one.
+          FILES="ROM-Trader-Setup.exe latest.yml SHA256SUMS.txt"
+          [ -f ROM-Trader-Setup.exe.blockmap ] && FILES="$FILES ROM-Trader-Setup.exe.blockmap"
+
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::notice::$TAG already exists here; replacing its assets"
-            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
-              ROM-Trader-Setup.exe ROM-Trader-Setup.exe.blockmap latest.yml SHA256SUMS.txt
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber $FILES
           else
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
               --title "ROM Trader ${TAG#v}" \
               --notes "Mirrored from [rom-trader $TAG](https://github.com/romanstma-cpu/rom-trader/releases/tag/$TAG), where it was built by CI from the tagged commit. Checksum verified on the way through." \
-              ROM-Trader-Setup.exe ROM-Trader-Setup.exe.blockmap latest.yml SHA256SUMS.txt
+              $FILES
           fi
 
       # ROM Convert publishes to its own repo, so a Convert release landing
