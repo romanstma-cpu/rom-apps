@@ -533,7 +533,7 @@
     </div>
     <div class="row js-row">
       <span class="ticker">ROMTRADER</span>
-      <span class="name"><strong>ROM Trader</strong>Kalshi momentum trading bot with a live dashboard</span>
+      <span class="name"><strong>ROM Trader</strong>Kalshi momentum bot — live dashboard, signals feed, risk brakes</span>
       <span class="ver">v1.0.0</span>
       <span class="size">79 MB</span>
       <span class="status live">● LIVE</span>
@@ -567,7 +567,11 @@
     </div>
     <div class="feature js-card">
       <h3>Brakes that work</h3>
-      <p>A daily loss limit that stops the engine on its own, one-click flatten to close everything at market, and spread and price filters that skip markets not worth touching.</p>
+      <p>A daily loss limit that stops the engine on its own, one-click flatten to close everything at market, a re-entry cooldown so it can't sell and instantly re-buy the same market, and filters that skip books not worth touching.</p>
+    </div>
+    <div class="feature js-card">
+      <h3>Open source</h3>
+      <p>The whole app is on GitHub under MIT, with a 72-assertion test suite covering the engine rules. Read exactly what it does before you run it, or build the installer yourself.</p>
     </div>
     <div class="feature js-card">
       <h3>Dry-run by default</h3>
@@ -579,7 +583,10 @@
     </div>
   </div>
   <div class="smartscreen js-anim">
-    <strong>First launch:</strong> Windows SmartScreen may warn about an unknown publisher — the installer isn't code-signed (certificates cost more than these apps do). Click <em>More info → Run anyway</em>. The download always comes from this page's GitHub release, so you can verify exactly what you're getting.
+    <strong>Before you run it:</strong> ROM Trader is a momentum heuristic, not a proven edge — it has no demonstrated profitability, and fees and spread work against it. It ships in dry-run and only places real orders once you add your own Kalshi keys and switch live mode on yourself. Nothing here is financial advice.
+  </div>
+  <div class="smartscreen js-anim">
+    <strong>First launch:</strong> Windows SmartScreen may warn about an unknown publisher — the installer isn't code-signed (certificates cost more than these apps do). Click <em>More info → Run anyway</em>. The download comes from this page's GitHub release and the <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">source is public</a>, so you can verify exactly what you're getting.
   </div>
 </section>
 
@@ -587,7 +594,8 @@
   <div class="foot">
     <img src="assets/rom-icon.png" alt="">
     <span>© 2026 ROM — free Windows apps</span>
-    <a href="https://github.com/romanstma-cpu/rom-apps" rel="noopener">source & releases ↗</a>
+    <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">ROM Trader source ↗</a>
+    <a href="https://github.com/romanstma-cpu/rom-apps/releases" rel="noopener">releases ↗</a>
   </div>
 </footer>
 
