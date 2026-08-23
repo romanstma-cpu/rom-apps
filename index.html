@@ -191,9 +191,9 @@
     z-index: -1;
     background: radial-gradient(
       ellipse at 38% 50%,
-      rgba(11, 8, 18, 0.94) 0%,
-      rgba(11, 8, 18, 0.86) 38%,
-      rgba(11, 8, 18, 0.55) 66%,
+      rgba(11, 8, 18, 0.90) 0%,
+      rgba(11, 8, 18, 0.78) 40%,
+      rgba(11, 8, 18, 0.42) 68%,
       transparent 100%
     );
     pointer-events: none;
@@ -827,25 +827,27 @@
 
       for (let r = 0; r < ROWS; r++) {
         const rt = r / (ROWS - 1);          // 0 far/top .. 1 near/bottom
-        const spread = 0.58 + 0.52 * rt;    // gentle perspective, never a tunnel
-        const baseY = h * (0.06 + rt * 0.92);
-        const amp = h * (0.012 + 0.055 * rt);
-        const alpha = (0.10 + 0.62 * rt) * 0.8;
-        if (alpha < 0.02) continue;
-        const size = 1 + 1.8 * rt;
-        const halfW = w * spread * 0.62;
-
-        ctx.globalAlpha = alpha;
+        const spread = 0.56 + 0.54 * rt;    // gentle perspective, never a tunnel
+        const baseY = h * (0.04 + rt * 0.96);
+        const amp = h * (0.016 + 0.062 * rt);
+        const depth = 0.20 + 0.80 * rt;     // far rows recede, near rows read
+        if (depth < 0.03) continue;
+        const size = 1.2 + 2.3 * rt;
+        const halfW = w * spread * 0.64;
 
         for (let c = 0; c < COLS; c++) {
           const ct = c / (COLS - 1);
           const x = w * 0.5 + (ct - 0.5) * 2 * halfW;
           if (x < -6 || x > w + 6) continue;
-          const y =
-            baseY +
-            Math.sin(ct * 7.2 + t * 0.55 + rt * 4.4) * amp +
-            Math.sin(ct * 3.0 - t * 0.38 + rt * 2.1) * amp * 0.58;
+          const wave =
+            Math.sin(ct * 7.2 + t * 0.55 + rt * 4.4) * 0.63 +
+            Math.sin(ct * 3.0 - t * 0.38 + rt * 2.1) * 0.37;
+          const y = baseY + wave * amp * 1.6;
           if (y < -6 || y > h + 6) continue;
+          // Crests catch the light, so the sheet reads as a surface rather
+          // than an even scatter of dots.
+          const crest = 0.55 + 0.45 * wave;
+          ctx.globalAlpha = Math.min(0.95, depth * crest * 1.15);
           ctx.fillStyle = tint[c];
           ctx.fillRect(x, y, size, size);
         }
