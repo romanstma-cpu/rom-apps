@@ -507,6 +507,36 @@
 
   .smartscreen strong { color: var(--amber); }
 
+  .verify {
+    margin-top: 14px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 20px 22px;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+  .verify p + p { margin-top: 14px; }
+  .verify strong { color: var(--text); }
+  /* Commands must never reflow: a wrapped hash is a hash nobody can compare. */
+  .verify .cmd {
+    margin: 12px 0;
+    background: #0d0a16;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 15px;
+    overflow-x: auto;
+  }
+  .verify .cmd code {
+    font-family: "IBM Plex Mono", Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: #cfc6e6;
+    white-space: pre;
+  }
+  .verify-foot { font-size: 13px; }
+
   /* ---------- footer ---------- */
   footer {
     position: relative;
@@ -835,8 +865,34 @@
   <div class="smartscreen js-anim">
     <strong>Before you run it:</strong> ROM Trader is a momentum heuristic, not a proven edge — it has no demonstrated profitability, and fees and spread work against it. It ships in dry-run and only places real orders once you add your own Kalshi keys and switch live mode on yourself. Nothing here is financial advice.
   </div>
+</section>
+
+<section class="section" id="verify" aria-labelledby="verify-h">
+  <h2 class="section-label js-anim" id="verify-h">IS THIS SAFE?</h2>
+  <p class="shot-lede js-anim">A fair question to ask of a free download from someone you’ve never heard of.</p>
+
   <div class="smartscreen js-anim">
-    <strong>First launch:</strong> Windows SmartScreen may warn about an unknown publisher — the installer isn't code-signed (certificates cost more than these apps do). Click <em>More info → Run anyway</em>. Every download comes from a GitHub release, and the source for <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader</a> and <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a> is public, so you can verify exactly what you're getting.
+    <strong>Windows will warn you.</strong> SmartScreen says “unknown publisher” because these installers aren’t code-signed yet — a certificate costs more per year than these apps make, which is nothing. Click <em>More info → Run anyway</em>. That warning is about a missing signature, not about anything found in the file.
+  </div>
+
+  <div class="verify js-anim">
+    <p><strong>So verify it yourself instead.</strong> Every release publishes the SHA-256 of its installer. Paste this into PowerShell after downloading — if the two lines match, the file you have is byte-for-byte the file that was published.</p>
+
+    <pre class="cmd"><code>Get-FileHash "$HOME\Downloads\ROM-Trader-Setup.exe" -Algorithm SHA256 | Select-Object -Expand Hash
+(irm https://github.com/romanstma-cpu/rom-apps/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]</code></pre>
+
+    <p>For ROM Convert, swap both names:</p>
+
+    <pre class="cmd"><code>Get-FileHash "$HOME\Downloads\ROM-Convert-Setup.exe" -Algorithm SHA256 | Select-Object -Expand Hash
+(irm https://github.com/romanstma-cpu/rom-convert/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]</code></pre>
+
+    <p class="verify-foot">
+      Beyond that: every download comes from a GitHub release, the full source for
+      <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader</a> and
+      <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a> is public under MIT,
+      and both installers are per-user — they never ask for administrator rights and uninstall cleanly.
+      You can also read the <a href="code-signing-policy.html">code signing policy</a>.
+    </p>
   </div>
 </section>
 

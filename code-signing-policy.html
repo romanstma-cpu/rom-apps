@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code signing policy — ROM</title>
+<meta name="description" content="How ROM apps are built, released and verified, and the current state of code signing.">
+<link rel="canonical" href="https://romapps.xyz/code-signing-policy.html">
+<meta name="theme-color" content="#0b0812">
+<meta name="color-scheme" content="dark">
+<link rel="icon" type="image/png" href="/assets/rom-icon.png">
+<link rel="apple-touch-icon" href="/assets/rom-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --void: #0b0812;
+    --panel: #151020;
+    --border: #2a2140;
+    --text: #ece7f5;
+    --muted: #8d84a3;
+    --faint: #635a7a;
+    --violet: #7c3aed;
+    --pink: #ff2d9a;
+    --amber: #f59e0b;
+    --mono: "IBM Plex Mono", Consolas, monospace;
+  }
+
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* The brand hairline the home page uses, so this doesn't feel bolted on. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--violet), var(--pink));
+    z-index: 10;
+  }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 54px 24px 90px; }
+
+  .top { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+  .top img { width: 34px; height: 34px; border-radius: 9px; }
+  .top a { color: var(--muted); text-decoration: none; font-size: 14px; }
+  .top a:hover { color: var(--text); }
+  .top .sep { color: var(--faint); }
+
+  h1 {
+    font-family: "Unbounded", sans-serif;
+    font-size: clamp(28px, 5vw, 38px);
+    line-height: 1.15;
+    margin-bottom: 10px;
+  }
+
+  .lede { color: var(--muted); font-size: 16px; margin-bottom: 40px; }
+
+  h2 {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 40px 0 14px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+  }
+
+  p { color: var(--muted); margin-bottom: 14px; }
+  p strong, li strong { color: var(--text); }
+
+  ul { margin: 0 0 14px 20px; color: var(--muted); }
+  li { margin-bottom: 8px; }
+
+  a { color: var(--pink); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--muted); }
+  th { color: var(--text); font-weight: 500; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; }
+  td code { font-family: var(--mono); font-size: 12px; }
+
+  .note {
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.06);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+  }
+  .note strong { color: var(--amber); }
+
+  pre {
+    background: #0d0a16;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 15px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+  }
+  code { font-family: var(--mono); font-size: 12.5px; color: #cfc6e6; }
+
+  footer {
+    margin-top: 54px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+    color: var(--faint);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <img src="/assets/rom-icon.png" alt="">
+    <a href="/">romapps.xyz</a>
+    <span class="sep">/</span>
+    <span style="color:var(--faint)">code signing policy</span>
+  </div>
+
+  <h1>Code signing policy</h1>
+  <p class="lede">How ROM apps are built and released, what is signed today, and how to check that the file you downloaded is the one that was published.</p>
+
+  <h2>Current status</h2>
+
+  <div class="note">
+    <strong>ROM installers are not code-signed yet.</strong> Windows SmartScreen will describe the publisher as unknown. That warning reports a missing signature — it is not a finding about the contents of the file.
+  </div>
+
+  <p>A certificate that Windows trusts costs several hundred dollars a year and, since 2023, must be held on dedicated hardware or in a cloud signing service. These apps are free and make no money, so signing is being pursued through routes that do not require that outlay. Until one is in place, every release publishes a checksum so the download can be verified directly.</p>
+
+  <h2>Verifying a download</h2>
+
+  <p>Every release includes a <code>SHA256SUMS.txt</code> next to the installer. Compare it with the file you downloaded — matching hashes mean the bytes are identical to what was published.</p>
+
+<pre><code>Get-FileHash "$HOME\Downloads\ROM-Trader-Setup.exe" -Algorithm SHA256 | Select-Object -Expand Hash
+(irm https://github.com/romanstma-cpu/rom-apps/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]</code></pre>
+
+  <p>The same applies to ROM Convert, using its own repository:</p>
+
+<pre><code>Get-FileHash "$HOME\Downloads\ROM-Convert-Setup.exe" -Algorithm SHA256 | Select-Object -Expand Hash
+(irm https://github.com/romanstma-cpu/rom-convert/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]</code></pre>
+
+  <h2>How releases are built</h2>
+
+  <p>Installers are built by GitHub Actions from a tagged commit in the public repository, not from a personal machine. The workflow runs the test suites, packages the installer, computes its checksum and attaches everything to the release. The workflow file is part of the source and can be read alongside it.</p>
+
+  <table>
+    <tr><th>App</th><th>Source</th><th>Releases</th></tr>
+    <tr>
+      <td>ROM Trader</td>
+      <td><a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">rom-trader</a></td>
+      <td><a href="https://github.com/romanstma-cpu/rom-apps/releases" rel="noopener">rom-apps</a></td>
+    </tr>
+    <tr>
+      <td>ROM Convert</td>
+      <td><a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">rom-convert</a></td>
+      <td><a href="https://github.com/romanstma-cpu/rom-convert/releases" rel="noopener">rom-convert</a></td>
+    </tr>
+  </table>
+
+  <p>Both projects are MIT licensed. Releases are cut only by the repository owner, whose GitHub account has two-factor authentication enabled.</p>
+
+  <h2>What the apps do on your machine</h2>
+
+  <ul>
+    <li><strong>Both</strong> install per-user. They never request administrator rights, install no services or drivers, and uninstall cleanly from Add or remove programs.</li>
+    <li><strong>Both</strong> check for their own updates over HTTPS against their GitHub releases, and download nothing else.</li>
+    <li><strong>ROM Convert</strong> reads and writes only the files you give it and the folder you choose for output. It sends nothing anywhere; conversion is done by a bundled copy of FFmpeg running locally.</li>
+    <li><strong>ROM Trader</strong> talks to the Kalshi API and nowhere else. Your API key is encrypted with your Windows account and is never transmitted anywhere except to Kalshi.</li>
+    <li>Neither app collects analytics, telemetry or personal information.</li>
+  </ul>
+
+  <h2>Third-party components</h2>
+
+  <p>ROM Convert bundles a static build of <a href="https://ffmpeg.org" rel="noopener">FFmpeg</a>, distributed under its own licence (LGPL v2.1+ or GPL v2+ depending on the build) and not covered by this project's MIT grant. It accounts for most of the installer's size. See <a href="https://ffmpeg.org/legal.html" rel="noopener">ffmpeg.org/legal.html</a>.</p>
+
+  <p>Both apps are built on <a href="https://www.electronjs.org" rel="noopener">Electron</a>, which bundles Chromium and Node.js under their respective licences.</p>
+
+  <h2>Reporting a problem</h2>
+
+  <p>If a download does not match its published checksum, or something about a build looks wrong, please open an issue on the relevant repository rather than running the file:
+  <a href="https://github.com/romanstma-cpu/rom-trader/issues" rel="noopener">ROM Trader</a> ·
+  <a href="https://github.com/romanstma-cpu/rom-convert/issues" rel="noopener">ROM Convert</a>.</p>
+
+  <footer>
+    Last updated 23 August 2026 · <a href="/">back to romapps.xyz</a>
+  </footer>
+
+</div>
+</body>
+</html>
