@@ -876,15 +876,17 @@
   </div>
 
   <div class="verify js-anim">
-    <p><strong>So verify it yourself instead.</strong> Every release publishes the SHA-256 of its installer. Paste this into PowerShell after downloading — if the two lines match, the file you have is byte-for-byte the file that was published.</p>
+    <p><strong>So verify it yourself instead.</strong> Every release publishes the SHA-256 of its installer. Paste this into PowerShell after downloading and it will tell you outright whether the file you have is byte-for-byte the one that was published.</p>
 
-    <pre class="cmd"><code>Get-FileHash "$HOME\Downloads\ROM-Trader-Setup.exe" -Algorithm SHA256 | Select-Object -Expand Hash
-(irm https://github.com/romanstma-cpu/rom-apps/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]</code></pre>
+    <pre class="cmd"><code>$f = "$HOME\Downloads\ROM-Trader-Setup.exe"
+$want = (irm https://github.com/romanstma-cpu/rom-apps/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
+if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
 
     <p>For ROM Convert, swap both names:</p>
 
-    <pre class="cmd"><code>Get-FileHash "$HOME\Downloads\ROM-Convert-Setup.exe" -Algorithm SHA256 | Select-Object -Expand Hash
-(irm https://github.com/romanstma-cpu/rom-convert/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]</code></pre>
+    <pre class="cmd"><code>$f = "$HOME\Downloads\ROM-Convert-Setup.exe"
+$want = (irm https://github.com/romanstma-cpu/rom-convert/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
+if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
 
     <p class="verify-foot">
       Beyond that: every download comes from a GitHub release, the full source for

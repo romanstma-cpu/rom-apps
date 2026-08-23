@@ -141,15 +141,19 @@
 
   <h2>Verifying a download</h2>
 
-  <p>Every release includes a <code>SHA256SUMS.txt</code> next to the installer. Compare it with the file you downloaded — matching hashes mean the bytes are identical to what was published.</p>
+  <p>Every release includes a <code>SHA256SUMS.txt</code> next to the installer. Run this in PowerShell after downloading; a match means the bytes are identical to what was published.</p>
 
-<pre><code>Get-FileHash "$HOME\Downloads\ROM-Trader-Setup.exe" -Algorithm SHA256 | Select-Object -Expand Hash
-(irm https://github.com/romanstma-cpu/rom-apps/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]</code></pre>
+<pre><code>$f = "$HOME\Downloads\ROM-Trader-Setup.exe"
+$want = (irm https://github.com/romanstma-cpu/rom-apps/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
+if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
 
   <p>The same applies to ROM Convert, using its own repository:</p>
 
-<pre><code>Get-FileHash "$HOME\Downloads\ROM-Convert-Setup.exe" -Algorithm SHA256 | Select-Object -Expand Hash
-(irm https://github.com/romanstma-cpu/rom-convert/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]</code></pre>
+<pre><code>$f = "$HOME\Downloads\ROM-Convert-Setup.exe"
+$want = (irm https://github.com/romanstma-cpu/rom-convert/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
+if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
+
+  <p>PowerShell's <code>-eq</code> is case-insensitive for strings, so it does not matter that <code>Get-FileHash</code> prints uppercase while the published sums are lowercase.</p>
 
   <h2>How releases are built</h2>
 
