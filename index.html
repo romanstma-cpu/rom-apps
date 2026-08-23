@@ -125,9 +125,17 @@
     animation: tape 40s linear infinite;
   }
 
-  .tape .up { color: var(--green); }
-  .tape .tick { color: var(--text); font-weight: 600; }
-  .tape span { margin-right: 3.5em; }
+  .tape span { margin-right: 3.2em; }
+
+  .pip {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    margin-right: 0.85em;
+    border-radius: 50%;
+    vertical-align: 1px;
+    background: linear-gradient(135deg, var(--violet), var(--pink));
+  }
 
   @keyframes tape {
     from { transform: translateX(0); }
@@ -412,7 +420,7 @@
 
   .row {
     display: grid;
-    grid-template-columns: 150px 1fr 90px 80px 110px 140px;
+    grid-template-columns: 1fr 90px 80px 132px 140px;
     gap: 14px;
     align-items: center;
     padding: 16px 20px;
@@ -434,8 +442,6 @@
     padding: 11px 20px;
   }
 
-  .row .ticker { font-weight: 600; letter-spacing: 1px; }
-
   .row .name {
     font-family: "Space Grotesk", sans-serif;
     color: var(--muted);
@@ -447,14 +453,40 @@
     font-weight: 600;
   }
 
-  .status { font-size: 11px; font-weight: 600; letter-spacing: 1px; }
-  .status.live { color: var(--green); }
-  .status.pre { color: var(--amber); }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    justify-self: start;
+    padding: 5px 11px 5px 9px;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+  }
+
+  .status .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .status.ok { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+  .status.wip { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 34%, transparent); }
+
+  /* A slow breath on the live dot; suppressed with reduced motion below. */
+  .status.ok .dot { animation: pulse 2.6s ease-in-out infinite; }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 55%, transparent); }
+    50% { box-shadow: 0 0 0 5px transparent; }
+  }
 
   .row .btn { padding: 9px 0; text-align: center; font-size: 13px; }
   .row .btn.disabled { color: var(--muted); pointer-events: none; opacity: 0.55; }
-
-  .row.soon .ticker { color: var(--border); }
 
   /* ---------- app detail ---------- */
   .features {
@@ -572,12 +604,12 @@
   @media (max-width: 880px) {
     .hero { grid-template-columns: 1fr; padding-bottom: 56px; }
     .features { grid-template-columns: 1fr; }
-    .row { grid-template-columns: 1fr 110px; row-gap: 6px; }
+    .row { grid-template-columns: 1fr 110px; row-gap: 8px; }
     .row.head { display: none; }
-    .row .ticker { grid-column: 1; }
     .row .name { grid-column: 1; }
     .row .ver, .row .size { display: inline; grid-column: 1; }
-    .row .btn { grid-column: 2; grid-row: 1 / span 3; }
+    .row .status { grid-column: 1; }
+    .row .btn { grid-column: 2; grid-row: 1 / span 4; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -590,20 +622,24 @@
 </head>
 <body>
 
-<a class="skip-link" href="#board">Skip to downloads</a>
+<a class="skip-link" href="#downloads">Skip to downloads</a>
 
 <div class="tape" aria-hidden="true">
   <div class="tape-inner">
-    <span><span class="tick">ROMTRADER</span> v1.1.0 <span class="up">▲ LIVE</span></span>
-    <span>NO ACCOUNTS 0.00</span>
-    <span>NO TELEMETRY 0.00</span>
-    <span>BLOAT <span class="up">▼ 0%</span></span>
-    <span>FREE <span class="up">▲ 100%</span></span>
-    <span><span class="tick">ROMTRADER</span> v1.1.0 <span class="up">▲ LIVE</span></span>
-    <span>NO ACCOUNTS 0.00</span>
-    <span>NO TELEMETRY 0.00</span>
-    <span>BLOAT <span class="up">▼ 0%</span></span>
-    <span>FREE <span class="up">▲ 100%</span></span>
+      <span><span class="pip"></span>NO ACCOUNTS</span>
+      <span><span class="pip"></span>NO SUBSCRIPTIONS</span>
+      <span><span class="pip"></span>NO TELEMETRY</span>
+      <span><span class="pip"></span>NO ADS</span>
+      <span><span class="pip"></span>OPEN SOURCE</span>
+      <span><span class="pip"></span>ONE SETUP FILE</span>
+      <span><span class="pip"></span>WINDOWS 10 / 11</span>
+      <span><span class="pip"></span>NO ACCOUNTS</span>
+      <span><span class="pip"></span>NO SUBSCRIPTIONS</span>
+      <span><span class="pip"></span>NO TELEMETRY</span>
+      <span><span class="pip"></span>NO ADS</span>
+      <span><span class="pip"></span>OPEN SOURCE</span>
+      <span><span class="pip"></span>ONE SETUP FILE</span>
+      <span><span class="pip"></span>WINDOWS 10 / 11</span>
   </div>
 </div>
 
@@ -629,7 +665,7 @@
       <p class="js-anim">Built by one person. No accounts, no subscriptions, no installers that phone home — each app is a single setup file that does its job and gets out of the way.</p>
       <div class="cta-row js-anim">
         <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download ROM Trader</a>
-        <a class="btn quiet" href="#board">See the board ↓</a>
+        <a class="btn quiet" href="#downloads">See all apps ↓</a>
       </div>
       <div class="cta-note js-anim">Windows 10/11 · 100 MB · v1.1.0</div>
     </div>
@@ -658,27 +694,25 @@
   <div class="scroll-hint" aria-hidden="true">SCROLL ▾</div>
 </div>
 
-<section class="section" id="board" aria-labelledby="board-h">
-  <h2 class="section-label js-anim" id="board-h">THE BOARD</h2>
+<section class="section" id="downloads" aria-labelledby="dl-h">
+  <h2 class="section-label js-anim" id="dl-h">DOWNLOADS</h2>
   <div class="board">
     <div class="row head">
-      <span>Ticker</span><span>App</span><span>Ver</span><span>Size</span><span>Status</span><span></span>
+      <span>App</span><span>Version</span><span>Size</span><span>Status</span><span></span>
     </div>
     <div class="row js-row">
-      <span class="ticker">ROMTRADER</span>
       <span class="name"><strong>ROM Trader</strong>Kalshi momentum bot — live dashboard, signals feed, risk brakes</span>
       <span class="ver">v1.1.0</span>
       <span class="size">100 MB</span>
-      <span class="status live">● LIVE</span>
+      <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download</a>
     </div>
 
     <div class="row soon js-row">
-      <span class="ticker" aria-hidden="true">██████</span>
       <span class="name"><strong>Next app</strong>in development</span>
       <span class="ver">—</span>
       <span class="size">—</span>
-      <span class="status pre">◌ PRE-MARKET</span>
+      <span class="status wip"><span class="dot"></span>In progress</span>
       <span class="btn disabled">Soon</span>
     </div>
   </div>
