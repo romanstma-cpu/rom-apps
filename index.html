@@ -101,8 +101,12 @@
   .skip-link:focus { top: 0; }
 
   @media (prefers-reduced-motion: reduce) {
-    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
-    html { scroll-behavior: auto; }
+    html:not(.force-motion) * {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+    html:not(.force-motion) { scroll-behavior: auto; }
   }
 
   /* ---------- ticker tape ---------- */
@@ -604,10 +608,31 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
-    .tape-inner { animation: none; }
-    .scroll-hint { animation: none; }
-    .btn, .feature, .row { transition: none; }
+    html:not(.force-motion) { scroll-behavior: auto; }
+    html:not(.force-motion) .scroll-hint { animation: none; }
+    html:not(.force-motion) .btn,
+    html:not(.force-motion) .feature,
+    html:not(.force-motion) .row { transition: none; }
+
+    /* A stopped marquee overflows and gets clipped mid-word. Drop the
+       repeats and lay the single run out evenly across the bar. */
+    html:not(.force-motion) .tape { white-space: normal; }
+
+    html:not(.force-motion) .tape-inner {
+      animation: none;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 8px 3.4em;
+      width: 100%;
+      padding: 8px 24px;
+    }
+
+    html:not(.force-motion) .tape-inner span { margin-right: 0; }
+
+    /* one run of three is enough when it is not scrolling */
+    html:not(.force-motion) .tape-inner > span:nth-child(n + 4) { display: none; }
   }
 </style>
 </head>
@@ -801,7 +826,11 @@
   // projection so it fills the hero instead of converging to a vanishing
   // point. Hand-rolled on a 2D canvas: a few hundred bytes of maths rather
   // than a 263 KB 3D dependency, and it draws faster.
-  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // ?motion=1 previews the animated site without touching an OS setting.
+  const forceMotion = new URLSearchParams(location.search).has("motion");
+  if (forceMotion) document.documentElement.classList.add("force-motion");
+  const reduceMotion =
+    !forceMotion && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function initField() {
     const canvas = document.getElementById("bg3d");
