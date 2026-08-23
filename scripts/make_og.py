@@ -94,7 +94,7 @@ def build() -> Path:
     # --- headline ---
     d.text((72, 226), "Apps.", font=font("segoeuib.ttf", 82), fill=TEXT)
 
-    line2 = "Download and run."
+    line2 = "No strings."
     f2 = font("segoeuib.ttf", 82)
     mask = Image.new("L", (W, H), 0)
     ImageDraw.Draw(mask).text((72, 320), line2, font=f2, fill=255)
