@@ -1,0 +1,105 @@
+name: Publish ROM Trader
+
+# Mirrors a ROM Trader release into this repository, which is the update feed
+# installed builds check.
+#
+# Why a relay instead of letting rom-trader publish here directly: the only
+# fine-grained permission that can create a release is "Contents", which also
+# allows pushing commits — and this repository is the website. A long-lived
+# token in another repo's CI that can rewrite romapps.xyz is a poor trade for
+# saving a click.
+#
+# rom-trader is public, so its release assets need no authentication to fetch,
+# and the built-in token can write releases here because this is where the
+# workflow runs. No secret is involved anywhere.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, e.g. 1.2.1"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch the built release from rom-trader
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          TAG="v${VERSION#v}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          BASE="https://github.com/romanstma-cpu/rom-trader/releases/download/$TAG"
+
+          mkdir -p out && cd out
+          for f in ROM-Trader-Setup.exe ROM-Trader-Setup.exe.blockmap latest.yml SHA256SUMS.txt; do
+            echo "downloading $f"
+            curl -fsSL --retry 3 -O "$BASE/$f"
+          done
+          ls -l
+
+      # The point of relaying rather than rebuilding is that the bytes users
+      # get are the bytes CI produced. Verify that rather than assume it.
+      - name: Verify the checksum
+        run: |
+          set -euo pipefail
+          cd out
+          sha256sum -c SHA256SUMS.txt
+          echo "checksum matches the file rom-trader's CI published"
+
+      # latest.yml drives the auto-updater; a mismatch here would offer users
+      # an update that fails its own integrity check on download.
+      - name: Verify the update feed agrees
+        run: |
+          set -euo pipefail
+          cd out
+          FEED_VERSION=$(grep '^version:' latest.yml | awk '{print $2}')
+          TAG_VERSION="${TAG#v}"
+          if [ "$FEED_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::latest.yml says $FEED_VERSION but the tag says $TAG_VERSION"
+            exit 1
+          fi
+          FEED_SIZE=$(grep '^  *size:' latest.yml | head -1 | awk '{print $2}')
+          REAL_SIZE=$(stat -c%s ROM-Trader-Setup.exe)
+          if [ "$FEED_SIZE" != "$REAL_SIZE" ]; then
+            echo "::error::latest.yml says $FEED_SIZE bytes but the installer is $REAL_SIZE"
+            exit 1
+          fi
+          echo "feed reports $FEED_VERSION at $REAL_SIZE bytes"
+
+      - name: Publish to the update feed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd out
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::$TAG already exists here; replacing its assets"
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+              ROM-Trader-Setup.exe ROM-Trader-Setup.exe.blockmap latest.yml SHA256SUMS.txt
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "ROM Trader ${TAG#v}" \
+              --notes "Mirrored from [rom-trader $TAG](https://github.com/romanstma-cpu/rom-trader/releases/tag/$TAG), where it was built by CI from the tagged commit. Checksum verified on the way through." \
+              ROM-Trader-Setup.exe ROM-Trader-Setup.exe.blockmap latest.yml SHA256SUMS.txt
+          fi
+
+      # ROM Convert publishes to its own repo, so a Convert release landing
+      # here would silently take over "latest" and break Trader's updater.
+      - name: Confirm this is the latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          LATEST=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
+          if [ "$LATEST" != "$TAG" ]; then
+            echo "::warning::latest is $LATEST, not $TAG — electron-updater reads the newest release, so check this"
+          else
+            echo "latest is $TAG"
+          fi
