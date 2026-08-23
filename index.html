@@ -1,302 +1,762 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROM - Ultimate CS2 Enhancement</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ROM — small, sharp Windows apps</title>
+<meta name="description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
+<meta property="og:title" content="ROM — small, sharp Windows apps">
+<meta property="og:description" content="Free Windows apps. Download and run.">
+<meta property="og:image" content="assets/rom-icon.png">
+<link rel="icon" type="image/png" href="assets/rom-icon.png">
+<link rel="apple-touch-icon" href="assets/rom-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f0c23 0%, #1a1a3e 50%, #2d2d62 100%);
-            color: #e0e0ff;
-            min-height: 100vh;
-            padding: 20px;
-        }
+  :root {
+    --void: #0b0812;
+    --panel: #151020;
+    --panel-2: #1b1428;
+    --border: #2a2140;
+    --text: #ece7f5;
+    --muted: #8d84a3;
+    --violet: #7c3aed;
+    --pink: #ff2d9a;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --mono: "IBM Plex Mono", Consolas, monospace;
+  }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+  html { scroll-behavior: smooth; }
 
-        header {
-            text-align: center;
-            padding: 40px 0;
-            border-bottom: 1px solid rgba(138, 43, 226, 0.3);
-            margin-bottom: 40px;
-        }
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
 
-        h1 {
-            font-size: 3.5rem;
-            background: linear-gradient(45deg, #8a2be2, #ff69b4, #00d4ff);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
-        }
+  a { color: inherit; }
 
-        .subtitle {
-            font-size: 1.2rem;
-            color: #a0a0c0;
-            max-width: 600px;
-            margin: 0 auto;
-        }
+  :focus-visible {
+    outline: 2px solid var(--pink);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
 
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 40px 0;
-        }
+  /* ---------- ticker tape ---------- */
+  .tape {
+    position: relative;
+    z-index: 5;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    user-select: none;
+  }
 
-        .feature-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(138, 43, 226, 0.3);
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
+  .tape-inner {
+    display: inline-block;
+    padding: 7px 0;
+    animation: tape 40s linear infinite;
+  }
 
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: #ff69b4;
-            box-shadow: 0 0 20px rgba(255, 105, 180, 0.3);
-        }
+  .tape .up { color: var(--green); }
+  .tape .tick { color: var(--text); font-weight: 600; }
+  .tape span { margin-right: 3.5em; }
 
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
+  @keyframes tape {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
 
-        .feature-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #ff69b4;
-        }
+  /* ---------- nav ---------- */
+  .nav {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 22px 24px;
+  }
 
-        .feature-desc {
-            color: #c0c0c0;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
+  .nav img { width: 34px; height: 34px; border-radius: 9px; }
 
-        .download-section {
-            text-align: center;
-            padding: 50px 0;
-            background: rgba(138, 43, 226, 0.1);
-            border-radius: 20px;
-            margin: 40px 0;
-        }
+  .nav .wordmark {
+    font-family: "Unbounded", sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 3px;
+  }
 
-        .download-btn {
-            display: inline-block;
-            background: linear-gradient(45deg, #8a2be2, #ff69b4);
-            color: white;
-            padding: 18px 50px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4);
-            border: none;
-            cursor: pointer;
-            margin: 10px;
-        }
+  .nav .gh {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+  }
 
-        .download-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 15px 40px rgba(255, 105, 180, 0.5);
-        }
+  .nav .gh:hover { color: var(--text); }
 
-        .download-btn:active {
-            transform: scale(0.98);
-        }
+  /* ---------- hero with 3D canvas ---------- */
+  .hero-wrap {
+    position: relative;
+    min-height: calc(100svh - 110px);
+    display: flex;
+    align-items: center;
+  }
 
-        .version-info {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-        }
+  #bg3d {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
 
-        .controls-section {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 15px;
-            padding: 30px;
-            margin: 30px 0;
-        }
+  .hero-fade {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 180px;
+    z-index: 1;
+    background: linear-gradient(to bottom, transparent, var(--void));
+    pointer-events: none;
+  }
 
-        .controls-section h2 {
-            text-align: center;
-            margin-bottom: 25px;
-            color: #00d4ff;
-        }
+  .hero {
+    position: relative;
+    z-index: 2;
+    max-width: 1060px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 24px 90px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 56px;
+    align-items: center;
+  }
 
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
 
-        .control-item {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-        }
+  h1 {
+    font-family: "Unbounded", sans-serif;
+    font-weight: 700;
+    font-size: clamp(30px, 4.6vw, 52px);
+    line-height: 1.12;
+    letter-spacing: -0.5px;
+    margin-bottom: 20px;
+  }
 
-        .key-combo {
-            background: #8a2be2;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            margin-right: 15px;
-            min-width: 80px;
-            text-align: center;
-        }
+  h1 .line { display: block; overflow: hidden; }
+  h1 .lw { display: inline-block; }
 
-        .key-desc {
-            color: #c0c0c0;
-        }
+  h1 .grad {
+    background: linear-gradient(100deg, var(--violet), var(--pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 
-        footer {
-            text-align: center;
-            padding: 30px 0;
-            color: #888;
-            border-top: 1px solid rgba(138, 43, 226, 0.2);
-            margin-top: 40px;
-        }
+  .hero p {
+    color: var(--muted);
+    font-size: 17px;
+    max-width: 46ch;
+    margin-bottom: 32px;
+  }
 
-        .badge {
-            display: inline-block;
-            background: #ff69b4;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            animation: pulse 2s infinite;
-        }
+  .cta-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
+  .btn {
+    display: inline-block;
+    padding: 13px 26px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: transform 0.18s ease, filter 0.18s ease, border-color 0.18s ease;
+  }
 
-        @media (max-width: 600px) {
-            h1 { font-size: 2.5rem; }
-            .download-btn { padding: 15px 30px; font-size: 1.1rem; }
-            .controls-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+  .btn.primary {
+    background: linear-gradient(100deg, var(--violet), var(--pink));
+    border: none;
+    color: #fff;
+    box-shadow: 0 8px 30px -8px rgba(255, 45, 154, 0.5);
+  }
+
+  .btn.primary:hover { filter: brightness(1.12); transform: translateY(-2px); }
+
+  .btn.quiet { color: var(--muted); }
+  .btn.quiet:hover { color: var(--text); border-color: var(--muted); transform: translateY(-2px); }
+
+  .cta-note {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 12px;
+  }
+
+  /* ---------- hero terminal mock ---------- */
+  .mock {
+    background: color-mix(in srgb, var(--panel) 82%, transparent);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px -30px rgba(124, 58, 237, 0.45);
+  }
+
+  .mock-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--panel-2) 85%, transparent);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .mock-bar img { width: 16px; height: 16px; border-radius: 4px; }
+
+  .mock-pills { margin-left: auto; display: flex; gap: 6px; }
+
+  .pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+  }
+
+  .pill.run { color: var(--green); border-color: rgba(34, 197, 94, 0.4); }
+  .pill.dry { color: var(--amber); border-color: rgba(245, 158, 11, 0.4); }
+
+  .mock-body { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .stat {
+    background: color-mix(in srgb, var(--panel-2) 85%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .stat .k {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .stat .v { font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .stat .v.up { color: var(--green); }
+
+  .mock-log {
+    grid-column: 1 / -1;
+    background: color-mix(in srgb, var(--panel-2) 85%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.9;
+    color: var(--muted);
+  }
+
+  .mock-log .t { color: var(--green); }
+
+  .scroll-hint {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    animation: hint 2.4s ease-in-out infinite;
+  }
+
+  @keyframes hint {
+    0%, 100% { transform: translate(-50%, 0); opacity: 0.7; }
+    50% { transform: translate(-50%, 8px); opacity: 1; }
+  }
+
+  /* ---------- board ---------- */
+  .section { position: relative; z-index: 2; max-width: 1060px; margin: 0 auto; padding: 0 24px 90px; }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 26px;
+  }
+
+  .section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .board {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 150px 1fr 90px 80px 110px 140px;
+    gap: 14px;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    transition: background 0.2s ease;
+  }
+
+  .row:not(.head):hover { background: var(--panel-2); }
+
+  .row:last-child { border-bottom: none; }
+
+  .row.head {
+    background: var(--panel-2);
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 11px 20px;
+  }
+
+  .row .ticker { font-weight: 600; letter-spacing: 1px; }
+
+  .row .name {
+    font-family: "Space Grotesk", sans-serif;
+    color: var(--muted);
+  }
+
+  .row .name strong {
+    display: block;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .status { font-size: 11px; font-weight: 600; letter-spacing: 1px; }
+  .status.live { color: var(--green); }
+  .status.pre { color: var(--amber); }
+
+  .row .btn { padding: 9px 0; text-align: center; font-size: 13px; }
+  .row .btn.disabled { color: var(--muted); pointer-events: none; opacity: 0.55; }
+
+  .row.soon .ticker { color: var(--border); }
+
+  /* ---------- app detail ---------- */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .feature {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+
+  .feature:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--violet) 55%, var(--border)); }
+
+  .feature h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .feature p { color: var(--muted); font-size: 14px; }
+
+  .smartscreen {
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.06);
+    border-radius: 14px;
+    padding: 18px 22px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .smartscreen strong { color: var(--amber); }
+
+  /* ---------- footer ---------- */
+  footer {
+    position: relative;
+    z-index: 2;
+    border-top: 1px solid var(--border);
+    padding: 30px 24px 46px;
+  }
+
+  .foot {
+    max-width: 1060px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .foot img { width: 22px; height: 22px; border-radius: 6px; }
+  .foot a { margin-left: auto; color: var(--muted); text-decoration: none; }
+  .foot a:hover { color: var(--text); }
+
+  /* ---------- reveal (GSAP sets initial state via .js-anim) ---------- */
+  /* elements start visible; JS hides them first so no-JS users see everything */
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 880px) {
+    .hero { grid-template-columns: 1fr; padding-bottom: 56px; }
+    .features { grid-template-columns: 1fr; }
+    .row { grid-template-columns: 1fr 110px; row-gap: 6px; }
+    .row.head { display: none; }
+    .row .ticker { grid-column: 1; }
+    .row .name { grid-column: 1; }
+    .row .ver, .row .size { display: inline; grid-column: 1; }
+    .row .btn { grid-column: 2; grid-row: 1 / span 3; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .tape-inner { animation: none; }
+    .scroll-hint { animation: none; }
+    .btn, .feature, .row { transition: none; }
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>ROM</h1>
-            <p class="subtitle">The Ultimate Counter-Strike 2 Enhancement Suite</p>
-            <p style="margin-top: 15px;"><span class="badge">Undetected</span></p>
-        </header>
 
-        <div class="features">
-            <div class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <div class="feature-title">Precision Aimbot</div>
-                <div class="feature-desc">Advanced aim assistance with customizable smoothness and bone selection</div>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">👁️</div>
-                <div class="feature-title">Visual Enhancements</div>
-                <div class="feature-desc">ESP, glow, radar hack, and full chams with custom color options</div>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">🔫</div>
-                <div class="feature-title">Skin Changer</div>
-                <div class="feature-desc">Apply any knife or weapon skin instantly with zero detection risk</div>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <div class="feature-title">Zero Latency</div>
-                <div class="feature-desc">Optimized for competitive play with minimal performance impact</div>
-            </div>
-        </div>
+<div class="tape" aria-hidden="true">
+  <div class="tape-inner">
+    <span><span class="tick">ROMTRADER</span> v1.0.0 <span class="up">▲ LIVE</span></span>
+    <span>NO ACCOUNTS 0.00</span>
+    <span>NO TELEMETRY 0.00</span>
+    <span>BLOAT <span class="up">▼ 0%</span></span>
+    <span>FREE <span class="up">▲ 100%</span></span>
+    <span><span class="tick">ROMTRADER</span> v1.0.0 <span class="up">▲ LIVE</span></span>
+    <span>NO ACCOUNTS 0.00</span>
+    <span>NO TELEMETRY 0.00</span>
+    <span>BLOAT <span class="up">▼ 0%</span></span>
+    <span>FREE <span class="up">▲ 100%</span></span>
+  </div>
+</div>
 
-        <div class="version-info">
-            <strong>Current Version:</strong> v3.0 | 
-            <strong>Updated:</strong> August 2026 | 
-            <strong>Status:</strong> <span style="color:#00ff88;">Undetected</span>
-        </div>
+<nav class="nav">
+  <img src="assets/rom-icon.png" alt="ROM logo">
+  <span class="wordmark">ROM</span>
+  <a class="gh" href="https://github.com/romanstma-cpu/rom-apps" rel="noopener">github ↗</a>
+</nav>
 
-        <div class="download-section">
-            <h2 style="margin-bottom: 20px;">Get ROM Now</h2>
-            <p style="margin-bottom: 25px; color: #a0a0c0;">Click the button below to download and install ROM. Fully automatic setup with one click!</p>
-            <a href="ROM_Installer.exe" class="download-btn">
-                ↓ Download ROM Installer
-            </a>
-            <p style="margin-top: 20px; font-size: 0.9rem; color: #888;">
-                Works with latest CS2 update • No installation required • Auto-injection
-            </p>
-        </div>
+<div class="hero-wrap">
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="hero-fade" aria-hidden="true"></div>
 
-        <div class="controls-section">
-            <h2>In-Game Controls</h2>
-            <div class="controls-grid">
-                <div class="control-item">
-                    <div class="key-combo">INSERT</div>
-                    <div class="key-desc">Toggle main menu</div>
-                </div>
-                
-                <div class="control-item">
-                    <div class="key-combo">F1</div>
-                    <div class="key-desc">Toggle aimbot</div>
-                </div>
-                
-                <div class="control-item">
-                    <div class="key-combo">F2</div>
-                    <div class="key-desc">Toggle visuals</div>
-                </div>
-                
-                <div class="control-item">
-                    <div class="key-combo">F3</div>
-                    <div class="key-desc">Toggle skins</div>
-                </div>
-                
-                <div class="control-item">
-                    <div class="key-combo">F4</div>
-                    <div class="key-desc">Toggle misc features</div>
-                </div>
-                
-                <div class="control-item">
-                    <div class="key-combo">END</div>
-                    <div class="key-desc">Emergency exit</div>
-                </div>
-            </div>
-        </div>
-
-        <footer>
-            <p>© 2026 ROM Enhancement Suite • All rights reserved</p>
-            <p style="margin-top: 10px; font-size: 0.8rem; color: #666;">
-                For educational purposes only • Use responsibly
-            </p>
-        </footer>
+  <header class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow js-anim">Windows apps · free downloads</div>
+      <h1>
+        <span class="line"><span class="lw js-word">Small,&nbsp;sharp&nbsp;apps.</span></span>
+        <span class="line"><span class="lw js-word grad">Download&nbsp;and&nbsp;run.</span></span>
+      </h1>
+      <p class="js-anim">Built by one person. No accounts, no subscriptions, no installers that phone home — each app is a single setup file that does its job and gets out of the way.</p>
+      <div class="cta-row js-anim">
+        <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download ROM Trader</a>
+        <a class="btn quiet" href="#board">See the board ↓</a>
+      </div>
+      <div class="cta-note js-anim">Windows 10/11 · 79 MB · v1.0.0</div>
     </div>
+
+    <div class="mock js-mock" aria-hidden="true">
+      <div class="mock-bar">
+        <img src="assets/rom-icon.png" alt="">
+        ROM Trader
+        <div class="mock-pills">
+          <span class="pill run">RUNNING</span>
+          <span class="pill dry">DRY-RUN</span>
+        </div>
+      </div>
+      <div class="mock-body">
+        <div class="stat"><div class="k">Total balance</div><div class="v">$104.62</div></div>
+        <div class="stat"><div class="k">Session P&L</div><div class="v up">+$4.62</div></div>
+        <div class="mock-log">
+          <div><span class="t">[trade]</span> OPEN KXBTCD 32x YES @ 41c</div>
+          <div><span class="t">[trade]</span> CLOSE KXETH 28x @ 55c (+$1.96, take-profit)</div>
+          <div>[info]&nbsp;&nbsp;scanning 40 markets…</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-hint" aria-hidden="true">SCROLL ▾</div>
+</div>
+
+<section class="section" id="board">
+  <div class="section-label js-anim">THE BOARD</div>
+  <div class="board">
+    <div class="row head">
+      <span>Ticker</span><span>App</span><span>Ver</span><span>Size</span><span>Status</span><span></span>
+    </div>
+    <div class="row js-row">
+      <span class="ticker">ROMTRADER</span>
+      <span class="name"><strong>ROM Trader</strong>Kalshi momentum bot — live dashboard, signals feed, risk brakes</span>
+      <span class="ver">v1.0.0</span>
+      <span class="size">79 MB</span>
+      <span class="status live">● LIVE</span>
+      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download</a>
+    </div>
+    <div class="row soon js-row">
+      <span class="ticker">██████</span>
+      <span class="name"><strong>Next app</strong>in development</span>
+      <span class="ver">—</span>
+      <span class="size">—</span>
+      <span class="status pre">◌ PRE-MARKET</span>
+      <span class="btn disabled">Soon</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label js-anim">ROM TRADER</div>
+  <div class="features">
+    <div class="feature js-card">
+      <h3>Momentum engine</h3>
+      <p>Scans the most liquid Kalshi markets closing within two hours and rides short-term price moves — take-profit, stop-loss, and reversal exits built in.</p>
+    </div>
+    <div class="feature js-card">
+      <h3>It shows its work</h3>
+      <p>A live signals feed lists every market the last sweep looked at, with the reason it did or didn't qualify — spread too wide, price out of range, momentum under the trigger.</p>
+    </div>
+    <div class="feature js-card">
+      <h3>Presets and saved setups</h3>
+      <p>Three starting configurations from steady to scalper, or tune every knob yourself and save it as a named setup you can switch back to later.</p>
+    </div>
+    <div class="feature js-card">
+      <h3>Brakes that work</h3>
+      <p>A daily loss limit that stops the engine on its own, one-click flatten to close everything at market, a re-entry cooldown so it can't sell and instantly re-buy the same market, and filters that skip books not worth touching.</p>
+    </div>
+    <div class="feature js-card">
+      <h3>Open source</h3>
+      <p>The whole app is on GitHub under MIT, with a 72-assertion test suite covering the engine rules. Read exactly what it does before you run it, or build the installer yourself.</p>
+    </div>
+    <div class="feature js-card">
+      <h3>Dry-run by default</h3>
+      <p>Paper-trades on live market data out of the box. Real orders only happen after you add your own API keys and explicitly switch to live mode.</p>
+    </div>
+    <div class="feature js-card">
+      <h3>Nothing extra</h3>
+      <p>One 79&nbsp;MB installer. Installs per-user, keeps its data in one folder, uninstalls clean. No account, no background services.</p>
+    </div>
+  </div>
+  <div class="smartscreen js-anim">
+    <strong>Before you run it:</strong> ROM Trader is a momentum heuristic, not a proven edge — it has no demonstrated profitability, and fees and spread work against it. It ships in dry-run and only places real orders once you add your own Kalshi keys and switch live mode on yourself. Nothing here is financial advice.
+  </div>
+  <div class="smartscreen js-anim">
+    <strong>First launch:</strong> Windows SmartScreen may warn about an unknown publisher — the installer isn't code-signed (certificates cost more than these apps do). Click <em>More info → Run anyway</em>. The download comes from this page's GitHub release and the <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">source is public</a>, so you can verify exactly what you're getting.
+  </div>
+</section>
+
+<footer>
+  <div class="foot">
+    <img src="assets/rom-icon.png" alt="">
+    <span>© 2026 ROM — free Windows apps</span>
+    <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">ROM Trader source ↗</a>
+    <a href="https://github.com/romanstma-cpu/rom-apps/releases" rel="noopener">releases ↗</a>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script type="module">
+  // ---------- 3D candlestick field (Three.js) ----------
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  async function init3D() {
+    const canvas = document.getElementById("bg3d");
+    try {
+      const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js");
+
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x0b0812, 10, 34);
+
+      const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 60);
+      camera.position.set(0, 0.6, 16);
+
+      const VIOLET = new THREE.Color(0x7c3aed);
+      const PINK = new THREE.Color(0xff2d9a);
+
+      // instanced candle bodies + wicks
+      const COUNT = 160;
+      const bodyGeo = new THREE.BoxGeometry(0.34, 1, 0.34);
+      const wickGeo = new THREE.BoxGeometry(0.055, 1, 0.055);
+      const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.92 });
+      const wickMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.6 });
+
+      const bodies = new THREE.InstancedMesh(bodyGeo, mat, COUNT);
+      const wicks = new THREE.InstancedMesh(wickGeo, wickMat, COUNT);
+      scene.add(bodies, wicks);
+
+      const dummy = new THREE.Object3D();
+      const color = new THREE.Color();
+      const seeds = [];
+
+      for (let i = 0; i < COUNT; i++) {
+        const x = (Math.random() - 0.5) * 34;
+        const y = (Math.random() - 0.5) * 16;
+        const z = -Math.random() * 26;
+        const h = 0.5 + Math.random() * 2.2;
+        seeds.push({ x, y, z, h, phase: Math.random() * Math.PI * 2, speed: 0.3 + Math.random() * 0.5 });
+        const t = THREE.MathUtils.clamp((x + 17) / 34 + (Math.random() - 0.5) * 0.25, 0, 1);
+        color.copy(VIOLET).lerp(PINK, t);
+        bodies.setColorAt(i, color);
+        wicks.setColorAt(i, color);
+      }
+      bodies.instanceColor.needsUpdate = true;
+      wicks.instanceColor.needsUpdate = true;
+
+      function place(time) {
+        for (let i = 0; i < COUNT; i++) {
+          const s = seeds[i];
+          const y = s.y + Math.sin(time * s.speed + s.phase) * 0.55;
+          dummy.position.set(s.x, y, s.z);
+          dummy.scale.set(1, s.h, 1);
+          dummy.rotation.set(0, 0, 0);
+          dummy.updateMatrix();
+          bodies.setMatrixAt(i, dummy.matrix);
+          dummy.scale.set(1, s.h + 1.1 + Math.sin(time * 0.7 + s.phase) * 0.2, 1);
+          dummy.updateMatrix();
+          wicks.setMatrixAt(i, dummy.matrix);
+        }
+        bodies.instanceMatrix.needsUpdate = true;
+        wicks.instanceMatrix.needsUpdate = true;
+      }
+
+      // sizing
+      const wrap = canvas.parentElement;
+      function resize() {
+        const w = wrap.clientWidth, h = wrap.clientHeight;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      resize();
+      addEventListener("resize", resize);
+
+      // mouse parallax
+      const target = { x: 0, y: 0.6 };
+      if (!reduceMotion) {
+        addEventListener("pointermove", (e) => {
+          target.x = (e.clientX / innerWidth - 0.5) * 1.6;
+          target.y = 0.6 - (e.clientY / innerHeight - 0.5) * 1.0;
+        });
+      }
+
+      // scroll scrub: camera pushes forward as you scroll into the board
+      const scroll = { z: 16, ry: 0 };
+      if (window.gsap && !reduceMotion) {
+        gsap.registerPlugin(ScrollTrigger);
+        gsap.to(scroll, {
+          z: 9,
+          ry: 0.22,
+          ease: "none",
+          scrollTrigger: { trigger: ".hero-wrap", start: "top top", end: "bottom top", scrub: 0.6 }
+        });
+      }
+
+      // render loop — paused when hero off-screen or tab hidden
+      const clock = new THREE.Clock();
+      let visible = true;
+      new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; }, { threshold: 0 }).observe(wrap);
+
+      if (reduceMotion) {
+        // Still draw the field, just frozen. At the default z the candles sit
+        // deep in the fog and the hero reads as an empty black box, so compose
+        // the one static frame from the closer end of the scroll range.
+        camera.position.set(0, 0.6, 10);
+        camera.rotation.y = 0.18;
+        place(1.4);
+        renderer.render(scene, camera);
+      } else {
+        renderer.setAnimationLoop(() => {
+          if (!visible || document.hidden) return;
+          const t = clock.getElapsedTime();
+          place(t);
+          camera.position.x += (target.x - camera.position.x) * 0.04;
+          camera.position.y += (target.y - camera.position.y) * 0.04;
+          camera.position.z = scroll.z;
+          camera.rotation.y = scroll.ry;
+          renderer.render(scene, camera);
+        });
+      }
+    } catch (e) {
+      canvas.style.display = "none"; // WebGL unavailable — static hero still works
+    }
+  }
+  init3D();
+
+  // ---------- GSAP intro + scroll reveals ----------
+  if (window.gsap && !reduceMotion) {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const intro = gsap.timeline({ defaults: { ease: "power3.out" } });
+    intro.from(".js-word", { yPercent: 115, duration: 0.9, stagger: 0.12 }, 0.1)
+         .from(".js-anim", { y: 24, autoAlpha: 0, duration: 0.7, stagger: 0.08 }, 0.4)
+         .from(".js-mock", { y: 40, autoAlpha: 0, scale: 0.96, duration: 0.9 }, 0.5);
+
+    gsap.utils.toArray(".js-row").forEach((row, i) => {
+      gsap.from(row, {
+        y: 30, autoAlpha: 0, duration: 0.6, delay: i * 0.08, ease: "power2.out",
+        scrollTrigger: { trigger: row, start: "top 88%", toggleActions: "play none none none" }
+      });
+    });
+
+    gsap.from(".js-card", {
+      y: 36, autoAlpha: 0, duration: 0.65, stagger: 0.12, ease: "power2.out",
+      scrollTrigger: { trigger: ".features", start: "top 85%", toggleActions: "play none none none" }
+    });
+
+    // floating mock idle
+    gsap.to(".js-mock", { y: -10, duration: 3.2, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 1.6 });
+  }
+</script>
+
 </body>
 </html>
