@@ -529,6 +529,18 @@
     height: auto;
   }
 
+  .shot-lede {
+    max-width: 1060px;
+    margin: -8px auto 30px;
+    padding: 0 24px;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  .shot-fig { margin: 0 0 40px; }
+
+  .shot-fig:last-child { margin-bottom: 0; }
+
   .shot-cap {
     margin-top: 14px;
     font-family: var(--mono);
@@ -655,13 +667,32 @@
 
 <section class="section" aria-labelledby="shot-h">
   <h2 class="section-label js-anim" id="shot-h">THE REAL THING</h2>
-  <div class="shot-wrap js-card">
-    <div class="shot-frame">
-      <img src="assets/rom-trader-dashboard.png"
-           alt="ROM Trader dashboard showing total balance, session and all-time P&amp;L, win rate, an equity curve, the market scanner and open positions"
-           width="1600" height="1000" loading="lazy" decoding="async">
-    </div>
-    <p class="shot-cap">Actual screenshot — ROM Trader v1.1.0 on first launch, before the engine is started.</p>
+  <p class="shot-lede js-anim">No mockups. This is the app running against live Kalshi markets.</p>
+
+  <div class="shot-wrap">
+    <figure class="shot-fig js-card">
+      <div class="shot-frame">
+        <picture>
+          <source srcset="assets/rom-trader-signals.webp" type="image/webp">
+          <img src="assets/rom-trader-signals.png"
+               alt="ROM Trader signals feed listing live Kalshi markets with bid and ask prices, spread, momentum, and a verdict column explaining why each market was skipped"
+               width="1586" height="993" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="shot-cap">Signals — every market the last sweep looked at, and exactly why each one did or didn’t qualify.</figcaption>
+    </figure>
+
+    <figure class="shot-fig js-card">
+      <div class="shot-frame">
+        <picture>
+          <source srcset="assets/rom-trader-dashboard.webp" type="image/webp">
+          <img src="assets/rom-trader-dashboard.png"
+               alt="ROM Trader dashboard showing balance, session and all-time profit and loss, win rate, an equity curve and live scanner statistics"
+               width="1586" height="993" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="shot-cap">Dashboard — balance, P&amp;L, equity curve and what the scanner is doing right now.</figcaption>
+    </figure>
   </div>
 </section>
 
