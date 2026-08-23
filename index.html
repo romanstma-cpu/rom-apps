@@ -54,7 +54,7 @@
     "operatingSystem": "Windows 10, Windows 11",
     "softwareVersion": "1.0.0",
     "url": "https://romapps.xyz/",
-    "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/releases/download/convert-v1.0.0/ROM-Convert-Setup.exe",
+    "downloadUrl": "https://github.com/romanstma-cpu/rom-convert/releases/latest/download/ROM-Convert-Setup.exe",
     "description": "Convert video, audio and images on your own PC. Bundled ffmpeg, no upload, no watermark, no account and no file size limit.",
     "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
@@ -696,7 +696,7 @@
       <span class="ver">v1.0.0</span>
       <span class="size">121 MB</span>
       <span class="status ok"><span class="dot"></span>Available</span>
-      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/download/convert-v1.0.0/ROM-Convert-Setup.exe">Download</a>
+      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-convert/releases/latest/download/ROM-Convert-Setup.exe">Download</a>
     </div>
 
     <div class="row soon js-row">
@@ -711,7 +711,7 @@
 
 <section class="section" aria-labelledby="shot-h">
   <h2 class="section-label js-anim" id="shot-h">THE REAL THING</h2>
-  <p class="shot-lede js-anim">No mockups. This is the app running against live Kalshi markets.</p>
+  <p class="shot-lede js-anim">No mockups. Both apps, running.</p>
 
   <div class="shot-wrap">
     <figure class="shot-fig js-card">
@@ -737,6 +737,65 @@
       </div>
       <figcaption class="shot-cap">Dashboard — balance, P&amp;L, equity curve and what the scanner is doing right now.</figcaption>
     </figure>
+
+    <figure class="shot-fig js-card">
+      <div class="shot-frame">
+        <picture>
+          <source srcset="assets/rom-convert-queue.webp" type="image/webp">
+          <img src="assets/rom-convert-queue.png"
+               alt="ROM Convert converting three video files to MP4: one finished showing 6.6 MB reduced to 3.2 MB, one in progress at 22 percent, one waiting"
+               width="1586" height="1075" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="shot-cap">Convert — a queue of real files, with what each one actually saved.</figcaption>
+    </figure>
+
+    <figure class="shot-fig js-card">
+      <div class="shot-frame">
+        <picture>
+          <source srcset="assets/rom-convert-formats.webp" type="image/webp">
+          <img src="assets/rom-convert-formats.png"
+               alt="ROM Convert format picker showing MP4, WebM, GIF, MP3, M4A, WAV, FLAC, JPG, PNG and WebP, each with a plain-English description"
+               width="1586" height="1075" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="shot-cap">Formats described by what they are for, not by codec name.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="convert-h">
+  <h2 class="section-label js-anim" id="convert-h">ROM CONVERT</h2>
+  <div class="features">
+    <div class="feature js-card">
+      <h3>Nothing is uploaded</h3>
+      <p>ffmpeg ships inside the app and does the work on your own machine. No server sees your files, no size cap, no watermark — and it keeps working with the network switched off.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Formats, not codecs</h3>
+      <p>Pick what you actually want — plays on everything, about half the size, ideal for the web — and it chooses the encoder and settings. Eleven outputs across video, audio and images.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>It never overwrites</h3>
+      <p>Convert the same file twice and you get the first result and a second one beside it. Writing over your original is refused outright, and scaling only ever shrinks — a 720p cap leaves a 480p clip alone.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Cancel without the mess</h3>
+      <p>Stop a conversion and the half-written file is deleted, because a truncated video that looks finished is worse than none. Failures explain themselves in plain words.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>A whole folder at a time</h3>
+      <p>Drag in as many files as you like and watch the queue work through them, with real progress and the speed it’s running at. Each one reports what it saved when it lands.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Trim and shrink</h3>
+      <p>Cut to a section, cap the resolution, or pick a smaller quality preset when the file needs to fit somewhere. Audio can be pulled straight out of a video in one step.</p>
+    </div>
   </div>
 </section>
 
@@ -770,14 +829,14 @@
 
     <div class="feature js-card">
       <h3>Open source</h3>
-      <p>The whole app is on GitHub under MIT with a 72-assertion test suite. One 100 MB installer, per-user, uninstalls clean — no account, no background services.</p>
+      <p>On GitHub under MIT, with 117 assertions — including a suite that runs against real Windows credential encryption, because your API key is stored with it. Per-user installer, uninstalls clean: no account, no background services.</p>
     </div>
   </div>
   <div class="smartscreen js-anim">
     <strong>Before you run it:</strong> ROM Trader is a momentum heuristic, not a proven edge — it has no demonstrated profitability, and fees and spread work against it. It ships in dry-run and only places real orders once you add your own Kalshi keys and switch live mode on yourself. Nothing here is financial advice.
   </div>
   <div class="smartscreen js-anim">
-    <strong>First launch:</strong> Windows SmartScreen may warn about an unknown publisher — the installer isn't code-signed (certificates cost more than these apps do). Click <em>More info → Run anyway</em>. The download comes from this page's GitHub release and the <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">source is public</a>, so you can verify exactly what you're getting.
+    <strong>First launch:</strong> Windows SmartScreen may warn about an unknown publisher — the installer isn't code-signed (certificates cost more than these apps do). Click <em>More info → Run anyway</em>. Every download comes from a GitHub release, and the source for <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader</a> and <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a> is public, so you can verify exactly what you're getting.
   </div>
 </section>
 
@@ -787,7 +846,8 @@
   <div class="foot">
     <img src="assets/rom-icon.png" alt="">
     <span>© 2026 ROM — free Windows apps</span>
-    <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">ROM Trader source ↗</a>
+    <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader source ↗</a>
+    <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert source ↗</a>
     <a href="https://github.com/romanstma-cpu/rom-apps/releases" rel="noopener">releases ↗</a>
   </div>
 </footer>
