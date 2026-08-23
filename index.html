@@ -38,7 +38,7 @@
     "name": "ROM Trader",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Windows 10, Windows 11",
-    "softwareVersion": "1.3.0",
+    "softwareVersion": "1.4.0",
     "url": "https://romapps.xyz/",
     "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe",
     "description": "An automated momentum bot for Kalshi prediction markets. Live dashboard, signals feed, strategy presets and risk controls. Dry-run by default.",
@@ -356,7 +356,9 @@
     color: var(--muted);
   }
 
-  .mock-log .t { color: var(--green); }
+  /* Muted, not green: these tags label a skipped market and a paper entry.
+     Green would read as profit, which is the impression to avoid here. */
+  .mock-log .t { color: var(--violet); }
 
   .scroll-hint {
     position: absolute;
@@ -655,7 +657,10 @@
     font-family: var(--mono);
     font-size: 12.5px;
     color: var(--faint, #635a7a);
-    text-align: center;
+    line-height: 1.55;
+    /* Left-aligned since going two-up: a centred caption wrapping to two
+       lines under a half-width image reads as a ragged blob. */
+    text-align: left;
   }
 
   /* ---------- responsive ---------- */
@@ -733,13 +738,16 @@
           <span class="pill dry">DRY-RUN</span>
         </div>
       </div>
+      <!-- Shows the scanner reasoning, not a balance going up. An invented
+           profit here would be the one claim the app's own disclaimer
+           disowns, and it is the first thing anyone sees. -->
       <div class="mock-body">
-        <div class="stat"><div class="k">Total balance</div><div class="v">$104.62</div></div>
-        <div class="stat"><div class="k">Session P&L</div><div class="v up">+$4.62</div></div>
+        <div class="stat"><div class="k">Markets scanned</div><div class="v">40</div></div>
+        <div class="stat"><div class="k">Eligible</div><div class="v">2</div></div>
         <div class="mock-log">
-          <div><span class="t">[trade]</span> OPEN KXBTCD 32x YES @ 41c</div>
-          <div><span class="t">[trade]</span> CLOSE KXETH 28x @ 55c (+$1.96, take-profit)</div>
-          <div>[info]&nbsp;&nbsp;scanning 40 markets…</div>
+          <div><span class="t">[skip]</span>&nbsp;&nbsp;KXBTCD — spread 4c over your 2c limit</div>
+          <div><span class="t">[skip]</span>&nbsp;&nbsp;KXETH — momentum 1c under 3c trigger</div>
+          <div><span class="t">[open]</span>&nbsp;&nbsp;KXHIGH 24x YES @ 43c — paper</div>
         </div>
       </div>
     </div>
@@ -756,7 +764,7 @@
     </div>
     <div class="row js-row">
       <span class="name"><strong>ROM Trader</strong>Kalshi momentum bot — live dashboard, signals feed, risk brakes</span>
-      <span class="ver">v1.3.0</span>
+      <span class="ver">v1.4.0</span>
       <span class="size">100 MB</span>
       <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download</a>
@@ -902,7 +910,7 @@
 
     <div class="feature js-card">
       <h3>Brakes that work</h3>
-      <p>Paper-trades by default — real orders need your own API keys and an explicit switch. Then it stops itself: on a daily loss limit, on a run of losses in a row, and outside the hours you allow. Plus one-click flatten and a cooldown so it can’t sell and instantly re-buy the same market.</p>
+      <p>Paper-trades by default — real orders need your own API keys and an explicit switch. Then it stops itself: on a daily loss limit, on a run of losses in a row, and outside the hours you allow. It also refuses any trade whose target can’t clear Kalshi’s round-trip fee, because those lose money however often they win. Plus one-click flatten and a cooldown so it can’t sell and instantly re-buy the same market.</p>
     </div>
 
     <div class="feature js-card">
@@ -912,7 +920,7 @@
 
     <div class="feature js-card">
       <h3>Open source</h3>
-      <p>On GitHub under MIT, with 172 assertions — including suites that run against real Windows credential encryption and drive the running app itself. Per-user installer, uninstalls clean: no account, no background services.</p>
+      <p>On GitHub under MIT, with 197 assertions — including suites that run against real Windows credential encryption and drive the running app itself. Per-user installer, uninstalls clean: no account, no background services.</p>
     </div>
   </div>
   <div class="smartscreen js-anim">
