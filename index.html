@@ -182,6 +182,25 @@
     pointer-events: none;
   }
 
+  /* Keeps the headline and body legible over the candle field without
+     washing the field out. Sits between canvas and copy. */
+  .hero-copy::before {
+    content: "";
+    position: absolute;
+    inset: -12% -18% -14% -22%;
+    z-index: -1;
+    background: radial-gradient(
+      ellipse at 38% 50%,
+      rgba(11, 8, 18, 0.94) 0%,
+      rgba(11, 8, 18, 0.86) 38%,
+      rgba(11, 8, 18, 0.55) 66%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  .hero-copy { position: relative; z-index: 1; }
+
   .hero-fade {
     position: absolute;
     left: 0; right: 0; bottom: 0;
@@ -827,8 +846,10 @@
       // The frozen reduced-motion frame, composed from the near end of the
       // scroll range so the candles aren't lost in the fog.
       function drawStatic() {
-        camera.position.set(0, 0.6, 10);
-        camera.rotation.y = 0.18;
+        // Match the animated start of the scroll range: far enough back that the
+        // field reads as a backdrop rather than competing with the headline.
+        camera.position.set(0, 0.6, 16);
+        camera.rotation.y = 0;
         place(1.4);
         renderer.render(scene, camera);
       }
