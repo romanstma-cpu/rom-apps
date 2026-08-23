@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ROM — small, sharp Windows apps</title>
+<title>ROM — free Windows apps</title>
 <meta name="description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
 <link rel="canonical" href="https://romapps.xyz/">
 <meta name="theme-color" content="#0b0812">
@@ -14,14 +14,14 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ROM">
 <meta property="og:url" content="https://romapps.xyz/">
-<meta property="og:title" content="ROM — small, sharp Windows apps">
+<meta property="og:title" content="ROM — free Windows apps">
 <meta property="og:description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
 <meta property="og:image" content="https://romapps.xyz/assets/og-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="ROM — small, sharp apps. Download and run.">
+<meta property="og:image:alt" content="ROM — apps. Download and run.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="ROM — small, sharp Windows apps">
+<meta name="twitter:title" content="ROM — free Windows apps">
 <meta name="twitter:description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
 <meta name="twitter:image" content="https://romapps.xyz/assets/og-card.png">
 
@@ -182,7 +182,7 @@
     pointer-events: none;
   }
 
-  /* Keeps the headline and body legible over the candle field without
+  /* Keeps the headline and body legible over the hero field without
      washing the field out. Sits between canvas and copy. */
   .hero-copy::before {
     content: "";
@@ -235,7 +235,7 @@
   h1 {
     font-family: "Unbounded", sans-serif;
     font-weight: 700;
-    font-size: clamp(30px, 4.6vw, 52px);
+    font-size: clamp(34px, 5.4vw, 66px);
     line-height: 1.12;
     letter-spacing: -0.5px;
     margin-bottom: 20px;
@@ -623,7 +623,7 @@
     <div class="hero-copy">
       <div class="eyebrow js-anim">Windows apps · free downloads</div>
       <h1>
-        <span class="line"><span class="lw js-word">Small,&nbsp;sharp&nbsp;apps.</span></span>
+        <span class="line"><span class="lw js-word">Apps.</span></span>
         <span class="line"><span class="lw js-word grad">Download&nbsp;and&nbsp;run.</span></span>
       </h1>
       <p class="js-anim">Built by one person. No accounts, no subscriptions, no installers that phone home — each app is a single setup file that does its job and gets out of the way.</p>
@@ -774,145 +774,106 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" integrity="sha384-Z3REaz79l2IaAZqJsSABtTbhjgOUYyV3p90XNnAPCSHg3EMTz1fouunq9WZRtj3d" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script type="module">
-  // ---------- 3D candlestick field (Three.js) ----------
+  // ---------- hero field ----------
+  // A perspective point-grid rippling on a slow wave. Hand-rolled on a 2D
+  // canvas rather than pulled from Three.js: this is a few hundred bytes of
+  // maths instead of a 263 KB dependency, and it draws faster.
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  async function init3D() {
+  function initField() {
     const canvas = document.getElementById("bg3d");
-    try {
-      const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js");
+    const wrap = canvas.parentElement;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) { canvas.style.display = "none"; return; }
 
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    const COLS = 104;
+    const ROWS = 44;
+    const SPAN = 30;      // world width
+    const NEAR = 4.2;     // nearest row distance
+    const DEPTH = 33;     // near -> far span
+    const FOV = 330;
 
-      const scene = new THREE.Scene();
-      scene.fog = new THREE.Fog(0x0b0812, 10, 34);
-
-      const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 60);
-      camera.position.set(0, 0.6, 16);
-
-      const VIOLET = new THREE.Color(0x7c3aed);
-      const PINK = new THREE.Color(0xff2d9a);
-
-      // instanced candle bodies + wicks
-      const COUNT = 160;
-      const bodyGeo = new THREE.BoxGeometry(0.34, 1, 0.34);
-      const wickGeo = new THREE.BoxGeometry(0.055, 1, 0.055);
-      const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.92 });
-      const wickMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.6 });
-
-      const bodies = new THREE.InstancedMesh(bodyGeo, mat, COUNT);
-      const wicks = new THREE.InstancedMesh(wickGeo, wickMat, COUNT);
-      scene.add(bodies, wicks);
-
-      const dummy = new THREE.Object3D();
-      const color = new THREE.Color();
-      const seeds = [];
-
-      for (let i = 0; i < COUNT; i++) {
-        const x = (Math.random() - 0.5) * 34;
-        const y = (Math.random() - 0.5) * 16;
-        const z = -Math.random() * 26;
-        const h = 0.5 + Math.random() * 2.2;
-        seeds.push({ x, y, z, h, phase: Math.random() * Math.PI * 2, speed: 0.3 + Math.random() * 0.5 });
-        const t = THREE.MathUtils.clamp((x + 17) / 34 + (Math.random() - 0.5) * 0.25, 0, 1);
-        color.copy(VIOLET).lerp(PINK, t);
-        bodies.setColorAt(i, color);
-        wicks.setColorAt(i, color);
-      }
-      bodies.instanceColor.needsUpdate = true;
-      wicks.instanceColor.needsUpdate = true;
-
-      function place(time) {
-        for (let i = 0; i < COUNT; i++) {
-          const s = seeds[i];
-          const y = s.y + Math.sin(time * s.speed + s.phase) * 0.55;
-          dummy.position.set(s.x, y, s.z);
-          dummy.scale.set(1, s.h, 1);
-          dummy.rotation.set(0, 0, 0);
-          dummy.updateMatrix();
-          bodies.setMatrixAt(i, dummy.matrix);
-          dummy.scale.set(1, s.h + 1.1 + Math.sin(time * 0.7 + s.phase) * 0.2, 1);
-          dummy.updateMatrix();
-          wicks.setMatrixAt(i, dummy.matrix);
-        }
-        bodies.instanceMatrix.needsUpdate = true;
-        wicks.instanceMatrix.needsUpdate = true;
-      }
-
-      // sizing
-      const wrap = canvas.parentElement;
-
-      // The frozen reduced-motion frame, composed from the near end of the
-      // scroll range so the candles aren't lost in the fog.
-      function drawStatic() {
-        // Match the animated start of the scroll range: far enough back that the
-        // field reads as a backdrop rather than competing with the headline.
-        camera.position.set(0, 0.6, 16);
-        camera.rotation.y = 0;
-        place(1.4);
-        renderer.render(scene, camera);
-      }
-
-      function resize() {
-        const w = wrap.clientWidth, h = wrap.clientHeight;
-        renderer.setSize(w, h, false);
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-        // setSize reallocates and clears the drawing buffer. With no animation
-        // loop running under reduced motion, nothing would ever redraw it and
-        // the hero would go permanently black on the first resize — which fonts
-        // loading, a scrollbar appearing, or mobile browser chrome all trigger.
-        if (reduceMotion) drawStatic();
-      }
-      resize();
-      addEventListener("resize", resize);
-
-      // mouse parallax
-      const target = { x: 0, y: 0.6 };
-      if (!reduceMotion) {
-        addEventListener("pointermove", (e) => {
-          target.x = (e.clientX / innerWidth - 0.5) * 1.6;
-          target.y = 0.6 - (e.clientY / innerHeight - 0.5) * 1.0;
-        });
-      }
-
-      // scroll scrub: camera pushes forward as you scroll into the board
-      const scroll = { z: 16, ry: 0 };
-      if (window.gsap && !reduceMotion) {
-        gsap.registerPlugin(ScrollTrigger);
-        gsap.to(scroll, {
-          z: 9,
-          ry: 0.22,
-          ease: "none",
-          scrollTrigger: { trigger: ".hero-wrap", start: "top top", end: "bottom top", scrub: 0.6 }
-        });
-      }
-
-      // render loop — paused when hero off-screen or tab hidden
-      const clock = new THREE.Clock();
-      let visible = true;
-      new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; }, { threshold: 0 }).observe(wrap);
-
-      if (reduceMotion) {
-        drawStatic();
-      } else {
-        renderer.setAnimationLoop(() => {
-          if (!visible || document.hidden) return;
-          const t = clock.getElapsedTime();
-          place(t);
-          camera.position.x += (target.x - camera.position.x) * 0.04;
-          camera.position.y += (target.y - camera.position.y) * 0.04;
-          camera.position.z = scroll.z;
-          camera.rotation.y = scroll.ry;
-          renderer.render(scene, camera);
-        });
-      }
-    } catch (e) {
-      canvas.style.display = "none"; // WebGL unavailable — static hero still works
+    // Per-column colour is fixed, so build the strings once instead of
+    // formatting ~4500 of them every frame.
+    const tint = [];
+    for (let c = 0; c < COLS; c++) {
+      const t = c / (COLS - 1);
+      tint.push(
+        "rgb(" +
+          Math.round(124 + (255 - 124) * t) + "," +
+          Math.round(58 + (45 - 58) * t) + "," +
+          Math.round(237 + (154 - 237) * t) + ")"
+      );
     }
+
+    let w = 0, h = 0, dpr = 1;
+
+    function resize() {
+      dpr = Math.min(devicePixelRatio || 1, 2);
+      w = wrap.clientWidth;
+      h = wrap.clientHeight;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // Resizing a canvas clears it. With no loop running under reduced
+      // motion nothing would repaint, so draw the frozen frame again.
+      if (reduceMotion) draw(2.1);
+    }
+
+    function draw(t) {
+      ctx.clearRect(0, 0, w, h);
+      const cx = w * 0.5;
+      const cy = h * 0.54;
+
+      for (let r = ROWS - 1; r >= 0; r--) {
+        const z = NEAR + (r / (ROWS - 1)) * DEPTH;
+        const near = 1 - (z - NEAR) / DEPTH;          // 1 near .. 0 far
+        const scale = FOV / z;
+        const alpha = Math.pow(near, 2.1) * 0.9;
+        if (alpha < 0.012) continue;
+        const size = Math.max(1, 2.5 * near + 0.6);
+        ctx.globalAlpha = alpha;
+
+        for (let c = 0; c < COLS; c++) {
+          const gx = (c / (COLS - 1) - 0.5) * SPAN;
+          const y =
+            Math.sin(gx * 0.40 + t * 0.5 + z * 0.15) * 0.95 +
+            Math.sin(gx * 0.16 - t * 0.29 + z * 0.08) * 0.62;
+          const sx = cx + gx * scale;
+          if (sx < -8 || sx > w + 8) continue;
+          const sy = cy + (y - 1.35) * scale;
+          if (sy < -8 || sy > h + 8) continue;
+          ctx.fillStyle = tint[c];
+          ctx.fillRect(sx, sy, size, size);
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    resize();
+    addEventListener("resize", resize);
+
+    if (reduceMotion) {
+      draw(2.1);
+      return;
+    }
+
+    let visible = true;
+    new IntersectionObserver(
+      (e) => { visible = e[0].isIntersecting; },
+      { threshold: 0 }
+    ).observe(wrap);
+
+    let raf = 0;
+    const t0 = performance.now();
+    (function loop(now) {
+      raf = requestAnimationFrame(loop);
+      if (!visible || document.hidden) return;
+      draw((now - t0) / 1000);
+    })(t0);
   }
-  init3D();
+
+  initField();
 
   // ---------- GSAP intro + scroll reveals ----------
   if (window.gsap && !reduceMotion) {
