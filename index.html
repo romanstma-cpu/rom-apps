@@ -699,7 +699,12 @@
       new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; }, { threshold: 0 }).observe(wrap);
 
       if (reduceMotion) {
-        place(0);
+        // Still draw the field, just frozen. At the default z the candles sit
+        // deep in the fog and the hero reads as an empty black box, so compose
+        // the one static frame from the closer end of the scroll range.
+        camera.position.set(0, 0.6, 10);
+        camera.rotation.y = 0.18;
+        place(1.4);
         renderer.render(scene, camera);
       } else {
         renderer.setAnimationLoop(() => {
