@@ -117,7 +117,8 @@ def build() -> Path:
     # --- chips ---
     x = 72
     for label, col in (
-        ("ROM TRADER v1.1.0", GREEN),
+        # Naming a version here means the card goes stale on every release.
+        ("TRADER + CONVERT", GREEN),
         ("OPEN SOURCE", MUTED),
         ("WINDOWS 10/11", MUTED),
     ):

@@ -28,21 +28,39 @@
 <link rel="icon" type="image/png" href="assets/rom-icon.png">
 <link rel="apple-touch-icon" href="assets/rom-icon.png">
 
+<!-- One entry per app. A single SoftwareApplication node would let search
+     engines describe only one of them, and the catalogue is the point. -->
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "ROM Trader",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Windows 10, Windows 11",
-  "softwareVersion": "1.1.2",
-  "url": "https://romapps.xyz/",
-  "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe",
-  "description": "An automated momentum bot for Kalshi prediction markets. Live dashboard, signals feed, strategy presets and risk controls. Dry-run by default.",
-  "license": "https://opensource.org/licenses/MIT",
-  "isAccessibleForFree": true,
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
-}
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ROM Trader",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Windows 10, Windows 11",
+    "softwareVersion": "1.1.2",
+    "url": "https://romapps.xyz/",
+    "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe",
+    "description": "An automated momentum bot for Kalshi prediction markets. Live dashboard, signals feed, strategy presets and risk controls. Dry-run by default.",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ROM Convert",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Windows 10, Windows 11",
+    "softwareVersion": "1.0.0",
+    "url": "https://romapps.xyz/",
+    "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/releases/download/convert-v1.0.0/ROM-Convert-Setup.exe",
+    "description": "Convert video, audio and images on your own PC. Bundled ffmpeg, no upload, no watermark, no account and no file size limit.",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+]
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -630,10 +648,9 @@
       </h1>
       <p class="js-anim">Free Windows apps, built by one person.</p>
       <div class="cta-row js-anim">
-        <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download ROM Trader</a>
-        <a class="btn quiet" href="#downloads">See all apps ↓</a>
+        <a class="btn primary" href="#downloads">See the apps ↓</a>
       </div>
-      <div class="cta-note js-anim">Windows 10/11 · 100 MB · v1.1.2</div>
+      <div class="cta-note js-anim">Two apps · Windows 10/11 · free and open source</div>
     </div>
 
     <div class="mock js-mock" aria-hidden="true">
@@ -672,6 +689,14 @@
       <span class="size">100 MB</span>
       <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download</a>
+    </div>
+
+    <div class="row js-row">
+      <span class="name"><strong>ROM Convert</strong>Video, audio and images — converted on your PC, never uploaded</span>
+      <span class="ver">v1.0.0</span>
+      <span class="size">121 MB</span>
+      <span class="status ok"><span class="dot"></span>Available</span>
+      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/download/convert-v1.0.0/ROM-Convert-Setup.exe">Download</a>
     </div>
 
     <div class="row soon js-row">
