@@ -24,12 +24,9 @@ Everything you need is below. It should be a copy-and-paste job.
 | Functionality documented on the download page | romapps.xyz |
 | Code signing policy published | romapps.xyz/code-signing-policy.html |
 | Builds from a pipeline, not a laptop | yes — GitHub Actions, verified green |
-| **Two-factor auth on the GitHub account** | **you must confirm** |
+| Two-factor auth on the GitHub account | yes — confirmed by the maintainer 23 Aug |
 
-That last one is a stated SignPath requirement and I cannot read it — the CLI
-token lacks the `read:user` scope. Check at
-<https://github.com/settings/security>. If it is off, turn it on before
-applying.
+Every condition is met. The application is ready to send.
 
 ## Apply for ROM Convert first
 
