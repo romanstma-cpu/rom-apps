@@ -16,14 +16,14 @@
 <meta property="og:url" content="https://romapps.xyz/">
 <meta property="og:title" content="ROM — small, sharp Windows apps">
 <meta property="og:description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
-<meta property="og:image" content="https://romapps.xyz/assets/rom-icon.png">
-<meta property="og:image:width" content="256">
-<meta property="og:image:height" content="256">
-<meta property="og:image:alt" content="ROM logo">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://romapps.xyz/assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ROM — small, sharp apps. Download and run.">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ROM — small, sharp Windows apps">
 <meta name="twitter:description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
-<meta name="twitter:image" content="https://romapps.xyz/assets/rom-icon.png">
+<meta name="twitter:image" content="https://romapps.xyz/assets/og-card.png">
 
 <link rel="icon" type="image/png" href="assets/rom-icon.png">
 <link rel="apple-touch-icon" href="assets/rom-icon.png">
@@ -495,6 +495,48 @@
   /* ---------- reveal (GSAP sets initial state via .js-anim) ---------- */
   /* elements start visible; JS hides them first so no-JS users see everything */
 
+  /* ---------- real product shot ---------- */
+  .shot-wrap {
+    position: relative;
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .shot-frame {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+  }
+
+  /* brand glow bleeding out from behind the frame */
+  .shot-frame::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    background: linear-gradient(120deg, var(--violet), var(--pink));
+    filter: blur(26px);
+    opacity: 0.32;
+  }
+
+  .shot-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .shot-cap {
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--faint, #635a7a);
+    text-align: center;
+  }
+
   /* ---------- responsive ---------- */
   @media (max-width: 880px) {
     .hero { grid-template-columns: 1fr; padding-bottom: 56px; }
@@ -608,6 +650,18 @@
       <span class="status pre">◌ PRE-MARKET</span>
       <span class="btn disabled">Soon</span>
     </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="shot-h">
+  <h2 class="section-label js-anim" id="shot-h">THE REAL THING</h2>
+  <div class="shot-wrap js-card">
+    <div class="shot-frame">
+      <img src="assets/rom-trader-dashboard.png"
+           alt="ROM Trader dashboard showing total balance, session and all-time P&amp;L, win rate, an equity curve, the market scanner and open positions"
+           width="1600" height="1000" loading="lazy" decoding="async">
+    </div>
+    <p class="shot-cap">Actual screenshot — ROM Trader v1.1.0 on first launch, before the engine is started.</p>
   </div>
 </section>
 
