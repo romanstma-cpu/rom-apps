@@ -356,9 +356,10 @@
     color: var(--muted);
   }
 
-  /* Muted, not green: these tags label a skipped market and a paper entry.
-     Green would read as profit, which is the impression to avoid here. */
-  .mock-log .t { color: var(--violet); }
+  /* Not green: these tags label a skipped market and a paper entry, and green
+     would read as profit. A light violet rather than --violet itself, which
+     measured 3.48:1 at this size — under the 4.5 needed for small text. */
+  .mock-log .t { color: #b9a2fb; }
 
   .scroll-hint {
     position: absolute;
@@ -656,7 +657,9 @@
     margin-top: 14px;
     font-family: var(--mono);
     font-size: 12.5px;
-    color: var(--faint, #635a7a);
+    /* --faint measured 3.10:1 here. These captions say what each screenshot
+       shows, so they are content and have to clear 4.5. */
+    color: var(--muted);
     line-height: 1.55;
     /* Left-aligned since going two-up: a centred caption wrapping to two
        lines under a half-width image reads as a ragged blob. */
