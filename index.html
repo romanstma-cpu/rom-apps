@@ -66,6 +66,17 @@
 
   html { scroll-behavior: smooth; }
 
+  /* A 2px brand edge instead of a scrolling strip: no text to clip, and it
+     reads as a deliberate top rule at any width. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 2px;
+    z-index: 60;
+    background: linear-gradient(90deg, var(--violet), var(--pink) 55%, var(--violet));
+  }
+
   body {
     background: var(--void);
     color: var(--text);
@@ -109,43 +120,6 @@
     html:not(.force-motion) { scroll-behavior: auto; }
   }
 
-  /* ---------- ticker tape ---------- */
-  .tape {
-    position: relative;
-    z-index: 5;
-    overflow: hidden;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--muted);
-    white-space: nowrap;
-    user-select: none;
-  }
-
-  .tape-inner {
-    display: inline-block;
-    padding: 7px 0;
-    animation: tape 40s linear infinite;
-  }
-
-  .tape span { margin-right: 3.2em; }
-
-  .pip {
-    display: inline-block;
-    width: 5px;
-    height: 5px;
-    margin-right: 0.85em;
-    border-radius: 50%;
-    vertical-align: 1px;
-    background: linear-gradient(135deg, var(--violet), var(--pink));
-  }
-
-  @keyframes tape {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-
   /* ---------- nav ---------- */
   .nav {
     position: relative;
@@ -180,7 +154,7 @@
   /* ---------- hero with 3D canvas ---------- */
   .hero-wrap {
     position: relative;
-    min-height: calc(100svh - 110px);
+    min-height: calc(100svh - 82px);
     display: flex;
     align-items: center;
   }
@@ -616,9 +590,7 @@
 
     /* A stopped marquee overflows and gets clipped mid-word. Drop the
        repeats and lay the single run out evenly across the bar. */
-    html:not(.force-motion) .tape { white-space: normal; }
 
-    html:not(.force-motion) .tape-inner {
       animation: none;
       display: flex;
       flex-wrap: wrap;
@@ -629,33 +601,14 @@
       padding: 8px 24px;
     }
 
-    html:not(.force-motion) .tape-inner span { margin-right: 0; }
 
     /* one run of three is enough when it is not scrolling */
-    html:not(.force-motion) .tape-inner > span:nth-child(n + 4) { display: none; }
   }
 </style>
 </head>
 <body>
 
 <a class="skip-link" href="#downloads">Skip to downloads</a>
-
-<div class="tape" aria-hidden="true">
-  <div class="tape-inner">
-      <span><span class="pip"></span>NO ACCOUNTS</span>
-      <span><span class="pip"></span>NO SUBSCRIPTIONS</span>
-      <span><span class="pip"></span>OPEN SOURCE</span>
-      <span><span class="pip"></span>NO ACCOUNTS</span>
-      <span><span class="pip"></span>NO SUBSCRIPTIONS</span>
-      <span><span class="pip"></span>OPEN SOURCE</span>
-      <span><span class="pip"></span>NO ACCOUNTS</span>
-      <span><span class="pip"></span>NO SUBSCRIPTIONS</span>
-      <span><span class="pip"></span>OPEN SOURCE</span>
-      <span><span class="pip"></span>NO ACCOUNTS</span>
-      <span><span class="pip"></span>NO SUBSCRIPTIONS</span>
-      <span><span class="pip"></span>OPEN SOURCE</span>
-  </div>
-</div>
 
 <nav class="nav">
   <img src="assets/rom-icon.png" alt="ROM logo">
