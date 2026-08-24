@@ -35,8 +35,11 @@ class RiskManager:
                   if p.market.category == signal.market.category]
         if len(in_cat) >= int(risk.get("max_per_category", 99)):
             return False, f"max positions in {signal.market.category}"
-        exposure = sum(p.cost for p in positions
-                       if p.market.condition_id == signal.market.condition_id)
+        in_market = [p for p in positions
+                     if p.market.condition_id == signal.market.condition_id]
+        if in_market and not bool(risk.get("allow_pyramiding", False)):
+            return False, "already holding this market"
+        exposure = sum(p.cost for p in in_market)
         if exposure + self.entry_size(signal) > float(risk.get("max_position_usd", 100)):
             return False, "max position size in market"
         return True, "ok"

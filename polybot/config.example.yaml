@@ -53,12 +53,14 @@ strategies:
 risk:
   stake_usd: 25             # base size per entry (scaled by confidence)
   max_position_usd: 100
+  allow_pyramiding: false   # allow adding to a market you already hold
   max_open_positions: 10
   max_per_category: 4
   daily_loss_stop_usd: 100  # halt new entries after this realized loss
   take_profit_pct: 0.20     # exit at +20%
   stop_loss_pct: 0.12       # exit at -12%
   max_hold_hours: 48
+  reentry_cooldown_minutes: 30  # wait after exiting before re-entering a market
 
 # per-category overrides (any risk/strategy key)
 category_overrides:

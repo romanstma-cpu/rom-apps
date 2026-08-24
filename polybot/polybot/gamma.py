@@ -12,6 +12,17 @@ log = logging.getLogger(__name__)
 GAMMA = "https://gamma-api.polymarket.com"
 
 
+def _json_field(m: dict, key: str) -> list | None:
+    """Gamma returns some list fields as JSON-encoded strings."""
+    val = m.get(key)
+    if isinstance(val, str):
+        try:
+            val = json.loads(val)
+        except ValueError:
+            return None
+    return val if isinstance(val, list) else None
+
+
 class GammaClient:
     def __init__(self, session: requests.Session | None = None):
         self.http = session or requests.Session()
@@ -34,13 +45,12 @@ class GammaClient:
             return []
         out: list[Market] = []
         for m in raw if isinstance(raw, list) else []:
-            tokens = m.get("clobTokenIds")
-            if isinstance(tokens, str):
-                try:
-                    tokens = json.loads(tokens)
-                except ValueError:
-                    tokens = None
-            if not tokens or len(tokens) < 2:
+            tokens = _json_field(m, "clobTokenIds")
+            if not tokens or len(tokens) != 2:
+                continue
+            # only binary Yes/No markets: the bot reasons in YES-token terms
+            outcomes = [str(o).lower() for o in _json_field(m, "outcomes") or []]
+            if outcomes and outcomes != ["yes", "no"]:
                 continue
             out.append(Market(
                 condition_id=m.get("conditionId", ""),

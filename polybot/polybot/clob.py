@@ -29,14 +29,22 @@ class ClobClient:
         except requests.RequestException as exc:
             log.debug("book fetch failed for %s: %s", token_id, exc)
             return None
-        bids = book.get("bids") or []
-        asks = book.get("asks") or []
+        try:
+            bids = [(float(b["price"]), float(b["size"]))
+                    for b in book.get("bids") or []]
+            asks = [(float(a["price"]), float(a["size"]))
+                    for a in book.get("asks") or []]
+        except (KeyError, TypeError, ValueError):
+            log.debug("malformed book for %s", token_id)
+            return None
         if not bids or not asks:
             return None
-        best_bid = max(float(b["price"]) for b in bids)
-        best_ask = min(float(a["price"]) for a in asks)
-        bid_depth = sum(float(b["price"]) * float(b["size"]) for b in bids)
-        ask_depth = sum(float(a["price"]) * float(a["size"]) for a in asks)
+        best_bid = max(p for p, _ in bids)
+        best_ask = min(p for p, _ in asks)
+        if best_bid >= best_ask:   # crossed/garbage book, don't trade on it
+            return None
+        bid_depth = sum(p * s for p, s in bids)
+        ask_depth = sum(p * s for p, s in asks)
         total = bid_depth + ask_depth
         return Snapshot(
             ts=time.time(),

@@ -44,8 +44,13 @@ class LiveExecutor:
     never needs the dependency or any keys."""
 
     def __init__(self, cfg: Config, portfolio: Portfolio):
-        from py_clob_client.client import ClobClient as PyClob  # noqa: import in method
-        from py_clob_client.clob_types import MarketOrderArgs, OrderType
+        try:
+            from py_clob_client.client import ClobClient as PyClob
+            from py_clob_client.clob_types import MarketOrderArgs, OrderType
+        except ImportError as exc:
+            raise RuntimeError(
+                "live mode needs py-clob-client — run: pip install "
+                "py-clob-client (or set mode: paper)") from exc
         self._MarketOrderArgs = MarketOrderArgs
         self._OrderType = OrderType
         live = cfg.get("live", {})

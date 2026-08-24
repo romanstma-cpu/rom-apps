@@ -43,7 +43,11 @@ def test_allow_entry_limits():
     pos = Position(market=MKT, side="BUY", entry_price=0.5, shares=60,
                    strategy="momentum")  # $30 in this market
     ok, why = rm.allow_entry(sig(), [pos], 0)
-    assert not ok and "size" in why
+    assert not ok and "holding" in why
+    pyr = Config({**CFG.data, "risk": {**CFG.data["risk"],
+                                       "allow_pyramiding": True}})
+    ok, why = RiskManager(pyr).allow_entry(sig(), [pos], 0)
+    assert not ok and "size" in why  # $30 + $25 > $40 cap even when pyramiding
     ok, why = rm.allow_entry(sig(), [], -200)
     assert not ok and "loss" in why
 

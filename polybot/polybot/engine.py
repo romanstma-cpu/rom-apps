@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 import time
 from collections import defaultdict, deque
+from concurrent.futures import ThreadPoolExecutor
 
 from .clob import ClobClient
 from .config import Config
@@ -38,9 +39,13 @@ class Engine:
         # per-category strategy instances (overrides may differ per category)
         self._strategies_by_cat: dict[str, list] = {}
         self.markets: list[Market] = []
-        self._day_start = time.time() - (time.time() % 86400)
         self.paused = False
+        self._last_exit: dict[str, float] = {}  # condition_id -> ts
         self.events: deque[dict] = deque(maxlen=200)  # feed for the dashboard
+
+    @staticmethod
+    def _today_start() -> float:
+        return time.time() - (time.time() % 86400)
 
     def _event(self, kind: str, text: str) -> None:
         self.events.append({"ts": time.time(), "kind": kind, "text": text})
@@ -61,18 +66,33 @@ class Engine:
         )
         log.info("watching %d markets across %s", len(self.markets),
                  ", ".join(m.get("categories", [])))
+        # prune history of markets we no longer watch or hold
+        keep = ({mk.condition_id for mk in self.markets} |
+                {p.market.condition_id for p in self.portfolio.positions})
+        for cid in [c for c in self.history if c not in keep]:
+            del self.history[cid]
+
+    def _snapshots(self) -> list[tuple[Market, Snapshot]]:
+        """Fetch order-book snapshots for all watched markets in parallel."""
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            snaps = pool.map(
+                lambda m: (m, self.clob.snapshot(m.yes_token, m.volume_24h)),
+                self.markets)
+            return [(m, s) for m, s in snaps if s is not None]
 
     def tick(self) -> list[Signal]:
         """One pass over all markets. Returns signals acted on."""
         acted: list[Signal] = []
-        for market in self.markets:
-            snap = self.clob.snapshot(market.yes_token, market.volume_24h)
-            if snap is None:
-                continue
+        for market, snap in self._snapshots():
             hist = self.history[market.condition_id]
             hist.append(snap)
             self._manage_exits(market, snap)
             if self.paused or not self.risk.price_ok(snap):
+                continue
+            cooldown = 60 * float(self.cfg.for_category(market.category)
+                                  .get("risk", {})
+                                  .get("reentry_cooldown_minutes", 30))
+            if time.time() - self._last_exit.get(market.condition_id, 0) < cooldown:
                 continue
             strategies = self.strategies_for(market.category)
             needs_tape = any(s.name == "whale_follow" for s in strategies)
@@ -82,7 +102,7 @@ class Engine:
                 sig = strat.evaluate(market, list(hist), trades)
                 if not sig:
                     continue
-                realized = self.portfolio.realized_pnl_since(self._day_start)
+                realized = self.portfolio.realized_pnl_since(self._today_start())
                 ok, why = self.risk.allow_entry(
                     sig, self.portfolio.positions, realized)
                 if not ok:
@@ -101,6 +121,7 @@ class Engine:
             reason = self.risk.should_exit(pos, snap.mid)
             if reason:
                 pnl = self.executor.exit(pos, snap, reason)
+                self._last_exit[pos.market.condition_id] = time.time()
                 self._event("exit", f"{pos.side} {pos.market.question[:60]} "
                                     f"pnl ${pnl:+.2f} ({reason})")
 

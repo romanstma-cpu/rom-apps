@@ -17,6 +17,8 @@ class WhaleFollow(Strategy):
     def evaluate(self, market: Market, history: Sequence[Snapshot],
                  trades: list[dict]) -> Signal | None:
         min_usd = float(self.params.get("min_trade_usd", 5000))
+        if len(self._seen) > 20000:   # bound memory on long runs
+            self._seen.clear()
         for t in trades:
             key = t.get("transactionHash") or f"{t.get('timestamp')}:{t.get('size')}"
             if key in self._seen:

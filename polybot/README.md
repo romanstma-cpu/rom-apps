@@ -71,6 +71,16 @@ Paper mode is the default and needs no keys. To trade live:
 3. Start small. Prediction markets are volatile; this software carries no
    warranty and you are responsible for your own trades.
 
+## Before you run it
+
+ROM Polybot's strategies are heuristics, not a proven edge — they have no
+demonstrated profitability, and spreads and fees work against you. It ships
+in paper mode and only places real orders once you install
+`py-clob-client`, provide your own keys, and switch live mode on yourself.
+Prediction markets can move fast and resolve against you; only trade money
+you can afford to lose. Nothing here is financial advice, and automated
+trading may not be permitted in your jurisdiction — that's on you to check.
+
 ## Layout
 
 ```

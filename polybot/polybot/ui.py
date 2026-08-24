@@ -116,7 +116,7 @@ PAGE = PAGE.replace("__APP_NAME__", APP_NAME).replace("__LOGO__", LOGO_URI)
 
 def _state(engine: Engine) -> dict:
     positions = []
-    for p in engine.portfolio.positions:
+    for p in list(engine.portfolio.positions):  # engine thread mutates these
         hist = engine.history.get(p.market.condition_id)
         mid = hist[-1].mid if hist else p.entry_price
         positions.append({
@@ -125,7 +125,7 @@ def _state(engine: Engine) -> dict:
             "pnl": round(p.pnl(mid), 2), "question": p.market.question,
         })
     markets = []
-    for m in engine.markets:
+    for m in list(engine.markets):
         hist = engine.history.get(m.condition_id)
         last = hist[-1] if hist else None
         markets.append({
@@ -138,7 +138,8 @@ def _state(engine: Engine) -> dict:
         "mode": engine.cfg.mode, "paused": engine.paused,
         "cash": round(engine.portfolio.cash, 2),
         "open_pnl": round(sum(p["pnl"] for p in positions), 2),
-        "realized_pnl": round(sum(c["pnl"] for c in engine.portfolio.closed), 2),
+        "realized_pnl": round(sum(c["pnl"]
+                                  for c in list(engine.portfolio.closed)), 2),
         "positions": positions, "markets": markets,
         "events": list(engine.events),
     }
