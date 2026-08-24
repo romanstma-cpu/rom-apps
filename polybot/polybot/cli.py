@@ -19,6 +19,11 @@ def cmd_run(engine: Engine) -> None:
     engine.run()
 
 
+def cmd_ui(engine: Engine) -> None:
+    from .ui import serve
+    serve(engine)
+
+
 def cmd_scan(engine: Engine) -> None:
     """One pass: print watched markets, current prices, and any signals."""
     engine.discover()
@@ -54,14 +59,15 @@ def cmd_portfolio(engine: Engine) -> None:
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="polybot",
                                  description="Open Polymarket trading bot")
-    ap.add_argument("command", choices=["run", "scan", "portfolio"])
+    ap.add_argument("command", choices=["run", "ui", "scan", "portfolio"])
     ap.add_argument("-c", "--config", help="path to config yaml")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
     _setup_logging(args.verbose)
     cfg = Config.load(args.config)
     engine = Engine(cfg)
-    {"run": cmd_run, "scan": cmd_scan, "portfolio": cmd_portfolio}[args.command](engine)
+    {"run": cmd_run, "ui": cmd_ui, "scan": cmd_scan,
+     "portfolio": cmd_portfolio}[args.command](engine)
 
 
 if __name__ == "__main__":

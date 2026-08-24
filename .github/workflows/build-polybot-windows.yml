@@ -1,0 +1,40 @@
+name: Build PolyBot for Windows
+
+on:
+  push:
+    branches: [main, claude/polymarket-bot-remake-leqf54]
+    paths: ["polybot/**", ".github/workflows/build-polybot-windows.yml"]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: polybot
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller pytest
+
+      - name: Run tests
+        run: python -m pytest tests -q
+
+      - name: Build PolyBot.exe
+        run: >
+          pyinstaller --onefile --name PolyBot
+          --add-data "config.example.yaml;."
+          windows/polybot_win.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PolyBot-windows
+          path: polybot/dist/PolyBot.exe

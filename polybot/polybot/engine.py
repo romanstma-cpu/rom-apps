@@ -39,6 +39,11 @@ class Engine:
         self._strategies_by_cat: dict[str, list] = {}
         self.markets: list[Market] = []
         self._day_start = time.time() - (time.time() % 86400)
+        self.paused = False
+        self.events: deque[dict] = deque(maxlen=200)  # feed for the dashboard
+
+    def _event(self, kind: str, text: str) -> None:
+        self.events.append({"ts": time.time(), "kind": kind, "text": text})
 
     def strategies_for(self, category: str) -> list:
         if category not in self._strategies_by_cat:
@@ -67,7 +72,7 @@ class Engine:
             hist = self.history[market.condition_id]
             hist.append(snap)
             self._manage_exits(market, snap)
-            if not self.risk.price_ok(snap):
+            if self.paused or not self.risk.price_ok(snap):
                 continue
             strategies = self.strategies_for(market.category)
             needs_tape = any(s.name == "whale_follow" for s in strategies)
@@ -86,6 +91,7 @@ class Engine:
                 usd = self.risk.entry_size(sig)
                 if self.executor.enter(sig, snap, usd):
                     acted.append(sig)
+                    self._event("enter", str(sig))
                 break  # at most one entry per market per tick
         return acted
 
@@ -94,7 +100,9 @@ class Engine:
                     if p.market.condition_id == market.condition_id]:
             reason = self.risk.should_exit(pos, snap.mid)
             if reason:
-                self.executor.exit(pos, snap, reason)
+                pnl = self.executor.exit(pos, snap, reason)
+                self._event("exit", f"{pos.side} {pos.market.question[:60]} "
+                                    f"pnl ${pnl:+.2f} ({reason})")
 
     def run(self) -> None:
         self.discover()

@@ -37,6 +37,27 @@ python -m polybot run                # paper trading (default)
 python -m polybot scan               # one-shot: show markets + signals
 ```
 
+## Windows
+
+Two options:
+
+- **PolyBot.exe (no Python needed)** — the GitHub Actions workflow
+  `build-polybot-windows.yml` builds a standalone `PolyBot.exe` with
+  PyInstaller on every push touching `polybot/` (also runnable manually from
+  the Actions tab). Download the `PolyBot-windows` artifact, put a
+  `config.yaml` next to the exe (optional — it falls back to the bundled
+  example config in paper mode), and double-click. Your browser opens the
+  dashboard at `http://127.0.0.1:8543`.
+- **From source** — install Python 3.10+ from python.org (tick "Add to
+  PATH"), then double-click `windows\run.bat`. It creates a venv, installs
+  dependencies, copies the example config, and opens the dashboard.
+
+## Dashboard
+
+`python -m polybot ui` runs the engine and serves a local dashboard
+(cash, open/realized P&L, watched markets, positions, activity feed, and a
+pause/resume button for new entries). Local only — it binds to 127.0.0.1.
+
 ## Live trading (optional)
 
 Paper mode is the default and needs no keys. To trade live:
