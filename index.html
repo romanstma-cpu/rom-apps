@@ -49,6 +49,20 @@
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
+    "name": "ROM Polybot",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Windows 10, Windows 11",
+    "softwareVersion": "1.0.0",
+    "url": "https://romapps.xyz/",
+    "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/releases/download/polybot-v1.0.0/ROM-Polybot.exe",
+    "description": "An automated trading bot for Polymarket prediction markets. Seven strategies, category filters, live dashboard with equity curve and risk controls. Paper-trades by default.",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
     "name": "ROM Convert",
     "applicationCategory": "MultimediaApplication",
     "operatingSystem": "Windows 10, Windows 11",
@@ -729,7 +743,7 @@
       <div class="cta-row js-anim">
         <a class="btn primary" href="#downloads">See the apps ↓</a>
       </div>
-      <div class="cta-note js-anim">Two apps · Windows 10/11 · free and open source</div>
+      <div class="cta-note js-anim">Three apps · Windows 10/11 · free and open source</div>
     </div>
 
     <div class="mock js-mock" aria-hidden="true">
@@ -774,6 +788,14 @@
     </div>
 
     <div class="row js-row">
+      <span class="name"><strong>ROM Polybot</strong>Polymarket bot — seven strategies, equity curve, risk brakes</span>
+      <span class="ver">v1.0.0</span>
+      <span class="size">8 MB</span>
+      <span class="status ok"><span class="dot"></span>Available</span>
+      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/download/polybot-v1.0.0/ROM-Polybot.exe">Download</a>
+    </div>
+
+    <div class="row js-row">
       <span class="name"><strong>ROM Convert</strong>Video, audio and images — converted on your PC, never uploaded</span>
       <span class="ver">v1.0.0</span>
       <span class="size">121 MB</span>
@@ -793,7 +815,7 @@
 
 <section class="section" aria-labelledby="shot-h">
   <h2 class="section-label js-anim" id="shot-h">THE REAL THING</h2>
-  <p class="shot-lede js-anim">No mockups. Both apps, running.</p>
+  <p class="shot-lede js-anim">No mockups. The apps, running.</p>
 
   <div class="shot-wrap">
     <figure class="shot-fig js-card">
@@ -931,6 +953,50 @@
   </div>
 </section>
 
+<section class="section" aria-labelledby="polybot-h">
+  <h2 class="section-label js-anim" id="polybot-h">
+    <img class="app-mark" src="assets/app-polybot.png" alt="">ROM POLYBOT
+  </h2>
+  <p class="section-lede js-anim">
+    The same idea, pointed at Polymarket.
+    <span>Seven strategies you can read, and switch off.</span>
+  </p>
+  <div class="features">
+    <div class="feature js-card">
+      <h3>Seven strategies, not one black box</h3>
+      <p>Momentum, mean reversion, volume spikes, trend continuation, spread scalping, whale following and sentiment shifts — each one a short file you can read, tune per category, or turn off entirely. Turn them all off and it only manages the exits on what you already hold.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Watches the categories you pick</h3>
+      <p>Politics, crypto, sports, or whatever else you list. It tracks the most active markets in each, with separate stake sizes and risk limits per category — sports can trade smaller than politics without touching the rest of your settings.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Follows the money</h3>
+      <p>It reads the public order book and trade tape: order-book imbalance, sudden volume against a rolling baseline, and single trades large enough to be worth copying. Every entry logs the number that triggered it, so you can tell whether the bot saw something or just noise.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Brakes that work</h3>
+      <p>Paper-trades by default — real orders need your own wallet key and an explicit switch, and the paper ledger is never allowed to drive live orders. Then it stops itself: take-profit, stop-loss, a maximum hold time, a daily loss limit, caps on open positions per market and per category, and a cooldown so it can't exit and instantly re-buy the same market. Pause new entries from the dashboard at any time.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>A dashboard, not a log file</h3>
+      <p>Double-click and it opens in your browser: equity curve, cash, open and realized P&amp;L, win rate, every open position with its live mark, the markets it is watching, and a feed of what it did and why. Export the trade history to CSV whenever you want to check its work in a spreadsheet.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Open source</h3>
+      <p>MIT on GitHub, with 38 tests — including an end-to-end engine suite and a soak test that checks the money adds up on every tick of a 400-tick run. One standalone exe, no installer, no account, nothing running in the background.</p>
+    </div>
+  </div>
+  <div class="smartscreen js-anim">
+    <strong>Before you run it:</strong> ROM Polybot's strategies are heuristics, not a proven edge — they have no demonstrated profitability, and spread and fees work against them. It ships in paper mode and only places real orders once you add your own Polymarket keys and switch live mode on yourself. Nothing here is financial advice.
+  </div>
+</section>
+
 <section class="section" id="verify" aria-labelledby="verify-h">
   <h2 class="section-label js-anim" id="verify-h">IS THIS SAFE?</h2>
   <p class="shot-lede js-anim">A fair question to ask of a free download from someone you’ve never heard of.</p>
@@ -952,11 +1018,19 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
 $want = (irm https://github.com/romanstma-cpu/rom-convert/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
 if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
 
+    <p>And for ROM Polybot:</p>
+
+    <pre class="cmd"><code>$f = "$HOME\Downloads\ROM-Polybot.exe"
+$want = (irm https://github.com/romanstma-cpu/rom-apps/releases/download/polybot-v1.0.0/SHA256SUMS-polybot.txt).Split(' ')[0]
+if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
+
     <p class="verify-foot">
       Beyond that: every download comes from a GitHub release, the full source for
-      <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader</a> and
-      <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a> is public under MIT,
+      <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader</a>,
+      <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a> and
+      <a href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot" rel="noopener">Polybot</a> is public under MIT,
       and both installers are per-user — they never ask for administrator rights and uninstall cleanly.
+      Polybot has no installer at all: it is a single exe you can delete.
       You can also read the <a href="code-signing-policy.html">code signing policy</a>.
     </p>
   </div>
@@ -970,6 +1044,7 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
     <span>© 2026 ROM — free Windows apps</span>
     <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader source ↗</a>
     <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert source ↗</a>
+    <a href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot" rel="noopener">Polybot source ↗</a>
     <a href="https://github.com/romanstma-cpu/rom-apps/releases" rel="noopener">releases ↗</a>
   </div>
 </footer>
