@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import time
 
-from .models import Market, Position, Signal, Snapshot
+from .models import Position, Signal, Snapshot
 
 
 class RiskManager:
