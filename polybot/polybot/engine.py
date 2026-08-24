@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
@@ -14,6 +15,7 @@ from .models import Market, Signal, Snapshot
 from .portfolio import Portfolio
 from .risk import RiskManager
 from .strategies import build_enabled
+from .validate import validate
 
 log = logging.getLogger(__name__)
 REDISCOVER_EVERY = 40  # ticks between market re-discovery
@@ -21,16 +23,24 @@ REDISCOVER_EVERY = 40  # ticks between market re-discovery
 
 class Engine:
     def __init__(self, cfg: Config):
+        for note in validate(cfg) or []:
+            log.warning("%s", note)
         self.cfg = cfg
         self.gamma = GammaClient()
         self.clob = ClobClient()
         self.risk = RiskManager(cfg)
         paper_cfg = cfg.get("paper", {})
+        live_mode = cfg.mode == "live"
+        # Separate ledgers per mode. Sharing one would let paper positions
+        # issue real sell orders the first time live mode starts.
+        ledger = (cfg.get("live", {}).get("ledger_path", "live_ledger.json")
+                  if live_mode else
+                  paper_cfg.get("ledger_path", "paper_ledger.json"))
         self.portfolio = Portfolio(
             starting_cash=float(paper_cfg.get("starting_cash", 1000)),
-            path=paper_cfg.get("ledger_path", "paper_ledger.json"),
+            path=ledger,
         )
-        if cfg.mode == "live":
+        if live_mode:
             self.executor = LiveExecutor(cfg, self.portfolio)
         else:
             self.executor = PaperExecutor(self.portfolio)
@@ -41,7 +51,18 @@ class Engine:
         self.markets: list[Market] = []
         self.paused = False
         self._last_exit: dict[str, float] = {}  # condition_id -> ts
+        self._stop = threading.Event()
+        # equity samples for the dashboard curve: (ts, cash + value of holdings)
+        self.equity: deque[tuple[float, float]] = deque(maxlen=500)
         self.events: deque[dict] = deque(maxlen=200)  # feed for the dashboard
+
+    def _sample_equity(self) -> None:
+        held = 0.0
+        for p in list(self.portfolio.positions):
+            hist = self.history.get(p.market.condition_id)
+            mark = p.held_token_price(hist[-1].mid) if hist else p.entry_price
+            held += mark * p.shares
+        self.equity.append((time.time(), round(self.portfolio.cash + held, 2)))
 
     @staticmethod
     def _today_start() -> float:
@@ -113,6 +134,7 @@ class Engine:
                     acted.append(sig)
                     self._event("enter", str(sig))
                 break  # at most one entry per market per tick
+        self._sample_equity()
         return acted
 
     def _manage_exits(self, market: Market, snap: Snapshot) -> None:
@@ -121,27 +143,35 @@ class Engine:
             reason = self.risk.should_exit(pos, snap.mid)
             if reason:
                 pnl = self.executor.exit(pos, snap, reason)
+                if pnl is None:      # exit rejected — still holding it
+                    continue
                 self._last_exit[pos.market.condition_id] = time.time()
                 self._event("exit", f"{pos.side} {pos.market.question[:60]} "
                                     f"pnl ${pnl:+.2f} ({reason})")
 
+    def stop(self) -> None:
+        """Ask the run loop to finish the current tick and exit."""
+        self._stop.set()
+
     def run(self) -> None:
-        self.discover()
         tick_n = 0
         log.info("engine started in %s mode, cash $%.2f",
                  self.cfg.mode, self.portfolio.cash)
-        while True:
-            try:
-                if tick_n and tick_n % REDISCOVER_EVERY == 0:
-                    self.discover()
-                acted = self.tick()
-                for sig in acted:
-                    log.info("entered: %s", sig)
-            except KeyboardInterrupt:
-                log.info("stopping; ledger saved")
-                self.portfolio.save()
-                return
-            except Exception:
-                log.exception("tick failed; continuing")
-            tick_n += 1
-            time.sleep(float(self.cfg.get("poll_seconds", 15)))
+        try:
+            self.discover()
+            while not self._stop.is_set():
+                try:
+                    if tick_n and tick_n % REDISCOVER_EVERY == 0:
+                        self.discover()
+                    for sig in self.tick():
+                        log.info("entered: %s", sig)
+                except Exception:
+                    log.exception("tick failed; continuing")
+                tick_n += 1
+                # interruptible sleep: stop() wakes it immediately
+                self._stop.wait(float(self.cfg.get("poll_seconds", 15)))
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.portfolio.save()
+            log.info("engine stopped; ledger saved")

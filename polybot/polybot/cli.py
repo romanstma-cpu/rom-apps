@@ -4,8 +4,12 @@ from __future__ import annotations
 import argparse
 import logging
 
+from . import __version__
+from .branding import APP_NAME
 from .config import Config
 from .engine import Engine
+from .ui import DEFAULT_PORT
+from .validate import ConfigError
 
 
 def _setup_logging(verbose: bool) -> None:
@@ -19,9 +23,9 @@ def cmd_run(engine: Engine) -> None:
     engine.run()
 
 
-def cmd_ui(engine: Engine) -> None:
-    from .ui import serve
-    serve(engine)
+def cmd_ui(engine: Engine, port: int = 0) -> None:
+    from .ui import DEFAULT_PORT, serve
+    serve(engine, port or DEFAULT_PORT)
 
 
 def cmd_scan(engine: Engine) -> None:
@@ -61,12 +65,22 @@ def main(argv: list[str] | None = None) -> None:
         prog="polybot", description="ROM Polybot — open Polymarket trading bot")
     ap.add_argument("command", choices=["run", "ui", "scan", "portfolio"])
     ap.add_argument("-c", "--config", help="path to config yaml")
+    ap.add_argument("-p", "--port", type=int, default=0,
+                    help=f"dashboard port (default {DEFAULT_PORT})")
     ap.add_argument("-v", "--verbose", action="store_true")
+    ap.add_argument("-V", "--version", action="version",
+                    version=f"{APP_NAME} {__version__}")
     args = ap.parse_args(argv)
     _setup_logging(args.verbose)
-    cfg = Config.load(args.config)
-    engine = Engine(cfg)
-    {"run": cmd_run, "ui": cmd_ui, "scan": cmd_scan,
+    try:
+        cfg = Config.load(args.config)
+        engine = Engine(cfg)
+    except (FileNotFoundError, ConfigError, RuntimeError) as exc:
+        ap.exit(2, f"{exc}\n")
+    if args.command == "ui":
+        cmd_ui(engine, args.port)
+        return
+    {"run": cmd_run, "scan": cmd_scan,
      "portfolio": cmd_portfolio}[args.command](engine)
 
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 import time
 
 import requests
@@ -15,7 +16,18 @@ DATA_API = "https://data-api.polymarket.com"
 
 class ClobClient:
     def __init__(self, session: requests.Session | None = None):
-        self.http = session or requests.Session()
+        # Snapshots are fetched from a thread pool and requests.Session is not
+        # thread-safe, so each worker thread gets its own.
+        self._local = threading.local()
+        self._shared = session
+
+    @property
+    def http(self) -> requests.Session:
+        if self._shared is not None:
+            return self._shared
+        if not hasattr(self._local, "session"):
+            self._local.session = requests.Session()
+        return self._local.session
 
     def _get(self, base: str, path: str, **params):
         r = self.http.get(f"{base}{path}", params=params, timeout=20)
