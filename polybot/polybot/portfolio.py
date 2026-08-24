@@ -2,11 +2,16 @@
 from __future__ import annotations
 
 import json
+import logging
+import os
+import threading
 import time
 from dataclasses import asdict
 from pathlib import Path
 
 from .models import Market, Position
+
+log = logging.getLogger(__name__)
 
 
 class Portfolio:
@@ -14,28 +19,48 @@ class Portfolio:
         self.cash = starting_cash
         self.positions: list[Position] = []
         self.closed: list[dict] = []
+        self._lock = threading.Lock()
         self.path = Path(path) if path else None
         if self.path and self.path.exists():
             self._load()
 
     # -- persistence -------------------------------------------------
     def _load(self) -> None:
-        data = json.loads(self.path.read_text())
+        """Read the ledger. A truncated or hand-edited file must not stop the
+        bot from starting: it is set aside and the run begins fresh."""
+        try:
+            data = json.loads(self.path.read_text())
+            positions = []
+            for p in data.get("positions", []):
+                mkt = Market(**dict(p)["market"])
+                positions.append(Position(
+                    market=mkt, **{k: v for k, v in p.items() if k != "market"}))
+        except (ValueError, TypeError, KeyError, OSError) as exc:
+            broken = self.path.with_suffix(self.path.suffix + ".broken")
+            log.warning("ledger %s unreadable (%s); moved to %s, starting fresh",
+                        self.path, exc, broken)
+            try:
+                self.path.replace(broken)
+            except OSError:
+                pass
+            return
         self.cash = data.get("cash", self.cash)
         self.closed = data.get("closed", [])
-        self.positions = []
-        for p in data.get("positions", []):
-            mkt = Market(**p.pop("market"))
-            self.positions.append(Position(market=mkt, **p))
+        self.positions = positions
 
     def save(self) -> None:
+        """Write atomically — a crash mid-write must not truncate the ledger."""
         if not self.path:
             return
-        self.path.write_text(json.dumps({
-            "cash": self.cash,
-            "positions": [asdict(p) for p in self.positions],
-            "closed": self.closed,
-        }, indent=2))
+        with self._lock:
+            payload = json.dumps({
+                "cash": self.cash,
+                "positions": [asdict(p) for p in self.positions],
+                "closed": self.closed,
+            }, indent=2)
+            tmp = self.path.with_suffix(self.path.suffix + ".tmp")
+            tmp.write_text(payload)
+            os.replace(tmp, self.path)
 
     # -- trading -----------------------------------------------------
     def open(self, pos: Position) -> None:

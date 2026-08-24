@@ -74,4 +74,8 @@ paper:
 live:
   clob_host: https://clob.polymarket.com
   chain_id: 137
+  ledger_path: live_ledger.json  # kept separate from the paper ledger
+  # signature_type: 0 = EOA key, 1 = email/Magic proxy, 2 = browser-wallet
+  # proxy. Defaults to 2 when POLYBOT_FUNDER is set, else 0.
+  # signature_type: 1
   # POLYBOT_PRIVATE_KEY and POLYBOT_FUNDER come from the environment.

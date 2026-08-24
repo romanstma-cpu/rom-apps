@@ -18,19 +18,22 @@ class PaperExecutor:
 
     def enter(self, signal: Signal, snap: Snapshot, usd: float) -> Position | None:
         # long YES fills at the YES ask; long NO at (1 - bid) of YES
-        price = snap.ask if signal.side == "BUY" else 1.0 - snap.bid
-        if price <= 0 or price >= 1 or usd > self.portfolio.cash:
+        price = round(snap.ask if signal.side == "BUY" else 1.0 - snap.bid, 4)
+        if price <= 0 or price >= 1:
+            return None
+        shares = round(usd / price, 2)
+        # check cash against the ROUNDED cost actually deducted, not the target
+        if shares <= 0 or price * shares > self.portfolio.cash:
             return None
         pos = Position(market=signal.market, side=signal.side,
-                       entry_price=round(price, 4),
-                       shares=round(usd / price, 2),
+                       entry_price=price, shares=shares,
                        strategy=signal.strategy)
         self.portfolio.open(pos)
         log.info("PAPER ENTER %s %.2f sh @ %.3f ($%.2f) %s", signal.side,
                  pos.shares, price, usd, signal.market.question[:60])
         return pos
 
-    def exit(self, pos: Position, snap: Snapshot, reason: str) -> float:
+    def exit(self, pos: Position, snap: Snapshot, reason: str) -> float | None:
         # exit long YES at the bid; long NO at (1 - ask) of YES
         yes_exit = snap.bid if pos.side == "BUY" else snap.ask
         pnl = self.portfolio.close(pos, yes_exit, reason)
@@ -59,7 +62,10 @@ class LiveExecutor:
             key=Config.env("POLYBOT_PRIVATE_KEY", required=True),
             chain_id=int(live.get("chain_id", 137)),
             funder=Config.env("POLYBOT_FUNDER"),
-            signature_type=2 if Config.env("POLYBOT_FUNDER") else 0,
+            # 0 = EOA, 1 = email/Magic proxy, 2 = browser-wallet proxy.
+            # Configurable: a Magic-wallet account signed as type 2 is rejected.
+            signature_type=int(live.get(
+                "signature_type", 2 if Config.env("POLYBOT_FUNDER") else 0)),
         )
         self.client.set_api_creds(self.client.create_or_derive_api_creds())
         self.portfolio = portfolio  # mirrors live fills for local tracking
@@ -82,7 +88,7 @@ class LiveExecutor:
                  signal.market.question[:60])
         return pos
 
-    def exit(self, pos: Position, snap: Snapshot, reason: str) -> float:
+    def exit(self, pos: Position, snap: Snapshot, reason: str) -> float | None:
         token = (pos.market.yes_token if pos.side == "BUY"
                  else pos.market.no_token)
         order = self.client.create_market_order(
@@ -90,8 +96,10 @@ class LiveExecutor:
                                   side="SELL"))
         resp = self.client.post_order(order, self._OrderType.FOK)
         if not resp or not resp.get("success"):
-            log.warning("live exit rejected: %s", resp)
-            return 0.0
+            # None, not 0.0: the position is still open and must not be
+            # recorded as a closed break-even trade.
+            log.warning("live exit rejected, position still open: %s", resp)
+            return None
         yes_exit = snap.bid if pos.side == "BUY" else snap.ask
         pnl = self.portfolio.close(pos, yes_exit, reason)
         log.info("LIVE EXIT %s pnl $%.2f (%s)", pos.side, pnl, reason)
