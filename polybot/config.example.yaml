@@ -1,0 +1,77 @@
+# ROM Polybot configuration. Copy to config.yaml and edit.
+
+mode: paper            # paper | live
+poll_seconds: 15       # engine tick interval
+history_size: 240      # snapshots kept per market (240 * 15s = 1h)
+
+markets:
+  categories: [politics, crypto, sports]   # Gamma categories to watch
+  exclude_categories: []
+  limit_per_category: 20      # most-active markets per category
+  min_volume_24h: 10000       # USD; skip illiquid markets
+  min_price: 0.05             # ignore near-resolved markets
+  max_price: 0.95
+
+strategies:
+  momentum:
+    enabled: true
+    lookback: 12            # snapshots
+    min_move: 0.03          # price change to trigger
+    confidence: 0.6
+  mean_reversion:
+    enabled: true
+    lookback: 40
+    zscore: 2.0
+    confidence: 0.5
+  volume_spike:
+    enabled: true
+    lookback: 40
+    spike_ratio: 3.0        # last-window volume vs baseline
+    confidence: 0.5
+  trend_continuation:
+    enabled: false
+    short_lookback: 12
+    long_lookback: 60
+    min_trend: 0.02
+    confidence: 0.5
+  spread_scalp:
+    enabled: false
+    min_spread: 0.04
+    min_volume_24h: 50000
+    confidence: 0.4
+  whale_follow:
+    enabled: true
+    min_trade_usd: 5000     # follow trades at least this size
+    confidence: 0.7
+  sentiment_shift:
+    enabled: false
+    lookback: 20
+    imbalance_delta: 0.3    # change in book imbalance to trigger
+    confidence: 0.5
+  # manual mode: disable everything above; the engine still manages exits.
+
+risk:
+  stake_usd: 25             # base size per entry (scaled by confidence)
+  max_position_usd: 100
+  allow_pyramiding: false   # allow adding to a market you already hold
+  max_open_positions: 10
+  max_per_category: 4
+  daily_loss_stop_usd: 100  # halt new entries after this realized loss
+  take_profit_pct: 0.20     # exit at +20%
+  stop_loss_pct: 0.12       # exit at -12%
+  max_hold_hours: 48
+  reentry_cooldown_minutes: 30  # wait after exiting before re-entering a market
+
+# per-category overrides (any risk/strategy key)
+category_overrides:
+  sports:
+    risk: { stake_usd: 10 }
+
+paper:
+  starting_cash: 1000
+  ledger_path: paper_ledger.json
+
+live:
+  clob_host: https://clob.polymarket.com
+  chain_id: 137
+  # POLYBOT_PRIVATE_KEY and POLYBOT_FUNDER come from the environment.
