@@ -10,20 +10,25 @@ import time
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+from .branding import APP_NAME, LOGO_URI
 from .engine import Engine
 
 log = logging.getLogger(__name__)
 DEFAULT_PORT = 8543
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8">
-<title>PolyBot</title>
+<title>__APP_NAME__</title>
+<link rel="icon" type="image/png" href="__LOGO__">
 <style>
   :root { color-scheme: dark; }
   body { margin:0; font:14px/1.5 system-ui,Segoe UI,sans-serif;
          background:#0d1117; color:#e6edf3; }
   header { display:flex; align-items:center; gap:16px; padding:12px 20px;
            background:#161b22; border-bottom:1px solid #30363d; }
-  h1 { font-size:16px; margin:0; }
+  h1 { font-size:16px; margin:0; display:flex; align-items:center; gap:10px;
+       letter-spacing:.04em; }
+  h1 img { width:28px; height:28px; border-radius:6px; }
+  h1 .sub { color:#8b949e; font-weight:400; }
   .stat { background:#161b22; border:1px solid #30363d; border-radius:8px;
           padding:10px 16px; min-width:120px; }
   .stat b { display:block; font-size:18px; }
@@ -47,7 +52,9 @@ PAGE = """<!doctype html><html><head><meta charset="utf-8">
           background:#1f6feb33; border:1px solid #1f6feb; }
 </style></head><body>
 <header>
-  <h1>PolyBot</h1><span class="mode" id="mode"></span>
+  <h1><img src="__LOGO__" alt="ROM logo"><span>ROM</span>
+      <span class="sub">POLYBOT</span></h1>
+  <span class="mode" id="mode"></span>
   <div class="stat">cash <b id="cash"></b></div>
   <div class="stat">open P&amp;L <b id="openpnl"></b></div>
   <div class="stat">realized P&amp;L <b id="realized"></b></div>
@@ -104,6 +111,7 @@ async function togglePause(){
 }
 refresh(); setInterval(refresh, 5000);
 </script></body></html>"""
+PAGE = PAGE.replace("__APP_NAME__", APP_NAME).replace("__LOGO__", LOGO_URI)
 
 
 def _state(engine: Engine) -> dict:

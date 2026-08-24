@@ -1,4 +1,4 @@
-# PolyBot configuration. Copy to config.yaml and edit.
+# ROM Polybot configuration. Copy to config.yaml and edit.
 
 mode: paper            # paper | live
 poll_seconds: 15       # engine tick interval

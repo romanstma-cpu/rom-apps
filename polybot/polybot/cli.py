@@ -57,8 +57,8 @@ def cmd_portfolio(engine: Engine) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
-    ap = argparse.ArgumentParser(prog="polybot",
-                                 description="Open Polymarket trading bot")
+    ap = argparse.ArgumentParser(
+        prog="polybot", description="ROM Polybot — open Polymarket trading bot")
     ap.add_argument("command", choices=["run", "ui", "scan", "portfolio"])
     ap.add_argument("-c", "--config", help="path to config yaml")
     ap.add_argument("-v", "--verbose", action="store_true")

@@ -1,4 +1,4 @@
-name: Build PolyBot for Windows
+name: Build ROM Polybot for Windows
 
 on:
   push:
@@ -27,14 +27,15 @@ jobs:
       - name: Run tests
         run: python -m pytest tests -q
 
-      - name: Build PolyBot.exe
+      - name: Build ROM-Polybot.exe
         run: >
-          pyinstaller --onefile --name PolyBot
+          pyinstaller --onefile --name ROM-Polybot
+          --icon windows/rom.ico
           --add-data "config.example.yaml;."
           windows/polybot_win.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PolyBot-windows
-          path: polybot/dist/PolyBot.exe
+          name: ROM-Polybot-windows
+          path: polybot/dist/ROM-Polybot.exe

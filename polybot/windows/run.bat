@@ -1,5 +1,5 @@
 @echo off
-rem PolyBot launcher for Windows (source install).
+rem ROM Polybot launcher for Windows (source install).
 rem Requires Python 3.10+ from https://python.org (check "Add to PATH").
 cd /d "%~dp0.."
 if not exist .venv (

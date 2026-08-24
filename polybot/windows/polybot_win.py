@@ -1,4 +1,4 @@
-"""PyInstaller entry point for the Windows build (PolyBot.exe)."""
+"""PyInstaller entry point for the Windows build (ROM-Polybot.exe)."""
 from polybot.ui import main_windows
 
 if __name__ == "__main__":

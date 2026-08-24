@@ -1,6 +1,7 @@
-# PolyBot — open Polymarket trading bot
+# ROM Polybot — open Polymarket trading bot
 
-A transparent, self-hosted remake of the Krypt PolyBot concept: an automated
+ROM's Polymarket bot — sibling of ROM Trader (Kalshi). A transparent,
+self-hosted remake of the Krypt PolyBot concept: an automated
 trading bot for [Polymarket](https://polymarket.com) that watches live markets,
 order flow, volume, and price action, and enters/manages positions from
 configurable strategies instead of emotion. No black box — every signal, rule,
@@ -41,10 +42,11 @@ python -m polybot scan               # one-shot: show markets + signals
 
 Two options:
 
-- **PolyBot.exe (no Python needed)** — the GitHub Actions workflow
-  `build-polybot-windows.yml` builds a standalone `PolyBot.exe` with
-  PyInstaller on every push touching `polybot/` (also runnable manually from
-  the Actions tab). Download the `PolyBot-windows` artifact, put a
+- **ROM-Polybot.exe (no Python needed)** — the GitHub Actions workflow
+  `build-polybot-windows.yml` builds a standalone `ROM-Polybot.exe` (with the
+  ROM icon) with PyInstaller on every push touching `polybot/` (also runnable
+  manually from the Actions tab). Download the `ROM-Polybot-windows` artifact,
+  put a
   `config.yaml` next to the exe (optional — it falls back to the bundled
   example config in paper mode), and double-click. Your browser opens the
   dashboard at `http://127.0.0.1:8543`.
