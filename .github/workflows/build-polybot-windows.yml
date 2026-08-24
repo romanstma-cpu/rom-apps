@@ -6,6 +6,11 @@ on:
     paths: ["polybot/**", ".github/workflows/build-polybot-windows.yml"]
     tags: ["polybot-v*"]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Publish a release under this tag (e.g. polybot-v1.0.0). Leave empty to only build."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -53,14 +58,17 @@ jobs:
             polybot/dist/ROM-Polybot.exe
             polybot/dist/SHA256SUMS-polybot.txt
 
-      # A tag push publishes the download the website links to.
+      # A polybot-v* tag push — or a manual run with release_tag set —
+      # publishes the download the website links to.
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/polybot-v')
+        if: startsWith(github.ref, 'refs/tags/polybot-v') || inputs.release_tag != ''
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag != '' && inputs.release_tag || github.ref_name }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            --title "ROM Polybot ${GITHUB_REF_NAME#polybot-v}" \
-            --notes "Built by CI from the tagged commit. Verify the download against \`SHA256SUMS-polybot.txt\`. Paper mode by default — live trading needs your own keys and an explicit switch." \
+          gh release create "$TAG" \
+            --target "${GITHUB_SHA}" \
+            --title "ROM Polybot ${TAG#polybot-v}" \
+            --notes "Built by CI from \`${GITHUB_SHA}\`. Verify the download against \`SHA256SUMS-polybot.txt\`. Paper mode by default — live trading needs your own keys and an explicit switch." \
             dist/ROM-Polybot.exe dist/SHA256SUMS-polybot.txt
