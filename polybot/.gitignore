@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 config.yaml
 paper_ledger.json
+soak-run.log
+soak-run.err
