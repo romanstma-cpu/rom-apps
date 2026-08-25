@@ -59,6 +59,20 @@
     "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ROM Polybot",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Windows, macOS, Linux (Python 3.10+)",
+    "softwareVersion": "1.0.0",
+    "url": "https://romapps.xyz/",
+    "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/tree/main/polybot",
+    "description": "An open Polymarket trading bot. Eight readable strategies, a risk manager, a local dashboard, and paper trading by default. Plain Python you can read and change.",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
   }
 ]
 </script>
@@ -781,19 +795,19 @@
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-convert/releases/latest/download/ROM-Convert-Setup.exe">Download</a>
     </div>
 
-    <div class="row soon js-row">
-      <span class="name"><strong>Next app</strong>in development</span>
-      <span class="ver">—</span>
-      <span class="size">—</span>
-      <span class="status wip"><span class="dot"></span>In progress</span>
-      <span class="btn disabled">Soon</span>
+    <div class="row js-row">
+      <span class="name"><strong>ROM Polybot</strong>Polymarket bot in plain Python — eight strategies, risk brakes, paper mode</span>
+      <span class="ver">v1.0.0</span>
+      <span class="size">source</span>
+      <span class="status ok"><span class="dot"></span>Available</span>
+      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot">Get source</a>
     </div>
   </div>
 </section>
 
 <section class="section" aria-labelledby="shot-h">
   <h2 class="section-label js-anim" id="shot-h">THE REAL THING</h2>
-  <p class="shot-lede js-anim">No mockups. Both apps, running.</p>
+  <p class="shot-lede js-anim">No mockups. All three, running.</p>
 
   <div class="shot-wrap">
     <figure class="shot-fig js-card">
@@ -842,6 +856,18 @@
         </picture>
       </div>
       <figcaption class="shot-cap">Formats described by what they are for, not by codec name.</figcaption>
+    </figure>
+
+    <figure class="shot-fig js-card">
+      <div class="shot-frame">
+        <picture>
+          <source srcset="assets/rom-polybot-dashboard.webp" type="image/webp">
+          <img src="assets/rom-polybot-dashboard.png"
+               alt="ROM Polybot dashboard showing paper-mode cash, open and realized profit and loss including a red minus seven dollars, four open positions with their strategies and entry prices, and nineteen watched Polymarket markets"
+               width="1586" height="993" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="shot-cap">Polybot — a real paper session, red numbers included. The dashboard never dresses up a loss.</figcaption>
     </figure>
   </div>
 </section>
@@ -928,6 +954,40 @@
   </div>
   <div class="smartscreen js-anim">
     <strong>Before you run it:</strong> ROM Trader is a momentum heuristic, not a proven edge — it has no demonstrated profitability, and fees and spread work against it. It ships in dry-run and only places real orders once you add your own Kalshi keys and switch live mode on yourself. Nothing here is financial advice.
+  </div>
+</section>
+
+<section class="section" aria-labelledby="polybot-h">
+  <h2 class="section-label js-anim" id="polybot-h">
+    <img class="app-mark" src="assets/app-polybot.png" alt="">ROM POLYBOT
+  </h2>
+  <p class="section-lede js-anim">
+    ROM Trader's Polymarket sibling, in plain Python.
+    <span>No black box — every rule is a file you can read.</span>
+  </p>
+  <div class="features">
+    <div class="feature js-card">
+      <h3>Eight strategies, all legible</h3>
+      <p>Momentum, mean reversion, volume spikes, trend continuation, whale following, order-book sentiment and more — each one a short Python file, each one tunable per category (politics, crypto, sports…) from one YAML config. Or run manual mode, where the engine only manages your exits.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>A risk manager that knows the market</h3>
+      <p>Position and category caps, a daily loss stop, spread and price-band filters — plus rules learned the hard way: sibling markets of one event count as a single bet, exits are refused when the stop would sit inside tick noise or the target above $1, and a market that resolves out from under a position gets settled at its real outcome instead of carried forever.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Paper first, honestly</h3>
+      <p>The default mode simulates against live order books with a local ledger — fills at the touch, never at a fantasy mid. Live trading exists, but it needs your own wallet key from an environment variable and an explicit config change. The dashboard shows red numbers in red.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Runs anywhere Python runs</h3>
+      <p>No installer and no build step: clone, <code>pip install</code>, go. A local web dashboard shows positions, watched markets and activity; the same engine runs headless from the terminal. Public Polymarket APIs only — observing needs no account at all.</p>
+    </div>
+  </div>
+  <div class="smartscreen js-anim">
+    <strong>Before you run it:</strong> the same honesty as ROM Trader — these strategies are heuristics with no demonstrated profitability. Its first four-hour paper session closed down $7.10, and that number is on this page in a screenshot because pretending otherwise is how trading tools lie. Paper mode is the default for a reason. Nothing here is financial advice.
   </div>
 </section>
 
