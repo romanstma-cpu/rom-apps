@@ -87,6 +87,20 @@
     "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "WHALENOVA",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Any (runs in the browser)",
+    "browserRequirements": "Requires JavaScript and WebGL",
+    "softwareVersion": "1.0.0",
+    "url": "https://romapps.xyz/whalenova/",
+    "description": "A Solana-style on-chain intelligence terminal: whale tracking, explainable signal scoring, backtesting and a live 3D network — running entirely in the browser on clearly-labeled simulated data. Analytics demonstration, not investment advice.",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
   }
 ]
 </script>
@@ -757,7 +771,7 @@
       <div class="cta-row js-anim">
         <a class="btn primary" href="#downloads">See the apps ↓</a>
       </div>
-      <div class="cta-note js-anim">Four apps · Windows 10/11 · free and open source</div>
+      <div class="cta-note js-anim">Four Windows apps + a browser terminal · free and open source</div>
     </div>
 
     <div class="mock js-mock" aria-hidden="true">
@@ -824,12 +838,20 @@
       <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot">Get source</a>
     </div>
+
+    <div class="row js-row">
+      <span class="name"><strong>WHALENOVA</strong>Solana-style intelligence terminal in your browser — whale tracking, signals, 3D network, simulated data</span>
+      <span class="ver">v1.0.0</span>
+      <span class="size">web</span>
+      <span class="status ok"><span class="dot"></span>Live</span>
+      <a class="btn primary" href="/whalenova/">Launch</a>
+    </div>
   </div>
 </section>
 
 <section class="section" aria-labelledby="shot-h">
   <h2 class="section-label js-anim" id="shot-h">THE REAL THING</h2>
-  <p class="shot-lede js-anim">No mockups. All four, running.</p>
+  <p class="shot-lede js-anim">No mockups. All five, running.</p>
 
   <div class="shot-wrap">
     <figure class="shot-fig js-card">
@@ -902,6 +924,30 @@
         </picture>
       </div>
       <figcaption class="shot-cap">Scribe — mid-transcription, the words appearing as they're heard. All of it offline.</figcaption>
+    </figure>
+
+    <figure class="shot-fig js-card">
+      <div class="shot-frame">
+        <picture>
+          <source srcset="assets/rom-whalenova-dashboard.webp" type="image/webp">
+          <img src="assets/rom-whalenova-dashboard.png"
+               alt="WHALENOVA dashboard with a live SOL reference price, ranked conviction signals with confidence and bear cases, a 3D network of tokens and wallets, a streaming whale activity feed and a net whale flow chart"
+               width="1586" height="993" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="shot-cap">WHALENOVA — the command center: ranked signals with their bear cases, and the one real number labeled LIVE.</figcaption>
+    </figure>
+
+    <figure class="shot-fig js-card">
+      <div class="shot-frame">
+        <picture>
+          <source srcset="assets/rom-whalenova-network.webp" type="image/webp">
+          <img src="assets/rom-whalenova-network.png"
+               alt="WHALENOVA 3D network view: tokens as glowing spheres brightened by signal strength, wallets orbiting as smaller nodes, trade particles in flight, red halos on risky tokens and a time machine slider at the bottom"
+               width="1586" height="993" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="shot-cap">The 3D network — signal strength as brightness, risk as a red halo, and a time machine that only shows what was knowable.</figcaption>
     </figure>
   </div>
 </section>
@@ -1056,6 +1102,35 @@
   </div>
   <div class="smartscreen js-anim">
     <strong>Honesty note:</strong> small models mishear — the 75 MB one once wrote "the rain and Spain stays mainly in the plane," which is why the model picker calls it rough and recommends Base. Bigger models hear better and run slower. No model is perfect, and this page won't pretend otherwise.
+  </div>
+</section>
+
+<section class="section" aria-labelledby="whalenova-h">
+  <h2 class="section-label js-anim" id="whalenova-h">
+    <img class="app-mark" src="assets/app-whalenova.png" alt="">WHALENOVA
+  </h2>
+  <p class="section-lede js-anim">
+    A Solana intelligence terminal, in your browser.
+    <span>Nothing to install — <a href="/whalenova/">launch it</a> and explore.</span>
+  </p>
+  <div class="features">
+    <div class="feature js-card">
+      <h3>Signals that argue their case</h3>
+      <p>Every setup gets a 0&ndash;100 score built from named evidence — whale flow, holder growth, liquidity, volume — with the weights visible, a stated confidence, a bear case, and the conditions that would invalidate it. When the evidence is thin, the engine says NO TRADE instead of inventing conviction.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>A market you can fly through</h3>
+      <p>Tokens hang as planets that brighten with signal strength; wallets orbit them, trades cross the dark as particles, and risky tokens wear a red halo. Five scene modes and a time machine that reconstructs any moment from the past week — showing only what was knowable then.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Learn without losing</h3>
+      <p>A paper trading desk with honest fills — slippage, fees, and orders rejected when they'd eat the pool — plus a backtesting lab whose anti-lookahead check fails the run loudly if any entry ever saw the future. Your workspace stays in your browser; nothing is uploaded.</p>
+    </div>
+  </div>
+  <div class="smartscreen js-anim">
+    <strong>What's real here:</strong> one number — the SOL price in the top bar, cross-checked between two public APIs and labeled LIVE. Every token, wallet, and trade around it is a deterministic simulation, and the app says so on every page. It's a demonstration of honest analytics method, not market data — and nothing on it is financial advice.
   </div>
 </section>
 
