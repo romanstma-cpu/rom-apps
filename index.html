@@ -73,6 +73,20 @@
     "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ROM Scribe",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Windows 10, Windows 11",
+    "softwareVersion": "1.2.0",
+    "url": "https://romapps.xyz/",
+    "downloadUrl": "https://github.com/romanstma-cpu/rom-scribe/releases/latest/download/ROM-Scribe-Setup.exe",
+    "description": "Transcribe and subtitle any video or audio on your own PC. Offline AI speech recognition, live transcript, caption burn-in. No upload, no per-minute pricing, no account.",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
   }
 ]
 </script>
@@ -743,7 +757,7 @@
       <div class="cta-row js-anim">
         <a class="btn primary" href="#downloads">See the apps ↓</a>
       </div>
-      <div class="cta-note js-anim">Two apps · Windows 10/11 · free and open source</div>
+      <div class="cta-note js-anim">Four apps · Windows 10/11 · free and open source</div>
     </div>
 
     <div class="mock js-mock" aria-hidden="true">
@@ -796,6 +810,14 @@
     </div>
 
     <div class="row js-row">
+      <span class="name"><strong>ROM Scribe</strong>Subtitles and transcripts from any video or audio — offline AI, no minutes counted</span>
+      <span class="ver">v1.2.0</span>
+      <span class="size">137 MB</span>
+      <span class="status ok"><span class="dot"></span>Available</span>
+      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-scribe/releases/latest/download/ROM-Scribe-Setup.exe">Download</a>
+    </div>
+
+    <div class="row js-row">
       <span class="name"><strong>ROM Polybot</strong>Polymarket bot in plain Python — eight strategies, risk brakes, paper mode</span>
       <span class="ver">v1.1.0</span>
       <span class="size">source</span>
@@ -807,7 +829,7 @@
 
 <section class="section" aria-labelledby="shot-h">
   <h2 class="section-label js-anim" id="shot-h">THE REAL THING</h2>
-  <p class="shot-lede js-anim">No mockups. All three, running.</p>
+  <p class="shot-lede js-anim">No mockups. All four, running.</p>
 
   <div class="shot-wrap">
     <figure class="shot-fig js-card">
@@ -868,6 +890,18 @@
         </picture>
       </div>
       <figcaption class="shot-cap">Polybot — a real paper session: red numbers in red, and every signal listed, taken or refused.</figcaption>
+    </figure>
+
+    <figure class="shot-fig js-card">
+      <div class="shot-frame">
+        <picture>
+          <source srcset="assets/rom-scribe-live.webp" type="image/webp">
+          <img src="assets/rom-scribe-live.png"
+               alt="ROM Scribe mid-transcription at seventy percent, showing the progress bar and the sentence currently being heard streamed live beneath it"
+               width="1586" height="993" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="shot-cap">Scribe — mid-transcription, the words appearing as they're heard. All of it offline.</figcaption>
     </figure>
   </div>
 </section>
@@ -991,6 +1025,40 @@
   </div>
 </section>
 
+<section class="section" aria-labelledby="scribe-h">
+  <h2 class="section-label js-anim" id="scribe-h">
+    <img class="app-mark" src="assets/app-scribe.png" alt="">ROM SCRIBE
+  </h2>
+  <p class="section-lede js-anim">
+    Subtitles and transcripts, made on your PC.
+    <span>No upload, no account, no minutes counted.</span>
+  </p>
+  <div class="features">
+    <div class="feature js-card">
+      <h3>Any video or audio in</h3>
+      <p>Drop an interview, a lecture, a meeting recording, a whole folder of podcasts — get back SRT and VTT subtitles and a plain transcript, saved beside the original. The transcript streams onto the screen as it's heard, so you can watch the words arrive.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Offline AI, verified</h3>
+      <p>Speech recognition is OpenAI's Whisper running locally through whisper.cpp — once a model is downloaded, the network cable can come out. Every model is checked against a known SHA-256 fingerprint before it's ever used, and interrupted downloads resume where they stopped instead of starting a gigabyte over.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Models to taste</h3>
+      <p>A 75 MB model that drafts fast, up to Large v3 Turbo — near the best speech recognition publicly available, free on your own hardware. About 100 languages, auto-detected, with optional translation to English. The picker is honest about which models mishear.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Burn captions in</h3>
+      <p>One click renders the subtitles onto the video itself — a share-ready captioned MP4 beside the original, original untouched. Per-minute transcription services charge real money for what your CPU does free while you make coffee.</p>
+    </div>
+  </div>
+  <div class="smartscreen js-anim">
+    <strong>Honesty note:</strong> small models mishear — the 75 MB one once wrote "the rain and Spain stays mainly in the plane," which is why the model picker calls it rough and recommends Base. Bigger models hear better and run slower. No model is perfect, and this page won't pretend otherwise.
+  </div>
+</section>
+
 <section class="section" id="verify" aria-labelledby="verify-h">
   <h2 class="section-label js-anim" id="verify-h">IS THIS SAFE?</h2>
   <p class="shot-lede js-anim">A fair question to ask of a free download from someone you’ve never heard of.</p>
@@ -1010,6 +1078,12 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
 
     <pre class="cmd"><code>$f = "$HOME\Downloads\ROM-Convert-Setup.exe"
 $want = (irm https://github.com/romanstma-cpu/rom-convert/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
+if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
+
+    <p>And for ROM Scribe:</p>
+
+    <pre class="cmd"><code>$f = "$HOME\Downloads\ROM-Scribe-Setup.exe"
+$want = (irm https://github.com/romanstma-cpu/rom-scribe/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
 if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
 
     <p class="verify-foot">
