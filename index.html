@@ -93,11 +93,12 @@
     "@type": "WebApplication",
     "name": "ROM Nova",
     "applicationCategory": "FinanceApplication",
-    "operatingSystem": "Any (runs in the browser)",
+    "operatingSystem": "Windows 10, Windows 11 (installer) or any modern browser",
     "browserRequirements": "Requires JavaScript and WebGL",
     "softwareVersion": "1.0.0",
     "url": "https://romapps.xyz/nova/",
-    "description": "A Solana-style on-chain intelligence terminal: whale tracking, explainable signal scoring, backtesting and a live 3D network — running entirely in the browser on clearly-labeled simulated data. Analytics demonstration, not investment advice.",
+    "downloadUrl": "https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe",
+    "description": "A Solana-style on-chain intelligence terminal: whale tracking, explainable signal scoring, backtesting and a live 3D network — on clearly-labeled simulated data. Runs in the browser or as a Windows app. Analytics demonstration, not investment advice.",
     "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -771,7 +772,7 @@
       <div class="cta-row js-anim">
         <a class="btn primary" href="#downloads">See the apps ↓</a>
       </div>
-      <div class="cta-note js-anim">Four Windows apps + a browser terminal · free and open source</div>
+      <div class="cta-note js-anim">Five apps · Windows and browser · free and open source</div>
     </div>
 
     <div class="mock js-mock" aria-hidden="true">
@@ -840,11 +841,11 @@
     </div>
 
     <div class="row js-row">
-      <span class="name"><strong>ROM Nova</strong>Solana-style intelligence terminal in your browser — whale tracking, signals, 3D network, simulated data</span>
+      <span class="name"><strong>ROM Nova</strong>Solana-style intelligence terminal — whale tracking, signals, 3D network, simulated data · or <a href="/nova/">launch it in your browser</a></span>
       <span class="ver">v1.0.0</span>
-      <span class="size">web</span>
-      <span class="status ok"><span class="dot"></span>Live</span>
-      <a class="btn primary" href="/nova/">Launch</a>
+      <span class="size">79 MB</span>
+      <span class="status ok"><span class="dot"></span>Available</span>
+      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe">Download</a>
     </div>
   </div>
 </section>
@@ -1110,8 +1111,8 @@
     <img class="app-mark" src="assets/app-nova.png" alt="">ROM NOVA
   </h2>
   <p class="section-lede js-anim">
-    A Solana intelligence terminal, in your browser.
-    <span>Nothing to install — <a href="/nova/">launch it</a> and explore.</span>
+    A Solana intelligence terminal.
+    <span><a href="/nova/">Launch it in your browser</a> — or install the Windows app.</span>
   </p>
   <div class="features">
     <div class="feature js-card">
@@ -1161,10 +1162,17 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
 $want = (irm https://github.com/romanstma-cpu/rom-scribe/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
 if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
 
+    <p>And for ROM Nova:</p>
+
+    <pre class="cmd"><code>$f = "$HOME\Downloads\ROM-Nova-Setup.exe"
+$want = (irm https://github.com/romanstma-cpu/rom-nova/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
+if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
+
     <p class="verify-foot">
       Beyond that: every download comes from a GitHub release, the full source for
-      <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader</a> and
-      <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a> is public under MIT,
+      <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader</a>,
+      <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a> and
+      <a href="https://github.com/romanstma-cpu/rom-nova" rel="noopener">Nova</a> is public under MIT,
       and both installers are per-user — they never ask for administrator rights and uninstall cleanly.
       You can also read the <a href="code-signing-policy.html">code signing policy</a>.
     </p>
