@@ -25,6 +25,9 @@ strategies:
     enabled: true
     lookback: 40
     zscore: 2.0
+    max_trend: 0.15         # skip when the whole window moved this far one
+                            # way — that's news (often resolution), not an
+                            # overshoot, and there is nothing to revert to
     confidence: 0.5
   volume_spike:
     enabled: true
@@ -68,6 +71,11 @@ risk:
   daily_loss_stop_usd: 100  # halt new entries after this realized loss
   take_profit_pct: 0.20     # exit at +20%
   stop_loss_pct: 0.12       # exit at -12%
+  min_stop_move: 0.02       # refuse entries whose stop is closer than this in
+                            # price terms — a 12% stop on a 7c token is one
+                            # tick away and fires on quote noise; a take-profit
+                            # computed past $1.00 is refused for the same
+                            # reason (the target cannot exist)
   max_hold_hours: 48
   reentry_cooldown_minutes: 30  # wait after exiting before re-entering a market
 

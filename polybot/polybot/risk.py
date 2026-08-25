@@ -28,6 +28,30 @@ class RiskManager:
         m = self.cfg.get("markets", {})
         return snap.spread <= float(m.get("max_spread", 0.05))
 
+    def exits_reachable(self, side: str, snap: Snapshot, category: str) -> tuple[bool, str]:
+        """Whether the percentage exits actually exist on the price line.
+
+        Prediction-market prices live in [0, 1], and percentage exits ignore
+        that. The first soak proved both failure modes in one evening: buys
+        at 7c carried a 12% stop that was a single tick away — every one
+        stopped out on quote noise — while NO positions entered at 95c
+        carried a +20% take-profit above $1.00, a target that cannot exist,
+        leaving dead capital that could only lose. An entry whose stop is
+        inside the noise or whose target is through the ceiling is not a
+        trade, it is a coin with one side.
+        """
+        risk = self._risk(category)
+        # Price of the token actually held: the YES ask for a buy, the NO
+        # ask (one minus the YES bid) for a sell.
+        held = snap.ask if side == "BUY" else 1.0 - snap.bid
+        stop_move = held * abs(float(risk.get("stop_loss_pct", 0.12)))
+        if stop_move < float(risk.get("min_stop_move", 0.02)):
+            return False, (f"stop {stop_move:.3f} inside tick noise at {held:.3f}")
+        target = held * (1.0 + float(risk.get("take_profit_pct", 0.20)))
+        if target >= 0.99:
+            return False, (f"take-profit {target:.3f} beyond the $1 ceiling from {held:.3f}")
+        return True, "ok"
+
     def entry_size(self, signal: Signal) -> float:
         """USD to commit for this signal; 0 means rejected."""
         risk = self._risk(signal.market.category)

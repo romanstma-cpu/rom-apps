@@ -135,6 +135,11 @@ class Engine:
                 sig = strat.evaluate(market, list(hist), trades)
                 if not sig:
                     continue
+                reachable, why_not = self.risk.exits_reachable(
+                    sig.side, snap, market.category)
+                if not reachable:
+                    log.debug("skip %s: %s", sig, why_not)
+                    continue
                 realized = self.portfolio.realized_pnl_since(self._today_start())
                 ok, why = self.risk.allow_entry(
                     sig, self.portfolio.positions, realized)

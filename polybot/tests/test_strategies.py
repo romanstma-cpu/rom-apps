@@ -34,6 +34,20 @@ def test_mean_reversion_fades_extension():
     assert sig and sig.side == "SELL"
 
 
+def test_mean_reversion_refuses_to_fade_a_march():
+    # A price that walked one way across the whole window is news being
+    # priced in — often a market resolving — not an overshoot. The soak
+    # faded three of these and every one kept marching through the stop.
+    s = MeanReversion({"lookback": 10, "zscore": 2.0})
+    # A steady march with a final plunge: z-score fires, the trend guard vetoes.
+    march = snaps([0.50, 0.48, 0.46, 0.44, 0.42, 0.40, 0.38, 0.36, 0.34, 0.20])
+    assert s.evaluate(MKT, march, []) is None
+    # Raising the guard shows it was the guard doing the refusing.
+    loose = MeanReversion({"lookback": 10, "zscore": 2.0, "max_trend": 0.90})
+    sig = loose.evaluate(MKT, march, [])
+    assert sig and sig.side == "BUY"
+
+
 def test_volume_spike_follows_drift():
     s = VolumeSpike({"lookback": 10, "spike_ratio": 3.0})
     mids, vols = [], []

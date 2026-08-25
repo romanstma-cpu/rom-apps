@@ -15,9 +15,16 @@ class MeanReversion(Strategy):
                  trades: list[dict]) -> Signal | None:
         lookback = int(self.params.get("lookback", 40))
         z_thresh = float(self.params.get("zscore", 2.0))
+        max_trend = float(self.params.get("max_trend", 0.15))
         if len(history) < lookback:
             return None
         mids = [s.mid for s in history[-lookback:]]
+        # A price that has marched one way across the whole window is not an
+        # overshoot, it is news being priced in — often a market resolving.
+        # The first soak faded three of those; the market kept marching, and
+        # every one stopped out. There is nothing to revert TO.
+        if abs(mids[-1] - mids[0]) > max_trend:
+            return None
         mean = statistics.fmean(mids)
         stdev = statistics.pstdev(mids)
         if stdev < 1e-4:

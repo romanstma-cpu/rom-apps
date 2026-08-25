@@ -101,6 +101,23 @@ def test_spread_gate():
     assert not rm.spread_ok(wide)
 
 
+def test_exit_targets_must_exist_on_the_price_line():
+    # The first soak's two failure modes: a 7c buy whose 10% stop is a
+    # single tick away, and a 95c NO whose +20% target is above $1.00.
+    rm = RiskManager(CFG)
+    cheap = Snapshot(ts=0, mid=0.075, bid=0.07, ask=0.08, volume_24h=0)
+    ok, why = rm.exits_reachable("BUY", cheap, "crypto")
+    assert not ok and "noise" in why
+
+    near_ceiling = Snapshot(ts=0, mid=0.05, bid=0.045, ask=0.055, volume_24h=0)
+    ok, why = rm.exits_reachable("SELL", near_ceiling, "crypto")  # NO at ~0.955
+    assert not ok and "ceiling" in why
+
+    mid = Snapshot(ts=0, mid=0.5, bid=0.49, ask=0.51, volume_24h=0)
+    assert rm.exits_reachable("BUY", mid, "crypto")[0]
+    assert rm.exits_reachable("SELL", mid, "crypto")[0]
+
+
 def test_paper_roundtrip(tmp_path):
     p = Portfolio(1000, path=str(tmp_path / "ledger.json"))
     ex = PaperExecutor(p)
