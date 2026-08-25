@@ -9,9 +9,12 @@ MKT = Market(condition_id="c1", question="Test?", category="crypto",
              yes_token="y", no_token="n", volume_24h=100000)
 
 
-def snaps(mids, vol=100000, imb=0.0, spread=0.02):
+def snaps(mids, vol=100000, imb=0.0, spread=0.02, vol_step=10):
+    # Volume drifts up by default, the way a market with prints looks;
+    # pass vol_step=0 for a book that moved with nobody trading.
     return [Snapshot(ts=time.time() + i, mid=m, bid=m - spread / 2,
-                     ask=m + spread / 2, volume_24h=vol, imbalance=imb)
+                     ask=m + spread / 2, volume_24h=vol + i * vol_step,
+                     imbalance=imb)
             for i, m in enumerate(mids)]
 
 
@@ -25,6 +28,17 @@ def test_momentum_buy_on_steady_rise():
 def test_momentum_ignores_small_move():
     s = Momentum({"lookback": 6, "min_move": 0.03})
     assert s.evaluate(MKT, snaps([0.50] * 6), []) is None
+
+
+def test_momentum_requires_traded_volume():
+    # The mid climbed but volume never moved: a maker repositioned quotes,
+    # nobody paid a higher price. Not momentum.
+    s = Momentum({"lookback": 6, "min_move": 0.03})
+    quiet = snaps([0.50, 0.51, 0.52, 0.53, 0.54, 0.55], vol_step=0)
+    assert s.evaluate(MKT, quiet, []) is None
+    loose = Momentum({"lookback": 6, "min_move": 0.03, "require_trades": False})
+    sig = loose.evaluate(MKT, quiet, [])
+    assert sig and sig.side == "BUY"
 
 
 def test_mean_reversion_fades_extension():

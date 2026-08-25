@@ -45,8 +45,10 @@ class FakeClob:
     def snapshot(self, token_id, volume_24h=0.0):
         self.i = min(self.i + 1, len(self.mids) - 1)
         mid = self.mids[self.i]
+        # Volume grows scan over scan, as a market with prints would show —
+        # momentum's require_trades gate is on by default and must see it.
         return Snapshot(ts=time.time(), mid=mid, bid=mid - self.half_spread,
-                        ask=mid + self.half_spread, volume_24h=50000)
+                        ask=mid + self.half_spread, volume_24h=50000 + self.i * 100)
 
     def recent_trades(self, condition_id, limit=50):
         return []
@@ -178,6 +180,26 @@ def test_wide_spread_blocks_entry():
     for _ in range(6):
         eng.tick()
     assert not eng.portfolio.positions
+
+
+def test_refused_signals_land_in_the_feed():
+    # A cheap market fires momentum but its stop would sit inside tick
+    # noise — the signal must appear in the feed as blocked, with the why.
+    eng = make_engine([0.05, 0.06, 0.07, 0.08, 0.09, 0.10])
+    for _ in range(6):
+        eng.tick()
+    assert not eng.portfolio.positions
+    blocked = [g for g in eng.signals if g["verdict"] == "blocked"]
+    assert blocked and "noise" in blocked[-1]["detail"]
+
+
+def test_taken_signals_land_in_the_feed():
+    eng = make_engine([0.50, 0.51, 0.52, 0.53, 0.54, 0.55])
+    for _ in range(6):
+        eng.tick()
+    assert eng.portfolio.positions
+    entered = [g for g in eng.signals if g["verdict"] == "entered"]
+    assert entered and entered[-1]["strategy"] == "momentum"
 
 
 def test_soak_accounting_invariant():

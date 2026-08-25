@@ -16,7 +16,12 @@ from .risk import RiskManager
 from .strategies import build_enabled
 
 log = logging.getLogger(__name__)
-REDISCOVER_EVERY = 40  # ticks between market re-discovery
+# Re-discovery is also the only place volume figures refresh: snapshots echo
+# the discovery-time volume_24h, so at the old 40-tick cadence every
+# volume delta inside a strategy window was zero and the volume-driven
+# strategies were effectively blind. One extra Gamma call per category per
+# minute buys them working eyes.
+REDISCOVER_EVERY = 4
 
 
 class Engine:
@@ -42,6 +47,10 @@ class Engine:
         self.paused = False
         self._last_exit: dict[str, float] = {}  # condition_id -> ts
         self.events: deque[dict] = deque(maxlen=200)  # feed for the dashboard
+        # Every signal a strategy produced and what became of it. The bot's
+        # decisions should be as legible refused as taken — the sibling
+        # Kalshi app's signals feed is its most-used screen for a reason.
+        self.signals: deque[dict] = deque(maxlen=120)
 
     @staticmethod
     def _today_start() -> float:
@@ -53,6 +62,16 @@ class Engine:
 
     def _event(self, kind: str, text: str) -> None:
         self.events.append({"ts": time.time(), "kind": kind, "text": text})
+
+    def _signal(self, sig: Signal, verdict: str, detail: str) -> None:
+        self.signals.append({
+            "ts": time.time(),
+            "strategy": sig.strategy,
+            "side": sig.side,
+            "question": sig.market.question,
+            "verdict": verdict,          # "entered" | "blocked"
+            "detail": detail,
+        })
 
     def strategies_for(self, category: str) -> list:
         if category not in self._strategies_by_cat:
@@ -139,17 +158,22 @@ class Engine:
                     sig.side, snap, market.category)
                 if not reachable:
                     log.debug("skip %s: %s", sig, why_not)
+                    self._signal(sig, "blocked", why_not)
                     continue
                 realized = self.portfolio.realized_pnl_since(self._today_start())
                 ok, why = self.risk.allow_entry(
                     sig, self.portfolio.positions, realized)
                 if not ok:
                     log.debug("skip %s: %s", sig, why)
+                    self._signal(sig, "blocked", why)
                     continue
                 usd = self.risk.entry_size(sig)
                 if self.executor.enter(sig, snap, usd):
                     acted.append(sig)
                     self._event("enter", str(sig))
+                    self._signal(sig, "entered", f"${usd:.2f} — {sig.reason}")
+                else:
+                    self._signal(sig, "blocked", "the executor refused the fill")
                 break  # at most one entry per market per tick
         return acted
 

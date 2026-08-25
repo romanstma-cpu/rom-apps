@@ -65,11 +65,18 @@ PAGE = """<!doctype html><html><head><meta charset="utf-8">
     <table id="positions"><thead><tr><th>side</th><th>strategy</th><th>entry</th>
     <th>mark</th><th>P&amp;L</th><th>market</th></tr></thead><tbody></tbody></table>
   </section>
+  <section class="wide"><h2>Signals — every one, taken or refused</h2>
+    <table id="signals"><thead><tr><th>when</th><th>strategy</th><th>side</th>
+    <th>verdict</th><th>market</th><th>why</th></tr></thead><tbody></tbody></table>
+  </section>
   <section><h2>Watched markets</h2>
     <table id="markets"><thead><tr><th>cat</th><th>mid</th><th>spread</th>
     <th>24h vol</th><th>question</th></tr></thead><tbody></tbody></table>
   </section>
-  <section><h2>Activity</h2><div id="events"></div></section>
+  <section><h2>By strategy</h2>
+    <table id="strategies"><thead><tr><th>strategy</th><th>closed</th>
+    <th>realized</th></tr></thead><tbody></tbody></table>
+    <h2 style="margin-top:14px">Activity</h2><div id="events"></div></section>
 </main>
 <script>
 let paused = false;
@@ -102,6 +109,15 @@ async function refresh(){
   document.getElementById('events').innerHTML = s.events.slice().reverse().map(e =>
     `<div class="${e.kind}">${new Date(e.ts*1000).toLocaleTimeString()} ${esc(e.text)}</div>`
   ).join('');
+  document.querySelector('#signals tbody').innerHTML = s.signals.slice().reverse().map(g =>
+    `<tr><td>${new Date(g.ts*1000).toLocaleTimeString()}</td><td>${esc(g.strategy)}</td>
+     <td>${g.side}</td><td class="${g.verdict==='entered'?'green':''}">${g.verdict}</td>
+     <td class="q">${esc(g.question)}</td><td class="q">${esc(g.detail)}</td></tr>`).join('') ||
+    '<tr><td colspan=6>no signals yet — strategies are watching</td></tr>';
+  document.querySelector('#strategies tbody').innerHTML = s.by_strategy.map(t =>
+    `<tr><td>${esc(t.strategy)}</td><td>${t.closed}</td>
+     <td class="${t.pnl>=0?'green':'red'}">${fmt(t.pnl)}</td></tr>`).join('') ||
+    '<tr><td colspan=3>no closed trades yet</td></tr>';
 }
 async function togglePause(){
   await fetch('/api/pause', {method:'POST',
@@ -133,14 +149,25 @@ def _state(engine: Engine) -> dict:
             "mid": last.mid if last else None,
             "spread": last.spread if last else None,
         })
+    closed = list(engine.portfolio.closed)
+    by_strategy: dict[str, dict] = {}
+    for c in closed:
+        e = by_strategy.setdefault(c.get("strategy", "?"), {"closed": 0, "pnl": 0.0})
+        e["closed"] += 1
+        e["pnl"] += c.get("pnl", 0.0)
+    strategy_rows = [
+        {"strategy": k, "closed": v["closed"], "pnl": round(v["pnl"], 2)}
+        for k, v in sorted(by_strategy.items(), key=lambda kv: kv[1]["pnl"])
+    ]
     return {
         "mode": engine.cfg.mode, "paused": engine.paused,
         "cash": round(engine.portfolio.cash, 2),
         "open_pnl": round(sum(p["pnl"] for p in positions), 2),
-        "realized_pnl": round(sum(c["pnl"]
-                                  for c in list(engine.portfolio.closed)), 2),
+        "realized_pnl": round(sum(c["pnl"] for c in closed), 2),
         "positions": positions, "markets": markets,
         "events": list(engine.events),
+        "signals": list(engine.signals),
+        "by_strategy": strategy_rows,
     }
 
 

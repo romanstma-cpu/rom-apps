@@ -20,6 +20,9 @@ strategies:
     enabled: true
     lookback: 12            # snapshots
     min_move: 0.03          # price change to trigger
+    require_trades: true    # the move must come with traded volume — quotes
+                            # shifting with nobody trading is a market maker
+                            # repositioning, not momentum
     confidence: 0.6
   mean_reversion:
     enabled: true
