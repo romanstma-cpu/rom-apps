@@ -23,6 +23,36 @@ def _json_field(m: dict, key: str) -> list | None:
     return val if isinstance(val, list) else None
 
 
+def parse_market(m: dict, category: str) -> Market | None:
+    """One Gamma market row → Market, or None if it is not a clean binary.
+
+    The outcomes list must literally be ["yes", "no"]: clobTokenIds are in
+    outcome order, so a market that omits its outcomes could hand us the NO
+    token as tokens[0] and every trade on it would be inverted. Refusing the
+    ambiguous row costs one market; trading it inverted costs money.
+    """
+    tokens = _json_field(m, "clobTokenIds")
+    if not tokens or len(tokens) != 2:
+        return None
+    outcomes = [str(o).lower() for o in _json_field(m, "outcomes") or []]
+    if outcomes != ["yes", "no"]:
+        return None
+    events = m.get("events")
+    event_slug = ""
+    if isinstance(events, list) and events and isinstance(events[0], dict):
+        event_slug = str(events[0].get("slug") or "")
+    return Market(
+        condition_id=m.get("conditionId", ""),
+        question=m.get("question", ""),
+        category=category,
+        yes_token=tokens[0],
+        no_token=tokens[1],
+        volume_24h=float(m.get("volume24hr") or 0),
+        end_date=m.get("endDate", "") or "",
+        event_slug=event_slug,
+    )
+
+
 class GammaClient:
     def __init__(self, session: requests.Session | None = None):
         self.http = session or requests.Session()
@@ -45,23 +75,43 @@ class GammaClient:
             return []
         out: list[Market] = []
         for m in raw if isinstance(raw, list) else []:
-            tokens = _json_field(m, "clobTokenIds")
-            if not tokens or len(tokens) != 2:
-                continue
-            # only binary Yes/No markets: the bot reasons in YES-token terms
-            outcomes = [str(o).lower() for o in _json_field(m, "outcomes") or []]
-            if outcomes and outcomes != ["yes", "no"]:
-                continue
-            out.append(Market(
-                condition_id=m.get("conditionId", ""),
-                question=m.get("question", ""),
-                category=category,
-                yes_token=tokens[0],
-                no_token=tokens[1],
-                volume_24h=float(m.get("volume24hr") or 0),
-                end_date=m.get("endDate", "") or "",
-            ))
+            parsed = parse_market(m, category)
+            if parsed:
+                out.append(parsed)
         return out
+
+    def resolution(self, condition_id: str) -> tuple[bool, float | None]:
+        """Whether a market has closed, and the YES outcome price if so.
+
+        Used to settle positions whose order book has disappeared: a market
+        that resolves stops serving a book, and without this check the
+        position would sit at its last mark forever with the cash locked.
+        Returns (False, None) on any doubt — holding is recoverable, booking
+        a wrong settlement is not.
+        """
+        try:
+            raw = self._get("/markets", condition_ids=condition_id)
+        except requests.RequestException as exc:
+            log.debug("resolution check failed for %s: %s", condition_id, exc)
+            return False, None
+        rows = raw if isinstance(raw, list) else []
+        if not rows or not isinstance(rows[0], dict):
+            return False, None
+        m = rows[0]
+        if not m.get("closed"):
+            return False, None
+        prices = _json_field(m, "outcomePrices")
+        if not prices or len(prices) != 2:
+            return True, None
+        try:
+            yes_price = float(prices[0])
+        except (TypeError, ValueError):
+            return True, None
+        # A resolved binary settles at 0 or 1; anything else means the
+        # market is closed but not yet resolved, so keep waiting.
+        if yes_price not in (0.0, 1.0):
+            return True, None
+        return True, yes_price
 
     def discover(self, categories: list[str], exclude: list[str],
                  limit_per_category: int, min_volume_24h: float) -> list[Market]:

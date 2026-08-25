@@ -20,8 +20,10 @@ and trade decision is plain Python you can read and change.
   - `manual` — no auto entries; the engine only manages exits for you
 - **Category-based trading** — politics, crypto, sports, culture, finance,
   news… monitor any Polymarket categories, with per-category overrides.
-- **Risk manager** — max position size, max open positions, per-category caps,
-  daily loss stop, price band filters, take-profit / stop-loss exits.
+- **Risk manager** — max position size, max open positions, per-category and
+  per-event caps (sibling markets of one event are a single bet), spread and
+  price band filters, daily loss stop, take-profit / stop-loss exits, and
+  settlement of positions whose market resolves out from under them.
 - **Paper mode by default** — full simulation against live market data with a
   local portfolio ledger. Live mode uses `py-clob-client` and is opt-in.
 - **Plain data sources** — Polymarket's public Gamma API (market discovery)

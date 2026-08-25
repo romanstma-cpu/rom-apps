@@ -14,6 +14,17 @@ class Market:
     no_token: str
     volume_24h: float = 0.0
     end_date: str = ""
+    # Gamma event slug shared by sibling markets of one real-world event —
+    # e.g. every "Fed decision in September" outcome market carries the same
+    # slug. Siblings are mutually exclusive outcomes of the same question,
+    # so positions across them are one bet, not diversification. Empty when
+    # Gamma reports no event.
+    event_slug: str = ""
+
+    @property
+    def event_key(self) -> str:
+        """Correlation key: the event slug, or the market itself if none."""
+        return self.event_slug or self.condition_id
 
 
 @dataclass

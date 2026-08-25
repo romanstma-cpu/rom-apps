@@ -11,6 +11,9 @@ markets:
   min_volume_24h: 10000       # USD; skip illiquid markets
   min_price: 0.05             # ignore near-resolved markets
   max_price: 0.95
+  max_spread: 0.05            # entries are takers and pay the spread in full;
+                              # a wider book than this starts every trade too
+                              # deep in the hole to test the idea fairly
 
 strategies:
   momentum:
@@ -42,6 +45,9 @@ strategies:
   whale_follow:
     enabled: true
     min_trade_usd: 5000     # follow trades at least this size
+    max_age_seconds: 300    # ignore tape entries older than this — the tape
+                            # reaches back hours, and a whale from this
+                            # morning is not a signal now
     confidence: 0.7
   sentiment_shift:
     enabled: false
@@ -56,6 +62,9 @@ risk:
   allow_pyramiding: false   # allow adding to a market you already hold
   max_open_positions: 10
   max_per_category: 4
+  max_per_event: 1          # markets of one event (e.g. every "Fed decision"
+                            # outcome) are the same bet — the sibling markets
+                            # move together and one resolution closes them all
   daily_loss_stop_usd: 100  # halt new entries after this realized loss
   take_profit_pct: 0.20     # exit at +20%
   stop_loss_pct: 0.12       # exit at -12%

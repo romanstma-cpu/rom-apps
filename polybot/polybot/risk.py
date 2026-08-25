@@ -18,6 +18,16 @@ class RiskManager:
         return (float(m.get("min_price", 0.05)) <= snap.mid
                 <= float(m.get("max_price", 0.95)))
 
+    def spread_ok(self, snap: Snapshot) -> bool:
+        """Entries are takers, so the spread is paid in full on the way in.
+
+        A 6-cent book means every entry starts roughly 6% down at mid — deep
+        enough that the stop-loss gets tripped by the entry itself plus a
+        little noise, before the idea was ever tested.
+        """
+        m = self.cfg.get("markets", {})
+        return snap.spread <= float(m.get("max_spread", 0.05))
+
     def entry_size(self, signal: Signal) -> float:
         """USD to commit for this signal; 0 means rejected."""
         risk = self._risk(signal.market.category)
@@ -35,6 +45,19 @@ class RiskManager:
                   if p.market.category == signal.market.category]
         if len(in_cat) >= int(risk.get("max_per_category", 99)):
             return False, f"max positions in {signal.market.category}"
+        # Sibling markets only: the same-market case is what the pyramiding
+        # and per-market size rules below are for.
+        in_event = [p for p in positions
+                    if p.market.event_key == signal.market.event_key
+                    and p.market.condition_id != signal.market.condition_id]
+        if len(in_event) + 1 > int(risk.get("max_per_event", 1)):
+            # Sibling markets of one event are mutually exclusive outcomes of
+            # the same question — the four "Fed decision" markets move as one.
+            # Stacking them is a single bet at multiplied size, and one
+            # resolution closes them all together. (Lesson imported from the
+            # Kalshi bot, where sibling strikes produced loss cascades that
+            # kept tripping the loss brakes.)
+            return False, "already holding this event"
         in_market = [p for p in positions
                      if p.market.condition_id == signal.market.condition_id]
         if in_market and not bool(risk.get("allow_pyramiding", False)):

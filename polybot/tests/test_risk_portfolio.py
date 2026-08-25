@@ -63,6 +63,44 @@ def test_exit_rules():
     assert "hold" in rm.should_exit(pos, 0.5)
 
 
+def test_max_per_event_blocks_sibling_markets():
+    rm = RiskManager(CFG)
+    fed_a = Market(condition_id="a", question="50bps?", category="crypto",
+                   yes_token="y", no_token="n", event_slug="fed-sept")
+    fed_b = Market(condition_id="b", question="25bps?", category="crypto",
+                   yes_token="y", no_token="n", event_slug="fed-sept")
+    other = Market(condition_id="d", question="jobs?", category="crypto",
+                   yes_token="y", no_token="n", event_slug="jobs-oct")
+    pos = Position(market=fed_a, side="BUY", entry_price=0.5, shares=10,
+                   strategy="momentum")
+    # sibling market of the same event: one bet, already placed
+    ok, why = rm.allow_entry(sig(market=fed_b), [pos], 0)
+    assert not ok and "event" in why
+    # unrelated event unaffected
+    ok, _ = rm.allow_entry(sig(market=other), [pos], 0)
+    assert ok
+
+
+def test_markets_without_event_slug_are_their_own_event():
+    rm = RiskManager(CFG)
+    solo1 = Market(condition_id="s1", question="?", category="crypto",
+                   yes_token="y", no_token="n")
+    solo2 = Market(condition_id="s2", question="?", category="crypto",
+                   yes_token="y", no_token="n")
+    pos = Position(market=solo1, side="BUY", entry_price=0.5, shares=10,
+                   strategy="momentum")
+    ok, _ = rm.allow_entry(sig(market=solo2), [pos], 0)
+    assert ok
+
+
+def test_spread_gate():
+    rm = RiskManager(CFG)
+    tight = Snapshot(ts=0, mid=0.5, bid=0.49, ask=0.51, volume_24h=0)
+    wide = Snapshot(ts=0, mid=0.5, bid=0.46, ask=0.54, volume_24h=0)
+    assert rm.spread_ok(tight)
+    assert not rm.spread_ok(wide)
+
+
 def test_paper_roundtrip(tmp_path):
     p = Portfolio(1000, path=str(tmp_path / "ledger.json"))
     ex = PaperExecutor(p)
@@ -70,6 +108,8 @@ def test_paper_roundtrip(tmp_path):
     assert pos and p.cash < 1000
     pnl = ex.exit(pos, snap(0.6), "take profit")
     assert pnl > 0 and not p.positions and len(p.closed) == 1
+    # the atomic save leaves the real file and no temp debris behind
+    assert not (tmp_path / "ledger.json.tmp").exists()
     # reload from disk
     p2 = Portfolio(1000, path=str(tmp_path / "ledger.json"))
     assert p2.cash == p.cash and len(p2.closed) == 1

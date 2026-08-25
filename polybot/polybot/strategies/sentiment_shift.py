@@ -14,7 +14,9 @@ class SentimentShift(Strategy):
 
     def evaluate(self, market: Market, history: Sequence[Snapshot],
                  trades: list[dict]) -> Signal | None:
-        lookback = int(self.params.get("lookback", 20))
+        # Floor of 6: the split below needs at least three baseline snapshots
+        # and three recent ones, or fmean gets an empty slice and raises.
+        lookback = max(6, int(self.params.get("lookback", 20)))
         delta_thresh = float(self.params.get("imbalance_delta", 0.3))
         if len(history) < lookback:
             return None

@@ -58,7 +58,7 @@ def test_spread_scalp_needs_wide_spread():
 def test_whale_follow_mirrors_and_dedupes():
     s = WhaleFollow({"min_trade_usd": 5000})
     trade = {"transactionHash": "0x1", "size": 20000, "price": 0.5,
-             "side": "BUY", "outcome": "Yes"}
+             "side": "BUY", "outcome": "Yes", "timestamp": time.time()}
     sig = s.evaluate(MKT, snaps([0.5]), [trade])
     assert sig and sig.side == "BUY"
     assert s.evaluate(MKT, snaps([0.5]), [trade]) is None  # seen already
@@ -67,9 +67,34 @@ def test_whale_follow_mirrors_and_dedupes():
 def test_whale_follow_normalizes_no_side():
     s = WhaleFollow({"min_trade_usd": 5000})
     trade = {"transactionHash": "0x2", "size": 20000, "price": 0.5,
-             "side": "BUY", "outcome": "No"}
+             "side": "BUY", "outcome": "No", "timestamp": time.time()}
     sig = s.evaluate(MKT, snaps([0.5]), [trade])
     assert sig and sig.side == "SELL"
+
+
+def test_whale_follow_ignores_stale_tape():
+    # The tape reaches back hours; the first scan after startup used to
+    # mirror a whale from that morning as if it had just traded.
+    s = WhaleFollow({"min_trade_usd": 5000, "max_age_seconds": 300})
+    old = {"transactionHash": "0x3", "size": 20000, "price": 0.5,
+           "side": "BUY", "outcome": "Yes", "timestamp": time.time() - 3600}
+    assert s.evaluate(MKT, snaps([0.5]), [old]) is None
+    # a missing timestamp is treated as unknowable age, not as fresh
+    undated = {"transactionHash": "0x4", "size": 20000, "price": 0.5,
+               "side": "BUY", "outcome": "Yes"}
+    assert s.evaluate(MKT, snaps([0.5]), [undated]) is None
+    # millisecond timestamps are normalized before the age check
+    fresh_ms = {"transactionHash": "0x5", "size": 20000, "price": 0.5,
+                "side": "BUY", "outcome": "Yes",
+                "timestamp": time.time() * 1000}
+    sig = s.evaluate(MKT, snaps([0.5]), [fresh_ms])
+    assert sig and sig.side == "BUY"
+
+
+def test_sentiment_shift_survives_tiny_lookback():
+    # lookback below the split size used to hand fmean an empty slice
+    s = SentimentShift({"lookback": 2, "imbalance_delta": 0.3})
+    assert s.evaluate(MKT, snaps([0.5] * 3, imb=0.5), []) is None
 
 
 def test_sentiment_shift():

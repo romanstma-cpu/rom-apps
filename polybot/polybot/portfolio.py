@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from dataclasses import asdict
 from pathlib import Path
@@ -31,11 +32,16 @@ class Portfolio:
     def save(self) -> None:
         if not self.path:
             return
-        self.path.write_text(json.dumps({
+        # Write-then-rename: a crash mid-write must never leave a torn
+        # ledger, because the loader would raise on it at the next start and
+        # the record of every trade would be hostage to hand-editing JSON.
+        tmp = self.path.with_suffix(self.path.suffix + ".tmp")
+        tmp.write_text(json.dumps({
             "cash": self.cash,
             "positions": [asdict(p) for p in self.positions],
             "closed": self.closed,
         }, indent=2))
+        os.replace(tmp, self.path)
 
     # -- trading -----------------------------------------------------
     def open(self, pos: Position) -> None:

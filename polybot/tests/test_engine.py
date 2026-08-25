@@ -24,21 +24,38 @@ MKT = Market(condition_id="c1", question="Up?", category="crypto",
 
 
 class FakeGamma:
+    def __init__(self, markets=None):
+        self.markets = [MKT] if markets is None else markets
+        self.resolved = (False, None)   # what resolution() reports
+
     def discover(self, **kw):
-        return [MKT]
+        return list(self.markets)
+
+    def resolution(self, condition_id):
+        return self.resolved
 
 
 class FakeClob:
     """Serves a scripted sequence of midpoints."""
-    def __init__(self, mids):
+    def __init__(self, mids, half_spread=0.01):
         self.mids = list(mids)
+        self.half_spread = half_spread
         self.i = -1
 
     def snapshot(self, token_id, volume_24h=0.0):
         self.i = min(self.i + 1, len(self.mids) - 1)
         mid = self.mids[self.i]
-        return Snapshot(ts=time.time(), mid=mid, bid=mid - 0.01,
-                        ask=mid + 0.01, volume_24h=50000)
+        return Snapshot(ts=time.time(), mid=mid, bid=mid - self.half_spread,
+                        ask=mid + self.half_spread, volume_24h=50000)
+
+    def recent_trades(self, condition_id, limit=50):
+        return []
+
+
+class NoBookClob:
+    """A market whose order book has disappeared."""
+    def snapshot(self, token_id, volume_24h=0.0):
+        return None
 
     def recent_trades(self, condition_id, limit=50):
         return []
@@ -93,6 +110,74 @@ def test_history_pruned_on_rediscover():
     eng.discover()
     assert "stale-market" not in eng.history
     assert MKT.condition_id in eng.history or not eng.history  # kept if seen
+
+
+def test_held_market_managed_after_discovery_drops_it():
+    # Discovery ranks by volume, so a held market will eventually fall off
+    # the watch list. Its exits must keep working anyway.
+    eng = make_engine([0.50, 0.51, 0.52, 0.53, 0.54, 0.55, 0.70])
+    for _ in range(6):
+        eng.tick()
+    assert eng.portfolio.positions
+    eng.gamma.markets = []          # market vanishes from discovery
+    eng.discover()
+    assert not eng.markets
+    eng.tick()                      # mid 0.70 → take-profit must still fire
+    assert not eng.portfolio.positions
+    assert eng.portfolio.closed and eng.portfolio.closed[-1]["pnl"] > 0
+
+
+def test_dropped_market_takes_no_new_entries():
+    # The union keeps exits alive for held markets; it must not quietly
+    # keep ENTERING markets that discovery no longer vouches for.
+    eng = make_engine([0.50, 0.51, 0.52, 0.53, 0.54, 0.55, 0.70])
+    for _ in range(4):
+        eng.tick()
+    assert not eng.portfolio.positions      # not enough history yet
+    # hold one position so the market stays in the tick universe
+    for _ in range(2):
+        eng.tick()
+    assert eng.portfolio.positions
+    eng.gamma.markets = []
+    eng.discover()
+    eng.tick()                              # exits at 0.70
+    for _ in range(3):
+        eng.tick()                          # more rising mids, no watch list
+    assert not eng.portfolio.positions      # nothing re-entered
+
+
+def test_resolved_market_settles_position():
+    eng = make_engine([0.50, 0.51, 0.52, 0.53, 0.54, 0.55])
+    for _ in range(6):
+        eng.tick()
+    assert eng.portfolio.positions
+    cash_before = eng.portfolio.cash
+    shares = eng.portfolio.positions[0].shares
+    eng.clob = NoBookClob()                 # book gone
+    eng.gamma.resolved = (False, None)      # transient: hold
+    eng.tick()
+    assert eng.portfolio.positions
+    eng.gamma.resolved = (True, None)       # closed but not yet resolved: hold
+    eng.tick()
+    assert eng.portfolio.positions
+    eng.gamma.resolved = (True, 1.0)        # resolved YES
+    eng.tick()
+    assert not eng.portfolio.positions
+    closed = eng.portfolio.closed[-1]
+    assert "settled" in closed["reason"] and closed["pnl"] > 0
+    # settlement pays face value: $1 per share lands in cash
+    assert abs(eng.portfolio.cash - (cash_before + shares)) < 0.01
+
+
+def test_wide_spread_blocks_entry():
+    eng = Engine(Config(CFG))
+    eng.gamma = FakeGamma()
+    # 0.08 spread against the 0.05 default gate
+    eng.clob = FakeClob([0.50, 0.51, 0.52, 0.53, 0.54, 0.55], half_spread=0.04)
+    eng.discover()
+    for _ in range(6):
+        eng.tick()
+    assert not eng.portfolio.positions
 
 
 def test_soak_accounting_invariant():

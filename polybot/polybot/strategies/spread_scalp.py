@@ -8,7 +8,16 @@ from .base import Strategy
 
 class SpreadScalp(Strategy):
     """On liquid markets with a wide spread, lean toward the heavier side of
-    the book and aim to capture part of the spread."""
+    the book.
+
+    Honest economics note: entries here are taker orders, so this strategy
+    PAYS the wide spread it targets — it starts every trade the full spread
+    down and profits only if the book-imbalance direction plays out by more
+    than that. True spread capture needs resting limit orders, which the
+    executor does not place yet. Note also that the wide-spread books this
+    strategy wants are exactly what the markets.max_spread gate refuses —
+    enabling this means raising that limit deliberately, eyes open. Ships
+    disabled by default."""
     name = "spread_scalp"
 
     def evaluate(self, market: Market, history: Sequence[Snapshot],

@@ -73,6 +73,10 @@ class LiveExecutor:
         if not resp or not resp.get("success"):
             log.warning("live order rejected: %s", resp)
             return None
+        # Ledger approximation: the FOK response does not carry the average
+        # fill price, so the local ledger books the snapshot touch. Real
+        # fills can be slightly worse in a moving book — treat the local
+        # P&L as an estimate and the exchange history as the record.
         price = snap.ask if signal.side == "BUY" else 1.0 - snap.bid
         pos = Position(market=signal.market, side=signal.side,
                        entry_price=round(price, 4),
