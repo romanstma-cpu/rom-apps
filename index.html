@@ -70,7 +70,6 @@
     "url": "https://romapps.xyz/",
     "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/tree/main/polybot",
     "description": "An open Polymarket trading bot. Eight readable strategies, a risk manager, a local dashboard, and paper trading by default. Plain Python you can read and change.",
-    "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
   },
@@ -99,7 +98,6 @@
     "url": "https://romapps.xyz/nova/",
     "downloadUrl": "https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe",
     "description": "A Solana-style on-chain intelligence terminal: whale tracking, explainable signal scoring, backtesting and a live 3D network — on clearly-labeled simulated data. Runs in the browser or as a Windows app. Analytics demonstration, not investment advice.",
-    "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
   }
@@ -202,8 +200,14 @@
     letter-spacing: 3px;
   }
 
+  /* min-height, not a bigger font: at 13px mono the link was a 21px-tall tap
+     target, under the 24px WCAG 2.5.8 minimum. The box grows around the same
+     text, so nothing moves and the thumb gets something to hit. */
   .nav .gh {
     margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
     font-family: var(--mono);
     font-size: 13px;
     color: var(--muted);
@@ -623,6 +627,10 @@
     margin: 0 auto;
     display: flex;
     align-items: center;
+    /* Wraps rather than squeezing. On a phone this row had no room for four
+       items and no permission to wrap, so flexbox shrank each link to about
+       50px and broke "Trader source ↗" across three lines. */
+    flex-wrap: wrap;
     gap: 12px;
     font-family: var(--mono);
     font-size: 12px;
@@ -630,7 +638,24 @@
   }
 
   .foot img { width: 22px; height: 22px; border-radius: 6px; }
-  .foot a { margin-left: auto; color: var(--muted); text-decoration: none; }
+
+  .foot a {
+    display: inline-flex;
+    align-items: center;
+    /* 24px is the WCAG 2.5.8 floor; at 12px mono these were 17px tall. */
+    min-height: 24px;
+    white-space: nowrap;
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  /* One auto margin, not three: on the old rule every link claimed the free
+     space, which is what pinned them into equal narrow columns. */
+  .foot a:first-of-type { margin-left: auto; }
+
+  @media (max-width: 700px) {
+    .foot a:first-of-type { margin-left: 0; }
+  }
   .foot a:hover { color: var(--text); }
 
   /* ---------- reveal (GSAP sets initial state via .js-anim) ---------- */
@@ -955,7 +980,7 @@
 
 <section class="section" aria-labelledby="convert-h">
   <h2 class="section-label js-anim" id="convert-h">
-    <img class="app-mark" src="assets/app-convert.png" alt="" width="96" height="96" decoding="async">ROM CONVERT
+    <img class="app-mark" src="assets/app-convert.png" alt="" width="96" height="96" loading="lazy" decoding="async">ROM CONVERT
   </h2>
   <p class="section-lede js-anim">
     Converting a file shouldn’t mean uploading it.
@@ -996,7 +1021,7 @@
 
 <section class="section" aria-labelledby="trader-h">
   <h2 class="section-label js-anim" id="trader-h">
-    <img class="app-mark" src="assets/app-trader.png" alt="" width="96" height="96" decoding="async">ROM TRADER
+    <img class="app-mark" src="assets/app-trader.png" alt="" width="96" height="96" loading="lazy" decoding="async">ROM TRADER
   </h2>
   <p class="section-lede js-anim">
     A bot that shows its work, and stops itself.
@@ -1040,7 +1065,7 @@
 
 <section class="section" aria-labelledby="polybot-h">
   <h2 class="section-label js-anim" id="polybot-h">
-    <img class="app-mark" src="assets/app-polybot.png" alt="" width="64" height="64" decoding="async">ROM POLYBOT
+    <img class="app-mark" src="assets/app-polybot.png" alt="" width="64" height="64" loading="lazy" decoding="async">ROM POLYBOT
   </h2>
   <p class="section-lede js-anim">
     ROM Trader's Polymarket sibling, in plain Python.
@@ -1074,7 +1099,7 @@
 
 <section class="section" aria-labelledby="scribe-h">
   <h2 class="section-label js-anim" id="scribe-h">
-    <img class="app-mark" src="assets/app-scribe.png" alt="" width="256" height="256" decoding="async">ROM SCRIBE
+    <img class="app-mark" src="assets/app-scribe.png" alt="" width="256" height="256" loading="lazy" decoding="async">ROM SCRIBE
   </h2>
   <p class="section-lede js-anim">
     Subtitles and transcripts, made on your PC.
@@ -1108,7 +1133,7 @@
 
 <section class="section" aria-labelledby="nova-h">
   <h2 class="section-label js-anim" id="nova-h">
-    <img class="app-mark" src="assets/app-nova.png" alt="" width="128" height="128" decoding="async">ROM NOVA
+    <img class="app-mark" src="assets/app-nova.png" alt="" width="128" height="128" loading="lazy" decoding="async">ROM NOVA
   </h2>
   <p class="section-lede js-anim">
     A Solana intelligence terminal.
@@ -1172,8 +1197,11 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
       Beyond that: every download comes from a GitHub release, the full source for
       <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader</a>,
       <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a> and
-      <a href="https://github.com/romanstma-cpu/rom-nova" rel="noopener">Nova</a> is public under MIT,
-      and both installers are per-user — they never ask for administrator rights and uninstall cleanly.
+      <a href="https://github.com/romanstma-cpu/rom-scribe" rel="noopener">Scribe</a> is public under MIT,
+      <a href="https://github.com/romanstma-cpu/rom-nova" rel="noopener">Nova</a> and
+      <a href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot" rel="noopener">Polybot</a>
+      are public to read as well, and every installer is per-user — none of them ask for
+      administrator rights, and they uninstall cleanly.
       You can also read the <a href="code-signing-policy.html">code signing policy</a>.
     </p>
   </div>
@@ -1183,7 +1211,7 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
 
 <footer>
   <div class="foot">
-    <img src="assets/rom-icon.png" alt="" width="256" height="256" decoding="async">
+    <img src="assets/rom-icon.png" alt="" width="256" height="256" loading="lazy" decoding="async">
     <span>© 2026 ROM — free Windows apps</span>
     <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader source ↗</a>
     <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert source ↗</a>
