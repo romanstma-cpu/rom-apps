@@ -334,81 +334,154 @@
     margin-top: 12px;
   }
 
-  /* ---------- hero terminal mock ---------- */
-  .mock {
-    background: color-mix(in srgb, var(--panel) 82%, transparent);
-    backdrop-filter: blur(6px);
+  /* ---------- hero: the live app ---------- */
+  .live-card {
+    position: relative;
+    display: block;
     border: 1px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
+    background: color-mix(in srgb, var(--panel) 82%, transparent);
     box-shadow: 0 30px 80px -30px rgba(124, 58, 237, 0.45);
+    text-decoration: none;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   }
 
-  .mock-bar {
+  .live-card:hover,
+  .live-card:focus-visible {
+    transform: translateY(-3px);
+    border-color: var(--violet);
+    box-shadow: 0 36px 90px -28px rgba(124, 58, 237, 0.7);
+  }
+
+  /* The screenshot is a poster, not the subject: dimmed so the call to action
+     carries, lifted on hover so the app underneath is legible. */
+  .live-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: saturate(1.05) brightness(0.7);
+    transition: filter 0.25s ease;
+  }
+
+  .live-card:hover img,
+  .live-card:focus-visible img { filter: saturate(1.1) brightness(0.86); }
+
+  /* Browser chrome, so "this runs in a tab" reads before the words do. */
+  .live-chrome {
+    position: absolute;
+    inset: 0 0 auto 0;
     display: flex;
     align-items: center;
     gap: 10px;
+    padding: 9px 12px;
+    background: color-mix(in srgb, var(--panel-2) 92%, transparent);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .live-dots { display: flex; gap: 5px; }
+  .live-dots i { width: 8px; height: 8px; border-radius: 999px; background: var(--border); }
+
+  .live-url {
+    flex: 1;
+    text-align: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--void) 70%, transparent);
+  }
+
+  .live-go {
+    position: absolute;
+    left: 50%;
+    top: 54%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px 12px 14px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--void) 80%, transparent);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--violet);
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .live-play {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--violet), var(--pink));
+    color: #fff;
+    font-size: 13px;
+    padding-left: 3px;
+  }
+
+  .live-go-text { display: flex; flex-direction: column; line-height: 1.25; font-weight: 700; }
+
+  .live-go-text small {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  /* ---------- the embed itself ---------- */
+  /* Full-viewport rather than inline: Nova is a dashboard with a sidebar, and
+     in the 430px hero column it would render its cramped narrow layout, which
+     is a worse advertisement than the screenshot it replaced. */
+  .live-frame {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    background: var(--void);
+  }
+
+  .live-frame-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     padding: 10px 14px;
     border-bottom: 1px solid var(--border);
-    background: color-mix(in srgb, var(--panel-2) 85%, transparent);
+    background: var(--panel);
     font-family: var(--mono);
     font-size: 12px;
     color: var(--muted);
   }
 
-  .mock-bar img { width: 16px; height: 16px; border-radius: 4px; }
+  .live-frame-bar strong { color: var(--text); font-weight: 600; }
+  .live-frame-bar .spacer { margin-left: auto; }
 
-  .mock-pills { margin-left: auto; display: flex; gap: 6px; }
-
-  .pill {
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    padding: 2px 8px;
+  .live-frame-bar a,
+  .live-frame-bar button {
+    font: inherit;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
     border-radius: 999px;
-    border: 1px solid var(--border);
+    padding: 5px 12px;
+    min-height: 24px;
+    cursor: pointer;
+    text-decoration: none;
   }
 
-  .pill.run { color: var(--green); border-color: rgba(34, 197, 94, 0.4); }
-  .pill.dry { color: var(--amber); border-color: rgba(245, 158, 11, 0.4); }
+  .live-frame-bar a:hover,
+  .live-frame-bar button:hover { color: var(--text); border-color: var(--muted); }
 
-  .mock-body { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .live-frame iframe { flex: 1; width: 100%; border: 0; background: #04060a; }
 
-  .stat {
-    background: color-mix(in srgb, var(--panel-2) 85%, transparent);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 14px;
+  @media (max-width: 700px) {
+    .live-go { gap: 10px; padding: 10px 16px 10px 12px; }
+    .live-play { width: 32px; height: 32px; font-size: 11px; }
+    .live-go-text small { display: none; }
   }
-
-  .stat .k {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-
-  .stat .v { font-size: 22px; font-weight: 700; margin-top: 4px; }
-  .stat .v.up { color: var(--green); }
-
-  .mock-log {
-    grid-column: 1 / -1;
-    background: color-mix(in srgb, var(--panel-2) 85%, transparent);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 14px;
-    font-family: var(--mono);
-    font-size: 11px;
-    line-height: 1.9;
-    color: var(--muted);
-  }
-
-  /* Not green: these tags label a skipped market and a paper entry, and green
-     would read as profit. A light violet rather than --violet itself, which
-     measured 3.48:1 at this size — under the 4.5 needed for small text. */
-  .mock-log .t { color: #b9a2fb; }
 
   .scroll-hint {
     position: absolute;
@@ -795,35 +868,45 @@
         <span class="line"><span class="lw js-word">Apps.</span></span>
         <span class="line"><span class="lw js-word grad">No&nbsp;strings.</span></span>
       </h1>
-      <p class="js-anim">Free Windows apps, built by one person.</p>
+      <p class="js-anim">Free Windows apps, built by one person. One of them runs right here, in this tab.</p>
       <div class="cta-row js-anim">
-        <a class="btn primary" href="#downloads">See the apps ↓</a>
+        <a class="btn primary js-live" href="/nova/">Try one in your browser</a>
+        <a class="btn quiet" href="#downloads">See the apps ↓</a>
       </div>
       <div class="cta-note js-anim">Five apps · Windows and browser · free and open source</div>
     </div>
 
-    <div class="mock js-mock" aria-hidden="true">
-      <div class="mock-bar">
-        <img src="assets/rom-icon.png" alt="" width="256" height="256" decoding="async">
-        ROM Trader
-        <div class="mock-pills">
-          <span class="pill run">RUNNING</span>
-          <span class="pill dry">DRY-RUN</span>
-        </div>
-      </div>
-      <!-- Shows the scanner reasoning, not a balance going up. An invented
-           profit here would be the one claim the app's own disclaimer
-           disowns, and it is the first thing anyone sees. -->
-      <div class="mock-body">
-        <div class="stat"><div class="k">Markets scanned</div><div class="v">40</div></div>
-        <div class="stat"><div class="k">Eligible</div><div class="v">2</div></div>
-        <div class="mock-log">
-          <div><span class="t">[skip]</span>&nbsp;&nbsp;KXBTCD — spread 4c over your 2c limit</div>
-          <div><span class="t">[skip]</span>&nbsp;&nbsp;KXETH — momentum 1c under 3c trigger</div>
-          <div><span class="t">[open]</span>&nbsp;&nbsp;KXHIGH 24x YES @ 43c — paper</div>
-        </div>
-      </div>
-    </div>
+    <!--
+      The one thing on this site that needs no download, no security warning
+      and no checksum. It used to be a 22px text link 6,300px down the page.
+
+      This replaces a hand-built mock of ROM Trader. A real screenshot of a
+      real app is a stronger claim than a drawing of one, and the old honesty
+      rule survives intact: Nova labels itself SIMULATED DATA on every screen,
+      so nothing here implies a profit the apps do not claim.
+
+      Progressive enhancement on purpose — with no JavaScript this is an
+      ordinary link to /nova/ and works completely. JS only upgrades the click
+      into an in-page embed, so nobody pays for a WebGL app they did not ask
+      to run.
+    -->
+    <a class="live-card js-live js-hero-art" href="/nova/">
+      <img
+        src="assets/rom-nova-network.webp"
+        alt="ROM Nova's 3D network view: token spheres lit by signal strength, with whale-flow arcs between them"
+        width="1586" height="993" decoding="async">
+      <span class="live-chrome" aria-hidden="true">
+        <span class="live-dots"><i></i><i></i><i></i></span>
+        <span class="live-url">romapps.xyz/nova</span>
+      </span>
+      <span class="live-go">
+        <span class="live-play" aria-hidden="true">▶</span>
+        <span class="live-go-text">
+          Launch it live
+          <small>runs in this tab · no install, no account</small>
+        </span>
+      </span>
+    </a>
   </header>
 
   <div class="scroll-hint" aria-hidden="true">SCROLL ▾</div>
@@ -1348,7 +1431,7 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
     const intro = gsap.timeline({ defaults: { ease: "power3.out" } });
     intro.from(".js-word", { yPercent: 115, duration: 0.9, stagger: 0.12 }, 0.1)
          .from(".js-anim", { y: 24, autoAlpha: 0, duration: 0.7, stagger: 0.08 }, 0.4)
-         .from(".js-mock", { y: 40, autoAlpha: 0, scale: 0.96, duration: 0.9 }, 0.5);
+         .from(".js-hero-art", { y: 40, autoAlpha: 0, scale: 0.96, duration: 0.9 }, 0.5);
 
     gsap.utils.toArray(".js-row").forEach((row, i) => {
       gsap.from(row, {
@@ -1362,8 +1445,66 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
       scrollTrigger: { trigger: ".features", start: "top 85%", toggleActions: "play none none none" }
     });
 
-    // floating mock idle
-    gsap.to(".js-mock", { y: -10, duration: 3.2, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 1.6 });
+    // floating hero art idle
+    gsap.to(".js-hero-art", { y: -10, duration: 3.2, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 1.6 });
+  }
+
+  /* ---------------------------------------------------------------- live app
+     Upgrades the /nova/ links into an in-page embed. Everything below is an
+     enhancement: with JavaScript off, or if any of this throws, the anchors
+     are ordinary links to /nova/ and the page is fully usable.
+
+     The iframe is built on click and never before — nobody who came here for
+     the Convert download should pay to load a WebGL app they did not open. */
+  {
+    const NOVA = "/nova/network/";
+    let open = null;
+
+    const close = () => {
+      if (!open) return;
+      open.frame.remove();
+      document.body.style.overflow = open.overflow;
+      open.opener?.focus();
+      open = null;
+    };
+
+    const launch = (opener) => {
+      if (open) return;
+      const frame = document.createElement("div");
+      frame.className = "live-frame";
+      frame.setAttribute("role", "dialog");
+      frame.setAttribute("aria-modal", "true");
+      frame.setAttribute("aria-label", "ROM Nova, running in your browser");
+      frame.innerHTML =
+        '<div class="live-frame-bar">' +
+          "<strong>ROM Nova</strong><span>running here — nothing installed, nothing uploaded</span>" +
+          '<span class="spacer"></span>' +
+          '<a href="' + NOVA + '" target="_blank" rel="noopener">Open in a tab ↗</a>' +
+          '<button type="button" data-close>Close ✕</button>' +
+        "</div>" +
+        '<iframe src="' + NOVA + '" title="ROM Nova" allow="fullscreen"></iframe>';
+
+      frame.querySelector("[data-close]").addEventListener("click", close);
+      document.body.appendChild(frame);
+      // Scroll lock, restored on close rather than assumed to have been "".
+      open = { frame, opener, overflow: document.body.style.overflow };
+      document.body.style.overflow = "hidden";
+      frame.querySelector("[data-close]").focus();
+    };
+
+    addEventListener("keydown", (e) => {
+      if (e.key === "Escape") close();
+    });
+
+    for (const el of document.querySelectorAll(".js-live")) {
+      el.addEventListener("click", (e) => {
+        // Let a middle-click, a modified click or a right-click do the normal
+        // thing: people who want this in their own tab should get that.
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        launch(el);
+      });
+    }
   }
 </script>
 
