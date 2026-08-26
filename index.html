@@ -70,6 +70,7 @@
     "url": "https://romapps.xyz/",
     "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/tree/main/polybot",
     "description": "An open Polymarket trading bot. Eight readable strategies, a risk manager, a local dashboard, and paper trading by default. Plain Python you can read and change.",
+    "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
   },
@@ -98,6 +99,7 @@
     "url": "https://romapps.xyz/nova/",
     "downloadUrl": "https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe",
     "description": "A Solana-style on-chain intelligence terminal: whale tracking, explainable signal scoring, backtesting and a live 3D network — on clearly-labeled simulated data. Runs in the browser or as a Windows app. Analytics demonstration, not investment advice.",
+    "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
   }
@@ -1194,13 +1196,13 @@ $want = (irm https://github.com/romanstma-cpu/rom-nova/releases/latest/download/
 if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
 
     <p class="verify-foot">
-      Beyond that: every download comes from a GitHub release, the full source for
+      Beyond that: every download comes from a GitHub release, and the full source for
       <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader</a>,
-      <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a> and
-      <a href="https://github.com/romanstma-cpu/rom-scribe" rel="noopener">Scribe</a> is public under MIT,
+      <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a>,
+      <a href="https://github.com/romanstma-cpu/rom-scribe" rel="noopener">Scribe</a>,
       <a href="https://github.com/romanstma-cpu/rom-nova" rel="noopener">Nova</a> and
       <a href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot" rel="noopener">Polybot</a>
-      are public to read as well, and every installer is per-user — none of them ask for
+      is public under MIT. Every installer is per-user — none of them ask for
       administrator rights, and they uninstall cleanly.
       You can also read the <a href="code-signing-policy.html">code signing policy</a>.
     </p>
