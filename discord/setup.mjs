@@ -106,7 +106,9 @@ async function main() {
 
   // ------------------------------------------------------------- channels
   const existingChannels = await api("GET", `/guilds/${GUILD}/channels`);
-  const chanByName = new Map(existingChannels.map((c) => [`${c.type}:${c.name}`, c]));
+  const chanByName = new Map(
+    existingChannels.map((c) => [`${c.type === CHANNEL_CATEGORY ? "cat" : "chan"}:${c.name}`, c]),
+  );
 
   // A read-only channel: @everyone keeps VIEW and reactions and can still reply
   // in threads, but cannot start top-level noise.
@@ -122,7 +124,7 @@ async function main() {
   let position = 0;
 
   for (const group of STRUCTURE) {
-    const catKey = `${CHANNEL_CATEGORY}:${group.category}`;
+    const catKey = `cat:${group.category}`;
     let category = chanByName.get(catKey);
 
     if (category) {
@@ -141,8 +143,11 @@ async function main() {
     }
 
     for (const ch of group.channels) {
-      const type = ch.announcement ? CHANNEL_ANNOUNCEMENT : CHANNEL_TEXT;
-      const key = `${type}:${ch.name}`;
+      const wanted = ch.announcement ? CHANNEL_ANNOUNCEMENT : CHANNEL_TEXT;
+      // Keyed by name, not by name+type: an announcement channel can land as a
+      // plain text channel via the fallback below, and a type-keyed lookup
+      // would then miss it on the next run and create a duplicate.
+      const key = `chan:${ch.name}`;
       let channel = chanByName.get(key);
 
       if (channel) {
@@ -151,14 +156,32 @@ async function main() {
         console.log(`  chan   + #${ch.name}${ch.readOnly ? "  [read-only]" : ""}`);
         continue;
       } else {
-        channel = await api("POST", `/guilds/${GUILD}/channels`, {
-          name: ch.name,
-          type,
-          topic: ch.topic,
-          parent_id: category.id,
-          position: position++,
-          ...(ch.readOnly ? { permission_overwrites: readOnlyOverwrites() } : {}),
-        });
+        const slot = position++;
+        const create = (type) =>
+          api("POST", `/guilds/${GUILD}/channels`, {
+            name: ch.name,
+            type,
+            topic: ch.topic,
+            parent_id: category.id,
+            position: slot,
+            ...(ch.readOnly ? { permission_overwrites: readOnlyOverwrites() } : {}),
+          });
+
+        try {
+          channel = await create(wanted);
+        } catch (e) {
+          // Announcement channels exist only on Community servers, and Discord
+          // rejects the type outright rather than degrading — a brand new
+          // server cannot have one. A plain text channel is the right fallback:
+          // the only thing lost is other servers being able to *follow* the
+          // channel, and it converts later with one toggle in Edit Channel.
+          const unsupportedType =
+            wanted === CHANNEL_ANNOUNCEMENT && /BASE_TYPE_CHOICES|50035/.test(e.message);
+          if (!unsupportedType) throw e;
+          console.log(`  note     not a Community server — #${ch.name} will be a normal text channel`);
+          channel = await create(CHANNEL_TEXT);
+        }
+
         chanByName.set(key, channel);
         console.log(`  chan   + #${ch.name}${ch.readOnly ? "  [read-only]" : ""}`);
       }

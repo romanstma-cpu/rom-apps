@@ -56,6 +56,11 @@ export const STRUCTURE = [
         name: "announcements",
         topic: "New releases and anything that changes how an app behaves.",
         readOnly: true,
+        // Announcement channels let *other* servers follow this one. They exist
+        // only on Community servers, and Discord rejects the type outright on a
+        // plain one rather than degrading — so setup.mjs falls back to a normal
+        // text channel. Nothing is lost day to day; flip it in Edit Channel
+        // once Community is enabled.
         announcement: true,
       },
     ],
