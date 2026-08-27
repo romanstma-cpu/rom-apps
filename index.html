@@ -28,6 +28,17 @@
 <link rel="icon" type="image/png" href="assets/rom-icon.png">
 <link rel="apple-touch-icon" href="assets/rom-icon.png">
 
+<!-- The hero poster is the LCP element. Preloaded so the fetch starts on the
+     first byte of <head> rather than when the parser reaches the hero, several
+     kilobytes of inline CSS later. Same srcset and sizes as the <img>, or the
+     browser preloads one candidate and then downloads a different one. -->
+<link rel="preload" as="image" fetchpriority="high"
+      href="assets/rom-nova-network-800.webp"
+      imagesrcset="assets/rom-nova-network-500.webp 500w,
+                   assets/rom-nova-network-800.webp 800w,
+                   assets/rom-nova-network.webp 1586w"
+      imagesizes="(max-width: 700px) 92vw, 430px">
+
 <!-- One entry per app. A single SoftwareApplication node would let search
      engines describe only one of them, and the catalogue is the point. -->
 <script type="application/ld+json">
@@ -627,6 +638,39 @@
   .row .btn { padding: 9px 0; text-align: center; font-size: 13px; }
   .row .btn.disabled { color: var(--muted); pointer-events: none; opacity: 0.55; }
 
+  /* What the row could never say in a 80px "Size" column: what actually
+     happens when you click. Held back until the row is hovered or something
+     inside it takes focus, so five identical lines do not shout at once — and
+     revealed on focus-within too, or a keyboard user would never see it.
+     Spans the whole grid on its own line rather than becoming a sixth column. */
+  .row .meta {
+    grid-column: 1 / -1;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transform: translateY(-3px);
+    transition: max-height 0.22s ease, opacity 0.22s ease, transform 0.22s ease;
+  }
+
+  .row:hover .meta,
+  .row:focus-within .meta {
+    max-height: 20px;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* No hover on a touch screen, so there is nothing to reveal — show it. */
+  @media (hover: none) {
+    .row .meta { max-height: 20px; opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html:not(.force-motion) .row .meta { transition: none; }
+  }
+
   /* ---------- app detail ---------- */
   .features {
     display: grid;
@@ -818,7 +862,9 @@
     .row .name { grid-column: 1; }
     .row .ver, .row .size { display: inline; grid-column: 1; }
     .row .status { grid-column: 1; }
-    .row .btn { grid-column: 2; grid-row: 1 / span 4; }
+    .row .meta { grid-column: 1; }
+    /* Five stacked rows now the meta line joins them, not four. */
+    .row .btn { grid-column: 2; grid-row: 1 / span 5; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -891,10 +937,18 @@
       to run.
     -->
     <a class="live-card js-live js-hero-art" href="/nova/">
+      <!-- This is the LCP element, and it was shipping the full 1586px file to
+           a slot that renders at 413px — 86KB to paint 14KB worth of pixels.
+           fetchpriority stays off every other image on the page: priority given
+           to everything is priority given to nothing. -->
       <img
-        src="assets/rom-nova-network.webp"
+        src="assets/rom-nova-network-800.webp"
+        srcset="assets/rom-nova-network-500.webp 500w,
+                assets/rom-nova-network-800.webp 800w,
+                assets/rom-nova-network.webp 1586w"
+        sizes="(max-width: 700px) 92vw, 430px"
         alt="ROM Nova's 3D network view: token spheres lit by signal strength, with whale-flow arcs between them"
-        width="1586" height="993" decoding="async">
+        width="1586" height="993" fetchpriority="high" decoding="async">
       <span class="live-chrome" aria-hidden="true">
         <span class="live-dots"><i></i><i></i><i></i></span>
         <span class="live-url">romapps.xyz/nova</span>
@@ -920,8 +974,9 @@
     </div>
     <div class="row js-row">
       <span class="name"><strong>ROM Trader</strong>Kalshi momentum bot — live dashboard, signals feed, risk brakes</span>
-      <span class="ver">v1.11.0</span>
+      <span class="ver">v1.11.1</span>
       <span class="size">100 MB</span>
+      <span class="meta">per-user install · no admin rights · uninstalls cleanly</span>
       <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download</a>
     </div>
@@ -930,6 +985,7 @@
       <span class="name"><strong>ROM Convert</strong>Video, audio and images — converted on your PC, never uploaded</span>
       <span class="ver">v1.0.0</span>
       <span class="size">121 MB</span>
+      <span class="meta">per-user install · no admin rights · uninstalls cleanly</span>
       <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-convert/releases/latest/download/ROM-Convert-Setup.exe">Download</a>
     </div>
@@ -938,6 +994,7 @@
       <span class="name"><strong>ROM Scribe</strong>Subtitles and transcripts from any video or audio — offline AI, no minutes counted</span>
       <span class="ver">v1.2.0</span>
       <span class="size">137 MB</span>
+      <span class="meta">per-user install · no admin rights · uninstalls cleanly</span>
       <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-scribe/releases/latest/download/ROM-Scribe-Setup.exe">Download</a>
     </div>
@@ -946,14 +1003,16 @@
       <span class="name"><strong>ROM Polybot</strong>Polymarket bot in plain Python — eight strategies, risk brakes, paper mode</span>
       <span class="ver">v1.1.0</span>
       <span class="size">source</span>
+      <span class="meta">Python 3.10+ · runs on Windows, macOS and Linux</span>
       <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot">Get source</a>
     </div>
 
     <div class="row js-row">
       <span class="name"><strong>ROM Nova</strong>Solana-style intelligence terminal — whale tracking, signals, 3D network, simulated data · or <a href="/nova/">launch it in your browser</a></span>
-      <span class="ver">v1.0.0</span>
+      <span class="ver">v1.0.2</span>
       <span class="size">79 MB</span>
+      <span class="meta">per-user install · no admin rights · uninstalls cleanly</span>
       <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe">Download</a>
     </div>
@@ -1464,6 +1523,9 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
       if (!open) return;
       open.frame.remove();
       document.body.style.overflow = open.overflow;
+      // Hand the page back to assistive tech and return focus where it started.
+      document.getElementById("content")?.removeAttribute("inert");
+      document.querySelector("footer")?.removeAttribute("inert");
       open.opener?.focus();
       open = null;
     };
@@ -1489,6 +1551,32 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
       // Scroll lock, restored on close rather than assumed to have been "".
       open = { frame, opener, overflow: document.body.style.overflow };
       document.body.style.overflow = "hidden";
+
+      // aria-modal tells a screen reader the rest of the page is inert. It was
+      // not: everything behind this dialog stayed focusable and reachable by
+      // Tab, which is worse than never having claimed it. inert makes the
+      // promise true, and the trap below keeps sighted keyboard users from
+      // tabbing into a page they can no longer see.
+      document.getElementById("content")?.setAttribute("inert", "");
+      document.querySelector("footer")?.setAttribute("inert", "");
+
+      frame.addEventListener("keydown", (e) => {
+        if (e.key !== "Tab") return;
+        const items = [...frame.querySelectorAll("a[href], button, iframe")];
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        // Wrap at both ends. Without this, Tab off the last control lands in
+        // the browser chrome and the next Tab is back in the hidden page.
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      });
+
       frame.querySelector("[data-close]").focus();
     };
 
