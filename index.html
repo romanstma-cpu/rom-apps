@@ -28,6 +28,24 @@
 <link rel="icon" type="image/png" href="assets/rom-icon.png">
 <link rel="apple-touch-icon" href="assets/rom-icon.png">
 
+<!-- Arms the reveal animations before the body is parsed, so the hero can
+     animate from CSS on the very first frame instead of waiting for a script
+     at the end of the document to hand out classes on a timer. The headline is
+     the largest thing on the page; anything that delays it delays LCP.
+
+     It stays a script rather than a plain CSS rule for one reason: if this does
+     not run, .reveal-ready is never set and every element on the page is simply
+     visible. A decoration must not be able to hide the content. -->
+<script>
+  try {
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
+      document.documentElement.classList.add("reveal-ready");
+    }
+  } catch (e) {
+    /* no reveal, no problem — the page renders in full */
+  }
+</script>
+
 <!-- The hero poster is the LCP element. Preloaded so the fetch starts on the
      first byte of <head> rather than when the parser reaches the hero, several
      kilobytes of inline CSS later. Same srcset and sizes as the <img>, or the
@@ -570,8 +588,11 @@
 
   .row {
     display: grid;
-    grid-template-columns: 1fr 90px 80px 132px 140px;
-    gap: 14px;
+    /* Was five columns. The fifth held a status pill reading "Available" on
+       every single row — five identical green dots, a column of pure noise
+       where the honest line about each app now goes instead. */
+    grid-template-columns: 1fr 90px 80px 140px;
+    gap: 14px 14px;
     align-items: center;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border);
@@ -647,29 +668,15 @@
     grid-column: 1 / -1;
     font-family: var(--mono);
     font-size: 11px;
+    line-height: 1.55;
     color: var(--muted);
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    transform: translateY(-3px);
-    transition: max-height 0.22s ease, opacity 0.22s ease, transform 0.22s ease;
+    margin-top: -4px;
   }
 
-  .row:hover .meta,
-  .row:focus-within .meta {
-    max-height: 20px;
-    opacity: 1;
-    transform: none;
-  }
+  /* The record lines earn a warmer colour: they are the point, not an aside. */
+  .row .meta.record { color: #c0b4d8; }
+  .row .meta.record b { color: var(--text); font-weight: 600; }
 
-  /* No hover on a touch screen, so there is nothing to reveal — show it. */
-  @media (hover: none) {
-    .row .meta { max-height: 20px; opacity: 1; transform: none; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    html:not(.force-motion) .row .meta { transition: none; }
-  }
 
   /* ---------- app detail ---------- */
   .features {
@@ -703,6 +710,42 @@
 
   .smartscreen strong { color: var(--amber); }
 
+  /* Shown only to visitors who cannot run any of these installers. */
+  .platform-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    margin-bottom: 14px;
+    padding: 13px 18px;
+    border: 1px solid color-mix(in srgb, var(--violet) 38%, transparent);
+    background: color-mix(in srgb, var(--violet) 10%, transparent);
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #d5cbe8;
+  }
+
+  .platform-note strong { color: var(--text); font-weight: 600; }
+
+  .platform-note a {
+    color: #fff;
+    background: linear-gradient(100deg, var(--violet), var(--pink));
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  /* A download that cannot run on the machine reading the page should not
+     look like the primary action any more. */
+  .row .btn.foreign {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
   .verify {
     margin-top: 14px;
     border: 1px solid var(--border);
@@ -732,6 +775,33 @@
     white-space: pre;
   }
   .verify-foot { font-size: 13px; }
+
+  .verify-pick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 14px 0 -4px;
+  }
+
+  .verify-pick button {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 7px 13px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .verify-pick button:hover { color: var(--text); border-color: var(--violet); }
+
+  .verify-pick button[aria-pressed="true"] {
+    color: var(--text);
+    border-color: var(--violet);
+    background: color-mix(in srgb, var(--violet) 18%, transparent);
+  }
 
   /* ---------- footer ---------- */
   footer {
@@ -777,8 +847,88 @@
   }
   .foot a:hover { color: var(--text); }
 
-  /* ---------- reveal (GSAP sets initial state via .js-anim) ---------- */
-  /* elements start visible; JS hides them first so no-JS users see everything */
+  /* ---------- reveal ----------
+     No animation library. This used to be GSAP + ScrollTrigger from a CDN:
+     41KB and a third origin, which on a phone was 55% of the entire page, to
+     fade things in. It also cost two screens of content — one tween covering
+     32 elements bound its trigger to the wrong one and left eight screenshots
+     invisible through the whole section that exists to prove the apps are real.
+
+     The hidden state lives behind .reveal-ready, which script adds only once
+     it knows IntersectionObserver exists and its own setup did not throw.
+     Nothing here can ever leave the page blank: with JS off, broken, or slow,
+     every element is simply visible. */
+  /* The hero is excluded by its own keyframes below, not by a :not() here.
+     `:not(.hero .js-anim)` took its specificity from its argument — 0-4-0
+     against the 0-2-0 of `.js-anim.shown` — so every element below the fold
+     received the class that was meant to reveal it and stayed invisible
+     anyway. A CSS animation beats a normal declaration outright, so the hero
+     rules further down override this without needing to outrank it. */
+  .reveal-ready .js-anim,
+  .reveal-ready .js-row,
+  .reveal-ready .js-card {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  .reveal-ready .js-card { transform: translateY(32px); }
+
+  .js-anim.shown,
+  .js-row.shown,
+  .js-card.shown {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.55s cubic-bezier(0.22, 0.61, 0.36, 1),
+      transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  /* The hero runs on CSS alone, started by the class the head script sets, so
+     nothing above the fold waits for a script at the end of the document.
+     h1 .line clips, so each word rises out of nothing. */
+  .reveal-ready .js-word {
+    animation: wordUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .reveal-ready .line:nth-child(2) .js-word { animation-delay: 0.12s; }
+
+  @keyframes wordUp {
+    from { transform: translateY(115%); }
+    to { transform: none; }
+  }
+
+  .reveal-ready .hero .js-anim {
+    animation: riseIn 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  .reveal-ready .hero .js-anim:nth-of-type(1) { animation-delay: 0.34s; }
+  .reveal-ready .hero .js-anim:nth-of-type(2) { animation-delay: 0.42s; }
+  .reveal-ready .hero .js-anim:nth-of-type(3) { animation-delay: 0.5s; }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* The art reveals on opacity and scale so the idle float can own `translate`
+     outright — two animations fighting over `transform` is how the float used
+     to cancel the reveal. */
+  .reveal-ready .js-hero-art {
+    animation:
+      artIn 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) 0.45s both,
+      heroFloat 3.2s ease-in-out 1.6s infinite;
+  }
+
+  @keyframes artIn {
+    from { opacity: 0; scale: 0.96; }
+    to { opacity: 1; scale: 1; }
+  }
+
+  @keyframes heroFloat {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html:not(.force-motion) .js-hero-art.shown { animation: none; }
+  }
 
   /* ---------- real product shot ---------- */
   /* Two across. Stacked full-width these four shots ran to well over two
@@ -914,12 +1064,12 @@
         <span class="line"><span class="lw js-word">Apps.</span></span>
         <span class="line"><span class="lw js-word grad">No&nbsp;strings.</span></span>
       </h1>
-      <p class="js-anim">Free Windows apps, built by one person. One of them runs right here, in this tab.</p>
+      <p class="js-anim">Five free Windows apps, built by one person. Two of them trade real markets — with no proven edge, and this site shows you the losing numbers. One runs right here, in this tab.</p>
       <div class="cta-row js-anim">
         <a class="btn primary js-live" href="/nova/">Try one in your browser</a>
         <a class="btn quiet" href="#downloads">See the apps ↓</a>
       </div>
-      <div class="cta-note js-anim">Five apps · Windows and browser · free and open source</div>
+      <div class="cta-note js-anim" id="cta-note">Trading bots · transcription · file conversion · a market terminal — Windows, free, open source</div>
     </div>
 
     <!--
@@ -968,53 +1118,55 @@
 
 <section class="section" id="downloads" aria-labelledby="dl-h">
   <h2 class="section-label js-anim" id="dl-h">DOWNLOADS</h2>
+
+  <!-- Filled in by script when the visitor is not on Windows. Every installer
+       below is a .exe, and handing a Mac or a phone a download that cannot run
+       is a dead end dressed up as a call to action. Empty and invisible by
+       default, so a failed detection costs nothing. -->
+  <div class="platform-note" id="platform-note" hidden></div>
+
   <div class="board">
     <div class="row head">
-      <span>App</span><span>Version</span><span>Size</span><span>Status</span><span></span>
+      <span>App</span><span>Version</span><span>Size</span><span></span>
     </div>
     <div class="row js-row">
       <span class="name"><strong>ROM Trader</strong>Kalshi momentum bot — live dashboard, signals feed, risk brakes</span>
       <span class="ver">v1.12.0</span>
       <span class="size">100 MB</span>
-      <span class="meta">per-user install · no admin rights · uninstalls cleanly</span>
-      <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download</a>
+      <span class="meta record">Paper-trades by default. Replayed over 27 hours of its own recorded books it won <b>45% of 143 trades and lost money</b> — the replay ships in the app so you can check.</span>
     </div>
 
     <div class="row js-row">
       <span class="name"><strong>ROM Convert</strong>Video, audio and images — converted on your PC, never uploaded</span>
       <span class="ver">v1.0.0</span>
       <span class="size">121 MB</span>
-      <span class="meta">per-user install · no admin rights · uninstalls cleanly</span>
-      <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-convert/releases/latest/download/ROM-Convert-Setup.exe">Download</a>
+      <span class="meta">per-user install · no admin rights · uninstalls cleanly · ffmpeg runs on your machine, nothing is uploaded</span>
     </div>
 
     <div class="row js-row">
       <span class="name"><strong>ROM Scribe</strong>Subtitles and transcripts from any video or audio — offline AI, no minutes counted</span>
       <span class="ver">v1.2.0</span>
       <span class="size">137 MB</span>
-      <span class="meta">per-user install · no admin rights · uninstalls cleanly</span>
-      <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-scribe/releases/latest/download/ROM-Scribe-Setup.exe">Download</a>
+      <span class="meta">per-user install · no admin rights · uninstalls cleanly · the model runs offline, audio never leaves the machine</span>
     </div>
 
     <div class="row js-row">
       <span class="name"><strong>ROM Polybot</strong>Polymarket bot in plain Python — eight strategies, risk brakes, paper mode</span>
       <span class="ver">v1.1.0</span>
       <span class="size">source</span>
-      <span class="meta">Python 3.10+ · runs on Windows, macOS and Linux</span>
-      <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot">Get source</a>
+      <span class="meta record">Python 3.10+ · Windows, macOS and Linux · paper mode by default. Its first four-hour paper session <b>closed down $7.10</b>, and that screenshot is further down this page.</span>
     </div>
 
     <div class="row js-row">
       <span class="name"><strong>ROM Nova</strong>Solana-style intelligence terminal — whale tracking, signals, 3D network, simulated data · or <a href="/nova/">launch it in your browser</a></span>
       <span class="ver">v1.0.5</span>
       <span class="size">79 MB</span>
-      <span class="meta">per-user install · no admin rights · uninstalls cleanly</span>
-      <span class="status ok"><span class="dot"></span>Available</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe">Download</a>
+      <span class="meta record">Trades nothing and predicts nothing. Every token, wallet and trade in it is a <b>deterministic simulation</b> — only the SOL price in the top bar is real, and it is labelled LIVE.</span>
     </div>
   </div>
 </section>
@@ -1315,27 +1467,20 @@
   <div class="verify js-anim">
     <p><strong>So verify it yourself instead.</strong> Every release publishes the SHA-256 of its installer. Paste this into PowerShell after downloading and it will tell you outright whether the file you have is byte-for-byte the one that was published.</p>
 
-    <pre class="cmd"><code>$f = "$HOME\Downloads\ROM-Trader-Setup.exe"
+    <!-- One block, four apps. This was four near-identical blocks differing
+         only in two names — about forty lines of the page's most technical
+         content, and four horizontally-scrolling boxes on a phone. The buttons
+         are added by script; with no JavaScript the Trader command is here in
+         full and the line below says what to swap. -->
+    <div class="verify-pick" id="verify-pick" hidden role="group" aria-label="Choose an app to verify"></div>
+
+    <pre class="cmd"><code id="verify-cmd">$f = "$HOME\Downloads\ROM-Trader-Setup.exe"
 $want = (irm https://github.com/romanstma-cpu/rom-apps/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
 if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
 
-    <p>For ROM Convert, swap both names:</p>
-
-    <pre class="cmd"><code>$f = "$HOME\Downloads\ROM-Convert-Setup.exe"
-$want = (irm https://github.com/romanstma-cpu/rom-convert/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
-if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
-
-    <p>And for ROM Scribe:</p>
-
-    <pre class="cmd"><code>$f = "$HOME\Downloads\ROM-Scribe-Setup.exe"
-$want = (irm https://github.com/romanstma-cpu/rom-scribe/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
-if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
-
-    <p>And for ROM Nova:</p>
-
-    <pre class="cmd"><code>$f = "$HOME\Downloads\ROM-Nova-Setup.exe"
-$want = (irm https://github.com/romanstma-cpu/rom-nova/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]
-if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }</code></pre>
+    <p id="verify-swap">For the other apps, swap both names — <code>ROM-Convert-Setup.exe</code> with
+      <code>rom-convert</code>, <code>ROM-Scribe-Setup.exe</code> with <code>rom-scribe</code>,
+      <code>ROM-Nova-Setup.exe</code> with <code>rom-nova</code>.</p>
 
     <p class="verify-foot">
       Beyond that: every download comes from a GitHub release, and the full source for
@@ -1363,8 +1508,6 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
   </div>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha384-g4NTh/Iv5PPU4xPyhEWqPcwtNXOvdaDI8LLnyYfyNZOjKJeYQyjzQ9X5275eBjpt" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" integrity="sha384-Z3REaz79l2IaAZqJsSABtTbhjgOUYyV3p90XNnAPCSHg3EMTz1fouunq9WZRtj3d" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script type="module">
   // ---------- hero field ----------
@@ -1483,56 +1626,184 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
 
   initField();
 
-  // ---------- GSAP intro + scroll reveals ----------
-  if (window.gsap && !reduceMotion) {
-    gsap.registerPlugin(ScrollTrigger);
-
-    const intro = gsap.timeline({ defaults: { ease: "power3.out" } });
-    intro.from(".js-word", { yPercent: 115, duration: 0.9, stagger: 0.12 }, 0.1)
-         .from(".js-anim", { y: 24, autoAlpha: 0, duration: 0.7, stagger: 0.08 }, 0.4)
-         .from(".js-hero-art", { y: 40, autoAlpha: 0, scale: 0.96, duration: 0.9 }, 0.5);
-
-    gsap.utils.toArray(".js-row").forEach((row, i) => {
-      gsap.from(row, {
-        y: 30, autoAlpha: 0, duration: 0.6, delay: i * 0.08, ease: "power2.out",
-        scrollTrigger: { trigger: row, start: "top 88%", toggleActions: "play none none none" }
-      });
-    });
-
-    // Each card is revealed by its own arrival, batched so the ones that come
-    // into view together still stagger.
-    //
-    // This replaces a single gsap.from(".js-card") whose scrollTrigger was
-    // `.features` — a selector matching several blocks, so GSAP bound it to the
-    // first one, which sits ~800px BELOW the screenshot gallery. The gallery's
-    // eight figures are .js-card too, so they were held at autoAlpha 0 until
-    // the scroll reached roughly 2,670px, by which point most of them had
-    // already gone past. Landing anywhere between 1,750 and 2,700 — by
-    // dragging the scrollbar, pressing End, following a hash, or refreshing at
-    // that position — showed two entire screens of nothing, in the one section
-    // whose subtitle reads "No mockups. All five, running."
+  // ---------- intro + scroll reveals, without a library ----------
+  //
+  // Replaces GSAP + ScrollTrigger: 41KB from a third origin, which was 55% of
+  // this page's weight on a phone, to fade things in. The library also cost
+  // two full screens of content, because one tween covering 32 elements bound
+  // its scroll trigger to the wrong one of several matching containers.
+  //
+  // The hidden state is applied here and only here. If IntersectionObserver is
+  // missing, motion is reduced, or anything below throws, .reveal-ready is
+  // never added or is removed again — and every element stays plainly visible.
+  // A decoration must not be able to hide the page.
+  (() => {
+    const root = document.documentElement;
+    if (!root.classList.contains("reveal-ready")) return; // head script declined
     try {
-      gsap.set(".js-card", { y: 36, autoAlpha: 0 });
-      ScrollTrigger.batch(".js-card", {
-        start: "top 92%",
-        once: true,
-        onEnter: (batch) =>
-          gsap.to(batch, {
-            y: 0, autoAlpha: 1, duration: 0.6, stagger: 0.08, ease: "power2.out", overwrite: true,
-          }),
-      });
+      const show = (el, delay) =>
+        delay > 0 ? setTimeout(() => el.classList.add("shown"), delay) : el.classList.add("shown");
+
+      // The hero is pure CSS, started by the head script. Everything below the
+      // fold waits for its own arrival, staggered within whatever group happens
+      // to come into view together.
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries
+            .filter((e) => e.isIntersecting)
+            .forEach((e, i) => {
+              show(e.target, i * 80);
+              io.unobserve(e.target);
+            });
+        },
+        { rootMargin: "0px 0px -40px 0px", threshold: 0.01 },
+      );
+
+      const hero = document.querySelector(".hero");
+      const pending = [];
+      for (const el of document.querySelectorAll(".js-anim, .js-row, .js-card")) {
+        if (hero && hero.contains(el)) continue; // already played
+        pending.push(el);
+        io.observe(el);
+      }
+
+      /* The guarantee.
+         An observer can leave something stranded — an element that only ever
+         reaches the sliver of viewport the rootMargin excludes, a bottom-of-page
+         block at maximum scroll, a threshold never quite crossed. Twice now a
+         reveal mechanism on this page has hidden real content that way, and the
+         second time it was the section explaining why the downloads are safe.
+
+         So position, not events, has the last word: anything whose top has
+         passed the bottom of the viewport is shown, no matter what the observer
+         did or did not report. Cheap, and it makes stranding impossible. */
+      const sweep = () => {
+        for (let i = pending.length - 1; i >= 0; i--) {
+          const el = pending[i];
+          if (el.classList.contains("shown")) {
+            pending.splice(i, 1);
+            continue;
+          }
+          if (el.getBoundingClientRect().top < innerHeight) {
+            el.classList.add("shown");
+            io.unobserve(el);
+            pending.splice(i, 1);
+          }
+        }
+      };
+
+      let queued = false;
+      const onScroll = () => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => {
+          queued = false;
+          sweep();
+        });
+      };
+      addEventListener("scroll", onScroll, { passive: true });
+      addEventListener("resize", onScroll, { passive: true });
+      addEventListener("load", sweep);
+      // Images settling can move everything below them past the fold.
+      setTimeout(sweep, 1200);
     } catch (e) {
-      // A decoration that throws must never leave the page blank. No animation
-      // is a far better outcome than no content.
-      gsap.set(".js-card", { clearProps: "all" });
+      root.classList.remove("reveal-ready");
     }
+  })();
 
-    // Lazy images settle after first paint and move everything below them.
-    // Without this the triggers keep firing against stale positions.
-    addEventListener("load", () => ScrollTrigger.refresh());
+  /* ------------------------------------------------------------- platform
+     Four of the five downloads are Windows installers. Offering one to a Mac,
+     a Linux box or a phone is a dead end dressed as a call to action, and the
+     page said "Windows" only in a 12px line under the hero.
 
-    // floating hero art idle
-    gsap.to(".js-hero-art", { y: -10, duration: 3.2, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 1.6 });
+     Progressive enhancement: the note is hidden and empty in the markup, so a
+     wrong guess or a thrown error leaves the ordinary download rows alone. */
+  /* A named function rather than inline logic, because navigator.userAgentData
+     reports the real OS and ignores a spoofed user-agent string — so the only
+     way to test this is to call it with values. window.romPlatform exists for
+     exactly that. */
+  window.romPlatform = function (ua, platform, uaDataMobile) {
+    // userAgentData is authoritative where it exists; the UA string is the
+    // fallback for Safari and Firefox, which do not implement it.
+    if (/Windows/i.test(platform || "") || /Windows NT/i.test(ua)) return null;
+    const both = ua + " " + (platform || "");
+    const mobile = uaDataMobile || /Android|iPhone|iPad|iPod/i.test(ua);
+    if (/Mac|iPhone|iPad|iPod/i.test(both)) return mobile ? "an iPhone or iPad" : "a Mac";
+    if (/Android/i.test(both)) return "Android";
+    if (/Linux|X11|CrOS/i.test(both)) return "Linux";
+    return "this device";
+  };
+
+  try {
+    const uad = navigator.userAgentData;
+    const name = window.romPlatform(
+      navigator.userAgent,
+      (uad && uad.platform) || "",
+      !!(uad && uad.mobile),
+    );
+    if (name) {
+      const note = document.getElementById("platform-note");
+      if (note) {
+        note.innerHTML =
+          '<span>You are on <strong>' + name + "</strong>. Four of these five are Windows " +
+          "installers and will not run here — but <strong>ROM Nova</strong> runs in this browser, " +
+          "and <strong>ROM Polybot</strong> is Python that runs anywhere.</span>" +
+          '<a href="/nova/" class="js-live">Open ROM Nova →</a>';
+        note.hidden = false;
+      }
+
+      // Demote the buttons that hand over an unusable file, without removing
+      // them: someone browsing on a phone may well be choosing what to install
+      // when they get back to their desk.
+      for (const a of document.querySelectorAll('.row .btn[href$=".exe"]')) {
+        a.classList.add("foreign");
+        a.textContent = "Windows .exe";
+      }
+    }
+  } catch (e) {
+    /* the rows are correct as authored */
+  }
+
+  /* --------------------------------------------------------------- verify
+     Turns one command block into four. The markup already contains the Trader
+     command and a sentence naming the swaps, so with no JavaScript nothing is
+     lost — this only saves the reader from doing the substitution by hand. */
+  try {
+    const APPS = [
+      ["ROM Trader", "ROM-Trader-Setup.exe", "rom-apps"],
+      ["ROM Convert", "ROM-Convert-Setup.exe", "rom-convert"],
+      ["ROM Scribe", "ROM-Scribe-Setup.exe", "rom-scribe"],
+      ["ROM Nova", "ROM-Nova-Setup.exe", "rom-nova"],
+    ];
+    const pick = document.getElementById("verify-pick");
+    const cmd = document.getElementById("verify-cmd");
+    const swap = document.getElementById("verify-swap");
+    if (pick && cmd) {
+      const render = (file, repo) => {
+        cmd.textContent =
+          '$f = "$HOME\\Downloads\\' + file + '"\n' +
+          "$want = (irm https://github.com/romanstma-cpu/" + repo +
+          "/releases/latest/download/SHA256SUMS.txt).Split(' ')[0]\n" +
+          'if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES NOT MATCH - do not run it" }';
+      };
+      APPS.forEach(([label, file, repo], i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = label;
+        b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+        b.addEventListener("click", () => {
+          for (const other of pick.children) other.setAttribute("aria-pressed", "false");
+          b.setAttribute("aria-pressed", "true");
+          render(file, repo);
+        });
+        pick.appendChild(b);
+      });
+      pick.hidden = false;
+      // The swap sentence exists for the no-JS reader; the buttons replace it.
+      if (swap) swap.hidden = true;
+    }
+  } catch (e) {
+    /* the Trader command and the swap note are already in the markup */
   }
 
   /* ---------------------------------------------------------------- live app
