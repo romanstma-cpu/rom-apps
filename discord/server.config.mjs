@@ -16,21 +16,6 @@ export const BRAND = {
 export const SITE = "https://romapps.xyz";
 export const GH = "https://github.com/romanstma-cpu";
 
-/**
- * Server identity.
- *
- * `icon` is relative to this file. Discord takes PNG, JPEG or GIF as a base64
- * data URI; 256x256 is accepted and 512 is the recommended source size.
- *
- * setup.mjs only applies the icon when the server has none, so a nicer one
- * uploaded by hand later is never clobbered by a routine re-run. Pass
- * `--rebrand` to overwrite it deliberately.
- */
-export const SERVER = {
-  name: "ROM Apps",
-  icon: "../assets/rom-icon.png",
-};
-
 /** Hoisted roles, created top-down. The bot's own role is managed by Discord. */
 export const ROLES = [
   {

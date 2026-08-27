@@ -55,9 +55,15 @@ node discord/setup.mjs
 
 Needs Node 18+ for native `fetch`. No dependencies, nothing to install.
 
-## 4. The three things the API cannot do for you
+## 4. The three things left to do by hand
 
-- **Server icon** — upload `assets/rom-icon.png` in Server Settings.
+- **Server icon** — upload it in Server Settings → Overview. `PATCH /guilds/{id}`
+  could set this from the config (as a base64 data URI) and the script
+  deliberately does not: it is a one-time click, and a rebrand living in a
+  config file means any routine re-run can overwrite an icon somebody chose
+  later. The Discord-specific cut is a circle on a bright gradient — the square
+  app icon loses its corners to Discord's crop and its dark face disappears
+  against the `#1e1f22` sidebar.
 - **GitHub feed** — `#github` → Edit Channel → Integrations → Webhooks → New
   Webhook → copy the URL. Then on each repo: Settings → Webhooks → Add, paste
   the URL with **`/github`** appended, content type `application/json`, and pick
