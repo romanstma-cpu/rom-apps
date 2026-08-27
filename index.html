@@ -1499,10 +1499,37 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
       });
     });
 
-    gsap.from(".js-card", {
-      y: 36, autoAlpha: 0, duration: 0.65, stagger: 0.12, ease: "power2.out",
-      scrollTrigger: { trigger: ".features", start: "top 85%", toggleActions: "play none none none" }
-    });
+    // Each card is revealed by its own arrival, batched so the ones that come
+    // into view together still stagger.
+    //
+    // This replaces a single gsap.from(".js-card") whose scrollTrigger was
+    // `.features` — a selector matching several blocks, so GSAP bound it to the
+    // first one, which sits ~800px BELOW the screenshot gallery. The gallery's
+    // eight figures are .js-card too, so they were held at autoAlpha 0 until
+    // the scroll reached roughly 2,670px, by which point most of them had
+    // already gone past. Landing anywhere between 1,750 and 2,700 — by
+    // dragging the scrollbar, pressing End, following a hash, or refreshing at
+    // that position — showed two entire screens of nothing, in the one section
+    // whose subtitle reads "No mockups. All five, running."
+    try {
+      gsap.set(".js-card", { y: 36, autoAlpha: 0 });
+      ScrollTrigger.batch(".js-card", {
+        start: "top 92%",
+        once: true,
+        onEnter: (batch) =>
+          gsap.to(batch, {
+            y: 0, autoAlpha: 1, duration: 0.6, stagger: 0.08, ease: "power2.out", overwrite: true,
+          }),
+      });
+    } catch (e) {
+      // A decoration that throws must never leave the page blank. No animation
+      // is a far better outcome than no content.
+      gsap.set(".js-card", { clearProps: "all" });
+    }
+
+    // Lazy images settle after first paint and move everything below them.
+    // Without this the triggers keep firing against stale positions.
+    addEventListener("load", () => ScrollTrigger.refresh());
 
     // floating hero art idle
     gsap.to(".js-hero-art", { y: -10, duration: 3.2, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 1.6 });
