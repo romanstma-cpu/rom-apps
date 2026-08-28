@@ -675,6 +675,58 @@
 
   /* The record lines earn a warmer colour: they are the point, not an aside. */
   .row .meta.record { color: #c0b4d8; }
+
+  /* ---- Kalshi referral ----
+     Sits under the download table because that is where the question arises:
+     you have just taken a Kalshi bot and you need a Kalshi account. Carries
+     the brand gradient rather than the amber of a warning — every other
+     coloured panel on this page means "read this before you click", and an
+     advert wearing that costume devalues the ones that matter.
+
+     Hidden until a referral code is actually configured. Kalshi accepts a code
+     only before the first deposit and within 72 hours of signup, so a link
+     that silently credits nobody cannot be repaired for the person who used
+     it, and shipping a dead one is worse than shipping none. */
+  .promo[hidden] { display: none; }
+
+  .promo {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    flex-wrap: wrap;
+    max-width: 980px;
+    margin: 26px auto 0;
+    padding: 20px 24px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.17), rgba(255, 45, 154, 0.10));
+    border: 1px solid rgba(124, 58, 237, 0.45);
+  }
+
+  .promo-body { flex: 1 1 340px; min-width: 0; }
+
+  .promo-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+
+  .promo-text { font-size: 14px; line-height: 1.6; color: var(--muted); }
+  .promo-text b { color: var(--text); }
+
+  /* Small, never hidden. These conditions are what decide whether the offer is
+     worth anything, so they stay readable instead of becoming texture — which
+     is why this is --muted (5.6:1 here) and not the fainter grey it started
+     as. That measured 4.37:1 against the composited panel, under AA for text
+     this size, and the small print of a financial offer is the last thing that
+     should be the hardest to read on the page. */
+  .promo-fine {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  @media (max-width: 720px) {
+    .promo { padding: 16px 18px; }
+    .promo .btn { width: 100%; text-align: center; }
+  }
   .row .meta.record b { color: var(--text); font-weight: 600; }
 
 
@@ -1169,6 +1221,37 @@
       <span class="meta record">Trades nothing and predicts nothing. Every token, wallet and trade in it is a <b>deterministic simulation</b> — only the SOL price in the top bar is real, and it is labelled LIVE.</span>
     </div>
   </div>
+
+  <!--
+    ROM Trader needs a Kalshi account, so this is the one advert on the page
+    that answers a question the page just raised.
+
+    The headline is Kalshi's own wording. A flat figure would be wrong: the
+    published split is $15 for 70% of claims, $35 for 24%, $75 for 5%, and
+    larger amounts below one percent each. Saying "$25" — a number that appears
+    nowhere in that table — would be the sort of claim this site does not make
+    about its own apps, and it is not going to start making it about somebody
+    else's regulated venue.
+
+    Hidden until a code is set. See the script at the foot of the page.
+  -->
+  <aside class="promo" id="kalshi-promo" hidden>
+    <div class="promo-body">
+      <div class="promo-title">ROM Trader needs a Kalshi account</div>
+      <div class="promo-text">
+        Sign up through this link and Kalshi adds a welcome bonus of <b>up to $500</b> in trading
+        credit to your new account.
+      </div>
+      <div class="promo-fine">
+        Kalshi's offer, not ROM's. Most people get $15 — the published split is $15 for 70% of
+        claims, $35 for 24%, and larger amounts below that. Requires ID verification and a trading
+        requirement Kalshi sets; the credit expires 7 days after it is granted. ROM earns a referral
+        credit if you sign up. Prediction markets carry risk and ROM Trader has never been shown to
+        be profitable — see the record line above.
+      </div>
+    </div>
+    <a class="btn primary" id="kalshi-promo-link" href="https://kalshi.com/r/07e2562a-3ef4-4b05-94e8-889e8d98b238" rel="nofollow sponsored noopener">Sign up on Kalshi ↗</a>
+  </aside>
 </section>
 
 <section class="section" aria-labelledby="shot-h">
@@ -1510,6 +1593,28 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
 
 
 <script type="module">
+  // ---------- Kalshi referral ----------
+  // ROM's referral code, from Kalshi -> Menu -> Referrals. An empty string
+  // leaves the block hidden, which is the point: Kalshi only honours a code
+  // before the first deposit and inside 72 hours of signup, so a link that
+  // credits nobody cannot be fixed after the fact for whoever clicked it.
+  // One string to fill in, in exactly one place.
+  const KALSHI_REFERRAL_CODE = "07e2562a-3ef4-4b05-94e8-889e8d98b238";
+
+  (function referral() {
+    const box = document.getElementById("kalshi-promo");
+    const link = document.getElementById("kalshi-promo-link");
+    if (!box || !link) return;
+    const code = KALSHI_REFERRAL_CODE.trim();
+    // Anything that is not a plain code is refused rather than pasted into a
+    // URL — a full link pasted here by mistake would build nonsense.
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(code)) return;
+    // Kalshi's own short form. Not interchangeable with a hand-built
+    // `sign-up?referral=` query, and a link on the wrong shape credits nobody.
+    link.href = `https://kalshi.com/r/${encodeURIComponent(code)}`;
+    box.hidden = false;
+  })();
+
   // ---------- hero field ----------
   // A dot sheet rippling on two crossed waves, in near-orthographic
   // projection so it fills the hero instead of converging to a vanishing
