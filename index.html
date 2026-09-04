@@ -19,7 +19,7 @@
 <meta property="og:image" content="https://romapps.xyz/assets/og-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="ROM — apps, no strings.">
+<meta property="og:image:alt" content="ROM — See the whales. Trust the numbers. ROM Nova's Whale Radar in a window beside the headline.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ROM — Nova and Trader, honest market tools">
 <meta name="twitter:description" content="A Solana terminal that hunts whale wallets by itself, and a Kalshi bot that publishes its own losing numbers. Free, open source, no account.">
@@ -814,6 +814,122 @@
     .duo { grid-template-columns: 1fr; }
   }
 
+  /* A real frame of the app at the top of each card, in window chrome — the
+     same treatment as the hero's live card, so the two read as one family. */
+  .duo-shot {
+    margin: -24px -24px 6px;
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+    background: #0d0a16;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .duo-chrome { display: flex; gap: 6px; padding: 9px 12px; }
+  .duo-chrome i { width: 9px; height: 9px; border-radius: 50%; background: #3a2f52; }
+
+  .duo-shot picture, .duo-shot img {
+    display: block;
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    object-position: left top;
+  }
+
+  /* ---------- by the numbers ----------
+     Four measured facts, each with where it came from. The brand headline is
+     "trust the numbers", so the numbers on this page carry their provenance
+     or they do not appear. */
+  .numbers-wrap { padding-bottom: 60px; }
+
+  .numbers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  .number {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+
+  .number b {
+    display: block;
+    font-family: "Unbounded", sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    background: linear-gradient(100deg, var(--violet), var(--pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .number span { display: block; font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+  @media (max-width: 880px) { .numbers { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 520px) { .numbers { grid-template-columns: 1fr; } }
+
+  /* ---------- nav links ---------- */
+  .nav-links {
+    display: flex;
+    gap: 22px;
+    margin-left: 26px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  .nav-links a {
+    position: relative;
+    padding: 4px 0;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--violet), var(--pink));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+  .nav-links a:hover::after { transform: scaleX(1); }
+
+  @media (max-width: 700px) { .nav-links { display: none; } }
+
+  /* ---------- section glows ----------
+     Nova's section breathes cyan, Trader's the brand pink — the two apps get
+     their own weather; the utilities stay on the plain void. Behind the
+     content, above the page background. */
+  .glow-nova::before,
+  .glow-trader::before {
+    content: "";
+    position: absolute;
+    /* Inside the section's own box: the blur bleeds visually without adding
+       layout width, so a phone never gets a sideways scroll from a glow. */
+    left: 0;
+    right: 0;
+    top: -60px;
+    height: 460px;
+    z-index: -1;
+    pointer-events: none;
+    filter: blur(70px);
+  }
+
+  .glow-nova::before { background: radial-gradient(45% 60% at 28% 30%, rgba(56, 225, 255, 0.11), transparent 70%); }
+  .glow-trader::before { background: radial-gradient(45% 60% at 72% 30%, rgba(255, 45, 154, 0.11), transparent 70%); }
+
   .smartscreen {
     border: 1px solid rgba(245, 158, 11, 0.35);
     background: rgba(245, 158, 11, 0.06);
@@ -839,6 +955,11 @@
     font-size: 13.5px;
     color: #d5cbe8;
   }
+
+  /* `display: flex` above outranks the UA's [hidden] rule, so on Windows —
+     where the script leaves the note hidden — an empty bordered bar rendered
+     over the downloads table. Hidden means gone. */
+  .platform-note[hidden] { display: none; }
 
   .platform-note strong { color: var(--text); font-weight: 600; }
 
@@ -1094,6 +1215,25 @@
     height: auto;
   }
 
+  /* Window chrome on every shot: the app's own top bar under a title bar
+     with three dots reads as a window on a desk, not a rectangle of pixels. */
+  .shot-frame picture { display: block; padding-top: 26px; }
+
+  .shot-frame::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 26px;
+    background:
+      radial-gradient(circle at 14px 13px, #3a2f52 4px, transparent 5px),
+      radial-gradient(circle at 30px 13px, #3a2f52 4px, transparent 5px),
+      radial-gradient(circle at 46px 13px, #3a2f52 4px, transparent 5px),
+      rgba(14, 10, 22, 0.94);
+    border-bottom: 1px solid var(--border);
+  }
+
   .shot-lede {
     max-width: 1060px;
     margin: -8px auto 30px;
@@ -1164,6 +1304,12 @@
 <nav class="nav">
   <img src="assets/rom-icon.png" alt="ROM logo" width="256" height="256" decoding="async">
   <span class="wordmark">ROM</span>
+  <div class="nav-links">
+    <a href="#nova-h">Nova</a>
+    <a href="#trader-h">Trader</a>
+    <a href="#downloads">Downloads</a>
+    <a href="#verify">Is this safe?</a>
+  </div>
   <a class="gh" href="https://github.com/romanstma-cpu/rom-apps" rel="noopener">github ↗</a>
 </nav>
 
@@ -1237,6 +1383,13 @@
 <section class="section duo-wrap" aria-label="The two market tools">
   <div class="duo">
     <article class="duo-card js-card">
+      <div class="duo-shot" aria-hidden="true">
+        <span class="duo-chrome"><i></i><i></i><i></i></span>
+        <picture>
+          <source srcset="assets/rom-nova-radar.webp" type="image/webp">
+          <img src="assets/rom-nova-radar.png" alt="" width="1586" height="993" loading="lazy" decoding="async">
+        </picture>
+      </div>
       <div class="duo-head">
         <img src="assets/app-nova.png" alt="" width="128" height="128" loading="lazy" decoding="async">
         <h3>ROM NOVA</h3>
@@ -1255,6 +1408,13 @@
     </article>
 
     <article class="duo-card js-card">
+      <div class="duo-shot" aria-hidden="true">
+        <span class="duo-chrome"><i></i><i></i><i></i></span>
+        <picture>
+          <source srcset="assets/rom-trader-signals.webp" type="image/webp">
+          <img src="assets/rom-trader-signals.png" alt="" width="1586" height="993" loading="lazy" decoding="async">
+        </picture>
+      </div>
       <div class="duo-head">
         <img src="assets/app-trader.png" alt="" width="96" height="96" loading="lazy" decoding="async">
         <h3>ROM TRADER</h3>
@@ -1271,6 +1431,27 @@
         <a class="btn quiet" href="#trader-h">Read the record ↓</a>
       </div>
     </article>
+  </div>
+</section>
+
+<section class="section numbers-wrap" aria-label="By the numbers">
+  <div class="numbers">
+    <div class="number js-card">
+      <b>11</b>
+      <span>whale wallets found in ten minutes, on its own — one armed capture of Nova's radar on 4 Sep 2026, the screenshot further down this page.</span>
+    </div>
+    <div class="number js-card">
+      <b>7 / 7</b>
+      <span>strategies Trader measured against its own recorded books, and every one lost after fees. Published here, not hidden.</span>
+    </div>
+    <div class="number js-card">
+      <b>0</b>
+      <span>keys, accounts or servers needed. Nova hunts on two public streams inside your browser; Trader paper-trades until you say otherwise.</span>
+    </div>
+    <div class="number js-card">
+      <b>1,478</b>
+      <span>tests across the two apps — 747 in Nova, 731 in Trader — including suites that drive the running app and real Windows credential encryption.</span>
+    </div>
   </div>
 </section>
 
@@ -1479,7 +1660,7 @@
   </div>
 </section>
 
-<section class="section" aria-labelledby="nova-h">
+<section class="section glow-nova" aria-labelledby="nova-h">
   <h2 class="section-label js-anim" id="nova-h">
     <img class="app-mark" src="assets/app-nova.png" alt="" width="128" height="128" loading="lazy" decoding="async">ROM NOVA
   </h2>
@@ -1523,7 +1704,7 @@
   </div>
 </section>
 
-<section class="section" aria-labelledby="trader-h">
+<section class="section glow-trader" aria-labelledby="trader-h">
   <h2 class="section-label js-anim" id="trader-h">
     <img class="app-mark" src="assets/app-trader.png" alt="" width="96" height="96" loading="lazy" decoding="async">ROM TRADER
   </h2>
