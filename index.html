@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ROM — free Windows apps</title>
-<meta name="description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
+<title>ROM — Nova and Trader, honest market tools</title>
+<meta name="description" content="ROM Nova: a Solana terminal that hunts whale wallets by itself and shows where every number came from. ROM Trader: a Kalshi bot that measures its own strategies and publishes the losses. Free, open source, no account — plus three offline utilities.">
 <link rel="canonical" href="https://romapps.xyz/">
 <meta name="theme-color" content="#0b0812">
 <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -14,15 +14,15 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ROM">
 <meta property="og:url" content="https://romapps.xyz/">
-<meta property="og:title" content="ROM — free Windows apps">
-<meta property="og:description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
+<meta property="og:title" content="ROM — Nova and Trader, honest market tools">
+<meta property="og:description" content="A Solana terminal that hunts whale wallets by itself, and a Kalshi bot that publishes its own losing numbers. Free, open source, no account.">
 <meta property="og:image" content="https://romapps.xyz/assets/og-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="ROM — apps, no strings.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="ROM — free Windows apps">
-<meta name="twitter:description" content="Free Windows apps built by one person. No accounts, no subscriptions, no bloat — download and run.">
+<meta name="twitter:title" content="ROM — Nova and Trader, honest market tools">
+<meta name="twitter:description" content="A Solana terminal that hunts whale wallets by itself, and a Kalshi bot that publishes its own losing numbers. Free, open source, no account.">
 <meta name="twitter:image" content="https://romapps.xyz/assets/og-card.png">
 
 <link rel="icon" type="image/png" href="assets/rom-icon.png">
@@ -70,7 +70,7 @@
     "softwareVersion": "1.15.1",
     "url": "https://romapps.xyz/",
     "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe",
-    "description": "An automated momentum bot for Kalshi prediction markets. Live dashboard, signals feed, strategy presets and risk controls. Dry-run by default.",
+    "description": "An automated momentum bot for Kalshi prediction markets that measures its own strategies against recorded books and publishes the results: seven strategies tested, all lost after fees. Live dashboard, signals feed, risk brakes, an Evidence page that re-runs the study on your own data. Paper-trades by default.",
     "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -127,7 +127,7 @@
     "softwareVersion": "1.14.0",
     "url": "https://romapps.xyz/nova/",
     "downloadUrl": "https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe",
-    "description": "A Solana on-chain intelligence terminal: live trending tokens, on-chain price history, mint and freeze authority read from the chain, and real wallet flow — alongside clearly-labeled simulation for what no keyless source can see. Runs in the browser or as a Windows app. Analytics demonstration, not investment advice.",
+    "description": "A Solana on-chain intelligence terminal with a Whale Radar that discovers and scores whale wallets by itself: live trending tokens, launch forensics read from the creation transaction, a wallet ledger with measured reputation, mint and freeze authority from the chain, real wallet flow — and clearly-labelled simulation for what no keyless source can see. Runs in the browser or as a Windows app. Executes no trades; not investment advice.",
     "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -330,6 +330,10 @@
     max-width: 34ch;
     margin-bottom: 36px;
   }
+
+  /* The two product names in the hero paragraph: bold alone inherits the
+     muted grey and reads as emphasis with the lights off. */
+  .hero p strong { color: var(--text); font-weight: 600; }
 
   .cta-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 
@@ -751,6 +755,65 @@
   .feature h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
   .feature p { color: var(--muted); font-size: 14px; }
 
+  /* ---------- the two that trade ----------
+     Two cards, side by side, straight under the hero: the site is for people
+     who trade, and the two tools that serve them should not be found by
+     scrolling past a file converter. Everything else keeps its section
+     further down. */
+  .duo-wrap { padding-bottom: 60px; }
+
+  .duo {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .duo-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: border-color 0.25s ease, transform 0.25s ease;
+  }
+
+  .duo-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--violet) 55%, var(--border)); }
+
+  .duo-head { display: flex; align-items: center; gap: 12px; }
+
+  .duo-head img { width: 40px; height: 40px; border-radius: 10px; box-shadow: 0 0 0 1px var(--border); }
+
+  .duo-head h3 { font-family: "Unbounded", sans-serif; font-size: 17px; letter-spacing: 1.5px; }
+
+  .duo-head .ver { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  .duo-card > p { font-size: 15px; line-height: 1.55; }
+
+  .duo-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .duo-card li::before { content: "▸ "; color: var(--pink); }
+
+  .duo-card li b { color: var(--text); font-weight: 600; }
+
+  .duo-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
+
+  .duo-actions .btn { font-size: 13px; padding: 10px 16px; }
+
+  @media (max-width: 880px) {
+    .duo { grid-template-columns: 1fr; }
+  }
+
   .smartscreen {
     border: 1px solid rgba(245, 158, 11, 0.35);
     background: rgba(245, 158, 11, 0.06);
@@ -1113,15 +1176,15 @@
   <header class="hero">
     <div class="hero-copy">
       <h1>
-        <span class="line"><span class="lw js-word">Apps.</span></span>
-        <span class="line"><span class="lw js-word grad">No&nbsp;strings.</span></span>
+        <span class="line"><span class="lw js-word">See the whales.</span></span>
+        <span class="line"><span class="lw js-word grad">Trust the numbers.</span></span>
       </h1>
-      <p class="js-anim">Five free Windows apps, built by one person. Two of them trade real markets — with no proven edge, and this site shows you the losing numbers. One runs right here, in this tab.</p>
+      <p class="js-anim">Two free tools for people who trade, built by one person. <strong>ROM Nova</strong> is a Solana terminal that hunts whale wallets on its own and names the source of every number. <strong>ROM Trader</strong> is a Kalshi bot that measures its own strategies — and this site shows you that they lose. No accounts, no keys required. Nova runs right here, in this tab.</p>
       <div class="cta-row js-anim">
-        <a class="btn primary js-live" href="/nova/">Try one in your browser</a>
-        <a class="btn quiet" href="#downloads">See the apps ↓</a>
+        <a class="btn primary js-live" href="/nova/">Launch Nova in your browser</a>
+        <a class="btn quiet" href="#downloads">Download ROM Trader ↓</a>
       </div>
-      <div class="cta-note js-anim" id="cta-note">Trading bots · transcription · file conversion · a market terminal — Windows, free, open source</div>
+      <div class="cta-note js-anim" id="cta-note">ROM Nova · ROM Trader · plus Convert, Scribe and Polybot — Windows, free, open source</div>
     </div>
 
     <!--
@@ -1171,6 +1234,46 @@
   <div class="scroll-hint" aria-hidden="true">SCROLL ▾</div>
 </div>
 
+<section class="section duo-wrap" aria-label="The two market tools">
+  <div class="duo">
+    <article class="duo-card js-card">
+      <div class="duo-head">
+        <img src="assets/app-nova.png" alt="" width="128" height="128" loading="lazy" decoding="async">
+        <h3>ROM NOVA</h3>
+        <span class="ver">v1.14.0</span>
+      </div>
+      <p>A Solana intelligence terminal that finds the wallets worth following — by itself, from two public streams, with no key.</p>
+      <ul>
+        <li><b>Whale Radar.</b> Arm it: every pump.fun launch and trade watched, wallets that buy big at launch tracked, every fill journaled, scores earned from settled round trips only.</li>
+        <li><b>Launch forensics.</b> Bundled, sniped, dev-sold — measured from the creation transaction, fed into the score.</li>
+        <li><b>Honest by construction.</b> Every panel names its source; what no keyless source can see is labelled a simulation, not dressed as data. It executes no trades.</li>
+      </ul>
+      <div class="duo-actions">
+        <a class="btn primary js-live" href="/nova/">Launch in your browser</a>
+        <a class="btn quiet" href="https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe">Windows installer</a>
+      </div>
+    </article>
+
+    <article class="duo-card js-card">
+      <div class="duo-head">
+        <img src="assets/app-trader.png" alt="" width="96" height="96" loading="lazy" decoding="async">
+        <h3>ROM TRADER</h3>
+        <span class="ver">v1.15.1</span>
+      </div>
+      <p>A Kalshi momentum bot that measures its own strategies against the books it recorded — and shows you the result before you risk a cent.</p>
+      <ul>
+        <li><b>Seven strategies measured, every one lost after fees.</b> Momentum, ladder arbitrage, resting orders, the favourite band, liquidity provision, a fair-value model, order flow. That sentence is the product's honesty, not its failure.</li>
+        <li><b>The Evidence page</b> re-runs the calibration study on your own recording, offline, with intervals clustered by event.</li>
+        <li><b>Brakes and paper first.</b> Daily loss limit, losing-streak halt, fee-clearing refusal, one bet per event ladder. Real orders need your own keys and an explicit switch.</li>
+      </ul>
+      <div class="duo-actions">
+        <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download for Windows</a>
+        <a class="btn quiet" href="#trader-h">Read the record ↓</a>
+      </div>
+    </article>
+  </div>
+</section>
+
 <section class="section" id="downloads" aria-labelledby="dl-h">
   <h2 class="section-label js-anim" id="dl-h">DOWNLOADS</h2>
 
@@ -1185,7 +1288,15 @@
       <span>App</span><span>Version</span><span>Size</span><span></span>
     </div>
     <div class="row js-row">
-      <span class="name"><strong>ROM Trader</strong>Kalshi momentum bot — live dashboard, signals feed, risk brakes</span>
+      <span class="name"><strong>ROM Nova</strong>Solana intelligence terminal — arm the Whale Radar and it discovers profitable wallets by itself, track any wallet off the chain, watch new pools triaged as they launch, audit every token's score · or <a href="/nova/">launch it in your browser</a></span>
+      <span class="ver">v1.14.0</span>
+      <span class="size">79 MB</span>
+      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe">Download</a>
+      <span class="meta record">Trades nothing and predicts nothing. Most of it is now real Solana — tokens, holder concentration, mint and freeze authority, wallet flow, LP-lock risk, launch forensics, the radar's own journal — and the chip in the nav names which parts still aren't. It also keeps a <b>forward-tested record of its own scoring</b>, and that record is allowed to say the score predicts nothing.</span>
+    </div>
+
+    <div class="row js-row">
+      <span class="name"><strong>ROM Trader</strong>Kalshi momentum bot — live dashboard, signals feed, risk brakes, an Evidence page that measures it on your own data</span>
       <span class="ver">v1.15.1</span>
       <span class="size">100 MB</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Download</a>
@@ -1214,14 +1325,6 @@
       <span class="size">source</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot">Get source</a>
       <span class="meta record">Python 3.10+ · Windows, macOS and Linux · paper mode by default. Its first four-hour paper session <b>closed down $7.10</b>, and that screenshot is further down this page.</span>
-    </div>
-
-    <div class="row js-row">
-      <span class="name"><strong>ROM Nova</strong>Solana intelligence terminal — arm the Whale Radar and it discovers profitable wallets by itself, track any wallet off the chain, watch new pools triaged as they launch, audit every token's score · or <a href="/nova/">launch it in your browser</a></span>
-      <span class="ver">v1.14.0</span>
-      <span class="size">79 MB</span>
-      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe">Download</a>
-      <span class="meta record">Trades nothing and predicts nothing. Most of it is now real Solana — tokens, holder concentration, mint and freeze authority, wallet flow, LP-lock risk — and the chip in the nav names which parts still aren't. It also keeps a <b>forward-tested record of its own scoring</b>, and that record is allowed to say the score predicts nothing.</span>
     </div>
   </div>
 
@@ -1259,9 +1362,33 @@
 
 <section class="section" aria-labelledby="shot-h">
   <h2 class="section-label js-anim" id="shot-h">THE REAL THING</h2>
-  <p class="shot-lede js-anim">No mockups. All five, running.</p>
+  <p class="shot-lede js-anim">No mockups. All five, running — the two market tools first.</p>
 
   <div class="shot-wrap">
+    <figure class="shot-fig js-card">
+      <div class="shot-frame">
+        <picture>
+          <source srcset="assets/rom-nova-dashboard.webp" type="image/webp">
+          <img src="assets/rom-nova-dashboard.png"
+               alt="ROM Nova dashboard with a live SOL reference price, ranked conviction signals with confidence and bear cases, a 3D network of tokens and wallets, a streaming whale activity feed and a net whale flow chart"
+               width="1586" height="993" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="shot-cap">ROM Nova — the command center: ranked signals with their bear cases, and every panel labelled with where its data actually came from.</figcaption>
+    </figure>
+
+    <figure class="shot-fig js-card">
+      <div class="shot-frame">
+        <picture>
+          <source srcset="assets/rom-nova-network.webp" type="image/webp">
+          <img src="assets/rom-nova-network.png"
+               alt="ROM Nova 3D network view: tokens as glowing spheres brightened by signal strength, wallets orbiting as smaller nodes, trade particles in flight, red halos on risky tokens and a time machine slider at the bottom"
+               width="1586" height="993" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="shot-cap">The 3D network — signal strength as brightness, risk as a red halo, and a time machine that only shows what was knowable.</figcaption>
+    </figure>
+
     <figure class="shot-fig js-card">
       <div class="shot-frame">
         <picture>
@@ -1333,30 +1460,94 @@
       </div>
       <figcaption class="shot-cap">Scribe — mid-transcription, the words appearing as they're heard. All of it offline.</figcaption>
     </figure>
+  </div>
+</section>
 
-    <figure class="shot-fig js-card">
-      <div class="shot-frame">
-        <picture>
-          <source srcset="assets/rom-nova-dashboard.webp" type="image/webp">
-          <img src="assets/rom-nova-dashboard.png"
-               alt="ROM Nova dashboard with a live SOL reference price, ranked conviction signals with confidence and bear cases, a 3D network of tokens and wallets, a streaming whale activity feed and a net whale flow chart"
-               width="1586" height="993" loading="lazy" decoding="async">
-        </picture>
-      </div>
-      <figcaption class="shot-cap">ROM Nova — the command center: ranked signals with their bear cases, and every panel labelled with where its data actually came from.</figcaption>
-    </figure>
+<section class="section" aria-labelledby="nova-h">
+  <h2 class="section-label js-anim" id="nova-h">
+    <img class="app-mark" src="assets/app-nova.png" alt="" width="128" height="128" loading="lazy" decoding="async">ROM NOVA
+  </h2>
+  <p class="section-lede js-anim">
+    It hunts whales by itself.
+    <span><a href="/nova/">Launch it in your browser</a> — or install the Windows app. Keyless, no account.</span>
+  </p>
+  <div class="features">
+    <div class="feature js-card">
+      <h3>The Whale Radar</h3>
+      <p>Arm it and the app watches every pump.fun launch and every bonding-curve trade from two public streams. A wallet that buys big in a launch's first minutes gets tracked; every fill it makes afterwards is journaled and scored from settled round trips only. When a wallet already proven at 70+ buys again, you get the signal on whatever page you're on. It remembers everything across restarts.</p>
+    </div>
 
-    <figure class="shot-fig js-card">
-      <div class="shot-frame">
-        <picture>
-          <source srcset="assets/rom-nova-network.webp" type="image/webp">
-          <img src="assets/rom-nova-network.png"
-               alt="ROM Nova 3D network view: tokens as glowing spheres brightened by signal strength, wallets orbiting as smaller nodes, trade particles in flight, red halos on risky tokens and a time machine slider at the bottom"
-               width="1586" height="993" loading="lazy" decoding="async">
-        </picture>
-      </div>
-      <figcaption class="shot-cap">The 3D network — signal strength as brightness, risk as a red halo, and a time machine that only shows what was knowable.</figcaption>
-    </figure>
+    <div class="feature js-card">
+      <h3>Launch forensics</h3>
+      <p>Open any token and it reads the launch off the chain: who bought inside the creation transaction, who sniped the first slots, what share of the supply that was, and whether the deployer and those wallets are still holding. Measured from the creation transaction itself, then fed into the score.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>A wallet ledger with a memory</h3>
+      <p>Public RPC forgets a wallet after two days. Record one and Nova keeps accumulating its fills, replays them into a measured reputation, and refuses to call anyone smart money under ten round trips over seven observed days — with the gaps named, because a closed app did not observe those hours.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>A launch feed that grades itself</h3>
+      <p>New pools triaged as they land, pushed over a socket within a second of creation. Every verdict is recorded and graded an hour and a day later against what the token actually did — a forward-tested record the app is allowed to lose.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Signals that argue their case</h3>
+      <p>Every setup gets a 0&ndash;100 score built from named evidence — whale flow, holder growth, liquidity, volume, launch forensics — with the weights visible, a stated confidence, a bear case, and the conditions that would invalidate it. When the evidence is thin, the engine says NO TRADE instead of inventing conviction.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Honest about its sources</h3>
+      <p>Every panel carries a chip naming where its data came from, and the parts no keyless source can see are labelled a simulation instead of dressed as data. Your workspace stays in your browser; nothing is uploaded, and nothing ever executes a trade. An optional Helius key you paste yourself extends the radar's coverage — stored in your browser, sent nowhere else.</p>
+    </div>
+  </div>
+  <div class="smartscreen js-anim">
+    <strong>What's real here:</strong> most of it — trending tokens, prices and candles, mint and freeze authority, holder concentration, wallet flow, launches, launch forensics, and everything the Whale Radar journals, all read keylessly in your own browser. The chip in the app's nav names what is still a labelled simulation. Scores are ranked evidence, not predictions; a fresh radar shows zero signals until wallets earn them; and nothing here is financial advice.
+  </div>
+</section>
+
+<section class="section" aria-labelledby="trader-h">
+  <h2 class="section-label js-anim" id="trader-h">
+    <img class="app-mark" src="assets/app-trader.png" alt="" width="96" height="96" loading="lazy" decoding="async">ROM TRADER
+  </h2>
+  <p class="section-lede js-anim">
+    A bot that measures itself, and publishes the answer.
+    <span>Paper-trades until you say otherwise.</span>
+  </p>
+  <div class="features">
+    <div class="feature js-card">
+      <h3>Momentum engine</h3>
+      <p>Scans the most liquid Kalshi markets closing within two hours and rides short-term price moves — take-profit, stop-loss and reversal exits built in. One bet per event ladder: sibling strikes of the same hour count as a single position, and a ladder that stops you out locks itself until the cooldown passes.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>It shows its work</h3>
+      <p>A live signals feed lists every market the last sweep looked at, with the reason it did or didn’t qualify — spread too wide, price out of range, momentum under the trigger, too close to close.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>The Evidence page</h3>
+      <p>Runs the calibration study on your own recording, offline: what the book quoted against what actually settled, bucketed by price, with intervals clustered by event — because a ladder of strikes over one hour is one trial, not fifteen. It reproduces the finding that retired seven strategies, on your data.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Test it before you trust it</h3>
+      <p>Every market sweep is recorded while it runs. Replay that data through your settings and all three presets at once — the same code that trades live, the same hours of market, side by side. The train/test sweep labels any sub-ten-trade out-of-sample winner as noise, because that is what it is.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Brakes that work</h3>
+      <p>Paper-trades by default — real orders need your own API keys and an explicit switch. Then it stops itself: on a daily loss limit, on a run of losses, and outside the hours you allow. It refuses any trade whose target can’t clear Kalshi’s round-trip fee, and any entry whose stop could never fire. One-click flatten, and a cooldown so it can’t sell and instantly re-buy the same market.</p>
+    </div>
+
+    <div class="feature js-card">
+      <h3>Runs in the background, open source</h3>
+      <p>Close the window and it keeps trading from the tray, where stop and close-all also live. Toasts report each open and close; updates download quietly but never install mid-session, because restarting would abandon open positions. On GitHub under MIT with 731 tests, including suites that run against real Windows credential encryption and drive the running app itself.</p>
+    </div>
+  </div>
+  <div class="smartscreen js-anim">
+    <strong>Before you run it:</strong> seven strategies have been measured against its own recorded books — momentum, ladder arbitrage, resting orders, the favourite band, liquidity provision, a fair-value model, and order flow — and <em>every one lost after fees</em>. That is why it ships paper-first, and why the Evidence page exists: the measuring apparatus is the part that works. It only places real orders once you add your own Kalshi keys and switch live mode on yourself. Nothing here is financial advice.
   </div>
 </section>
 
@@ -1398,50 +1589,6 @@
       <h3>Trim and shrink</h3>
       <p>Cut to a section, cap the resolution, or pick a smaller quality preset when the file needs to fit somewhere. Audio can be pulled straight out of a video in one step.</p>
     </div>
-  </div>
-</section>
-
-<section class="section" aria-labelledby="trader-h">
-  <h2 class="section-label js-anim" id="trader-h">
-    <img class="app-mark" src="assets/app-trader.png" alt="" width="96" height="96" loading="lazy" decoding="async">ROM TRADER
-  </h2>
-  <p class="section-lede js-anim">
-    A bot that shows its work, and stops itself.
-    <span>Paper-trades until you say otherwise.</span>
-  </p>
-  <div class="features">
-    <div class="feature js-card">
-      <h3>Momentum engine</h3>
-      <p>Scans the most liquid Kalshi markets closing within two hours and rides short-term price moves — take-profit, stop-loss and reversal exits built in.</p>
-    </div>
-
-    <div class="feature js-card">
-      <h3>It shows its work</h3>
-      <p>A live signals feed lists every market the last sweep looked at, with the reason it did or didn’t qualify — spread too wide, price out of range, momentum under the trigger.</p>
-    </div>
-
-    <div class="feature js-card">
-      <h3>Test it before you trust it</h3>
-      <p>Every market sweep is recorded while it runs. Replay that data through your settings and all three presets at once — the same code that trades live, the same hours of market, four sets of results side by side. It won’t tell you what happens next, but it will tell you which settings were obviously worse.</p>
-    </div>
-
-    <div class="feature js-card">
-      <h3>Brakes that work</h3>
-      <p>Paper-trades by default — real orders need your own API keys and an explicit switch. Then it stops itself: on a daily loss limit, on a run of losses in a row, and outside the hours you allow. It also refuses any trade whose target can’t clear Kalshi’s round-trip fee, because those lose money however often they win. Plus one-click flatten and a cooldown so it can’t sell and instantly re-buy the same market.</p>
-    </div>
-
-    <div class="feature js-card">
-      <h3>Runs in the background</h3>
-      <p>Close the window and it keeps trading from the tray, where stop and close-all also live. Toasts report each open and close, and make a sound only when the engine has stopped itself — the one you actually need to hear. Updates download quietly but never install mid-session, because restarting would abandon open positions.</p>
-    </div>
-
-    <div class="feature js-card">
-      <h3>Open source</h3>
-      <p>On GitHub under MIT, with 197 assertions — including suites that run against real Windows credential encryption and drive the running app itself. Per-user installer, uninstalls clean: no account, no background services.</p>
-    </div>
-  </div>
-  <div class="smartscreen js-anim">
-    <strong>Before you run it:</strong> ROM Trader is a momentum heuristic, not a proven edge — it has no demonstrated profitability, and fees and spread work against it. It ships in dry-run and only places real orders once you add your own Kalshi keys and switch live mode on yourself. Nothing here is financial advice.
   </div>
 </section>
 
@@ -1513,35 +1660,6 @@
   </div>
 </section>
 
-<section class="section" aria-labelledby="nova-h">
-  <h2 class="section-label js-anim" id="nova-h">
-    <img class="app-mark" src="assets/app-nova.png" alt="" width="128" height="128" loading="lazy" decoding="async">ROM NOVA
-  </h2>
-  <p class="section-lede js-anim">
-    A Solana intelligence terminal.
-    <span><a href="/nova/">Launch it in your browser</a> — or install the Windows app.</span>
-  </p>
-  <div class="features">
-    <div class="feature js-card">
-      <h3>Signals that argue their case</h3>
-      <p>Every setup gets a 0&ndash;100 score built from named evidence — whale flow, holder growth, liquidity, volume — with the weights visible, a stated confidence, a bear case, and the conditions that would invalidate it. When the evidence is thin, the engine says NO TRADE instead of inventing conviction.</p>
-    </div>
-
-    <div class="feature js-card">
-      <h3>A market you can fly through</h3>
-      <p>Tokens hang as planets that brighten with signal strength; wallets orbit them, trades cross the dark as particles, and risky tokens wear a red halo. Five scene modes and a time machine that reconstructs any moment from the past week — showing only what was knowable then.</p>
-    </div>
-
-    <div class="feature js-card">
-      <h3>Learn without losing</h3>
-      <p>A paper trading desk with honest fills — slippage, fees, and orders rejected when they'd eat the pool — plus a backtesting lab whose anti-lookahead check fails the run loudly if any entry ever saw the future. Your workspace stays in your browser; nothing is uploaded.</p>
-    </div>
-  </div>
-  <div class="smartscreen js-anim">
-    <strong>What's real here:</strong> one number — the SOL price in the top bar, cross-checked between two public APIs and labeled LIVE. Every token, wallet, and trade around it is a deterministic simulation, and the app says so on every page. It's a demonstration of honest analytics method, not market data — and nothing on it is financial advice.
-  </div>
-</section>
-
 <section class="section" id="verify" aria-labelledby="verify-h">
   <h2 class="section-label js-anim" id="verify-h">IS THIS SAFE?</h2>
   <p class="shot-lede js-anim">A fair question to ask of a free download from someone you’ve never heard of.</p>
@@ -1588,6 +1706,7 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
   <div class="foot">
     <img src="assets/rom-icon.png" alt="" width="256" height="256" loading="lazy" decoding="async">
     <span>© 2026 ROM — free Windows apps</span>
+    <a href="https://github.com/romanstma-cpu/rom-nova" rel="noopener">Nova source ↗</a>
     <a href="https://github.com/romanstma-cpu/rom-trader" rel="noopener">Trader source ↗</a>
     <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert source ↗</a>
     <a href="https://github.com/romanstma-cpu/rom-apps/releases" rel="noopener">releases ↗</a>
@@ -1922,7 +2041,11 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
      The iframe is built on click and never before — nobody who came here for
      the Convert download should pay to load a WebGL app they did not open. */
   {
-    const NOVA = "/nova/network/";
+    // The dashboard, not the 3D network: the embed used to open the scene
+    // that looks best in a screenshot, and a trader landed on eye candy. The
+    // dashboard shows real Solana the moment it opens, and the Whale Radar
+    // is one click away in its rail.
+    const NOVA = "/nova/";
     let open = null;
 
     const close = () => {
