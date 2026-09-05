@@ -124,7 +124,7 @@
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Windows 10, Windows 11 (installer) or any modern browser",
     "browserRequirements": "Requires JavaScript and WebGL",
-    "softwareVersion": "1.23.0",
+    "softwareVersion": "1.24.0",
     "url": "https://romapps.xyz/nova/",
     "downloadUrl": "https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe",
     "description": "A Solana on-chain intelligence terminal with a Whale Radar that discovers and scores whale wallets by itself, grades its own signals, announces the wallet's exit, and runs a copy desk that holds no key: live trending tokens, launch forensics read from the creation transaction, a wallet ledger with measured reputation, mint and freeze authority from the chain, real wallet flow — and clearly-labelled simulation for what no keyless source can see. Runs in the browser or as a Windows app. Executes no trades; not investment advice.",
@@ -1393,7 +1393,7 @@
       <div class="duo-head">
         <img src="assets/app-nova.png" alt="" width="128" height="128" loading="lazy" decoding="async">
         <h3>ROM NOVA</h3>
-        <span class="ver">v1.23.0</span>
+        <span class="ver">v1.24.0</span>
       </div>
       <p>A Solana intelligence terminal that finds the wallets worth following — by itself, from two public streams, with no key.</p>
       <ul>
@@ -1451,8 +1451,8 @@
       <span>keys, accounts or servers needed. Nova hunts on two public streams inside your browser; Trader paper-trades until you say otherwise.</span>
     </div>
     <div class="number js-card">
-      <b>1,594</b>
-      <span>tests across the two apps — 863 in Nova, 731 in Trader — including suites that drive the running app and real Windows credential encryption.</span>
+      <b>1,606</b>
+      <span>tests across the two apps — 875 in Nova, 731 in Trader — including suites that drive the running app and real Windows credential encryption.</span>
     </div>
   </div>
 </section>
@@ -1472,7 +1472,7 @@
     </div>
     <div class="row js-row">
       <span class="name"><strong>ROM Nova</strong>Solana intelligence terminal — arm the Whale Radar and it discovers profitable wallets by itself, track any wallet off the chain, watch new pools triaged as they launch, audit every token's score · or <a href="/nova/">launch it in your browser</a></span>
-      <span class="ver">v1.23.0</span>
+      <span class="ver">v1.24.0</span>
       <span class="size">79 MB</span>
       <a class="btn primary" href="https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe">Download</a>
       <span class="meta record">Trades nothing and predicts nothing. Most of it is now real Solana — tokens, holder concentration, mint and freeze authority, wallet flow, LP-lock risk, launch forensics, the radar's own journal — and the chip in the nav names which parts still aren't. It also keeps a <b>forward-tested record of its own scoring</b>, and that record is allowed to say the score predicts nothing.</span>
@@ -1701,10 +1701,68 @@
       <p>Every panel carries a chip naming where its data came from, and the parts no keyless source can see are labelled a simulation instead of dressed as data. Your workspace stays in your browser; nothing is uploaded, and nothing ever executes a trade. An optional Helius key you paste yourself extends the radar's coverage — stored in your browser, sent nowhere else.</p>
     </div>
   </div>
+  <div class="features" style="grid-template-columns: 1fr;">
+    <div class="feature js-card" id="hosted-radar">
+      <h3>The hosted radar</h3>
+      <p>ROM runs this same Whale Radar on a server around the clock and pushes what it finds into the app: signals with their grades and the wallet's exit, the wallets it has proved, and a graded model that says in one word whether it has earned any trust. <span id="hosted-state">Open to anyone today — no account needed.</span> <span id="hosted-live"></span></p>
+      <p>Connect it from the app's Account page. The sentence above is read from the radar itself as this page loads — its gate, its price if it has one, its live counts — not typed here. Nothing executes a trade, and a plan buys coverage, never a return.</p>
+    </div>
+  </div>
   <div class="smartscreen js-anim">
     <strong>What's real here:</strong> most of it — trending tokens, prices and candles, mint and freeze authority, holder concentration, wallet flow, launches, launch forensics, and everything the Whale Radar journals, all read keylessly in your own browser. The chip in the app's nav names what is still a labelled simulation. Scores are ranked evidence, not predictions; a fresh radar shows zero signals until wallets earn them; and nothing here is financial advice.
   </div>
 </section>
+<script>
+  /* The hosted radar in its own words: its gate, its price if it has one,
+     and its live counts, read from the radar as this page loads. With
+     JavaScript off, or with the radar asleep, the paragraph stands as
+     written — "open to anyone today" is its state at the time of writing. */
+  (() => {
+    const RADAR = "https://rom-nova-radar.onrender.com";
+    const state = document.getElementById("hosted-state");
+    const live = document.getElementById("hosted-live");
+    if (!state || !live || typeof fetch !== "function") return;
+    const money = (p) => {
+      try {
+        const zero = ["jpy", "krw", "vnd", "clp", "isk", "huf", "twd"].includes(String(p.currency).toLowerCase());
+        const amount = new Intl.NumberFormat("en-US", { style: "currency", currency: String(p.currency).toUpperCase() }).format(zero ? p.amount : p.amount / 100);
+        return amount + (p.interval ? " / " + p.interval : "");
+      } catch {
+        return null;
+      }
+    };
+    fetch(RADAR + "/config")
+      .then((r) => r.json())
+      .then((c) => {
+        if (c.access === "subscription") {
+          const p = c.billing && c.billing.price;
+          const price = p && typeof p.amount === "number" && p.currency ? money(p) : null;
+          state.textContent = price
+            ? "A plan, " + price + ", cancel any time — that price is read from the radar, not typed on this page."
+            : "A plan — the price is shown at checkout in the app.";
+        } else if (c.access === "account") {
+          state.textContent = "Free with a sign-in on the app's Account page — an email and a six-digit code, no password.";
+        } else {
+          state.textContent = "Open to anyone today — no account needed.";
+        }
+      })
+      .catch(() => {});
+    fetch(RADAR + "/health")
+      .then((r) => r.json())
+      .then((h) => {
+        const c = h.counts || {};
+        const hours = Math.floor((h.uptime_s || 0) / 3600);
+        const verdict = h.model && h.model.verdict ? h.model.verdict : null;
+        live.textContent =
+          "Live as you read this: " +
+          Number(c.tracked || 0).toLocaleString() + " wallets tracked, " +
+          Number(c.signals || 0).toLocaleString() + " signals and " +
+          Number(c.graded || 0).toLocaleString() + " grades since its last restart " + hours + "h ago" +
+          (verdict ? ", and the model's verdict on itself is “" + verdict + "”" : "") + ".";
+      })
+      .catch(() => {});
+  })();
+</script>
 
 <section class="section glow-trader" aria-labelledby="trader-h">
   <h2 class="section-label js-anim" id="trader-h">
