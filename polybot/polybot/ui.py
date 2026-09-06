@@ -9,7 +9,8 @@ import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from .branding import APP_NAME, LOGO_URI
+from .branding import APP_NAME, LOGO_URI, safe_console
+from .fees import taker_fee
 from .engine import Engine
 
 log = logging.getLogger(__name__)
@@ -134,10 +135,16 @@ def _state(engine: Engine) -> dict:
     for p in list(engine.portfolio.positions):  # engine thread mutates these
         hist = engine.history.get(p.market.condition_id)
         mid = hist[-1].mid if hist else p.entry_price
+        # Net, like the realized figure beside it. Showing gross here while
+        # the ledger books net would put two different P&Ls on one screen
+        # and make the header stats disagree with the trade history.
+        exit_fee = taker_fee(p.shares, p.held_token_price(mid),
+                             engine.fees.cached_rate(p.market.condition_id))
         positions.append({
             "side": p.side, "strategy": p.strategy, "entry": p.entry_price,
             "mark": round(p.held_token_price(mid), 4),
-            "pnl": round(p.pnl(mid), 2), "question": p.market.question,
+            "pnl": round(p.net_pnl(mid, exit_fee), 2),
+            "question": p.market.question,
         })
     markets = []
     for m in list(engine.markets):
@@ -228,6 +235,7 @@ def main_windows() -> None:
 
     from .config import Config
 
+    safe_console()
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(levelname)-7s %(message)s",
                         datefmt="%H:%M:%S")

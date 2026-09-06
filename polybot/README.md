@@ -19,13 +19,22 @@ and trade decision is plain Python you can read and change.
   - `sentiment_shift` — trade sharp changes in order-book imbalance
   - `manual` — no auto entries; the engine only manages exits for you
 - **Category-based trading** — politics, crypto, sports, culture, finance,
-  news… monitor any Polymarket categories, with per-category overrides.
+  news… monitor any Polymarket tag, with per-category overrides. Discovery
+  runs over Gamma's `/events`, which is the endpoint that actually honours a
+  tag filter, so a market's category is the tag it was found under and sibling
+  markets of one event are grouped exactly rather than guessed at.
 - **Risk manager** — max position size, max open positions, per-category and
   per-event caps (sibling markets of one event are a single bet), spread and
   price band filters, daily loss stop, take-profit / stop-loss exits, and
   settlement of positions whose market resolves out from under them.
 - **Paper mode by default** — full simulation against live market data with a
   local portfolio ledger. Live mode uses `py-clob-client` and is opt-in.
+- **Fees are charged, not assumed away** — Polymarket bills the taker
+  `shares x rate x price x (1 - price)`, and this bot takes on both legs. The
+  rate is read per market from the exchange and applied to paper fills too, so
+  the ledger reports what the exchange would actually have paid out. It matters
+  more than it sounds: a +20% / -12% system looks like it breaks even at a
+  37.5% win rate when fees are ignored, and needs closer to 59% once they are.
 - **Plain data sources** — Polymarket's public Gamma API (market discovery)
   and CLOB API (books, prices, trade tape). No accounts needed to observe.
 
@@ -76,7 +85,11 @@ Paper mode is the default and needs no keys. To trade live:
 ## Before you run it
 
 ROM Polybot's strategies are heuristics, not a proven edge — they have no
-demonstrated profitability, and spreads and fees work against you. It ships
+demonstrated profitability. The bot now charges itself the real taker fee on
+both legs, which makes the paper ledger honest but does not make the
+strategies good: it mostly reveals how much of a winning move the spread and
+the fee were always taking. Nothing here measures whether any strategy has an
+edge, and until something does, assume none of them do. It ships
 in paper mode and only places real orders once you install
 `py-clob-client`, provide your own keys, and switch live mode on yourself.
 Prediction markets can move fast and resolve against you; only trade money
@@ -89,8 +102,10 @@ trading may not be permitted in your jurisdiction — that's on you to check.
 polybot/
   config.py      # YAML config + env loading
   models.py      # Market, Snapshot, Signal, Position dataclasses
-  gamma.py       # Gamma API client (market discovery, categories)
+  http.py        # one retrying HTTP session for every client
+  gamma.py       # Gamma API client (event-based discovery, categories)
   clob.py        # CLOB API client (midpoints, books, trade tape)
+  fees.py        # taker fee model + per-market rates from the exchange
   strategies/    # one file per strategy, all subclass Strategy
   risk.py        # RiskManager: entry gating + exit rules
   portfolio.py   # paper ledger (JSON on disk) and P&L

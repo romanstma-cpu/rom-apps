@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import logging
 
+from .branding import safe_console
 from .config import Config
 from .engine import Engine
 
@@ -63,6 +64,7 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("-c", "--config", help="path to config yaml")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
+    safe_console()
     _setup_logging(args.verbose)
     cfg = Config.load(args.config)
     engine = Engine(cfg)

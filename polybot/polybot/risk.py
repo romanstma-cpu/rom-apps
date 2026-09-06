@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import time
 
+from .fees import taker_fee
 from .models import Position, Signal, Snapshot
 
 
@@ -28,7 +29,8 @@ class RiskManager:
         m = self.cfg.get("markets", {})
         return snap.spread <= float(m.get("max_spread", 0.05))
 
-    def exits_reachable(self, side: str, snap: Snapshot, category: str) -> tuple[bool, str]:
+    def exits_reachable(self, side: str, snap: Snapshot, category: str,
+                        fee_rate: float = 0.0) -> tuple[bool, str]:
         """Whether the percentage exits actually exist on the price line.
 
         Prediction-market prices live in [0, 1], and percentage exits ignore
@@ -50,6 +52,18 @@ class RiskManager:
         target = held * (1.0 + float(risk.get("take_profit_pct", 0.20)))
         if target >= 0.99:
             return False, (f"take-profit {target:.3f} beyond the $1 ceiling from {held:.3f}")
+        # A target that exists on the price line can still be one the fees
+        # eat. Polybot takes on both legs, and the fee is heaviest at mid
+        # price — precisely where most of its trading lives. Per share, so
+        # size cancels out of the comparison.
+        if fee_rate > 0:
+            entry_fee = taker_fee(1.0, held, fee_rate)
+            exit_fee = taker_fee(1.0, target, fee_rate)
+            net_pct = ((target - held) - entry_fee - exit_fee) / (held + entry_fee)
+            floor = float(risk.get("min_net_take_profit", 0.05))
+            if net_pct < floor:
+                return False, (f"take-profit nets {net_pct:+.1%} after fees, "
+                               f"under the {floor:.0%} floor")
         return True, "ok"
 
     def entry_size(self, signal: Signal) -> float:
@@ -91,10 +105,19 @@ class RiskManager:
             return False, "max position size in market"
         return True, "ok"
 
-    def should_exit(self, pos: Position, yes_mid: float) -> str | None:
-        """Return a reason string if the position should be closed."""
+    def should_exit(self, pos: Position, yes_mid: float,
+                    fee_rate: float = 0.0) -> str | None:
+        """Return a reason string if the position should be closed.
+
+        The thresholds are measured on NET P&L — after the fee already paid
+        to enter and the fee it would cost to leave right now. A +20% take
+        profit that books +13% once the exchange is paid was never a +20%
+        take profit; it just read like one in the log.
+        """
         risk = self._risk(pos.market.category)
-        pnl_pct = pos.pnl_pct(yes_mid)
+        exit_fee = taker_fee(pos.shares, pos.held_token_price(yes_mid),
+                             fee_rate)
+        pnl_pct = pos.net_pnl_pct(yes_mid, exit_fee)
         if pnl_pct >= float(risk.get("take_profit_pct", 0.20)):
             return f"take profit {pnl_pct:+.1%}"
         if pnl_pct <= -abs(float(risk.get("stop_loss_pct", 0.12))):

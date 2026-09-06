@@ -63,16 +63,39 @@ class Position:
     shares: float
     strategy: str
     opened_ts: float = field(default_factory=time.time)
+    # Taker fee already charged on the way in. Defaulted so ledgers written
+    # before fees were modelled still load; they simply report the entry
+    # leg as free, which is what they believed at the time.
+    fees_paid: float = 0.0
 
     @property
     def cost(self) -> float:
         return self.entry_price * self.shares
 
+    @property
+    def basis(self) -> float:
+        """What opening this actually took out of the bankroll."""
+        return self.cost + self.fees_paid
+
     def held_token_price(self, yes_mid: float) -> float:
         return yes_mid if self.side == "BUY" else 1.0 - yes_mid
 
     def pnl(self, yes_mid: float) -> float:
+        """Price movement alone — no fees. Rarely the number you want."""
         return (self.held_token_price(yes_mid) - self.entry_price) * self.shares
 
     def pnl_pct(self, yes_mid: float) -> float:
         return self.pnl(yes_mid) / self.cost if self.cost else 0.0
+
+    def net_pnl(self, yes_mid: float, exit_fee: float = 0.0) -> float:
+        """What the trade is worth after both taker legs.
+
+        Pass the exit fee the bot would pay to close *right now*, so an
+        exit rule reasons about money it can actually keep rather than a
+        price move it has to buy its way out of.
+        """
+        return self.pnl(yes_mid) - self.fees_paid - exit_fee
+
+    def net_pnl_pct(self, yes_mid: float, exit_fee: float = 0.0) -> float:
+        return (self.net_pnl(yes_mid, exit_fee) / self.basis
+                if self.basis else 0.0)

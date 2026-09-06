@@ -1,4 +1,7 @@
+import json
 import time
+
+import pytest
 
 from polybot.config import Config
 from polybot.executor import PaperExecutor
@@ -137,3 +140,112 @@ def test_no_side_pnl():
                    strategy="momentum")
     assert pos.pnl(0.4) > 0   # YES fell → NO holder profits
     assert pos.pnl(0.6) < 0
+
+
+# -- fees ------------------------------------------------------------
+
+class FixedFees:
+    def __init__(self, rate=0.05):
+        self.rate = rate
+
+    def rate_for(self, condition_id):
+        return self.rate
+
+
+def test_paper_entry_charges_the_taker_fee_on_top_of_the_stake():
+    p = Portfolio(1000)
+    pos = PaperExecutor(p, FixedFees(0.05)).enter(sig(), snap(0.5), 25)
+    assert pos.fees_paid > 0
+    # the stake AND the fee leave the bankroll at open
+    assert p.cash == pytest.approx(1000 - pos.cost - pos.fees_paid)
+    assert pos.basis == pytest.approx(pos.cost + pos.fees_paid)
+
+
+def test_paper_roundtrip_books_gross_fees_and_net_separately():
+    # "the idea was right and the fees ate it" and "the idea was wrong" are
+    # different lessons; one net figure cannot tell them apart.
+    p = Portfolio(1000)
+    ex = PaperExecutor(p, FixedFees(0.05))
+    pos = ex.enter(sig(), snap(0.5), 25)
+    net = ex.exit(pos, snap(0.6), "take profit")
+    rec = p.closed[0]
+    assert rec["gross"] > rec["pnl"]           # fees came out of the win
+    assert rec["fees"] > 0
+    assert rec["pnl"] == pytest.approx(net, abs=0.01)
+    assert rec["pnl"] == pytest.approx(rec["gross"] - rec["fees"], abs=0.01)
+
+
+def test_a_fee_blind_ledger_would_have_overstated_the_same_trade():
+    free = Portfolio(1000)
+    fex = PaperExecutor(free)
+    fex.exit(fex.enter(sig(), snap(0.5), 25), snap(0.6), "tp")
+    charged = Portfolio(1000)
+    cex = PaperExecutor(charged, FixedFees(0.05))
+    cex.exit(cex.enter(sig(), snap(0.5), 25), snap(0.6), "tp")
+    assert charged.closed[0]["pnl"] < free.closed[0]["pnl"]
+    assert charged.cash < free.cash
+
+
+def test_cash_is_conserved_across_a_fee_charged_roundtrip():
+    p = Portfolio(1000)
+    ex = PaperExecutor(p, FixedFees(0.05))
+    net = ex.exit(ex.enter(sig(), snap(0.5), 25), snap(0.6), "tp")
+    assert p.cash == pytest.approx(1000 + net, abs=0.01)
+
+
+def held(fees_paid=0.0):
+    return Position(market=MKT, side="BUY", entry_price=0.5, shares=50,
+                    strategy="momentum", fees_paid=fees_paid)
+
+
+def test_take_profit_is_measured_after_fees_not_before():
+    # +24% on price alone clears the 20% target. Once the entry fee already
+    # paid and the exit fee still owed come out, the same move nets under
+    # 20% — it was never a 20% take profit, it only read like one.
+    rm = RiskManager(CFG)                       # take_profit_pct = 0.2
+    assert "take profit" in rm.should_exit(held(), 0.62)
+    assert rm.should_exit(held(0.40), 0.62, fee_rate=0.05) is None
+
+
+def test_stop_loss_fires_sooner_once_fees_are_counted():
+    # -9% on price alone sits inside the 10% stop. After both legs it does
+    # not, and the position is losing more than the operator authorised.
+    rm = RiskManager(CFG)                       # stop_loss_pct = 0.1
+    assert rm.should_exit(held(), 0.455) is None
+    assert "stop loss" in rm.should_exit(held(0.40), 0.455, fee_rate=0.05)
+
+
+def test_entries_whose_target_the_fees_would_eat_are_refused():
+    # The gate that will refuse the most trades, and should.
+    rm = RiskManager(CFG)
+    mid = Snapshot(ts=0, mid=0.5, bid=0.49, ask=0.51, volume_24h=0)
+    assert rm.exits_reachable("BUY", mid, "crypto")[0]        # fee-blind: fine
+    ok, why = rm.exits_reachable("BUY", mid, "crypto", fee_rate=0.30)
+    assert not ok and "fees" in why
+
+
+def test_a_generous_target_still_clears_a_normal_fee():
+    rm = RiskManager(CFG)
+    mid = Snapshot(ts=0, mid=0.5, bid=0.49, ask=0.51, volume_24h=0)
+    assert rm.exits_reachable("BUY", mid, "crypto", fee_rate=0.05)[0]
+
+
+def test_ledgers_written_before_fees_existed_still_load(tmp_path):
+    # Old ledgers have no fees_paid. They must load and simply report the
+    # entry leg as free — which is what they believed at the time.
+    led = tmp_path / "ledger.json"
+    led.write_text(json.dumps({
+        "cash": 900.0,
+        "positions": [{
+            "market": {"condition_id": "c1", "question": "?",
+                       "category": "crypto", "yes_token": "y",
+                       "no_token": "n", "volume_24h": 1.0,
+                       "end_date": "", "event_slug": ""},
+            "side": "BUY", "entry_price": 0.5, "shares": 10.0,
+            "strategy": "momentum", "opened_ts": 1787650384.29}],
+        "closed": [],
+    }))
+    p = Portfolio(1000, path=str(led))
+    assert p.cash == 900.0
+    assert p.positions[0].fees_paid == 0.0
+    assert p.positions[0].basis == p.positions[0].cost

@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from .clob import ClobClient
 from .config import Config
 from .executor import LiveExecutor, PaperExecutor
+from .fees import DEFAULT_RATE, FeeBook
 from .gamma import GammaClient
 from .models import Market, Signal, Snapshot
 from .portfolio import Portfolio
@@ -25,20 +26,28 @@ REDISCOVER_EVERY = 4
 
 
 class Engine:
-    def __init__(self, cfg: Config):
+    def __init__(self, cfg: Config, fees: FeeBook | None = None):
         self.cfg = cfg
         self.gamma = GammaClient()
         self.clob = ClobClient()
         self.risk = RiskManager(cfg)
+        # Injected rather than reassignable: the executor is handed this
+        # same book at construction, so swapping self.fees afterwards would
+        # leave the executor charging from the old one — the kind of split
+        # brain that shows up as a ledger nobody can reconcile.
+        fee_cfg = cfg.get("fees", {}) or {}
+        self.fees = fees if fees is not None else FeeBook(
+            default_rate=float(fee_cfg.get("default_rate", DEFAULT_RATE)),
+            enabled=bool(fee_cfg.get("enabled", True)))
         paper_cfg = cfg.get("paper", {})
         self.portfolio = Portfolio(
             starting_cash=float(paper_cfg.get("starting_cash", 1000)),
             path=paper_cfg.get("ledger_path", "paper_ledger.json"),
         )
         if cfg.mode == "live":
-            self.executor = LiveExecutor(cfg, self.portfolio)
+            self.executor = LiveExecutor(cfg, self.portfolio, self.fees)
         else:
-            self.executor = PaperExecutor(self.portfolio)
+            self.executor = PaperExecutor(self.portfolio, self.fees)
         self.history: dict[str, deque[Snapshot]] = defaultdict(
             lambda: deque(maxlen=int(cfg.get("history_size", 240))))
         # per-category strategy instances (overrides may differ per category)
@@ -86,6 +95,8 @@ class Engine:
             exclude=m.get("exclude_categories", []),
             limit_per_category=int(m.get("limit_per_category", 20)),
             min_volume_24h=float(m.get("min_volume_24h", 0)),
+            events_per_category=int(m.get("events_per_category", 12)),
+            max_markets_per_event=int(m.get("max_markets_per_event", 4)),
         )
         log.info("watching %d markets across %s", len(self.markets),
                  ", ".join(m.get("categories", [])))
@@ -155,7 +166,8 @@ class Engine:
                 if not sig:
                     continue
                 reachable, why_not = self.risk.exits_reachable(
-                    sig.side, snap, market.category)
+                    sig.side, snap, market.category,
+                    self.fees.rate_for(market.condition_id))
                 if not reachable:
                     log.debug("skip %s: %s", sig, why_not)
                     self._signal(sig, "blocked", why_not)
@@ -203,11 +215,22 @@ class Engine:
                      market.question[:60], pnl)
 
     def _manage_exits(self, market: Market, snap: Snapshot) -> None:
+        fee_rate = self.fees.rate_for(market.condition_id)
         for pos in [p for p in self.portfolio.positions
                     if p.market.condition_id == market.condition_id]:
-            reason = self.risk.should_exit(pos, snap.mid)
+            reason = self.risk.should_exit(pos, snap.mid, fee_rate)
             if reason:
                 pnl = self.executor.exit(pos, snap, reason)
+                if pnl is None:
+                    # The exchange refused the order. The position is still
+                    # open and still exposed — starting the cooldown or
+                    # announcing an exit here would put the dashboard and
+                    # the ledger at odds with the account. Try again next
+                    # tick; say plainly that it did not close.
+                    self._event("blocked", f"{pos.side} "
+                                           f"{pos.market.question[:60]} "
+                                           f"exit refused ({reason})")
+                    continue
                 self._last_exit[pos.market.condition_id] = time.time()
                 self._event("exit", f"{pos.side} {pos.market.question[:60]} "
                                     f"pnl ${pnl:+.2f} ({reason})")

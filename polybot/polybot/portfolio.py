@@ -45,22 +45,35 @@ class Portfolio:
 
     # -- trading -----------------------------------------------------
     def open(self, pos: Position) -> None:
-        self.cash -= pos.cost
+        # basis, not cost: the entry fee leaves the bankroll at the same
+        # moment the stake does.
+        self.cash -= pos.basis
         self.positions.append(pos)
         self.save()
 
-    def close(self, pos: Position, yes_mid: float, reason: str) -> float:
-        pnl = pos.pnl(yes_mid)
-        self.cash += pos.cost + pnl
+    def close(self, pos: Position, yes_mid: float, reason: str,
+              exit_fee: float = 0.0) -> float:
+        """Book a close and return the NET result.
+
+        Gross and fees are both recorded, because "the idea was right and
+        the fees ate it" and "the idea was wrong" are different lessons and
+        a single net figure cannot tell them apart.
+        """
+        gross = pos.pnl(yes_mid)
+        net = gross - pos.fees_paid - exit_fee
+        # The entry fee already left cash at open; only the exit leg is new.
+        self.cash += pos.cost + gross - exit_fee
         self.positions.remove(pos)
         self.closed.append({
             "question": pos.market.question, "side": pos.side,
             "strategy": pos.strategy, "entry": pos.entry_price,
             "exit": pos.held_token_price(yes_mid), "shares": pos.shares,
-            "pnl": round(pnl, 2), "reason": reason, "closed_ts": time.time(),
+            "gross": round(gross, 4),
+            "fees": round(pos.fees_paid + exit_fee, 4),
+            "pnl": round(net, 4), "reason": reason, "closed_ts": time.time(),
         })
         self.save()
-        return pnl
+        return net
 
     def realized_pnl_since(self, since_ts: float) -> float:
         return sum(c["pnl"] for c in self.closed

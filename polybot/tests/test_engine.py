@@ -63,8 +63,23 @@ class NoBookClob:
         return []
 
 
-def make_engine(mids):
-    eng = Engine(Config(CFG))
+class FakeFees:
+    """A fee book that answers from memory and never opens a socket.
+
+    The real FeeBook asks the exchange for each market's rate. A suite that
+    lets it do so is slow, flaky offline, and silently dependent on what
+    Polymarket charges today — so every engine here is handed one of these
+    instead, with the rate written down in the test.
+    """
+    def __init__(self, rate=0.0):
+        self.rate = rate
+
+    def rate_for(self, condition_id):
+        return self.rate
+
+
+def make_engine(mids, fee_rate=0.0):
+    eng = Engine(Config(CFG), fees=FakeFees(fee_rate))
     eng.gamma = FakeGamma()
     eng.clob = FakeClob(mids)
     eng.discover()
@@ -96,7 +111,7 @@ def test_engine_paused_blocks_entries_but_not_exits():
 
 def test_engine_respects_price_band():
     cfg = dict(CFG, markets=dict(CFG["markets"], max_price=0.60))
-    eng = Engine(Config(cfg))
+    eng = Engine(Config(cfg), fees=FakeFees())
     eng.gamma = FakeGamma()
     eng.clob = FakeClob([0.90, 0.91, 0.92, 0.93, 0.94, 0.95])
     eng.discover()
@@ -172,7 +187,7 @@ def test_resolved_market_settles_position():
 
 
 def test_wide_spread_blocks_entry():
-    eng = Engine(Config(CFG))
+    eng = Engine(Config(CFG), fees=FakeFees())
     eng.gamma = FakeGamma()
     # 0.08 spread against the 0.05 default gate
     eng.clob = FakeClob([0.50, 0.51, 0.52, 0.53, 0.54, 0.55], half_spread=0.04)
@@ -212,13 +227,81 @@ def test_soak_accounting_invariant():
         mid = min(0.93, max(0.07, mid + rng.uniform(-0.02, 0.02)))
         mids.append(round(mid, 3))
     cfg = dict(CFG, risk=dict(CFG["risk"], reentry_cooldown_minutes=0))
-    eng = Engine(Config(cfg))
+    # Run the invariant with fees ON: money leaving as fees is exactly the
+    # kind of leak a conservation check exists to catch, and the old
+    # fee-blind version of this assertion would have passed a bot that
+    # forgot to charge itself.
+    eng = Engine(Config(cfg), fees=FakeFees(0.05))
     eng.gamma = FakeGamma()
     eng.clob = FakeClob(mids)
     eng.discover()
     for _ in range(400):
         eng.tick()
         realized = sum(c["pnl"] for c in eng.portfolio.closed)
-        open_cost = sum(p.cost for p in eng.portfolio.positions)
-        assert abs(eng.portfolio.cash + open_cost - (500 + realized)) < 0.01
+        # basis, not cost: the entry fee left cash at open, so it is part of
+        # what an open position is currently holding out of the bankroll.
+        open_basis = sum(p.basis for p in eng.portfolio.positions)
+        assert abs(eng.portfolio.cash + open_basis - (500 + realized)) < 0.01
     assert len(eng.portfolio.closed) >= 1  # it actually traded
+    # and the fees were genuinely charged, not modelled as zero
+    assert all(c["fees"] > 0 for c in eng.portfolio.closed)
+
+
+def test_a_market_name_the_console_cannot_encode_does_not_crash(capsys):
+    # A real scan died on "Will Flavio Bolsonaro win..." because a Windows
+    # console code page has no accented o. Polymarket is global; the bot
+    # has to survive its own watch list.
+    from polybot.branding import safe_console
+
+    safe_console()
+    print("Will Flávio Bolsonaro win? — AfD – ø")
+    assert "Bolsonaro" in capsys.readouterr().out
+
+
+class RefusingExecutor:
+    """Wraps a real executor but has every exit order rejected.
+
+    This is the live-mode case: post_order comes back unsuccessful. It used
+    to be indistinguishable from a break-even close, because the executor
+    returned 0.0 either way.
+    """
+
+    def __init__(self, inner):
+        self.inner = inner
+        self.attempts = 0
+
+    def enter(self, signal, snap, usd):
+        return self.inner.enter(signal, snap, usd)
+
+    def exit(self, pos, snap, reason):
+        self.attempts += 1
+        return None
+
+
+def test_a_refused_exit_leaves_the_position_open_and_says_so():
+    eng = make_engine([0.50, 0.51, 0.52, 0.53, 0.54, 0.55, 0.70])
+    for _ in range(6):
+        eng.tick()
+    assert eng.portfolio.positions
+    eng.executor = RefusingExecutor(eng.executor)
+
+    eng.tick()                              # 0.70 → take-profit, refused
+    assert eng.executor.attempts == 1
+    assert eng.portfolio.positions          # still open, still exposed
+    assert not eng.portfolio.closed         # nothing booked
+    # no re-entry cooldown started off the back of a close that never was
+    assert MKT.condition_id not in eng._last_exit
+    assert any("refused" in e["text"] for e in eng.events)
+    assert not any(e["kind"] == "exit" for e in eng.events)
+
+
+def test_a_refused_exit_is_retried_on_the_next_tick():
+    eng = make_engine([0.50, 0.51, 0.52, 0.53, 0.54, 0.55, 0.70])
+    for _ in range(6):
+        eng.tick()
+    eng.executor = RefusingExecutor(eng.executor)
+    eng.tick()
+    eng.tick()
+    # a position the exchange would not close must keep asking, not be
+    # quietly abandoned to the max-hold timer
+    assert eng.executor.attempts == 2

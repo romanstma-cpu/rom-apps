@@ -6,6 +6,7 @@ import time
 
 import requests
 
+from .http import make_session
 from .models import Snapshot
 
 log = logging.getLogger(__name__)
@@ -15,7 +16,10 @@ DATA_API = "https://data-api.polymarket.com"
 
 class ClobClient:
     def __init__(self, session: requests.Session | None = None):
-        self.http = session or requests.Session()
+        # The engine snapshots the whole universe from an 8-worker pool, so
+        # the adapter's connection pool must be at least that wide or every
+        # snapshot pays for a fresh TLS handshake it then throws away.
+        self.http = session or make_session()
 
     def _get(self, base: str, path: str, **params):
         r = self.http.get(f"{base}{path}", params=params, timeout=20)
