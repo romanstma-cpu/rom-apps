@@ -94,11 +94,11 @@
     "@type": "SoftwareApplication",
     "name": "ROM Polybot",
     "applicationCategory": "FinanceApplication",
-    "operatingSystem": "Windows, macOS, Linux (Python 3.10+)",
-    "softwareVersion": "1.1.0",
+    "operatingSystem": "Windows 10, Windows 11 (64-bit)",
+    "softwareVersion": "2.0.0",
     "url": "https://romapps.xyz/",
-    "downloadUrl": "https://github.com/romanstma-cpu/rom-apps/tree/main/polybot",
-    "description": "An open Polymarket trading bot. Eight readable strategies, a risk manager, a local dashboard, and paper trading by default. Plain Python you can read and change.",
+    "downloadUrl": "https://romapps.xyz/assets/ROM-Polybot-Setup-2.0.0.exe",
+    "description": "A Windows trading workspace for Polymarket US. Portfolio dashboard, strategies, scripts, backtesting and risk controls. Connect with your Polymarket US Key ID and Secret Key. Trading starts paused.",
     "license": "https://opensource.org/licenses/MIT",
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -1502,12 +1502,11 @@
       <span class="meta">per-user install · no admin rights · uninstalls cleanly · the model runs offline, audio never leaves the machine</span>
     </div>
 
-    <div class="row js-row">
-      <span class="name"><strong>ROM Polybot</strong>Polymarket bot in plain Python — eight strategies, risk brakes, paper mode</span>
-      <span class="ver">v1.1.0</span>
-      <span class="size">source</span>
-      <a class="btn primary" href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot">Get source</a>
-      <span class="meta record">Python 3.10+ · Windows, macOS and Linux · paper mode by default. Its first four-hour paper session <b>closed down $7.10</b>, and that screenshot is further down this page.</span>
+    <div class="row js-row" id="download-polybot">
+      <span class="name"><strong>ROM Polybot</strong>Your Polymarket US desktop workspace — portfolio, strategies, scripts and risk controls</span>
+      <span class="ver">v2.0.0</span><span class="size">95.8 MB</span>
+      <a class="btn primary" href="assets/ROM-Polybot-Setup-2.0.0.exe">Download</a>
+      <span class="meta">Windows 10/11 · 64-bit · no separate Python install · connect your Polymarket US Key ID and Secret Key · trading starts paused</span>
     </div>
   </div>
 
@@ -1641,11 +1640,11 @@
         <picture>
           <source srcset="assets/rom-polybot-dashboard.webp" type="image/webp">
           <img src="assets/rom-polybot-dashboard.png"
-               alt="ROM Polybot dashboard showing paper-mode cash, open and realized profit and loss including a red minus seven dollars, four open positions with their strategies and entry prices, and nineteen watched Polymarket markets"
+               alt="ROM Polybot 2.0 desktop dashboard with portfolio totals, equity history and paused trading engines; no API connected"
                width="1586" height="993" loading="lazy" decoding="async">
         </picture>
       </div>
-      <figcaption class="shot-cap">Polybot — a real paper session: red numbers in red, and every signal listed, taken or refused.</figcaption>
+      <figcaption class="shot-cap">Polybot 2.0 — the new Polymarket US desktop workspace. Fresh setup shown; no API connected and trading paused.</figcaption>
     </figure>
 
     <figure class="shot-fig js-card">
@@ -1849,38 +1848,17 @@
   </div>
 </section>
 
-<section class="section" aria-labelledby="polybot-h">
-  <h2 class="section-label js-anim" id="polybot-h">
-    <img class="app-mark" src="assets/app-polybot.png" alt="" width="64" height="64" loading="lazy" decoding="async">ROM POLYBOT
-  </h2>
-  <p class="section-lede js-anim">
-    ROM Trader's Polymarket sibling, in plain Python.
-    <span>No black box — every rule is a file you can read.</span>
-  </p>
+<section class="section" id="polybot" aria-labelledby="polybot-h">
+  <h2 class="section-label js-anim" id="polybot-h"><img class="app-mark" src="assets/app-polybot.png" alt="" width="64" height="64" loading="lazy" decoding="async">ROM POLYBOT <span style="font-size:.55em;margin-left:1em;color:#6ea8fe">2.0 · WINDOWS</span></h2>
+  <p class="section-lede js-anim">Your Polymarket US trading workspace.<span>A new desktop interface. One API connection.</span></p>
   <div class="features">
-    <div class="feature js-card">
-      <h3>Eight strategies, all legible</h3>
-      <p>Momentum, mean reversion, volume spikes, trend continuation, whale following, order-book sentiment and more — each one a short Python file, each one tunable per category (politics, crypto, sports…) from one YAML config. Or run manual mode, where the engine only manages your exits.</p>
-    </div>
-
-    <div class="feature js-card">
-      <h3>A risk manager that knows the market</h3>
-      <p>Position and category caps, a daily loss stop, spread and price-band filters — plus rules learned the hard way: sibling markets of one event count as a single bet, exits are refused when the stop would sit inside tick noise or the target above $1, and a market that resolves out from under a position gets settled at its real outcome instead of carried forever.</p>
-    </div>
-
-    <div class="feature js-card">
-      <h3>Paper first, honestly</h3>
-      <p>The default mode simulates against live order books with a local ledger — fills at the touch, never at a fantasy mid. Live trading exists, but it needs your own wallet key from an environment variable and an explicit config change. The dashboard shows red numbers in red.</p>
-    </div>
-
-    <div class="feature js-card">
-      <h3>Runs anywhere Python runs</h3>
-      <p>No installer and no build step: clone, <code>pip install</code>, go. A local web dashboard shows positions, watched markets and activity; the same engine runs headless from the terminal. Public Polymarket APIs only — observing needs no account at all.</p>
-    </div>
+    <div class="feature js-card"><h3>Your portfolio, clearly</h3><p>Track balances, positions, session performance, signals and trading history from a redesigned dashboard with a clean navy interface and organized navigation.</p></div>
+    <div class="feature js-card"><h3>Connect with your US API</h3><p>Install the app, open API, and enter your Polymarket US Key ID and Secret Key. Credentials are encrypted locally with your Windows account. No separate Python installation or crypto wallet setup is required.</p></div>
+    <div class="feature js-card"><h3>Strategies under your control</h3><p>Configure the main engine, explore crypto markets available on the US exchange, write scripts and run backtests. Review position limits and risk controls before enabling each engine.</p></div>
+    <div class="feature js-card"><h3>Start with trading paused</h3><p>All engines start paused. Connection tests read your balance without placing orders. Wallet-address copy trading is unavailable on Polymarket US; supported strategies depend on the markets listed there.</p></div>
   </div>
-  <div class="smartscreen js-anim">
-    <strong>Before you run it:</strong> the same honesty as ROM Trader — these strategies are heuristics with no demonstrated profitability. Its first four-hour paper session closed down $7.10, and that number is on this page in a screenshot because pretending otherwise is how trading tools lie. Paper mode is the default for a reason. Nothing here is financial advice.
-  </div>
+  <p style="margin-top:2rem"><a class="btn primary" href="#download-polybot">Download ROM Polybot for Windows</a></p>
+  <div class="smartscreen js-anim"><strong>Before you trade:</strong> a verified Polymarket US account and API credentials are required. Automated trading can lose money. Live authenticated trading has not yet been verified for this release; review your setup and risk limits before enabling an engine.</div>
 </section>
 
 <section class="section" aria-labelledby="scribe-h">
@@ -1949,7 +1927,7 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
       <a href="https://github.com/romanstma-cpu/rom-convert" rel="noopener">Convert</a>,
       <a href="https://github.com/romanstma-cpu/rom-scribe" rel="noopener">Scribe</a>,
       <a href="https://github.com/romanstma-cpu/rom-nova" rel="noopener">Nova</a> and
-      <a href="https://github.com/romanstma-cpu/rom-apps/tree/main/polybot" rel="noopener">Polybot</a>
+      <a href="#polybot">Polybot</a>
       is public under MIT. Every installer is per-user — none of them ask for
       administrator rights, and they uninstall cleanly.
       You can also read the <a href="code-signing-policy.html">code signing policy</a>.
@@ -2231,7 +2209,7 @@ if ((Get-FileHash $f -Algorithm SHA256).Hash -eq $want) { "MATCH" } else { "DOES
         note.innerHTML =
           '<span>You are on <strong>' + name + "</strong>. Four of these five are Windows " +
           "installers and will not run here — but <strong>ROM Nova</strong> runs in this browser, " +
-          "and <strong>ROM Polybot</strong> is Python that runs anywhere.</span>" +
+          "and <strong>ROM Polybot</strong> is a Windows app for Polymarket US.</span>" +
           '<a href="/nova/" class="js-live">Open ROM Nova →</a>';
         note.hidden = false;
       }
