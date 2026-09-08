@@ -1,47 +1,19 @@
-# romapps.xyz
+# ROM Apps
 
-The download site for [ROM](https://romapps.xyz) — free Windows apps.
+The public catalog at https://romapps.xyz is served by GitHub Pages from `main`. The homepage is static HTML and CSS, with no build step or client-side framework. It lists ROM Polybot, Nova, Trader and Scribe. ROM Convert is no longer listed.
 
-Static site served by GitHub Pages from `main`. No build step: `index.html`
-carries its own CSS and JS inline, and pulls GSAP from a CDN with subresource
-integrity. The hero is a hand-written canvas point field — there is no 3D
-library on the page.
+The independently built Nova web application lives under `nova/`; preserve that directory when updating the homepage. `CNAME` keeps the existing custom domain.
 
-```
-index.html            the whole site
-404.html              styled not-found page
-assets/               logo, social card, app screenshots (png + webp)
-favicon.ico           root favicon
-apple-touch-icon.png  browsers probe this path directly
-robots.txt            allows everything, points at the sitemap
-sitemap.xml           single-page sitemap
-CNAME                 custom domain for GitHub Pages
-scripts/make_og.py    regenerates assets/og-card.png
-scripts/make_shots.py regenerates the ROM Trader screenshots
-```
+## Polybot downloads
 
-ROM Convert's screenshots come from `scripts/shots.ts` in its own repo, which
-drives the running app over the DevTools protocol and captures the renderer.
+The current download is `assets/ROM-Polybot-Setup-2.2.0.exe`, with its SHA-256 in `assets/SHA256SUMS-Polybot-2.2.0.txt`. The versioned filename prevents stale browser caches from serving a different build under the same name. The corresponding source and release notes are maintained in the ROM Polybot desktop workspace; the legacy Python code under `polybot/` is not the source of this desktop release.
 
-## Apps
+When publishing a new build, update the homepage metadata, download link, screenshot and verification page together. Verify the downloaded artifact against the locally built installer before announcing availability.
 
-| App | Source | Releases |
-|---|---|---|
-| ROM Trader | [rom-trader](https://github.com/romanstma-cpu/rom-trader) | this repo |
-| ROM Convert | [rom-convert](https://github.com/romanstma-cpu/rom-convert) | rom-convert |
+## Preserve other update channels
 
-## Releases, and one thing to be careful about
+This repository’s latest GitHub release is ROM Trader’s update feed. Do not make another app’s release the latest: installed Trader builds expect their own `latest.yml` there. Nova and Scribe use their respective repositories for Windows releases. Polybot is served from versioned site assets, independently of that release feed.
 
-**Each auto-updating app needs its own releases repo.** electron-updater
-resolves its feed from the *newest release in the repo*, then looks for
-`latest.yml` attached to that release. Publishing a second app's release here
-makes it the newest, so the other app looks for its `latest.yml` under a tag
-that does not have one, and every update check fails with a 404.
+## Page validation
 
-That happened once: ROM Convert 1.0.0 was published here and broke ROM
-Trader's updater until `make_latest` was set back on `v1.1.2`. ROM Convert now
-publishes to its own repo. Keep it that way — this repo is ROM Trader's
-release channel and the site's host, nothing else.
-
-The site links to `releases/latest/download/…` for each app, so a new release
-does not need a site edit — only the version and size in the download table.
+Check local links and anchors, image loading, narrow-screen layout, product/version references and download integrity. There are no external font, animation or analytics scripts on the homepage.
