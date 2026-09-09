@@ -1,0 +1,274 @@
+from __future__ import annotations
+
+import asyncio
+import json
+import logging
+import os
+import random
+import time
+from collections import deque
+from typing import Optional
+
+logger = logging.getLogger("rtds_ws")
+
+try:
+    import websockets  # type: ignore
+    _WS_IMPORT_OK = True
+except Exception:  # pragma: no cover - websockets missing
+    websockets = None  # type: ignore
+    _WS_IMPORT_OK = False
+
+_URL = os.environ.get("ROM_RTDS_WS_URL") or "wss://ws-live-data.polymarket.com"
+
+_DISABLED = os.environ.get("ROM_RTDS_WS", "1").strip().lower() in (
+    "0", "off", "false", "no",
+)
+
+_TOPIC = "crypto_prices_chainlink"
+
+_ASSET_BY_SYMBOL: dict[str, str] = {
+    "btc/usd": "BTC",
+    "eth/usd": "ETH",
+    "sol/usd": "SOL",
+    "xrp/usd": "XRP",
+    "doge/usd": "DOGE",
+    "hype/usd": "HYPE",
+    "bnb/usd": "BNB",
+}
+
+_FRESH_SEC = 10.0
+_PING_INTERVAL_SEC = 5.0
+_SILENT_TIMEOUT_SEC = 30.0
+_RECONNECT_MAX_SEC = 60.0
+_SAMPLES_MAX = 180
+_SETTLE_WINDOW_SEC = 60
+
+
+class _Client:
+    def __init__(self) -> None:
+        self.connected: bool = False
+        self._stop: bool = False
+        self._task: Optional[asyncio.Task] = None
+        self._ws = None
+        self.last_msg_t: float = 0.0
+        self.prices: dict[str, tuple[float, float]] = {}
+        self.samples: dict[str, deque] = {
+            a: deque(maxlen=_SAMPLES_MAX) for a in _ASSET_BY_SYMBOL.values()
+        }
+
+
+    def start(self) -> None:
+        if _DISABLED or not _WS_IMPORT_OK:
+            if not _WS_IMPORT_OK and not _DISABLED:
+                logger.warning("rtds_ws: `websockets` not installed — staying on fallbacks")
+            return
+        self._stop = False
+        loop = asyncio.get_event_loop()
+        if self._task is None or self._task.done():
+            self._task = loop.create_task(self._run(), name="rtds_ws")
+            logger.info("rtds_ws: starting (polymarket rtds / chainlink)")
+
+    async def stop(self) -> None:
+        self._stop = True
+        ws = self._ws
+        self._ws = None
+        if ws is not None:
+            try:
+                await ws.close()
+            except Exception:
+                pass
+        if self._task is not None:
+            self._task.cancel()
+            try:
+                await self._task
+            except (asyncio.CancelledError, Exception):
+                pass
+        self._task = None
+        self.connected = False
+
+    def is_running(self) -> bool:
+        return self._task is not None and not self._task.done()
+
+
+    async def _run(self) -> None:
+        attempt = 0
+        while not self._stop:
+            try:
+                await self._connect_once()
+                attempt = 0
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                attempt = min(attempt + 1, 16)
+                backoff = min(2.0 ** attempt, _RECONNECT_MAX_SEC)
+                backoff *= random.uniform(0.75, 1.25)
+                logger.warning(
+                    f"rtds_ws: disconnected ({type(e).__name__}: {e}); "
+                    f"reconnect in {backoff:.0f}s"
+                )
+                self.connected = False
+                try:
+                    await asyncio.sleep(backoff)
+                except asyncio.CancelledError:
+                    raise
+
+    async def _connect_once(self) -> None:
+        import ws_ssl
+        kwargs = dict(ping_interval=None, close_timeout=5, max_size=2 ** 22,
+                      ssl=ws_ssl.client_context())
+        async with websockets.connect(_URL, **kwargs) as ws:
+            self._ws = ws
+            self.connected = True
+            self.last_msg_t = time.time()
+            await ws.send(json.dumps({
+                "action": "subscribe",
+                "subscriptions": [{"topic": _TOPIC, "type": "*"}],
+            }))
+            logger.info(f"rtds_ws: connected → {_URL}")
+            last_ping = time.time()
+            while not self._stop:
+                if time.time() - last_ping >= _PING_INTERVAL_SEC:
+                    try:
+                        await ws.send("PING")
+                    except Exception:
+                        return
+                    last_ping = time.time()
+                try:
+                    raw = await asyncio.wait_for(ws.recv(), timeout=2.0)
+                except asyncio.TimeoutError:
+                    if time.time() - self.last_msg_t > _SILENT_TIMEOUT_SEC:
+                        logger.warning("rtds_ws: silent link — forcing reconnect")
+                        return
+                    continue
+                self.last_msg_t = time.time()
+                if raw == "PONG":
+                    continue
+                try:
+                    self.handle_message(json.loads(raw))
+                except Exception as e:
+                    logger.debug(f"rtds_ws: handle error: {e}")
+        self.connected = False
+        self._ws = None
+
+
+    def handle_message(self, m) -> None:
+        if not isinstance(m, dict) or m.get("topic") != _TOPIC:
+            return
+        p = m.get("payload")
+        if m.get("type") != "update" or not isinstance(p, dict):
+            return
+        asset = _ASSET_BY_SYMBOL.get((p.get("symbol") or "").lower())
+        if not asset:
+            return
+        try:
+            px = float(p.get("value"))
+        except (TypeError, ValueError):
+            return
+        if px <= 0:
+            return
+        now = time.time()
+        self.prices[asset] = (now, px)
+        sec = int(now)
+        ring = self.samples[asset]
+        if not ring or ring[-1][0] < sec:
+            ring.append((sec, px))
+
+
+    def spot(self, asset: str) -> Optional[float]:
+        rec = self.prices.get((asset or "").upper())
+        if not rec:
+            return None
+        ts, px = rec
+        if time.time() - ts > _FRESH_SEC:
+            return None
+        return px
+
+    def fresh_spots(self) -> dict[str, float]:
+        if not self.connected:
+            return {}
+        now = time.time()
+        return {
+            a: px for a, (ts, px) in self.prices.items()
+            if now - ts <= _FRESH_SEC
+        }
+
+    def sample_at(
+        self, asset: str, epoch_sec: float, tolerance_sec: float = 3.0,
+    ) -> Optional[float]:
+        ring = self.samples.get((asset or "").upper())
+        if not ring:
+            return None
+        target = int(epoch_sec)
+        best_px, best_gap = None, None
+        for sec, px in ring:
+            gap = abs(sec - target)
+            if gap <= tolerance_sec and (best_gap is None or gap < best_gap):
+                best_px, best_gap = px, gap
+                if gap == 0:
+                    break
+        return best_px
+
+    def window_partial(
+        self, asset: str, close_epoch: float, now: Optional[float] = None,
+    ) -> tuple[float, int]:
+        ring = self.samples.get((asset or "").upper())
+        if not ring:
+            return 0.0, 0
+        if now is None:
+            now = time.time()
+        start = close_epoch - _SETTLE_WINDOW_SEC
+        end = min(now, close_epoch)
+        total, count = 0.0, 0
+        for sec, px in ring:
+            if start <= sec < end:
+                total += px
+                count += 1
+        return total, count
+
+    def stats(self) -> dict:
+        return {
+            "enabled": not _DISABLED and _WS_IMPORT_OK,
+            "connected": self.connected,
+            "assets": sorted(self.fresh_spots()),
+            "lastMsgAgeSec": round(max(0.0, time.time() - self.last_msg_t), 1)
+            if self.connected else None,
+        }
+
+
+_client = _Client()
+
+
+def start() -> None:
+    _client.start()
+
+
+async def stop() -> None:
+    await _client.stop()
+
+
+def is_connected() -> bool:
+    return _client.connected
+
+
+def is_running() -> bool:
+    return _client.is_running()
+
+
+def spot(asset: str) -> Optional[float]:
+    return _client.spot(asset)
+
+
+def fresh_spots() -> dict[str, float]:
+    return _client.fresh_spots()
+
+
+def sample_at(asset: str, epoch_sec: float, tolerance_sec: float = 3.0) -> Optional[float]:
+    return _client.sample_at(asset, epoch_sec, tolerance_sec)
+
+
+def window_partial(asset: str, close_epoch: float, now: Optional[float] = None) -> tuple[float, int]:
+    return _client.window_partial(asset, close_epoch, now)
+
+
+def stats() -> dict:
+    return _client.stats()

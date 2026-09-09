@@ -1,0 +1,2 @@
+import { Card, Page, Section } from '../components/common';
+export function AboutPage(){return <Page title="ROM Polybot" subtitle="Desktop trading for Polymarket US"><Section title="About"><Card><p className="text-sm">ROM Polybot keeps your strategies, risk controls, trade history, and account settings together in a local desktop app.</p><button className="rom-btn-default mt-4" onClick={()=>void window.rom.app.openExternal('https://docs.polymarket.us')}>Polymarket US documentation</button></Card></Section></Page>;}

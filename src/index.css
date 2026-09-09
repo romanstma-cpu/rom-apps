@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  scrollbar-color: #526078 #0b1019;
+}
+
+.rom-review{width:min(520px,calc(100vw - 40px));max-height:calc(100vh - 48px);overflow:auto;border:1px solid #34445b;border-radius:16px;background:#121a26;color:#f1f5fc;padding:28px;box-shadow:0 24px 80px #0008}
+.rom-review::backdrop{background:#030810c9;backdrop-filter:blur(5px)}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid #6ea8fe;outline-offset:3px}
+button:not(:disabled),summary{cursor:pointer}
+.terminal-command{background:linear-gradient(115deg,#152638,#111c29 70%);border:1px solid #2b4258;border-radius:16px;padding:28px}
+.terminal-mode{display:inline-flex;align-items:center;gap:8px;border:1px solid #40536a;border-radius:6px;padding:6px 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#b9cfeb}
+.terminal-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#283647;border:1px solid #283647;border-radius:12px;overflow:hidden}
+.terminal-metrics>div{background:#111d2a;padding:20px 24px}.terminal-metrics dt{font-size:11px;color:#a4b1c4}.terminal-metrics dd{margin:8px 0 0;font-size:28px;line-height:1.2;letter-spacing:-.03em;font-weight:600;font-variant-numeric:tabular-nums}.terminal-metrics small{display:block;margin-top:8px;color:#9cacbf;font-size:11px}
+@media(max-width:1050px){.terminal-metrics>div{padding:16px}.terminal-metrics dd{font-size:23px}.terminal-command{padding:22px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: #0b1019;
+  overflow: hidden;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+
+/* The custom title bar uses -webkit-app-region: drag — re-enable
+   pointer interactions for any clickable controls inside it. */
+.titlebar-drag {
+  -webkit-app-region: drag;
+}
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* ── ROM sprite (8-frame idle strip, 48×48 per frame) ──
+   Frame stepping is driven by the Web Animations API in ROMSprite.tsx;
+   this just sets up crisp pixel scaling. */
+.rom-sprite {
+  display: inline-block;
+  image-rendering: pixelated;
+}
+
+/* Soft "alive" bob for the lounging pet + a glowing blue drop shadow. */
+.rom-pet {
+  animation: rom-bob 2.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.45));
+}
+@keyframes rom-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rom-pet {
+    animation: none;
+  }
+}
+
+@layer components {
+  .rom-card {
+    @apply rounded-xl border border-rom-border bg-rom-surface p-5;
+  }
+  .rom-card-hover {
+    @apply transition-colors hover:border-rom-borderHi;
+  }
+  .rom-input {
+    @apply w-full rounded-lg border border-rom-border bg-rom-void/60 px-3 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-rom-dim focus:border-rom-indigo;
+  }
+  .rom-label {
+    @apply mb-1.5 block text-xs font-medium text-rom-muted;
+  }
+  .rom-help {
+    @apply mt-1 text-xs text-rom-dim;
+  }
+  .rom-btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-lg border border-rom-border px-3 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .rom-btn-default {
+    @apply rom-btn bg-rom-surface2 hover:border-rom-borderHi hover:bg-white/5;
+  }
+  .rom-btn-primary {
+    @apply rom-btn border-blue-400/30 bg-blue-600 shadow-sm hover:bg-blue-500;
+  }
+  .rom-btn-danger {
+    @apply rom-btn border-rom-loss/40 bg-rom-loss/10 text-rom-loss hover:border-rom-loss hover:bg-rom-loss/15;
+  }
+  .rom-btn-ghost {
+    @apply rom-btn border-transparent bg-transparent hover:bg-white/5;
+  }
+  .rom-pill {
+    @apply inline-flex items-center gap-1 rounded-full border border-rom-border bg-rom-surface2 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider;
+  }
+  .rom-section-title {
+    @apply mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rom-muted;
+  }
+  .rom-table {
+    @apply w-full text-sm;
+  }
+  .rom-table th {
+    @apply border-b border-rom-border px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-rom-muted;
+  }
+  .rom-table td {
+    @apply border-b border-rom-border/50 px-3 py-2 text-white/90;
+  }
+  .rom-table tr:hover td {
+    @apply bg-white/[0.02];
+  }
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #6ea8fe; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
