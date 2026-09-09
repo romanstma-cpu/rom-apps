@@ -1,0 +1,45 @@
+HOW TO USE — READ THIS IF THE APP SAYS "DAMAGED"
+=================================================
+
+macOS shows:
+
+    "ROM PolyBot is damaged and can't be opened.
+     You should move it to the Trash."
+
+The app is NOT damaged. ROM PolyBot is not signed with an Apple
+Developer certificate, so macOS Gatekeeper quarantines it after
+download and shows this message for ANY unsigned app. Removing the
+quarantine flag fixes it permanently.
+
+HOW TO FIX (takes 30 seconds)
+-----------------------------
+
+1. Drag "ROM PolyBot" into the Applications folder
+   (like any other app in this window).
+
+2. Open Terminal:
+   press Cmd+Space, type "Terminal", press Enter.
+
+3. Copy-paste this command and press Enter:
+
+   xattr -cr "/Applications/ROM PolyBot.app"
+
+4. Open ROM PolyBot from Applications. It now starts normally,
+   this time and every time after.
+
+If it still won't open on the very first launch, right-click the
+app icon → "Open" → "Open" once.
+
+WHY THIS HAPPENS
+----------------
+
+Apple charges for Developer ID signing and notarization; unsigned
+apps downloaded from the internet get a "quarantine" attribute, and
+recent macOS versions word the block as "damaged" instead of
+"unidentified developer". The xattr command above removes only that
+quarantine attribute from this app — it does not change anything
+else on your system.
+
+You only ever need to do this once per install/update.
+
+Questions? Check the README or the support Discord.

@@ -1,0 +1,1 @@
+These original tests describe the removed international Polygon wallet, CLOB, and fixed notional rules. They are retained as text references; Polymarket US contracts are tested in test_us_polymarket_api.py and test_api_retry.py. Shared strategy and risk tests remain active.

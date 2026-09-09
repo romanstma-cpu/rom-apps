@@ -1,0 +1,46 @@
+import {_electron as electron} from 'playwright-core';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
+const sandbox=fs.mkdtempSync(path.join(os.tmpdir(),'rom-risk-draft-'));
+for(const d of ['Roaming','Local','profile'])fs.mkdirSync(path.join(sandbox,d));
+const app=await electron.launch({executablePath:path.resolve('node_modules/electron/dist/electron.exe'),args:[process.cwd(),`--user-data-dir=${path.join(sandbox,'profile')}`],env:{...process.env,APPDATA:path.join(sandbox,'Roaming'),LOCALAPPDATA:path.join(sandbox,'Local')},timeout:30000});
+try{
+  const p=await app.firstWindow();const errors=[];p.on('pageerror',e=>errors.push(e.message));
+  await p.getByRole('button',{name:'Continue to API setup'}).click();
+  await p.getByRole('navigation').getByRole('button',{name:'Overview',exact:true}).click();
+  await p.setViewportSize({width:1440,height:900});
+  await p.screenshot({path:'.work/overview-2.2.png'});
+  await p.getByRole('navigation').getByRole('button',{name:'Strategy',exact:true}).click();
+  const original=await p.evaluate(()=>window.rom.config.get());
+  const amount=p.getByLabel('Maximum per position ($)',{exact:false});
+  await amount.fill('23');
+  await p.getByText('Unsaved changes',{exact:true}).waitFor();
+  assert.equal((await p.evaluate(()=>window.rom.config.get())).hardMaxPositionUsd,original.hardMaxPositionUsd);
+  await p.getByRole('button',{name:'Discard changes',exact:true}).click();
+  await amount.fill('24');
+  await p.evaluate(()=>window.rom.config.update({hardMaxPositionUsd:26}));
+  await p.getByText('Settings changed elsewhere while you were editing.',{exact:false}).waitFor();
+  assert.equal(await p.getByRole('button',{name:'Save limits',exact:true}).isEnabled(),false);
+  await p.getByRole('button',{name:'Discard changes',exact:true}).click();
+  assert.equal(await amount.inputValue(), '26');
+  // Return to the original fixture before the explicit-save test below.
+  await p.evaluate(v=>window.rom.config.update({hardMaxPositionUsd:v}),original.hardMaxPositionUsd);
+  await p.waitForFunction(v=>document.querySelector('fieldset input').value===String(v),original.hardMaxPositionUsd);
+  assert.equal(await amount.inputValue?.() ?? await amount.getAttribute('value'),String(original.hardMaxPositionUsd));
+  await amount.fill('23');await p.getByRole('button',{name:'Save limits',exact:true}).click();
+  await p.getByText('Risk limits saved',{exact:true}).waitFor();
+  assert.equal((await p.evaluate(()=>window.rom.config.get())).hardMaxPositionUsd,23);
+  await p.getByLabel('Portfolio exposure (%)',{exact:false}).fill('99');
+  await p.getByLabel('Keep as cash (%)',{exact:false}).fill('99');
+  assert.equal(await p.getByRole('button',{name:'Save limits',exact:true}).isEnabled(),false);
+  await p.getByRole('button',{name:'Discard changes',exact:true}).click();
+  await p.getByRole('navigation').getByRole('button',{name:'Overview',exact:true}).click();
+  await p.getByRole('button',{name:'Review evidence',exact:true}).click();
+  await p.getByRole('heading',{name:'Evidence',exact:true}).waitFor();
+  await p.getByText('Your record starts here.',{exact:true}).waitFor();
+  await p.screenshot({path:'.work/evidence-2.2.png'});
+  await p.getByRole('navigation').getByRole('button',{name:'Strategy',exact:true}).click();
+  await p.screenshot({path:'.work/strategy-2.2.png'});
+  const cfg=await p.evaluate(()=>window.rom.config.get());assert.equal(cfg.enableTrading,false);assert.equal(cfg.scriptsLiveEnabled,false);assert.deepEqual(errors,[]);
+  console.log('PASS: draft isolation, discard, explicit save, invalid budget rejection, empty evidence and paused trading');
+}finally{await app.close();}

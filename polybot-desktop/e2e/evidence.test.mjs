@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import ts from 'typescript';
+import vm from 'node:vm';
+const output=ts.transpileModule(fs.readFileSync('src/utils/evidence.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const context={exports:{}};vm.runInNewContext(output,context);
+const {summarizeEvidence:summary}=context.exports;
+const row=(id,pnl,over={})=>({id,pnlUsd:pnl,signalSource:'momentum',resolved:true,status:'filled',filledContracts:10,resolvedAt:`2026-09-${String(id).padStart(2,'0')}T12:00:00Z`,ticker:'A',eventTicker:'E',...over});
+assert.equal(summary([]).average,null);
+assert.equal(summary([]).profitFactor,null);
+const s=summary([row(3,3),row(1,5),row(2,-8),row(4,0)]);
+assert.equal(s.pnl,0);assert.equal(s.maxDrawdown,8);assert.equal(s.eventCount,1);assert.equal(s.breakEven,1);assert.equal(s.profitFactor,1);
+assert.equal(summary([row(1,10,{status:'dry_run'}),row(2,10,{filledContracts:0}),row(3,10,{resolved:false}),row(4,10,{signalSource:'external'}),row(5,NaN),row(6,null),row(7,10,{resolvedAt:null})]).count,0);
+assert.equal(summary([row(1,-4),row(2,-3)]).maxDrawdown,7);
+assert.equal(summary([row(1,10)]).profitFactor,null);
+assert.equal(summary([row(1,10,{eventTicker:''}),row(2,10,{eventTicker:'',ticker:'B'})]).eventCount,2);
+console.log('PASS: evidence calculations, chronological drawdown, sample exclusions, no infinite or fabricated statistics');

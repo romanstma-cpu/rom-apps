@@ -1,0 +1,81 @@
+name: Build Installers
+
+# Builds native installers on each OS and publishes them as assets on a
+# per-run GitHub *prerelease* (tag build-<run_number>), for you to distribute
+# yourself. Release assets do NOT count against the Actions artifact storage
+# quota and never expire — unlike upload-artifact, which fills the 500 MB quota
+# after a couple of runs. It does NOT wire up auto-update. Runs automatically on
+# a push to main/build, or on demand from the Actions tab.
+#
+# The Python backend is frozen with PyInstaller, which cannot cross-compile — so
+# each installer is built on its own native runner (win backend on Windows, mac
+# on macOS, linux on Ubuntu). `npm run dist` = vite build + PyInstaller (from
+# python/rom-polybot-backend.spec, incl. the --selftest gate) + electron-builder.
+on:
+  push:
+    branches: [main, build]
+  workflow_dispatch: {}
+
+# contents: write is required to create the release and upload installer assets.
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux            # AppImage + deb
+          - os: windows-latest
+            name: windows          # nsis .exe
+          - os: macos-13
+            name: mac-intel        # x64 .dmg
+          - os: macos-latest
+            name: mac-apple-silicon # arm64 .dmg
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Build app, bundle backend, package installer
+        run: npm run dist
+        env:
+          # Build the macOS app unsigned — no Apple Developer cert/secrets needed.
+          # electron-builder ad-hoc signs arm64 so it still launches (right-click
+          # > Open the first time). No-op on Linux/Windows.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      # Publish installers as assets on a per-run prerelease. Each matrix job
+      # uploads only its own platform's files to the shared tag; concurrent jobs
+      # are safe because softprops creates-or-updates the release idempotently
+      # and each platform's asset names are distinct. Release assets are exempt
+      # from the Actions artifact storage quota that was failing uploads before.
+      - name: Publish installers to a GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: CI build ${{ github.run_number }} (${{ github.sha }})
+          prerelease: true
+          body: >
+            Unsigned CI installers built from ${{ github.sha }}.
+            Windows: SmartScreen "More info → Run anyway". macOS: unsigned —
+            right-click → Open the first time (arm64 is ad-hoc signed).
+          files: |
+            release/*.AppImage
+            release/*.deb
+            release/*.exe
+            release/*.dmg

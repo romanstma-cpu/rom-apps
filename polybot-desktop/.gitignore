@@ -1,0 +1,84 @@
+# ── Dependencies ──────────────────────────────────────────────────
+node_modules/
+
+# ── Build / packaging output ──────────────────────────────────────
+dist/
+dist-electron/
+release/
+python/dist/
+python/build/
+# Ignore stray/auto-generated PyInstaller specs, but KEEP the backend spec: it is
+# the single source of truth for the frozen bundle (collect_all of the
+# deposit-wallet signer + keyring) and `npm run py:dist` builds from it, so CI
+# needs it in the checkout.
+*.spec
+!python/rom-polybot-backend.spec
+
+# ── Python ────────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# ── Local runtime state — NEVER COMMIT (may hold credentials / trades)
+# The backend falls back to ./credentials, ./data, ./logs next to the
+# Python files when ROM_TRADER_USERDATA is unset (dev runs).
+credentials/
+python/data/
+python/logs/
+*.db
+*.db-wal
+*.db-shm
+
+# ── Secrets / local env ───────────────────────────────────────────
+.env
+.env.*
+!.env.example
+# Key material must never reach the public repo, whatever it is named.
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+id_rsa*
+id_ecdsa*
+id_ed25519*
+secrets.json
+credentials.json
+service-account*.json
+
+# ── Logs ──────────────────────────────────────────────────────────
+*.log
+
+# ── OS / editor cruft ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.tmp
+.idea/
+.vscode/
+*.swp
+*~
+
+# ── Superseded asset backups — kept locally, not part of the release ──
+icon-backup/
+
+# ── Internal docs — kept locally, NOT for the public repo ─────────
+# (marketing strategy, internal SWOT, AI scratchpad, creator video script —
+# contain private handles / business notes / affiliate-link mechanics /
+# references to a private sibling project)
+AI_CONTEXT.md
+MARKETING.md
+PROS_AND_CONS.md
+YOUTUBE_GUIDE_SCRIPT.md
+
+# Local-only simulation / animation-testing copy of the app (NEVER pushed to git)
+simulation/
+
+# ── Local agent tooling ───────────────────────────────────────────
+# Machine-specific: settings.local.json holds absolute paths from whichever
+# machine ran the tool (including references to a private sibling project).
+.claude/
+
+.work/
+python/credentials/
