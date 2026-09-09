@@ -1,0 +1,25 @@
+/* ROM's existing palette, with the product preview as the signature moment. */
+:root{--scroll-thumb:#566b85;--scroll-track:#0b1018}
+html{scrollbar-color:var(--scroll-thumb) var(--scroll-track)}
+::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:var(--scroll-track)}::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border:3px solid var(--scroll-track);border-radius:8px}::-webkit-scrollbar-thumb:hover{background:#a1c7ff}
+button,a,summary{cursor:pointer}button:focus-visible{outline:2px solid var(--mint);outline-offset:4px}button:active,.btn:active{transform:translateY(1px)}
+.hero{padding:76px 0 30px;overflow:hidden;background:radial-gradient(ellipse at 84% 45%,#21466055,transparent 60%)}
+.hero-grid{grid-template-columns:minmax(0,.9fr) minmax(0,1.25fr);gap:48px;align-items:center}
+h1{font-size:clamp(42px,4.4vw,64px);letter-spacing:-.04em;line-height:1.08;font-weight:650}h1 span{color:var(--mint)}
+.hero-copy{margin-top:26px}.hero-copy p{font-size:16px;line-height:1.8;max-width:42ch}.hero-copy .actions{gap:18px}
+.market-labels{display:flex;flex-wrap:wrap;gap:18px;margin-top:28px;font-size:11px;color:var(--muted)}
+.terminal-stage{min-width:0;perspective:1200px;animation:stage-arrive 1.2s cubic-bezier(.16,1,.3,1) both}
+.stage-heading,.stage-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:11px;color:var(--muted);padding:14px 0}.stage-heading>span:first-child{letter-spacing:.12em;color:var(--mint);font-weight:600}
+.terminal-preview{margin:0;position:relative;border-radius:12px;overflow:hidden;box-shadow:0 28px 65px #0006;transform:rotateY(-7deg) rotateX(3deg);transform-origin:center;animation:terminal-settle 1.6s cubic-bezier(.16,1,.3,1) both}
+.terminal-preview img{width:100%;height:auto;display:block}.scan-pass{position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 30%,#a1c7ff28 48%,transparent 65%);transform:translateX(110%);animation:scan-once 2.6s ease-in-out both}
+.stage-footer button{border:0;border-bottom:1px solid #a1c7ff60;background:transparent;color:var(--accent);font:inherit;min-height:44px;padding:8px 0;white-space:nowrap}.stage-footer button:hover{color:var(--mint);border-color:var(--mint)}
+.terminal-stage.replaying .scan-pass{animation:none}.hero-notes{margin-top:38px;padding-top:20px}
+.referral-card{border-radius:14px;border-color:#8de0c54d;background:linear-gradient(105deg,#162d3d,#132821);position:relative;overflow:hidden;padding:30px 34px}.referral-card h2{font-size:42px;letter-spacing:-.035em}.referral-card .terms{font-size:12px}.referral-card .btn{background:var(--mint)}.referral-card .btn:hover{background:#b3efdc}.referral-code{font-size:15px;padding:3px 10px}
+.eyebrow{display:none}.section-head{padding-top:12px}.section-head h2{font-size:36px}.feature{border-radius:14px}.feature-copy h4{font-size:34px;letter-spacing:-.03em}.app-grid{gap:24px}.app-card{border-radius:14px;transition:border-color .2s}.app-card:hover{border-color:#a1c7ff55}.card-shot{aspect-ratio:1.6}.principles .number{display:none}.principles h3{color:var(--mint)}.foot{padding-bottom:40px}.mobile-note{font-size:13px}
+@keyframes stage-arrive{from{transform:translateY(22px)}to{transform:translateY(0)}}
+@keyframes terminal-settle{from{transform:rotateY(-13deg) rotateX(5deg) translateY(18px)}to{transform:rotateY(-7deg) rotateX(3deg)}}
+@keyframes scan-once{from{transform:translateX(-110%)}to{transform:translateX(110%)}}
+@media(max-width:960px){.hero-grid{gap:26px;grid-template-columns:1fr 1fr}.hero{padding-top:48px}.stage-footer{align-items:flex-start}.stage-footer>span{line-height:1.7}.hero-copy .actions{gap:8px}}
+@media(max-width:700px){.hero{padding-top:30px}.hero-grid{grid-template-columns:1fr;gap:28px}h1{font-size:clamp(42px,12vw,68px)}.hero-copy p{font-size:16px;max-width:100%}.hero-copy .actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.hero-copy .btn{font-size:13px;padding:12px}.terminal-preview{transform:none;animation:none}.terminal-stage{padding:0 3px}.stage-heading{padding-top:0}.hero-notes{margin-top:20px;font-size:12px}.market-labels{margin-top:20px}.referral-card{padding:24px}.referral-card h2{font-size:38px}.referral-card .terms{font-size:12px}.section-head h2{font-size:30px}.feature-copy h4{font-size:30px}.card-shot{aspect-ratio:auto}.stage-footer{font-size:10px}.stage-footer button{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.terminal-stage,.terminal-preview,.scan-pass{animation:none!important}.scan-pass{display:none}#replay-preview{display:none}.terminal-preview{transform:none}html{scroll-behavior:auto}}
+@media(forced-colors:active){html{scrollbar-color:auto}.scan-pass{display:none}.referral-card,.terminal-preview{border:1px solid CanvasText}}
