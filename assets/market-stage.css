@@ -1,4 +1,5 @@
 /* ROM's existing palette, with the product preview as the signature moment. */
+.preview-image-link{display:block;cursor:zoom-in}.preview-size-link{display:inline-flex;align-items:center;min-height:44px;padding:10px 0;color:var(--accent);font-size:13px;text-decoration:underline;text-underline-offset:4px}.preview-size-link:hover{color:var(--mint)}.card-body>.preview-size-link{margin:-8px 0 16px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 :root{--scroll-thumb:#566b85;--scroll-track:#0b1018}
 html{scrollbar-color:var(--scroll-thumb) var(--scroll-track)}
 ::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:var(--scroll-track)}::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border:3px solid var(--scroll-track);border-radius:8px}::-webkit-scrollbar-thumb:hover{background:#a1c7ff}
