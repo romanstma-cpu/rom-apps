@@ -12,6 +12,7 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.json --noEmit",
+    "check:e2e-drift": "node scripts/check-e2e-drift.mjs",
     "py:setup": "node scripts/setup-python.mjs",
     "py:test": "node scripts/test-python.mjs",
     "py:backtest": "node scripts/backtest.mjs",

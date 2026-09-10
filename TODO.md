@@ -13,7 +13,8 @@ _(none — picked up from the top of the list below)_
 ## 1. Bugs and failing tests
 
 - [x] `e2e/paper-activity.e2e.mjs` failing since 2.8 on stale UI strings
-- [ ] Audit remaining e2e specs for assertions that no longer match shipped UI
+- [x] Audit remaining e2e specs for assertions that no longer match shipped UI
+      (added `npm run check:e2e-drift`; 49 locators checked, all valid)
 - [ ] `python/db.py: get_previous_snapshots_bulk` is now unreferenced — confirm
       no external caller, then remove with its test
 
