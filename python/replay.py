@@ -92,6 +92,9 @@ def tick_to_asset(row: dict, cfg: dict, close_iso: str) -> dict:
         "velocity1mPct": row.get("velocity1m_pct"),
         "change5mPct": row.get("change5m_pct"),
         "change15mPct": row.get("change15m_pct"),
+        # Lets the fee model charge the schedule in force at this tick
+        # rather than today's. See crypto15m.asset_fee_at.
+        "observedAt": row.get("observed_at"),
     }
     crypto15m.derive_script_fields(out, crypto15m._interval(cfg))
     return out

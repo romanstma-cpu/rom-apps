@@ -284,7 +284,7 @@ export interface AppState {
   enableDiscordRpc: boolean;
   acceptedDisclaimer: boolean;
   windowBounds: { x: number; y: number; width: number; height: number } | null;
-  /** Set once the UTC-day-boundary migration has run. See RELEASE-2.8.md. */
+  /** Set once the UTC-day-boundary migration has run (see DECISIONS.md). */
   tradingDayMigrated?: boolean;
 }
 

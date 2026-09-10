@@ -9,6 +9,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
+import fees_us
+
 logger = logging.getLogger(__name__)
 
 
@@ -702,6 +704,84 @@ def _init_db_schema() -> None:
             conn.execute("UPDATE crypto15m_ticks SET interval='15m' WHERE interval IS NULL")
         except sqlite3.OperationalError:
             pass
+        try:
+            _restate_shadow_pnl_on_us_fees(conn)
+        except sqlite3.OperationalError:
+            pass
+
+
+SHADOW_FEE_RESTATEMENT_KEY = "migrations:shadow_pnl_us_fees:v1"
+
+
+def _us_fee_per_contract(cost: float, created_at) -> float:
+    """Taker fee for one contract, at the US schedule in force when placed."""
+    at = _epoch_of(created_at)
+    p = max(0.0, min(1.0, float(cost)))
+    return float(fees_us.coefficient_at_or_earliest(at)) * p * (1.0 - p)
+
+
+def _epoch_of(value) -> float:
+    """Parse a stored timestamp to epoch seconds; 0.0 when unusable."""
+    text = str(value or "").strip()
+    if not text:
+        return 0.0
+    try:
+        stamp = datetime.fromisoformat(
+            text.replace("Z", "+00:00").replace(" ", "T", 1))
+    except ValueError:
+        return 0.0
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=timezone.utc)
+    return stamp.timestamp()
+
+
+def _restate_shadow_pnl_on_us_fees(conn) -> int:
+    """One-time: re-settle old shadow rows on the correct US fee schedule.
+
+    Script practice fills used to be settled with an international
+    per-category table that charged crypto 0.07 and geopolitics nothing at
+    all. Neither rate exists on Polymarket US. Rows settled under it record a
+    P&L that could never have happened, and leaving them alongside correctly
+    priced new rows makes a script's practice record mean two different
+    things at once.
+
+    So restate them rather than annotate them: the inputs (entry price,
+    contracts, outcome, placement time) are all still on the row, so the
+    correct figure is fully reconstructible. Runs once, guarded by a key in
+    app_kv, and reports how many rows moved.
+    """
+    if kv_get(conn, SHADOW_FEE_RESTATEMENT_KEY):
+        return 0
+    rows = conn.execute(
+        """SELECT id, entry_cents, contracts, outcome_correct, created_at,
+                  pnl_usd
+             FROM script_shadow_orders
+            WHERE resolved=1 AND outcome_correct IS NOT NULL
+              AND contracts > 0"""
+    ).fetchall()
+    changed = 0
+    for r in rows:
+        r = dict(r)
+        cost = float(r.get("entry_cents") or 0) / 100.0
+        contracts = int(r.get("contracts") or 0)
+        fee = _us_fee_per_contract(cost, r.get("created_at"))
+        won = bool(r.get("outcome_correct"))
+        per_ct = (1.0 - cost - fee) if won else (-cost - fee)
+        restated = round(per_ct * contracts, 4)
+        if r.get("pnl_usd") is None or abs(float(r["pnl_usd"]) - restated) > 5e-5:
+            conn.execute(
+                "UPDATE script_shadow_orders SET pnl_usd=? WHERE id=?",
+                (restated, r["id"]),
+            )
+            changed += 1
+    kv_set(conn, SHADOW_FEE_RESTATEMENT_KEY, str(changed))
+    if changed:
+        logger.warning(
+            f"restated {changed} script practice row(s) onto the Polymarket US "
+            f"fee schedule; they were priced with an international table that "
+            f"charged crypto 0.07 and geopolitics nothing"
+        )
+    return changed
 
 
 def _protect_order_journal_on_reset():

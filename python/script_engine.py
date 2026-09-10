@@ -237,8 +237,9 @@ def _shadow_fee(cost: float, created_at: str | None) -> float:
     """US taker fee for a shadow fill, priced at the schedule in force then.
 
     Previously this used the legacy per-category table, which charged crypto
-    0.07 and geopolitics nothing at all. See RELEASE-2.8.md - already-settled
-    shadow rows keep the P&L they were written with.
+    0.07 and geopolitics nothing at all. Rows settled under that table were
+    restated once by `db._restate_shadow_pnl_on_us_fees`, so a script's
+    practice record is priced on one schedule throughout.
     """
     import backtest as bt
     return bt.us_fee_per_contract(cost, bt.epoch_of(created_at))

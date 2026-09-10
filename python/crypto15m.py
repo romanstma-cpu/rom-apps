@@ -10,6 +10,7 @@ from typing import Optional
 
 import httpx
 
+import fees_us
 import us_market_stream
 import indicators
 import polymarket_api
@@ -398,14 +399,45 @@ def _norm_cdf(x: float) -> float:
     return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
 
 
-FEE_RATE_CRYPTO = 0.07
 FEE_EXPONENT_CRYPTO = 1.0
 
 
-def _fee_cents(price_cents: float, schedule: Optional[dict] = None) -> float:
+def asset_fee_at(asset: Optional[dict]) -> Optional[float]:
+    """Epoch used to pick the fee schedule for a (possibly replayed) asset.
+
+    Live assets carry no timestamp and price at "now". Replayed ticks carry
+    `observedAt`, so a backtest charges the schedule that applied back then
+    rather than today's.
+    """
+    ts = str((asset or {}).get("observedAt") or "").strip()
+    if not ts:
+        return None
+    try:
+        stamp = datetime.fromisoformat(
+            ts.replace("Z", "+00:00").replace(" ", "T", 1))
+    except ValueError:
+        return None
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=timezone.utc)
+    return stamp.timestamp()
+
+
+def _fee_cents(
+    price_cents: float, schedule: Optional[dict] = None,
+    at: Optional[float] = None,
+) -> float:
+    """Taker fee in cents for one contract at `price_cents`.
+
+    The coefficient comes from the Polymarket US schedule in force at `at`
+    (default: now). This used to be a hard-coded 0.07, an international rate
+    that overstated US cost and so made the engine demand more edge than it
+    needed. An explicit `schedule` rate still wins, for what-if analysis.
+    """
     if schedule is not None and not schedule.get("enabled", True):
         return 0.0
-    rate, exponent = FEE_RATE_CRYPTO, FEE_EXPONENT_CRYPTO
+    rate = float(fees_us.coefficient_at_or_earliest(
+        time.time() if at is None else at))
+    exponent = FEE_EXPONENT_CRYPTO
     if schedule is not None:
         rate = float(schedule.get("rate") or rate)
         exponent = float(schedule.get("exponent") or exponent)
@@ -430,17 +462,18 @@ def model_up_prob(
 
 def model_edge_net_cents(
     up_prob: Optional[float], yes_ask: Optional[float], no_ask: Optional[float],
-    fee_schedule: Optional[dict] = None,
+    fee_schedule: Optional[dict] = None, at: Optional[float] = None,
 ) -> Optional[float]:
     if up_prob is None:
         return None
     edges = []
     if yes_ask and 0 < yes_ask < 1:
         ask_c = yes_ask * 100.0
-        edges.append(up_prob * 100.0 - ask_c - _fee_cents(ask_c, fee_schedule))
+        edges.append(up_prob * 100.0 - ask_c - _fee_cents(ask_c, fee_schedule, at))
     if no_ask and 0 < no_ask < 1:
         ask_c = no_ask * 100.0
-        edges.append((1.0 - up_prob) * 100.0 - ask_c - _fee_cents(ask_c, fee_schedule))
+        edges.append((1.0 - up_prob) * 100.0 - ask_c
+                     - _fee_cents(ask_c, fee_schedule, at))
     if not edges:
         return None
     return round(max(edges), 2)

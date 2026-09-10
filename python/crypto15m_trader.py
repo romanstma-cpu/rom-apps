@@ -236,9 +236,10 @@ def paired_sides(asset: dict) -> tuple[str, float, float]:
         return "", 0.0, 0.0
     mp = float(mp)
     fs = asset.get("feeSchedule")
+    at = crypto15m.asset_fee_at(asset)
     up_c, down_c = float(up_ask) * 100.0, float(down_ask) * 100.0
-    up_edge = mp * 100.0 - up_c - crypto15m._fee_cents(up_c, fs)
-    down_edge = (1.0 - mp) * 100.0 - down_c - crypto15m._fee_cents(down_c, fs)
+    up_edge = mp * 100.0 - up_c - crypto15m._fee_cents(up_c, fs, at)
+    down_edge = (1.0 - mp) * 100.0 - down_c - crypto15m._fee_cents(down_c, fs, at)
     if up_edge >= down_edge:
         return "up", up_edge, down_edge
     return "down", down_edge, up_edge
@@ -346,7 +347,8 @@ def should_enter(asset: dict, cfg: dict, *, has_open: bool, open_count: int) -> 
             return False, "no executable ask under the entry cap"
         ask_c = float(ask) * 100.0
         edge = round(
-            p_side * 100.0 - ask_c - crypto15m._fee_cents(ask_c, asset.get("feeSchedule")),
+            p_side * 100.0 - ask_c - crypto15m._fee_cents(
+                ask_c, asset.get("feeSchedule"), crypto15m.asset_fee_at(asset)),
             2,
         )
         min_e = float(cfg.get("crypto15m_model_min_edge_cents", 2.0) or 0.0)
@@ -928,8 +930,9 @@ async def _open_paired_entry(
             f"{combined:.0f}c > {max_comb:.0f}c cap (snapshot was cheaper)"
         )
         return []
-    up_edge = mp * 100.0 - up_ask - crypto15m._fee_cents(up_ask, fs)
-    down_edge = (1.0 - mp) * 100.0 - down_ask - crypto15m._fee_cents(down_ask, fs)
+    _at = crypto15m.asset_fee_at(a)
+    up_edge = mp * 100.0 - up_ask - crypto15m._fee_cents(up_ask, fs, _at)
+    down_edge = (1.0 - mp) * 100.0 - down_ask - crypto15m._fee_cents(down_ask, fs, _at)
     dom_side = "up" if up_edge >= down_edge else "down"
     dom_edge = max(up_edge, down_edge)
     tilt = paired_tilt(dom_edge, cfg)

@@ -12,6 +12,10 @@ import replay
 import rtds_ws
 import spot_ws
 from config import merge_with_defaults
+from conftest import US_FEE_APRIL, US_FEE_JULY
+
+JULY = US_FEE_JULY.timestamp()    # theta 0.06
+APRIL = US_FEE_APRIL.timestamp()  # theta 0.05
 
 
 def test_model_up_prob_sides_and_bounds():
@@ -37,19 +41,44 @@ def test_model_up_prob_missing_inputs_none():
     assert crypto15m.model_up_prob(100.0, 100.0, 0.0, 5.0) is None
 
 
-def test_fee_cents_is_fee_v2_curve():
-    assert crypto15m._fee_cents(90.0) == pytest.approx(0.63)
-    assert crypto15m._fee_cents(50.0) == pytest.approx(1.75)
+def test_fee_cents_uses_the_us_schedule_in_force():
+    # theta x P x (1-P) x 100, theta from the schedule at `at`.
+    assert crypto15m._fee_cents(90.0, at=JULY) == pytest.approx(0.54)
+    assert crypto15m._fee_cents(50.0, at=JULY) == pytest.approx(1.50)
+    assert crypto15m._fee_cents(90.0, at=APRIL) == pytest.approx(0.45)
+    assert crypto15m._fee_cents(50.0, at=APRIL) == pytest.approx(1.25)
+
+
+def test_fee_cents_defaults_to_the_current_schedule():
+    """No timestamp means live, which must price at today's coefficient."""
+    import time as _t
+    assert crypto15m._fee_cents(50.0) == pytest.approx(
+        crypto15m._fee_cents(50.0, at=_t.time()))
+
+
+def test_asset_fee_at_reads_a_replayed_tick_timestamp():
+    assert crypto15m.asset_fee_at({"observedAt": "2026-08-01 12:00:00"}) == JULY
+    assert crypto15m.asset_fee_at({"observedAt": "2026-08-01T12:00:00Z"}) == JULY
+    # Live assets carry no timestamp, so the caller falls back to now.
+    assert crypto15m.asset_fee_at({}) is None
+    assert crypto15m.asset_fee_at(None) is None
+    assert crypto15m.asset_fee_at({"observedAt": "garbage"}) is None
+
+
+def test_fee_cents_honours_an_explicit_schedule_override():
     assert crypto15m._fee_cents(50.0, {"enabled": True, "rate": 0.25, "exponent": 2.0}) \
         == pytest.approx(0.25 * 0.25 ** 2 * 100.0)
     assert crypto15m._fee_cents(50.0, {"enabled": False}) == 0.0
 
 
 def test_model_edge_picks_the_better_side_net_of_fee():
-    e = crypto15m.model_edge_net_cents(0.98, 0.90, 0.15)
-    assert e == pytest.approx(7.37, abs=0.01)
-    e2 = crypto15m.model_edge_net_cents(0.02, 0.15, 0.90)
-    assert e2 == pytest.approx(7.37, abs=0.01)
+    # 98c model vs a 90c ask, less the 0.54c fee at theta 0.06.
+    e = crypto15m.model_edge_net_cents(0.98, 0.90, 0.15, at=JULY)
+    assert e == pytest.approx(7.46, abs=0.01)
+    e2 = crypto15m.model_edge_net_cents(0.02, 0.15, 0.90, at=JULY)
+    assert e2 == pytest.approx(7.46, abs=0.01)
+    # April's cheaper 0.05 leaves more edge on the very same book.
+    assert crypto15m.model_edge_net_cents(0.98, 0.90, 0.15, at=APRIL) > e
     assert crypto15m.model_edge_net_cents(None, 0.9, 0.1) is None
     assert crypto15m.model_edge_net_cents(0.98, None, None) is None
 
@@ -213,14 +242,15 @@ def test_paired_tilt_ladder():
 
 
 def test_paired_sides_picks_the_underpriced_side():
+    at = "2026-08-01 12:00:00"   # theta 0.06
     dom, edge, hedge_edge = c15t.paired_sides(
-        _asset(modelProb=0.60, upAsk=0.50, downAsk=0.48))
+        _asset(modelProb=0.60, upAsk=0.50, downAsk=0.48, observedAt=at))
     assert dom == "up"
-    assert edge == pytest.approx(60 - 50 - 1.75, abs=0.01)
+    assert edge == pytest.approx(60 - 50 - 1.50, abs=0.01)
     dom2, edge2, _ = c15t.paired_sides(
-        _asset(modelProb=0.60, upAsk=0.70, downAsk=0.28))
+        _asset(modelProb=0.60, upAsk=0.70, downAsk=0.28, observedAt=at))
     assert dom2 == "down"
-    assert edge2 == pytest.approx(40 - 28 - 1.4112, abs=0.01)
+    assert edge2 == pytest.approx(40 - 28 - 1.2096, abs=0.01)
     assert c15t.paired_sides(_asset(modelProb=None))[0] == ""
     assert c15t.paired_sides(_asset(downAsk=None))[0] == ""
 

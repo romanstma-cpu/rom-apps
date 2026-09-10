@@ -3,6 +3,41 @@
 Assumptions made while working without confirmation. Each entry states the
 ambiguity, the choice, and why it is the safest reasonable option.
 
+## 2026-09-10 — price the live crypto fee from the dated US schedule
+
+`crypto15m._fee_cents` hard-coded `FEE_RATE_CRYPTO = 0.07`, an international
+rate, and it gates live crypto15m entries through the net-edge calculation.
+`polymarket_api` passes `fee_schedule: None`, so the fallback was always the
+operative value.
+
+Left alone in 2.8 because the error is conservative — overstating cost makes
+the engine demand more edge than it needs — and correcting it makes the engine
+take *more* trades, which is risk-increasing. Now corrected on request: the
+coefficient comes from `fees_us` at the schedule in force, so backtests and
+live agree instead of differing by a penny per contract. An explicit
+`schedule` rate still overrides, for what-if analysis.
+
+Replayed ticks carry `observedAt` into the asset dict so a backtest charges
+the schedule that applied then, not today's.
+
+## 2026-09-10 — restate old script practice P&L rather than annotate it
+
+Practice fills settled before the US fee correction used a per-category table
+charging crypto 0.07 and geopolitics nothing. Two options: mark those rows so
+the UI can show which schedule each used, or recompute them.
+
+Chose recompute. The old figures are not merely stale, they are impossible —
+no Polymarket US trade was ever charged those rates, and geopolitics was never
+free. A practice record exists to answer "would this script have made money?",
+and a mixed record answers it two different ways at once. Entry price,
+contracts, outcome and placement time all survive on the row, so the correct
+figure is fully reconstructible rather than estimated.
+
+`db._restate_shadow_pnl_on_us_fees` runs once, guarded by a key in `app_kv`,
+skips unresolved and never-settled rows, leaves already-correct rows alone,
+and logs how many moved. It is a rewrite of recorded history, so it is
+deliberately loud rather than silent.
+
 ## 2026-09-10 — assert e2e against `WorkspaceStatus`, not `TopBar`
 
 `paper-activity.e2e.mjs` waited for a practice-mode string that exists only in
