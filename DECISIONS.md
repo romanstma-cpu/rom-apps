@@ -76,3 +76,16 @@ ALTER loop kept for legacy upgrade. Added TestInsertColumnParity, a
 parser-level regression that asserts every static INSERT in db.py
 references only base-SCHEMA columns — this whole bug class is now caught
 at the source.
+
+## 2026-09-10 — IPC config validation at the Electron boundary
+
+`config:update`/`config:replace` forwarded renderer values to the store
+unchecked. The backend validates deeply, but a compromised/buggy renderer
+could send NaN/Inf (which survive JSON to Python and re-trigger the NaN
+bug class), wrong-typed values, or arbitrary nested objects. Added
+`electron/system/config-validate.ts`: a per-key type map (~180 keys) with
+enum/array/nullable handling; unknown keys are dropped (forward-compatible)
+rather than fatal. Wired into both IPC handlers; invalid payloads throw
+before reaching the store. Decision: rules objects get shape-only checks
+here (array of objects), deep validation stays in the Python backend — no
+logic duplication.

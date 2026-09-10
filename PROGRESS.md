@@ -5,9 +5,15 @@
 - **E2E:** 23/23 pass (all 9 suites green)
 - **Typecheck:** clean
 - **Branch:** main
-- **Latest commit:** be99c38 (schema/insert column drift fix)
+- **Latest commit:** c42c09e (IPC config validation)
 
 ## Session accomplishments
+
+### Security
+- New `electron/system/config-validate.ts`: per-key type validation for all
+  ~180 TraderConfig keys; wired into config:update/config:replace IPC.
+  Rejects NaN/Infinity, wrong-typed values, invalid enums, bad arrays.
+  Unknown keys dropped (forward-compatible). Test: scripts/test-config-validate.mjs.
 
 ### Critical bug fixed (would have crashed crypto15m pipeline on schema-only builds)
 `crypto15m_signals`/`crypto15m_ticks` INSERTs referenced `interval` which
