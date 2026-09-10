@@ -7,6 +7,7 @@ coverage gaps and the price/volume baselines that a signal is allowed to use.
 from __future__ import annotations
 
 import asyncio
+from collections import deque
 from datetime import datetime, timezone
 
 import pytest
@@ -37,6 +38,81 @@ def tape():
     t = momentum_window.Tape()
     yield t
     t.reset()
+
+
+# --- rejection accounting -----------------------------------------------
+#
+# The gate itself is unchanged. These cover only the counters that explain it.
+# A starved tape and a quiet market produce the same empty summarize() result,
+# so without this accounting a host-clock fault is indistinguishable from
+# "nothing is trading" — see the reasons surfaced by scanner's momentum log.
+
+def test_clock_behind_exchange_is_counted_apart_from_staleness(tape):
+    # Local clock 2s behind the exchange: now-at is negative, every receipt is
+    # dropped. This is a host fault, not a market condition, and must not be
+    # pooled with ordinary staleness.
+    assert tape.add(trade(1, at=T + 2), T) is False
+    assert tape.rejects["local clock behind exchange"] == 1
+    assert tape.rejects["older than 30s at receipt"] == 0
+
+    assert tape.add(trade(2, at=T - 3600), T) is False
+    assert tape.rejects["older than 30s at receipt"] == 1
+    assert tape.rejects["local clock behind exchange"] == 1
+
+
+def test_every_rejection_path_is_attributed(tape):
+    tape.add(trade(1, at=T - 3600), T)
+    tape.add({"trade_id": "x", "ticker": "M1", "created_time": "2026-07-10T12:00:00",
+              "count_fp": 1, "yes_price_dollars": .4, "taker_side": "yes"}, T)
+    tape.add(trade(2, side="sideways"), T)
+    tape.add(trade(3, price=5.0), T)
+    tape.add({"ticker": "M1"}, T)
+    tape.add(trade(4), T)
+    tape.add(trade(4), T)  # duplicate
+    assert tape.rejects == {
+        "older than 30s at receipt": 1,
+        "naive timestamp": 1,
+        "bad identity fields": 1,
+        "bad numeric values": 1,
+        "malformed payload": 1,
+        "duplicate receipt": 1,
+    }
+    assert tape.accepted == 1
+
+
+def test_counters_survive_reset_because_a_reset_is_itself_the_diagnosis(tape):
+    tape.add(trade(1, at=T + 2), T)
+    tape.add(trade(2), T)
+    tape.reset()
+    assert tape.rows == deque([])           # window state cleared
+    assert tape.accepted == 1               # evidence retained
+    assert tape.rejects["local clock behind exchange"] == 1
+    assert tape.resets == 1
+
+
+def test_disconnect_driven_resets_are_counted(tape):
+    # A stream reconnecting faster than WINDOW can never warm up, so reset
+    # frequency is a first-class health signal, not incidental bookkeeping.
+    for _ in range(3):
+        tape.reset()
+    assert tape.stats()["resets"] == 3
+
+
+def test_stats_reports_reasons_most_common_first(tape):
+    for i in range(3):
+        tape.add(trade(i, at=T + 2), T)
+    tape.add(trade(99, at=T - 3600), T)
+    stats = tape.stats()
+    assert stats["rejected"] == 4
+    assert list(stats["reasons"]) == [
+        "local clock behind exchange", "older than 30s at receipt",
+    ]
+    assert stats["accepted"] == 0 and stats["rows"] == 0
+
+
+def test_a_fresh_tape_reports_no_resets(tape):
+    assert tape.stats() == {"accepted": 0, "rejected": 0, "reasons": {},
+                            "resets": 0, "rows": 0, "tickers": 0}
 
 
 # --- the window itself --------------------------------------------------

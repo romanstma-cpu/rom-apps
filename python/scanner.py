@@ -535,10 +535,21 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
                     new_alerts.append(dict(row))
 
     if skipped:
+        # The skip reasons alone cannot distinguish a quiet market from a tape
+        # that is discarding every receipt (host clock behind the exchange, a
+        # payload shape change) or from a stream reconnecting faster than the
+        # five-minute warm-up. The tape counters separate those cases; without
+        # them all three print the same line.
+        tape = momentum_window.tape.stats()
+        reasons = list(tape["reasons"].items())[:3]
         logger.info(
-            "momentum: %d alerts from %d markets; skipped %s",
+            "momentum: %d alerts from %d markets; skipped %s | "
+            "tape: %d accepted, %d rejected%s, %d resets",
             len(new_alerts), len(markets),
             ", ".join(f"{n}x {why}" for why, n in skipped.most_common(4)),
+            tape["accepted"], tape["rejected"],
+            " (" + ", ".join(f"{n}x {why}" for why, n in reasons) + ")" if reasons else "",
+            tape["resets"],
         )
     return len(new_alerts), new_alerts
 
