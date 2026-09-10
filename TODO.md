@@ -13,17 +13,20 @@ Rules for this file:
 
 ## Now
 
-- [ ] **Docs: DESIGN.md refresh for 2.13 changes**
-  Update the architecture doc with the new kill switch, CSV export,
-  keyboard shortcuts, responsive sidebar, focus trap, config validation,
-  schema/insert column drift fix, and the crypto15m interval column fix.
-  Scope: DESIGN.md only. Test: renders correctly. Rollback: revert.
+- [ ] **Automated e2e coverage for CSV export and kill switch path**
+  History CSV export and the Dashboard kill-switch flow are covered by
+  manual/terminal e2e but not as standalone suites. Add `e2e/history-csv.e2e.mjs`
+  and fold kill-switch feedback assertions into the paper-activity suite.
+    Scope: e2e/* only. Test: node e2e/<file>.e2e.mjs. Rollback: revert.
 
 ## Later
 
 - [ ] **Focus trap for remaining modals**
-  OnboardingModal is done. Apply the same pattern to Settings panels
-  and Accounts modals if they ever become full-screen overlays.
+  OnboardingModal, NameDialog done. Apply the same pattern to RiskLimits
+  and Accounts full-screen overlays if they ever become dialogs.
+- [ ] **Window icon .ico regeneration**
+  The installer bundles an icon; confirm the generated .ico matches the
+  current ROM branding (visual check, not code).
 
 ## Done
 
