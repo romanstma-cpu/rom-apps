@@ -124,3 +124,55 @@ rather than fatal. Wired into both IPC handlers; invalid payloads throw
 before reaching the store. Decision: rules objects get shape-only checks
 here (array of objects), deep validation stays in the Python backend — no
 logic duplication.
+
+## 2026-09-10 — integer-cents math in copy-trader sizing
+
+`_compute_copy_contracts` used float floor-division (`budget // price`). At
+clean penny prices this is off by one: `10.0 // 0.10 == 99.0`. The correct
+notional is 100. Replaced with integer-cents math (`budget_cents //
+price_cents`) so sizing is exact at every penny multiple. Same class of bug
+as the exit-loss-budget discipline: never let float representation cost a
+contract.
+
+## 2026-09-10 — indicator/_floats uses math.isfinite, not f==f
+
+`_floats` dropped NaN with `f == f` but kept Inf. An Inf close then poisoned
+every downstream indicator (EMA seed, VWAP denominator, pct_change prev).
+`math.isfinite(f)` rejects both. Also `ema_series` was computing `n` from the
+raw list then seeding from filtered values — a filtered-empty series could
+produce a bogus seed. Length now comes from the filtered list, so a
+single-element period-1 EMA is the value itself (not `[]`) and insufficient
+filtered data returns None. Test expectations updated to match.
+
+## 2026-09-10 — clob_ws ignores out-of-range/malformed levels
+
+`_best_from_levels` now skips prices outside (0,1) and non-dict price_change
+entries. A single malformed book row could previously surface a best bid/ask
+of 1.0 or garbage; the CLOB parser is a trust boundary from the exchange feed.
+
+## 2026-09-10 — insert_bot_position does NOT write pnl_usd/resolved
+
+The agent's copy-trader tests seeded rows via `insert_bot_position` assuming
+it persisted `pnl_usd`/`resolved`; it writes neither (fixed column list).
+Source is fine — the integration path always sets those via `update_*`.
+Fixtures now set them explicitly via UPDATE, and the helper `_seed_pnl_copy`
+wraps that. Decision: tests must match the real DB write contract, not the
+assumed one.
+
+## 2026-09-10 — new copy wallet baselines, not flagged eligible
+
+`_filter_new_entries`: a wallet never followed before has its position added
+to seen but is NOT returned as eligible — only wallets already tracked can
+trigger new-entry alerts. The agent's test expected the opposite; the source
+behavior prevents a flood when you start following a new wallet. Test
+corrected to assert the real design.
+
+## 2026-09-10 — design agent wave: focus traps, kill-switch honesty, overview hero
+
+UI/a11y committed as 61426ec. Highlights: NameDialog focus trap + ARIA
+dialog semantics; global Ctrl+digit shortcuts skip inputs/composition and any
+open `[aria-modal]`/dialog; kill switch now checks `ActionResult.ok` (a
+completed request does not imply all holdings sold — exits depend on
+quotes/depth), keeps a persistent role=status result, and disables Cancel
+while busy; Overview adds a latest-decision-cycle panel with mono/tabular
+metrics and an API-auth indicator. All verified: typecheck, build, e2e 23/23.
