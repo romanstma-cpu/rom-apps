@@ -78,6 +78,8 @@ export const DEFAULT_CONFIG: TraderConfig = {
   maxTotalExposureFraction: 0.75,
   maxGroupExposureFraction: 0.0,
   maxDrawdownFraction: 0.0,
+  requireEntryDepth: true,
+  exitPriceLossBudgetCents: 2,
 
   tradeScanInterval: 20,
   positionPollInterval: 30,

@@ -61,6 +61,8 @@ export interface TraderConfig {
   maxTotalExposureFraction: number;
   maxGroupExposureFraction: number;
   maxDrawdownFraction: number;
+  requireEntryDepth: boolean;
+  exitPriceLossBudgetCents: number;
 
   tradeScanInterval: number;
   positionPollInterval: number;

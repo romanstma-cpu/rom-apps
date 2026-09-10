@@ -1177,29 +1177,6 @@ def get_previous_snapshot(conn, ticker: str) -> dict | None:
     return dict(row) if row else None
 
 
-def get_previous_snapshots_bulk(conn, tickers) -> dict:
-    out: dict[str, dict] = {}
-    uniq = [t for t in dict.fromkeys(tickers) if t]
-    CHUNK = 400
-    for i in range(0, len(uniq), CHUNK):
-        chunk = uniq[i:i + CHUNK]
-        placeholders = ",".join("?" * len(chunk))
-        rows = conn.execute(
-            f"""SELECT ticker, volume_24h, yes_bid, last_price FROM (
-                   SELECT ticker, volume_24h, yes_bid, last_price,
-                          ROW_NUMBER() OVER (
-                              PARTITION BY ticker ORDER BY snapshot_at DESC, id DESC
-                          ) AS rn
-                   FROM market_snapshots
-                   WHERE ticker IN ({placeholders})
-               ) WHERE rn = 2""",
-            chunk,
-        ).fetchall()
-        for r in rows:
-            out[r["ticker"]] = dict(r)
-    return out
-
-
 def get_unresolved_alerts(conn, days: int = 30) -> list:
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
         "%Y-%m-%d %H:%M:%S"
