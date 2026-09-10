@@ -190,7 +190,7 @@ def _filter_new_entries(followed: dict, env: str, cfg: dict) -> dict:
 def _compute_copy_contracts(
     cfg: dict, *, price_cents: int, balance_usd: float, cap_usd: Optional[float] = None
 ) -> int:
-    price = max(0.01, int(price_cents) / 100.0)
+    price_cents = max(1, int(price_cents))
     bal = max(0.0, float(balance_usd or 0.0))
     mode = (cfg.get("copy_sizing_mode") or "fixed").lower()
     if mode == "balance_pct" and bal > 0:
@@ -202,7 +202,10 @@ def _compute_copy_contracts(
         budget = min(budget, bal * 0.98)
     if cap_usd is not None:
         budget = min(budget, max(0.0, cap_usd))
-    return max(0, int(budget // price))
+    # Integer cents math: float floor-division (budget // price) is off by one
+    # at clean penny prices, e.g. 10.0 // 0.10 == 99.0.
+    budget_cents = max(0, int(round(budget * 100.0)))
+    return budget_cents // price_cents
 
 
 async def _followed_holdings(cfg: dict) -> tuple[dict, bool]:

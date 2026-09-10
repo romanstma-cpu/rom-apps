@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Optional
 
 MACD_FAST = 12
@@ -15,20 +16,21 @@ def _floats(values) -> list[float]:
             f = float(v)
         except (TypeError, ValueError):
             continue
-        if f == f:
+        if math.isfinite(f):
             out.append(f)
     return out
 
 
 def ema_series(values: list[float], period: int) -> list[float]:
-    n = len(values)
+    vals = _floats(values)
+    n = len(vals)
     if period <= 0 or n < period:
         return []
     k = 2.0 / (period + 1.0)
-    seed = sum(values[:period]) / period
+    seed = sum(vals[:period]) / period
     out = [seed]
     prev = seed
-    for v in values[period:]:
+    for v in vals[period:]:
         prev = v * k + prev * (1.0 - k)
         out.append(prev)
     return out

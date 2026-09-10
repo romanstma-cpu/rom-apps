@@ -23,7 +23,10 @@ def _best_from_levels(levels, *, is_bid: bool) -> Optional[float]:
             sz = float(lvl.get("size", 0))
             if sz <= 0:
                 continue
-            prices.append(float(lvl["price"]))
+            p = float(lvl["price"])
+            if not (0.0 < p < 1.0):
+                continue
+            prices.append(p)
         except (TypeError, ValueError, KeyError):
             continue
     if not prices:
@@ -43,6 +46,8 @@ def parse_book(msg: dict) -> Optional[tuple[str, Optional[float], Optional[float
 def parse_price_changes(msg: dict) -> list[tuple[str, Optional[float], Optional[float]]]:
     out: list[tuple[str, Optional[float], Optional[float]]] = []
     for pc in msg.get("price_changes") or []:
+        if not isinstance(pc, dict):
+            continue
         aid = pc.get("asset_id")
         if not aid:
             continue
