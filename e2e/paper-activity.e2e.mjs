@@ -19,7 +19,9 @@ try {
   assert.equal(await p.getByRole('button',{name:'Start practice',exact:true}).isDisabled(),true);
 
   await p.evaluate(()=>window.rom.trading.setPaperEnabled(true));
-  await p.getByText('Practice mode — no exchange orders',{exact:true}).waitFor();
+  // WorkspaceStatus owns the header state line; practice shows as the
+  // engine-count alternative once no live engine is enabled.
+  await p.getByText(/Practice selected/).waitFor();
   let cfg=await p.evaluate(()=>window.rom.config.get());
   assert.equal(cfg.mainPaperTrading,true);assert.equal(cfg.enableTrading,false);
 
@@ -27,7 +29,9 @@ try {
   await p.getByRole('heading',{name:'What Polybot is doing',exact:true}).waitFor();
   await p.waitForFunction(async()=> (await window.rom.trading.status()).mainState==='blocked');
   await p.getByText('blocked',{exact:true}).waitFor();
-  await p.getByText(/auth failed/i).waitFor();
+  // The credential reason is shown in more than one card; assert it appears
+  // rather than requiring a single match.
+  await p.getByText(/auth failed/i).first().waitFor();
   await p.screenshot({path:'.work/overview-2.4.png'});
   const status=await p.evaluate(()=>window.rom.trading.status());
   assert.equal(status.mainMode,'paper');assert.equal(status.mainState,'blocked');
