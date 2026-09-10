@@ -66,7 +66,7 @@ def flush():
             now = time.time()
             if now-_last_prune >= 60:
                 c.execute('DELETE FROM main_replay_events WHERE at < ?', (now-60*86400,))
-                c.execute('DELETE FROM main_replay_events WHERE id < COALESCE((SELECT id FROM main_replay_events ORDER BY id DESC LIMIT 1 OFFSET 499999),0)')
+                c.execute('DELETE FROM main_replay_events WHERE id < COALESCE((SELECT id FROM main_replay_events ORDER BY at DESC, id DESC LIMIT 1 OFFSET 499999),0)')
                 _last_prune = now
     except Exception:
         with _lock:

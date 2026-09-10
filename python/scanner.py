@@ -414,6 +414,7 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
     skipped: Counter[str] = Counter()
 
     with db.get_db() as conn:
+        db.save_snapshots_bulk(conn, markets)
         for market in markets:
             ticker = market["ticker"]
             if is_micro_market(market.get("slug", "")):
@@ -423,8 +424,6 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
             oi = _to_float(market.get("open_interest", 0))
             close_time = market.get("close_time", "")
             days_left = _parse_days_to_close(close_time)
-
-            db.save_snapshot(conn, ticker, market)
 
             # Flow comes only from the deduplicated per-market trade window.
             # Rolling 24h totals and scan-to-scan diffs cannot distinguish fresh

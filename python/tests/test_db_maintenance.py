@@ -339,3 +339,18 @@ def test_no_restore_when_db_already_exists(tmp_path, monkeypatch):
     conn.close()
     monkeypatch.setattr(db, "_restore_checked", False)
     assert _marker_survived(db.db_path())
+
+
+def test_save_snapshots_bulk(fresh_db):
+    markets = [
+        {"ticker": "MKT1", "volume": 1000, "volume_24h": 500, "open_interest": 200, "yes_bid": 0.55, "last_price": 0.54},
+        {"ticker": "MKT2", "volume": 2000, "volume_24h": 1500, "open_interest": 800, "yes_bid": 0.65, "last_price": 0.64},
+        {"ticker": "", "volume": 0},  # should be skipped
+    ]
+    with db.get_db() as c:
+        db.save_snapshots_bulk(c, markets)
+        rows = c.execute("SELECT ticker, volume, volume_24h FROM market_snapshots ORDER BY ticker").fetchall()
+        assert len(rows) == 2
+        assert rows[0][0] == "MKT1" and rows[0][1] == 1000.0 and rows[0][2] == 500.0
+        assert rows[1][0] == "MKT2" and rows[1][1] == 2000.0 and rows[1][2] == 1500.0
+

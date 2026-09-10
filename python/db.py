@@ -1168,6 +1168,27 @@ def save_snapshot(conn, ticker: str, market: dict) -> None:
     )
 
 
+def save_snapshots_bulk(conn, markets: list[dict]) -> None:
+    if not markets:
+        return
+    conn.executemany(
+        """INSERT INTO market_snapshots (ticker, volume, volume_24h, open_interest, yes_bid, last_price)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        [
+            (
+                m.get("ticker", ""),
+                _to_float(m.get("volume", 0)),
+                _to_float(m.get("volume_24h", 0)),
+                _to_float(m.get("open_interest", 0)),
+                _to_float(m.get("yes_bid", 0)),
+                _to_float(m.get("last_price", 0)),
+            )
+            for m in markets
+            if m.get("ticker")
+        ],
+    )
+
+
 def get_previous_snapshot(conn, ticker: str) -> dict | None:
     row = conn.execute(
         """SELECT * FROM market_snapshots WHERE ticker = ?

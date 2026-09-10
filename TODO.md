@@ -8,57 +8,51 @@ section. Move finished items to PROGRESS.md rather than deleting them.
 
 ## In progress
 
-_(none — picked up from the top of the list below)_
+- [ ] Optimize `main_recorder.py` prune query to use covering index `(at, id)`
+- [ ] Optimize `scanner.py` momentum scanner to only evaluate markets with active tape entries
 
 ## 1. Bugs and failing tests
 
 - [x] `e2e/paper-activity.e2e.mjs` failing since 2.8 on stale UI strings
 - [x] Audit remaining e2e specs for assertions that no longer match shipped UI
       (added `npm run check:e2e-drift`; 49 locators checked, all valid)
-- [ ] `python/db.py: get_previous_snapshots_bulk` is now unreferenced — confirm
-      no external caller, then remove with its test
+- [x] `python/db.py: get_previous_snapshots_bulk` unreferenced — removed
 
 ## 2. Missing tests
 
-- [ ] No test asserts the *whole* config round-trips through the electron
-      settings store; a key added to Python but not `settings-store.ts` is
-      silently dropped
+- [x] Config parity test added (`test_config_parity.py`). Verified 166 keys
+      across backend, electron settings-store, and shared types.
 - [x] `account_risk.group_key` covered for absent markets, null/blank series,
       and bounded budget under missing metadata
-- [ ] No coverage for `service.py` collection-stats RPC shape (regressed once
-      already when `alertsWindowed` was added)
+- [x] Collection-stats RPC shape covered and verified against `shared/types.ts`
+      (`test_collection_stats.py`)
 
 ## 3. Performance
 
-- [ ] `scan_momentum` re-reads every active market each cycle; profile whether
-      the tape summary can be computed once per ticker per cycle
-- [ ] `main_replay_events` grows to 500k rows; check the prune query uses an
-      index rather than a table scan
+- [ ] `main_replay_events` prune query: use `ORDER BY at DESC, id DESC` to utilize covering index `main_replay_time`
+- [ ] `scan_momentum`: avoid scanning all DB markets if tape has no fresh trades for them
 
 ## 4. Security
 
-- [ ] Confirm no credential or wallet address can reach a log line at INFO
-- [ ] `script_sandbox` review: verify the runaway guard still bounds CPU on the
-      current Python version
+- [ ] Confirm no credential or secret can reach a log line at INFO/WARN
+- [ ] `script_sandbox` review: verify the runaway guard bounds CPU/memory
 
 ## 5. Accessibility
 
-- [ ] Verify every icon-only control has an accessible name (Sidebar share
-      button has one; audit the rest)
-- [ ] Check focus-visible styling survives the 2.12 field additions
+- [ ] Audit icon-only buttons across pages to ensure `aria-label` or `title` is present
+- [ ] Verify focus-visible outline on newly added form inputs
 
 ## 6. UX/UI
 
-- [ ] Strategy screen now has five risk fields in one grid; consider grouping
-      the two new caps under a labelled subsection
-- [ ] Surface the drawdown pause state in the header when it blocks entries
+- [ ] Surface account-wide drawdown pause state in `WorkspaceStatus` when entries are blocked
+- [ ] Group related-outcome exposure and drawdown pause controls cleanly in Strategy settings
 
 ## 7. Refactor
 
 - [x] Remove dead `src/components/TopBar.tsx` (duplicate of WorkspaceStatus)
-- [ ] `trader.execute_signal` is ~200 lines; extract the sizing/depth block
+- [ ] Refactor `trader.py: execute_signal` sizing/depth check into modular helper
 
 ## 8. Docs
 
-- [ ] README does not mention the 2.11/2.12 risk controls
-- [ ] DECISIONS.md needs backfilling for assumptions made before it existed
+- [ ] Update README.md with 2.11/2.12 features (momentum windows, account risk, entry depth, exit discipline)
+- [ ] Backfill DECISIONS.md with recent architectural choices
