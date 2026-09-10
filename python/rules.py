@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from typing import Any
 
 RULE_OPS = {
@@ -47,6 +49,8 @@ def sanitize_rules(raw: Any, allowed_fields, *, limit: int = 30) -> list[dict[st
         try:
             v = float(c.get("value"))
         except (TypeError, ValueError):
+            continue
+        if not math.isfinite(v):
             continue
         clean.append({"field": f, "op": op, "value": v})
     return clean
