@@ -61,3 +61,9 @@ RELEASE-2.1..2.8 moved to releases/archive/ (unreferenced; site keeps copies).
   Kept " vs " sports priority as designed.
 
 Suite: 1238 passing, 139 skipped (was 1091 at session start)
+- rules: 19 tests — FOUND 2 REAL BUGS:
+  - sanitize_rules("NaN") leaked nan into entry rules (always-false)
+  - unknown-field rule must fail closed, not silently pass
+  Fixed with math.isfinite guard + documented fail-closed contract.
+
+Suite: 1257 passing, 139 skipped
