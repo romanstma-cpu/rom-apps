@@ -70,4 +70,8 @@ Dashboard shows a "Flatten All" banner with 2-step confirmation (arm → confirm
 Trade History page has an export button that writes all resolved positions (not just the visible 200) to a CSV blob via `Blob` + `URL.createObjectURL`.
 
 ## Verification
+Overview uses the existing navy, blue, and mint tokens through Tailwind; Segoe UI owns headings/body and Consolas owns terminal data. The command panel includes a latest-cycle readout, with unknown values rendered as dashes. MainActivity owns the leading-filter count bars; these are relative counts, not conversion rates or profit predictions. The existing page scroller owns overflow; portfolio metrics stack below 640px. No decorative market data is generated.
+
+Dashboard exit feedback checks ActionResult.ok and keeps a persistent result message. A completed request does not imply that all holdings were sold. Global navigation shortcuts ignore forms, composition, and open dialogs.
+
 Use isolated Electron profiles for UI checks, with mocked trading status and no real credentials or orders. Check offline, scanning, blocked, failed refresh, saved-limit gating and mode labels. Run `npm run check:e2e-drift` to detect assertion drift (literal strings in e2e tests vs. real rendered text). Run `node scripts/test-config-validate.mjs` to verify IPC config validation. Run `pytest python/tests/` to verify schema parity and all backend logic.

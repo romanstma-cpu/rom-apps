@@ -59,10 +59,14 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
       <p className="mt-2 text-xs text-rom-dim">
         {status.mainCandidates} candidate(s) checked · {status.mainPlaced} {status.mainMode === 'paper' ? 'practice trade(s)' : 'order(s)'} created
       </p>
-      {topFilters.length > 0 && <ul className="mt-2 space-y-1">
-        {topFilters.map(([reason, count]) => <li key={reason} className="text-xs text-rom-dim">{reason} ×{count}</li>)}
-      </ul>}
     </details>}
+    {topFilters.length > 0 && <section className="mt-5 border-t border-rom-border pt-4" aria-label="Leading entry filters">
+      <div className="mb-3 flex justify-between gap-4 text-xs text-rom-muted"><h4>Leading entry filters</h4><span>Latest cycle · counts may overlap</span></div>
+      <ul className="space-y-3">{topFilters.map(([reason, count]) => <li key={reason}>
+        <div className="mb-1.5 flex justify-between gap-4 text-xs"><span className="break-words text-rom-muted">{reason}</span><span className="font-mono text-rom-purple">{count}</span></div>
+        <div aria-hidden="true" className="h-1 overflow-hidden rounded-full bg-rom-surface2"><div className="h-full rounded-full bg-rom-purple/70" style={{width: `${Math.min(100, count / Math.max(1, topFilters[0][1]) * 100)}%`}} /></div>
+      </li>)}</ul>
+    </section>}
 
     {status.mainMode === 'paper' && <p className="mt-4 flex gap-2 border-t border-rom-border pt-3 text-[11px] leading-5 text-rom-dim">
       <FlaskConical className="mt-0.5 h-3.5 w-3.5 shrink-0" />

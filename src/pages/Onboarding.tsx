@@ -122,7 +122,7 @@ export function OnboardingModal({onDone}:{onDone:()=>void}) {
             onDone();
           }}
         >
-          Continue to API Setup
+          Continue to API setup
         </button>
       </div>
     </div>

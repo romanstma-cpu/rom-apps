@@ -16,6 +16,10 @@ button:not(:disabled),summary{cursor:pointer}
 .terminal-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#283647;border:1px solid #283647;border-radius:12px;overflow:hidden}
 .terminal-metrics>div{background:#111d2a;padding:20px 24px}.terminal-metrics dt{font-size:11px;color:#a4b1c4}.terminal-metrics dd{margin:8px 0 0;font-size:28px;line-height:1.2;letter-spacing:-.03em;font-weight:600;font-variant-numeric:tabular-nums}.terminal-metrics small{display:block;margin-top:8px;color:#9cacbf;font-size:11px}
 @media(max-width:1050px){.terminal-metrics>div{padding:16px}.terminal-metrics dd{font-size:23px}.terminal-command{padding:22px}}
+.terminal-command-detailed{position:relative;border-top:2px solid theme('colors.rom.purple');background:linear-gradient(125deg,theme('colors.rom.surface2'),theme('colors.rom.surface'))}
+.terminal-command-detailed h3{line-height:1.2}
+.terminal-metrics dd{font-family:theme('fontFamily.mono')}
+@media(max-width:640px){.terminal-metrics{grid-template-columns:1fr}.terminal-command{padding:18px}.terminal-command h3{font-size:24px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 html,

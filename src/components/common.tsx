@@ -4,6 +4,57 @@ import { cls } from '../utils/format';
 import { shareToX, X_PROFILE } from '../utils/share';
 import type { RuleCondition, TraderConfig } from '@shared/types';
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function useFocusTrap(open: boolean, containerRef: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    if (!open || !containerRef.current) return;
+
+    const el = containerRef.current;
+    const prevFocus = document.activeElement as HTMLElement | null;
+
+    // Focus first focusable element in the dialog on open
+    const first = el.querySelector<HTMLElement>(FOCUSABLE);
+    first?.focus();
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Let the caller handle close via onClose
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      const nodes = el.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+
+    // Disable scroll behind the dialog
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+      prevFocus?.focus();
+    };
+  }, [open, containerRef]);
+}
+
 export function NameDialog({
   open, title, label, initialValue = '', placeholder, confirmLabel = 'Save',
   onSubmit, onClose,
@@ -19,6 +70,8 @@ export function NameDialog({
 }) {
   const [value, setValue] = useState(initialValue);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(open, containerRef);
 
   useEffect(() => {
     if (!open) return;
@@ -36,14 +89,18 @@ export function NameDialog({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
-      onMouseDown={onClose}
-    >
       <div
-        className="w-full max-w-sm rounded-xl border border-rom-border bg-rom-surface p-5 shadow-rom-soft"
-        onMouseDown={(e) => e.stopPropagation()}
+        className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onMouseDown={onClose}
       >
+        <div
+          ref={containerRef}
+          className="w-full max-w-sm rounded-xl border border-rom-border bg-rom-surface p-5 shadow-rom-soft"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
         <h3 className="text-sm font-semibold text-white">{title}</h3>
         {label && <p className="mt-1 text-xs text-rom-muted">{label}</p>}
         <input

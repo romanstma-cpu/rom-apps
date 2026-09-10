@@ -63,6 +63,8 @@ function Shell() {
   // press (K then a digit) to avoid hijacking browser find/save.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (e.isComposing || target?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], dialog') || document.querySelector('[aria-modal="true"], dialog[open]')) return;
       if (e.ctrlKey || e.metaKey) {
         const t = e.key.toLowerCase();
         if (PAGE_SHORTCUTS[t]) {

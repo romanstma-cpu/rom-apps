@@ -1,5 +1,5 @@
-import { ArrowRight, Check, ShieldCheck, SlidersHorizontal } from 'lucide-react';
-import { Card, Page, StatCard } from '../components/common';
+import { ArrowRight, Check, ShieldCheck, SlidersHorizontal, Radio, ScanLine } from 'lucide-react';
+import { Card, Page } from '../components/common';
 import { useApp } from '../state/AppStateProvider';
 import { fmtUsd } from '../utils/format';
 import type { PageId } from '../App';
@@ -11,21 +11,31 @@ export function OverviewPage({ onNav }: { onNav: (page: PageId) => void }) {
   const activity = useStrategyActivity();
   const connected = backend.authOk;
   const open = positions.filter(p => !p.resolved && ['filled', 'partial', 'submitted'].includes(p.status));
-  const live = !!(config?.enableTrading || config?.crypto15mEnabled || config?.copyEnabled || config?.scriptsLiveEnabled);
   const practicing = !!config?.mainPaperTrading && !config?.enableTrading;
   return <Page title="Overview" subtitle="Your account, performance and risk limits." actions={<button className="rom-btn-default" onClick={()=>onNav('evidence')}>Review evidence</button>}>
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="terminal-command">
-        <div className="flex flex-wrap items-center justify-between gap-6">
+      <div className="terminal-command terminal-command-detailed">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-rom-borderHi pb-4 text-xs text-rom-muted">
+          <span className="flex items-center gap-2 font-mono uppercase tracking-widest"><ScanLine className="h-4 w-4 text-rom-purple" />ROM / Strategy terminal</span>
+          <span className="flex items-center gap-2"><Radio className="h-3.5 w-3.5" />{connected ? 'API authenticated' : 'API not connected'}</span>
+        </div>
+        <div className="grid items-center gap-6 xl:grid-cols-[1fr_260px]">
           <div className="max-w-xl"><div className="terminal-mode mb-5"><span className={`h-1.5 w-1.5 rounded-full ${activity.label==='Scanning'?'bg-rom-win':'bg-rom-purple'}`} />{config?.enableTrading ? 'Live enabled' : practicing ? 'Practice enabled' : 'Trading paused'} · Polymarket US</div>
             <h3 className="text-3xl font-semibold tracking-tight">Main strategy: {activity.label.toLowerCase()}.</h3>
             <p className="mt-3 text-sm leading-6 text-rom-muted">{activity.summary}</p>
           </div>
-          <button className="rom-btn-primary" onClick={() => onNav(connected ? 'main' : 'api')}>{connected ? 'Review strategy' : 'Connect account'}<ArrowRight className="h-4 w-4" /></button>
+          <div className="rounded-xl border border-rom-borderHi bg-rom-void/40 p-5">
+            <h4 className="mb-4 text-xs font-semibold uppercase tracking-widest text-rom-muted">Latest decision cycle</h4>
+            <dl className="grid grid-cols-2 gap-4">
+              <div><dt className="text-xs text-rom-muted">Candidates</dt><dd className="mt-1 font-mono text-2xl">{activity.status?.mainLastCycleAt ? activity.status.mainCandidates : '—'}</dd></div>
+              <div><dt className="text-xs text-rom-muted">{activity.status?.mainMode === 'paper' ? 'Practice entries' : 'Orders created'}</dt><dd className="mt-1 font-mono text-2xl">{activity.status?.mainLastCycleAt ? activity.status.mainPlaced : '—'}</dd></div>
+            </dl>
+            <button className="rom-btn-primary mt-5 w-full" onClick={() => onNav(connected ? 'main' : 'api')}>{connected ? 'Review strategy' : 'Connect account'}<ArrowRight className="h-4 w-4" /></button>
+          </div>
         </div>
         {!connected && <div className="mt-7 grid gap-3 border-t border-rom-border pt-5 sm:grid-cols-3">{['Connect your account', 'Review strategy & limits', 'Choose when to start'].map((label, i) => <div key={label} className="flex items-center gap-3 text-xs text-rom-muted"><span className="grid h-6 w-6 place-items-center rounded-full border border-rom-border text-rom-purple">{i + 1}</span>{label}</div>)}</div>}
       </div>
-      <dl className="terminal-metrics">
+      <dl className="terminal-metrics" aria-label="Portfolio summary">
         <div><dt>{practicing?'Practice available':'Account value'}</dt><dd>{practicing ? (activity.status ? fmtUsd(activity.status.mainPaper.availableUsd) : '—') : connected ? fmtUsd(account?.totalUsd) : '—'}</dd><small>{practicing?'Simulated funds, separate from your account':'Cash and portfolio value'}</small></div>
         <div><dt>{practicing?'Practice recorded P&L':'Session return'}</dt><dd>{practicing ? (activity.status ? fmtUsd(activity.status.mainPaper.pnlUsd,{sign:true}) : '—') : connected ? fmtUsd(account?.sessionPnlUsd,{sign:true}) : '—'}</dd><small>{practicing?'Includes the simulated cost allowance':'Performance during this session'}</small></div>
         <div><dt>{practicing?'Open practice trades':'Open positions'}</dt><dd>{practicing ? activity.status?.mainPaper.open ?? '—' : connected ? open.length : '—'}</dd><small>{practicing?'No exchange orders':'Including pending orders'}</small></div>

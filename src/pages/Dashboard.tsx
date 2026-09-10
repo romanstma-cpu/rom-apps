@@ -20,6 +20,7 @@ export function DashboardPage({ onNav }: DashboardProps) {
   const [restarting, setRestarting] = useState(false);
   const [killArmed, setKillArmed] = useState(false);
   const [killBusy, setKillBusy] = useState(false);
+  const [killResult, setKillResult] = useState('');
 
   const engineDown = backend.status === 'crashed' || backend.status === 'stopped';
 
@@ -27,7 +28,8 @@ export function DashboardPage({ onNav }: DashboardProps) {
     setRestarting(true);
     toast.info('Restarting engine…');
     try {
-      await window.rom.backend.restart();
+      const result = await window.rom.backend.restart();
+      if (!result.ok) throw new Error(result.message || 'Engine restart rejected');
 
       window.setTimeout(() => { void refresh.backend(); }, 1200);
     } catch (e: any) {
@@ -41,13 +43,19 @@ export function DashboardPage({ onNav }: DashboardProps) {
 
   const flattenAll = async (): Promise<void> => {
     setKillBusy(true);
-    toast.info('Flattening all open positions…');
+    setKillResult('Requesting exits. Positions may remain open.');
     try {
-      await window.rom.trading.flatten();
-      toast.success('All positions flattened');
+      const result = await window.rom.trading.flatten();
+      if (!result.ok) throw new Error(result.message || 'Exit request rejected');
+      const message = 'Exit attempt completed. Check Positions for remaining holdings and pending orders.';
+      setKillResult(message);
+      toast.info(message);
+      await refresh.positions();
       setKillArmed(false);
     } catch (e: any) {
-      toast.error(`Flatten failed: ${e?.message || e}`);
+      const message = `Exit request failed: ${e?.message || e}`;
+      setKillResult(message);
+      toast.error(message);
     } finally {
       setKillBusy(false);
     }
@@ -142,7 +150,8 @@ export function DashboardPage({ onNav }: DashboardProps) {
             {restarting ? 'Restarting…' : 'Restart engine'}
           </button>
         </div>
-      )}\
+      )}
+      {killResult && <p role="status" className="mb-4 rounded-xl border border-rom-border bg-rom-surface p-4 text-sm text-rom-muted">{killResult}</p>}
       {openPositions.length > 0 && (
         <div className="mb-4 flex flex-col gap-3 rounded-xl border border-rom-loss/30 bg-rom-loss/5 p-4 sm:flex-row sm:items-center">
           <Ban className="h-6 w-6 shrink-0 text-rom-loss" />
@@ -154,8 +163,8 @@ export function DashboardPage({ onNav }: DashboardProps) {
             </div>
             <div className="mt-0.5 text-xs text-rom-muted">
               {killArmed
-                ? 'This will immediately sell every open position at market price. This action cannot be undone.'
-                : 'Kill switch will immediately sell every open position at market price.'}
+                ? 'Requests cancellation of open orders and exits for filled main-strategy positions. Sales cannot be undone. Missing quotes or limited depth can leave holdings open. This does not pause the strategy.'
+                : 'Request exits for the main strategy. Execution depends on current quotes and available depth; holdings may remain open.'}
             </div>
           </div>
           {killArmed ? (
@@ -170,6 +179,7 @@ export function DashboardPage({ onNav }: DashboardProps) {
               </button>
               <button
                 onClick={() => setKillArmed(false)}
+                disabled={killBusy}
                 className="rom-btn-default shrink-0"
               >
                 Cancel
