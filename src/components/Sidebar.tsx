@@ -62,7 +62,7 @@ export function Sidebar({ page, setPage }: SidebarProps) {
     ...(advanced ? [{ label: 'Advanced tools', ids: ['evidence', 'analytics', 'signals', 'crypto15m', 'scripts', 'backtest', 'copy', 'terminal', 'profiles', 'accounts', 'settings', 'logs', 'guide', 'about'] }] : []),
   ];
   return rail ? (
-    <aside aria-label="Main navigation" className="flex h-full w-14 shrink-0 flex-col items-center gap-1 border-r border-rom-border bg-[#0E1520] py-4">
+    <aside aria-label="Main navigation" className="flex h-full w-14 shrink-0 flex-col items-center gap-1 border-r border-rom-border bg-rom-sidebar py-4">
       {NAV.slice(0, 9).map(({ id, label, icon: Icon }) => {
         const active = page === id;
         return (
@@ -83,7 +83,7 @@ export function Sidebar({ page, setPage }: SidebarProps) {
       })}
     </aside>
   ) : (
-    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-rom-border bg-[#0E1520]">
+    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-rom-border bg-rom-sidebar">
     <div className="flex items-center gap-3 px-5 py-6"><ROMSprite size={42} /><div><div className="text-xl font-semibold tracking-[0.12em]">ROM</div><div className="text-xs text-rom-muted">Polybot <span className="mx-1 text-rom-dim">/</span> US</div></div></div>
     <nav aria-label="Main navigation" className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
       {groups.map(group => <div key={group.label} className="mb-4"><div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-rom-dim">{group.label}</div>

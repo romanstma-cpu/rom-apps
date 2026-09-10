@@ -6,6 +6,7 @@ export default {
         rom: {
           black: '#000000',
           void: '#0B1019',
+          sidebar: '#0E1520',
           surface: '#121A26',
           surface2: '#192333',
           border: 'rgba(255,255,255,0.08)',
