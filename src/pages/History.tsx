@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { History as HistoryIcon, Play, Receipt, Square, Timer, Trash2, Trophy } from 'lucide-react';
+import { History as HistoryIcon, Download, Play, Receipt, Square, Timer, Trash2, Trophy } from 'lucide-react';
 import type { BotRun, Crypto15mPosition } from '@shared/types';
 import { useApp } from '../state/AppStateProvider';
 import { useToast } from '../state/ToastProvider';
@@ -431,7 +431,35 @@ function TradeHistory({ resolved, account }: {
   }, [resolved]);
 
   const bestDay = byDay.reduce((m, d) => (d.pnl > (m?.pnl ?? -Infinity) ? d : m), byDay[0]);
-  const worstDay = byDay.reduce((m, d) => (d.pnl < (m?.pnl ?? Infinity) ? d : m), byDay[0]);
+    const worstDay = byDay.reduce((m, d) => (d.pnl < (m?.pnl ?? Infinity) ? d : m), byDay[0]);
+
+    const downloadCsv = (): void => {
+      const esc = (v: unknown): string => {
+        const s = String(v ?? '');
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const header = ['resolvedAt', 'source', 'ticker', 'title', 'side', 'costUsd', 'outcome', 'pnlUsd'];
+      const rows = resolved.map((p: any) => [
+        p.resolvedAt || p.lastUpdated || '',
+        esc(p.signalSource),
+        esc(p.ticker),
+        esc(p.title),
+        p.direction,
+        p.costUsd ?? '',
+        p.outcomeCorrect === 1 ? 'won' : p.outcomeCorrect === 0 ? 'lost' : 'n/a',
+        p.pnlUsd ?? '',
+      ]);
+      const csv = [header, ...rows].map((r) => r.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rom-polybot-trades-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    };
 
   return (
     <>
@@ -518,22 +546,33 @@ function TradeHistory({ resolved, account }: {
             </div>
           </div>
         </Card>
-      </div>
+              </div>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-rom-border">
-        <table className="rom-table">
-          <thead>
-            <tr>
-              <th>Resolved</th>
-              <th>Source</th>
-              <th>Ticker</th>
-              <th>Title</th>
-              <th>Side</th>
-              <th>Cost</th>
-              <th>Outcome</th>
-              <th>P&amp;L</th>
-            </tr>
-          </thead>
+                <div className="mt-6 overflow-hidden rounded-xl border border-rom-border">
+                  <div className="flex items-center justify-between border-b border-rom-border px-4 py-2">
+                    <div className="text-xs text-rom-muted">All trade history ({resolved.length})</div>
+                    <button
+                      onClick={downloadCsv}
+                      disabled={resolved.length === 0}
+                      className="rom-btn-default px-2 py-1 text-xs disabled:opacity-50"
+                      title="Download all resolved trades as CSV"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Export CSV
+                    </button>
+                  </div>
+                  <table className="rom-table">
+                    <thead>
+                      <tr>
+                        <th>Resolved</th>
+                        <th>Source</th>
+                        <th>Ticker</th>
+                        <th>Title</th>
+                        <th>Side</th>
+                        <th>Cost</th>
+                        <th>Outcome</th>
+                        <th>P&amp;L</th>
+                      </tr>
+                    </thead>
           <tbody>
             {resolved.slice(0, 200).map((p: any) => (
               <tr key={p.id}>
