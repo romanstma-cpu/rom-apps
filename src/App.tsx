@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StrategyActivityProvider } from './state/StrategyActivity';
 import { TitleBar } from './components/TitleBar';
 import { Sidebar } from './components/Sidebar';
@@ -33,6 +33,18 @@ export type PageId =
   | 'visualizer' | 'crypto15m' | 'copy' | 'accounts' | 'backtest'
   | 'terminal' | 'scripts' | 'analytics' | 'evidence';
 
+const PAGE_SHORTCUTS: Record<string, PageId> = {
+  '1': 'dashboard',
+  '2': 'main',
+  '3': 'positions',
+  '4': 'signals',
+  '5': 'history',
+  '6': 'crypto15m',
+  '7': 'backtest',
+  '8': 'settings',
+  '9': 'api',
+};
+
 export default function App() {
   return (
     <ToastProvider>
@@ -46,6 +58,22 @@ export default function App() {
 function Shell() {
   const [page, setPage] = useState<PageId>('dashboard');
   const { state } = useApp();
+
+  // Keyboard navigation: Ctrl+1..9 jumps to a page; Ctrl+K is a 2-key
+  // press (K then a digit) to avoid hijacking browser find/save.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        const t = e.key.toLowerCase();
+        if (PAGE_SHORTCUTS[t]) {
+          e.preventDefault();
+          setPage(PAGE_SHORTCUTS[t]);
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const showOnboarding = state ? !state.acceptedDisclaimer : false;
 
