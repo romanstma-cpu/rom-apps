@@ -3,56 +3,70 @@
 Prioritized per the autonomous operating rules: bugs and failing tests first,
 then missing tests, performance, security, accessibility, UX, refactors, docs.
 
-Rules for this file: one line per task, newest priority at the top of its
-section. Move finished items to PROGRESS.md rather than deleting them.
+Rules for this file:
+- Max 15 active items
+- Three sections only: now / later / done
+- Done items removed after commit
+- Every item states scope, test, and rollback
 
-## In progress
+---
 
-- [ ] Optimize `main_recorder.py` prune query to use covering index `(at, id)`
-- [ ] Optimize `scanner.py` momentum scanner to only evaluate markets with active tape entries
+## Now
 
-## 1. Bugs and failing tests
+- [ ] **Kill switch UI**
+  Add a prominent "Kill Switch" button to Dashboard and Positions that calls
+  `trader.flatten_open_positions` immediately. Requires a confirmation dialog
+  and a 5s countdown before executing. Scope: `src/pages/Dashboard.tsx`,
+  `src/pages/Positions.tsx`, `python/service.py` (new RPC handler).
+  Test: manual e2e — button shows, confirmation works, positions flatten.
+  Rollback: revert commit.
 
-- [x] `e2e/paper-activity.e2e.mjs` failing since 2.8 on stale UI strings
-- [x] Audit remaining e2e specs for assertions that no longer match shipped UI
-      (added `npm run check:e2e-drift`; 49 locators checked, all valid)
-- [x] `python/db.py: get_previous_snapshots_bulk` unreferenced — removed
+- [ ] **Onboarding walkthrough**
+  Fill `src/pages/Onboarding.tsx` (currently 6 lines) with a 4-step wizard:
+  1) Connect API keys, 2) Set risk limits, 3) Start practice mode, 4) Go live.
+  Link from `MainEngine.tsx` when `profiles` count is 0. Scope: `src/pages/Onboarding.tsx`,
+  `src/pages/MainEngine.tsx`. Test: `npm run typecheck`. Rollback: revert commit.
 
-## 2. Missing tests
+- [ ] **Guide page**
+  Fill `src/pages/Guide.tsx` (currently 2 lines) with a quick-reference page
+  explaining each screen, the signal lifecycle, and where to find settings.
+  Scope: `src/pages/Guide.tsx`. Test: `npm run typecheck`. Rollback: revert commit.
 
-- [x] Config parity test added (`test_config_parity.py`). Verified 166 keys
-      across backend, electron settings-store, and shared types.
-- [x] `account_risk.group_key` covered for absent markets, null/blank series,
-      and bounded budget under missing metadata
-- [x] Collection-stats RPC shape covered and verified against `shared/types.ts`
-      (`test_collection_stats.py`)
+- [ ] **Re-run full e2e suite**
+  Verify all 9 suites pass after the session's changes. Scope: all e2e/*.mjs.
+  Test: each suite exits 0. Rollback: N/A.
 
-## 3. Performance
+## Later
 
-- [ ] `main_replay_events` prune query: use `ORDER BY at DESC, id DESC` to utilize covering index `main_replay_time`
-- [ ] `scan_momentum`: avoid scanning all DB markets if tape has no fresh trades for them
+- [ ] **Keyboard shortcuts**
+  Add Ctrl+1-9 to switch between pages (Dashboard, MainEngine, Positions, etc.)
+  and Ctrl+K for the command palette. Scope: `src/App.tsx`, new hook.
+  Test: `npm run typecheck`. Rollback: revert commit.
 
-## 4. Security
+- [ ] **Responsive mobile layout**
+  Collapsible sidebar for screens < 768px. Scope: `src/components/Sidebar.tsx`.
+  Test: manual resize in dev mode. Rollback: revert commit.
 
-- [ ] Confirm no credential or secret can reach a log line at INFO/WARN
-- [ ] `script_sandbox` review: verify the runaway guard bounds CPU/memory
+- [ ] **Dark mode toggle (if theme is not already dark-only)**
+  Check if app supports light mode. If not, document why. Scope: `src/index.css`.
+  Test: visual. Rollback: revert commit.
 
-## 5. Accessibility
+- [ ] **Export trade history as CSV**
+  Button on History page to download filtered results. Scope: `src/pages/History.tsx`.
+  Test: `npm run typecheck`. Rollback: revert commit.
 
-- [ ] Audit icon-only buttons across pages to ensure `aria-label` or `title` is present
-- [ ] Verify focus-visible outline on newly added form inputs
+- [ ] **Consolidate stale RELEASE-*.md files**
+  Keep only RELEASE-2.12.md; move older to a `releases/archive/` directory.
+  Test: `git status` clean. Rollback: revert commit.
 
-## 6. UX/UI
+## Done
 
-- [ ] Surface account-wide drawdown pause state in `WorkspaceStatus` when entries are blocked
-- [ ] Group related-outcome exposure and drawdown pause controls cleanly in Strategy settings
-
-## 7. Refactor
-
-- [x] Remove dead `src/components/TopBar.tsx` (duplicate of WorkspaceStatus)
-- [ ] Refactor `trader.py: execute_signal` sizing/depth check into modular helper
-
-## 8. Docs
-
-- [ ] Update README.md with 2.11/2.12 features (momentum windows, account risk, entry depth, exit discipline)
-- [ ] Backfill DECISIONS.md with recent architectural choices
+- [x] paper-activity e2e fixed (asserts against WorkspaceStatus)
+- [x] Dead TopBar component removed
+- [x] Config parity tests + all 17 UI defaults fixed
+- [x] Backend-only config keys classified
+- [x] Replay pruning indexed + save_snapshots_bulk batched
+- [x] group_key edge cases tested
+- [x] collection_stats RPC shape test added
+- [x] main_recorder tests (age/count prune, dedup, index save)
+- [x] Script sandbox recursion test added

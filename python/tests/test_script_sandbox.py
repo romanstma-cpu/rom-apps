@@ -205,3 +205,11 @@ def test_find_ctx_fields_sees_both_access_styles():
         "    return None\n"
     )
     assert fields == ["minsLeft", "upAsk"]
+
+
+def test_infinite_recursion_becomes_script_error():
+    mod = ss.CompiledScript("rec", "def decide(ctx):\n    return decide(ctx)\n")
+    with pytest.raises(ss.ScriptError) as exc:
+        mod.call("decide", {})
+    assert "RecursionError" in str(exc.value)
+
