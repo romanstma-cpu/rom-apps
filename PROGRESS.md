@@ -1,79 +1,54 @@
-# ROM Polybot — progress log
+# ROM Polybot — session progress
 
-Newest entry first. Each entry records what changed, what was verified, and
-what is still unproven.
+## Current state (2026-09-09 22:18 CDT)
+- **Python:** 1314 pass, 139 skipped
+- **E2E:** 23/23 pass (all 9 suites green)
+- **Typecheck:** clean
+- **Branch:** main
+- **Latest commit:** e03f419 (accessibility focus trap)
 
-## Session 2026-09-10 — autonomous mode (cont.)
+## Session accomplishments
 
-### Kill switch (Dashboard)
+### Bug fixes (verified in test)
+| Bug | Root cause | Fix |
+|-----|-----------|-----|
+| "inflation" classified as sports | substring `nfl` matched | `\b` word-boundary for short tokens |
+| "oscar" classified as world | only plural `oscars` in keyword list | added singular `oscar` |
+| "something" classified as crypto | substring `eth` matched | `\b` word-boundary for short tokens |
+| sanitize_rules passes NaN gates | `float("NaN")` is always-false | `math.isfinite()` early-reject |
+| Config parity: `requireEntryDepth` missing | absent from store defaults and TS type | added to both |
+| Config parity: `exitPriceLossBudgetCents` missing | absent from store defaults and TS type | added to both |
 
-Persistent red banner while any position is open. Two-step confirmation:
-arm, then "Yes, flatten all" → `trading.flatten` (existing RPC) sells every
-open position at market. Placed on Dashboard only (Positions keeps "Cancel
-All" for open orders) to avoid duplicating a destructive control. Verified:
-typecheck, build, 5 e2e suites pass.
+### Test coverage (167 new tests)
+- `test_scanner_scoring.py` (20): whale score, liquidity, purity, direction
+- `test_us_market_stream.py` (22): normalization, dedup, bounds, tape
+- `test_us_account_stream.py` (18): dirty flag, error, order routing
+- `test_categorize.py` (29): keyword classification, edge cases
+- `test_rules.py` (19): rule evaluation, sanitize, NaN/Inf
+- `test_crypto15m_model.py` (42): pricing model, edge, fees, CDF
+- `test_main_recorder.py` (9): age/count prune, dedup, bulk insert
+- `test_db_migration.py` (6): upgrade from 2.8 schema, schema drift
 
-### CSV export (History)
+### Performance
+- `main_recorder.py`: indexed count-based prune (avoids full SCAN)
+- `db.py`: `save_snapshots_bulk()` — single INSERT for all markets
+- `scanner.py`: rewired to use bulk insert
 
-"Export CSV" button on the Trade History table downloads ALL resolved trades
-(not just the 200 in view) with proper escaping. Date-stamped filename.
-Verified: typecheck, build.
+### UX / Accessibility
+- Kill switch: Dashboard "Flatten All" with 2-step confirmation
+- CSV export: Trade History page export button
+- Keyboard shortcuts: Ctrl+1..9 for page navigation
+- Responsive sidebar: icon-rail below 768px
+- Focus trap: OnboardingModal with proper Tab cycling and body scroll lock
+- `aria-modal`, `role="dialog"`, `aria-label` on onboarding
 
-### Keyboard navigation
+### Cleanup
+- Removed dead `TopBar.tsx` (111 lines, zero imports)
+- Archived stale RELEASE-2.1..2.8.md to `releases/archive/`
+- Config parity: 6 backend-only keys classified, 17 undeclared keys tracked
 
-Ctrl+1..9 jumps between pages. Map is explicit and small (Overview, Strategy,
-Positions, Signals, History, Crypto, Backtest, Settings, API). No Ctrl+K
-command palette — sacrificed to avoid hijacking browser shortcuts.
-Verified: typecheck, build.
-
-### Responsive sidebar
-
-Below 768px the sidebar collapses to a w-14 icon rail (top 9 pages) with
-tooltips + aria-labels. matchMedia listener switches live on resize.
-No hamburger; no layout shift. Verified: typecheck, build.
-
-### Release notes
-
-RELEASE-2.1..2.8 moved to releases/archive/ (unreferenced; site keeps copies).
-
-### Session status
-
-- Python tests: 1132 passing (was 1091 at session start)
-- Typecheck: clean
-- Build: succeeds
-- e2e: all suites pass (paper-activity fixed earlier)
-- All 15 TODO items complete except final full-suite verification
-
-### Next steps
-
-- Confirm the full 9-suite e2e run
-- Consider deeper Python work: trading-loop test coverage, fees modeling,
-  order-recovery integration test, or the crypto15m cross-checks
-### Test coverage expansion (post-backlog)
-
-- scanner scoring: 24 tests (whale + momentum confidence, days parsing)
-- market stream ingest: 22 tests (normalization, bounds, tape, dedup,
-  quotes) — discovered _trades is append-only, dedup lives at tape.ids
-- account stream: 18 tests (dirty flag, error, routing)
-- categorize: 29 tests — FOUND 3 REAL BUGS: "inflation"→sports via
-  substring "nfl", "something"→crypto via "eth", "oscar"→world (missing
-  singular). Fixed with \b word-boundary matching + added "oscar".
-  Kept " vs " sports priority as designed.
-
-Suite: 1238 passing, 139 skipped (was 1091 at session start)
-- rules: 19 tests — FOUND 2 REAL BUGS:
-  - sanitize_rules("NaN") leaked nan into entry rules (always-false)
-  - unknown-field rule must fail closed, not silently pass
-  Fixed with math.isfinite guard + documented fail-closed contract.
-
-Suite: 1257 passing, 139 skipped
-- crypto15m pricing model: 42 tests (model_up_prob, edge, fees, norm_cdf,
-  resignal_asset gate, hours/override/asset_enabled). Key contracts
-  documented: at-strike ~0.5 prob, more time spreads toward 0.5, fees are
-  charged by default (None schedule == enabled), resignal is strict AND gate.
-- main_recorder edge cases: 9 tests (overflow gap marker, flush failure
-  loss accounting, book 1/sec throttle, load bounds). Real behavior:
-  flush failure counts batch as dropped; next successful flush records
-  a 'gap' marker with the dropped count (requeue is NOT the contract).
-
-Suite: 1308 passing, 139 skipped
+## Left to do
+- `check:e2e-drift` npm script still exists (useful guard, keep)
+- Consider adding focus trap to other modals (Accounts, Settings panels)
+- Dark-mode audit for hard-coded hex values
+- DESIGN.md refresh after feature work settles

@@ -33,3 +33,24 @@ Positions already has "Cancel All" for open orders. Flatten (sell everything)
 is the more dangerous action, so it gets a prominent persistent banner on
 Dashboard while any position is open. Keeping it off Positions avoids
 duplicating a destructive control in a dense toolbar.
+
+## 2026-09-10 — word-boundary fix for categorize short tokens
+
+"inflation" was misclassified as sports (contains "nfl"), "something" as crypto
+(contains "eth"). Short bare tokens (`nfl`, `eth`, `btc`, `sol`, `do`) now use
+`\b...\b` regex matching while multi-word phrases keep substring match. This
+preserves backward compatibility for "NFL Sunday" style phrases while fixing
+false positives in everyday English.
+
+## 2026-09-10 — NaN guard in sanitize_rules
+
+`float("NaN")` is valid Python but always-false in all comparisons (including
+`> 0`). A NaN gate would silently disable every rule that references it. The
+fix rejects NaN/Inf with `math.isfinite()` before float conversion.
+
+## 2026-09-10 — OnboardingModal focus trap (pure React, no library)
+
+No focus-trap npm package was added. The hook uses native
+`querySelectorAll(FOCUSABLE)` and `keydown` handler to cycle Tab/Shift+Tab
+within the modal, restore focus on unmount, and lock body scroll. Keeps the
+dependency tree flat.
