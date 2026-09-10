@@ -26,9 +26,6 @@ StrategyActivityProvider owns main-strategy activity across Overview, sidebar, h
 
 RiskLimits owns the saved/draft/conflict workflow. Start controls must block unsaved limits, missing connection and unavailable engine status. Pause stays available when enabled. MainEngine owns the single pair of mode actions; advanced tuning must not add alternate start paths. Existing ToastProvider owns errors and successful changes.
 
-## Verification
-Use isolated Electron profiles for UI checks, with mocked trading status and no real credentials or orders. Check offline, scanning, blocked, failed refresh, saved-limit gating and mode labels.
-
 ## 2.7 terminal refinement
 Overview uses a restrained command panel, three aligned metrics and a separate activity card. Practice metrics must come from the practice ledger, with missing values shown as unknown. Mint indicates confirmed activity, not configuration alone. Respect reduced motion and visible keyboard focus.
 
@@ -39,3 +36,38 @@ Momentum flow is measured from bounded per-market trade windows, never from roll
 
 ## 2.12 risk and execution honesty
 MainEngine owns the related-outcome exposure cap and the peak-equity drawdown pause; both show zero as off, never as unlimited. Entry size is bounded by displayed book depth, so a quoted price must never be presented as executable for a size the book cannot support. Exits require a live quote: a missing bid holds the position and says so, and must never be described as a completed exit. Risk controls reduce the size of a bad outcome and must not be described as preventing loss or producing profit.
+
+## 2.13 infrastructure hardening
+
+### Schema / insert parity
+Every INSERT in db.py must reference columns present in the base SCHEMA (not columns added only by the ALTER migration loop). A parser-level regression (`test_db_migration.py::TestInsertColumnParity`) asserts this across every static INSERT, catching the whole class of schema drift bugs. Six columns were found missing and fixed (interval on crypto15m_signals/ticks; yes_sub_title on alerts; script_id on bot_positions; script_id/tp_pct/sl_cents on crypto15m_positions). The ALTER loop stays for legacy upgrade.
+
+### IPC config validation
+`config:update` and `config:replace` are validated at the Electron boundary by a per-key type map (~180 keys) before reaching the store or the Python backend. Rejects: NaN/Infinity (which survive JSON to Python and re-trigger the NaN-gate bug class), wrong-typed values, invalid enum values, non-string array elements. Unknown keys are dropped silently (forward-compatible). Rules objects get shape-only checks here; deep content validation stays in the Python backend. Test: `scripts/test-config-validate.mjs`.
+
+### NaN / Inf guard in rule sanitization
+`rules.py: sanitize_rules` rejects NaN/Inf values with `math.isfinite()` before float conversion. A NaN gate would silently disable every rule that references it because `float('NaN')` is always-false in comparisons. Verified by 19 tests in `test_rules.py`.
+
+### DB migration test
+Anchored to the real 2.8 shipped schema (extracted from git at test time, SHA-guarded). Verifies: upgrade runs cleanly, new columns exist, old rows survive, idempotency. Also verifies base-SCHEMA INSERT parity (see above).
+
+### Categorize word-boundary fix
+Short bare tokens (`nfl`, `eth`, `btc`, `sol`, `do`) wrapped in `\b...\b` regex while multi-word phrases keep substring match. Fixes false positives: "inflation" no longer classified as sports, "something" no longer classified as crypto. "oscar" singular added to ENTERTAINMENT_KEYWORDS.
+
+### Keyboard shortcuts
+Ctrl+1..9 jumps to pages (Overview, Strategy, Positions, Signals, History, Crypto, Backtest, Settings, API) via a global `keydown` handler in the Shell component.
+
+### Responsive icon-rail sidebar
+Below 768px the sidebar collapses to a 56px icon strip using a `useEffect` window-width listener. The sidebar background uses the `rom.sidebar` token (extracted from hard-coded `#0E1520`).
+
+### OnboardingModal focus trap
+Native React focus trap (no library): `querySelectorAll(FOCUSABLE)` + `keydown` handler cycles Tab/Shift+Tab within the modal. Restores previous focus on unmount. Locks body scroll via `overflow: hidden` on `document.body`. ARIA: `role="dialog"`, `aria-modal="true"`, `aria-label`.
+
+### Kill switch
+Dashboard shows a "Flatten All" banner with 2-step confirmation (arm → confirm). Calls `window.rom.trading.flatten()`. Lives only on Dashboard, not duplicated on Positions where "Cancel All" already exists.
+
+### CSV export
+Trade History page has an export button that writes all resolved positions (not just the visible 200) to a CSV blob via `Blob` + `URL.createObjectURL`.
+
+## Verification
+Use isolated Electron profiles for UI checks, with mocked trading status and no real credentials or orders. Check offline, scanning, blocked, failed refresh, saved-limit gating and mode labels. Run `npm run check:e2e-drift` to detect assertion drift (literal strings in e2e tests vs. real rendered text). Run `node scripts/test-config-validate.mjs` to verify IPC config validation. Run `pytest python/tests/` to verify schema parity and all backend logic.

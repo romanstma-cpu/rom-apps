@@ -13,15 +13,13 @@ Rules for this file:
 
 ## Now
 
-- [ ] **Dark-mode audit**
-  Confirm every page uses `bg-rom-*` tokens (no hard-coded hex). Scope:
-  full `src/` grep. Test: e2e visual. Rollback: revert.
+- [ ] **Docs: DESIGN.md refresh for 2.13 changes**
+  Update the architecture doc with the new kill switch, CSV export,
+  keyboard shortcuts, responsive sidebar, focus trap, config validation,
+  schema/insert column drift fix, and the crypto15m interval column fix.
+  Scope: DESIGN.md only. Test: renders correctly. Rollback: revert.
 
 ## Later
-
-- [ ] **Docs: DESIGN.md refresh for 2.13 changes**
-  After feature work settles, update the architecture doc with the new
-  kill switch, CSV export, shortcuts, rail sidebar, focus trap.
 
 - [ ] **Focus trap for remaining modals**
   OnboardingModal is done. Apply the same pattern to Settings panels
@@ -29,6 +27,7 @@ Rules for this file:
 
 ## Done
 
+- [x] Dark-mode audit: sidebar bg-[#0E1520] → rom.sidebar token
 - [x] Security: IPC config validation (config-validate.ts + test;
       config:update/replace reject bad shapes, NaN/Inf, wrong enums)
 - [x] Accessibility: OnboardingModal focus trap (Tab cycle, body scroll lock)
