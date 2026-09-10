@@ -21,28 +21,33 @@ REPO = Path(__file__).resolve().parents[2]
 STORE = REPO / "electron" / "system" / "settings-store.ts"
 TYPES = REPO / "shared" / "types.ts"
 
-# Backend-only keys: runtime state the desktop UI never sets.
-# Anything listed here must be genuinely unreachable from the renderer.
+# Backend-only keys: internal tuning or runtime state with no UI control.
+# Anything listed here must be genuinely unreachable from the renderer —
+# verified by grepping src/ for the camelCase name.
 BACKEND_ONLY = {
     "network",
+    # Internal tuning with no UI control (verified: absent from src/).
+    "crypto15m_autosize_to_min_notional",
+    "crypto15m_model_fm_max_book_gap_cents",
+    "crypto15m_poll_sec",
+    "crypto15m_rules_no",
+    "db_cleanup_interval",
+    "script_hook_timeout_sec",
 }
 
 # Keys the desktop store has never declared a default for. Writes still
 # persist (patchConfig spreads over current config), but the renderer reads
 # `undefined` until something writes them, so a bound control starts empty.
-# Verified by .work/probe-config-persist.mjs. Tracked in TODO.md; this list
-# must only ever shrink.
+# Verified with a live Electron probe. Tracked in TODO.md; the guard below
+# means this list may only ever shrink.
 UNDECLARED_IN_STORE = {
     "copy_allow_reentries", "copy_lifetime_loss_limit_pct",
     "copy_lifetime_loss_limit_usd", "copy_only_new_entries",
-    "crypto15m_assets", "crypto15m_autosize_to_min_notional",
-    "crypto15m_daily_loss_limit", "crypto15m_interval",
+    "crypto15m_assets", "crypto15m_daily_loss_limit", "crypto15m_interval",
     "crypto15m_lifetime_loss_limit_pct", "crypto15m_lifetime_loss_limit_usd",
-    "crypto15m_maker_fill_sec", "crypto15m_model_fm_max_book_gap_cents",
-    "crypto15m_poll_sec", "crypto15m_rules_no", "crypto15m_take_profit_pct",
-    "db_cleanup_interval", "lifetime_loss_limit_pct", "lifetime_loss_limit_usd",
-    "max_contracts", "min_contracts", "script_hook_timeout_sec",
-    "sizing_mode", "take_profit_pct",
+    "crypto15m_maker_fill_sec", "crypto15m_take_profit_pct",
+    "lifetime_loss_limit_pct", "lifetime_loss_limit_usd",
+    "max_contracts", "min_contracts", "sizing_mode", "take_profit_pct",
 }
 
 
