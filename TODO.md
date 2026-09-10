@@ -13,18 +13,11 @@ Rules for this file:
 
 ## Now
 
-- [ ] **Perf: replay load chunking**
-  `main_recorder.load` caps at 100k events and raises. Streaming readers
-  (Backtest page) would benefit from a chunked iterator. Scope:
-  `python/main_recorder.py` — add `iter_load` returning an iterator that
-  pages through rows with keyset pagination. Test: unit test with 150k
-  rows, assert all reachable. Rollback: revert commit.
-
-- [ ] **Security: bind IPC validation**
-  Electron `ipcMain.handle('trading:flatten', ...)` and other handlers
-  take no validation; ensure the preload `contextIsolation` stays on and
-  that `trading:flatten` requires paper-mode off. Scope: `electron/ipc.ts`.
-  Test: manual + e2e. Rollback: revert commit.
+- [ ] **Security: IPC input validation for config:replace**
+  `config:replace` accepts a full `TraderConfig` object with no shape
+  validation — the renderer can send `__proto__`, nested objects, or
+  wrong-typed values. Scope: `electron/ipc.ts`, `settings-store.ts`.
+  Test: unit test for config:replace with bad shapes. Rollback: revert.
 
 - [ ] **Accessibility: focus trap in OnboardingModal**
   The modal has no focus trap; Tab can escape behind the scrim. Add one.
@@ -41,6 +34,7 @@ Rules for this file:
 
 ## Done
 
+- [x] DB migration test: 2.8 schema to current — verified upgrade path
 - [x] Test coverage: scanner scoring (24), market stream (22), account
       stream (18), categorize (29) — found+fixed 3 real bugs
 - [x] Test coverage: rules (19) — found+fixed NaN leak
