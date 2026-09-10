@@ -67,3 +67,13 @@ Suite: 1238 passing, 139 skipped (was 1091 at session start)
   Fixed with math.isfinite guard + documented fail-closed contract.
 
 Suite: 1257 passing, 139 skipped
+- crypto15m pricing model: 42 tests (model_up_prob, edge, fees, norm_cdf,
+  resignal_asset gate, hours/override/asset_enabled). Key contracts
+  documented: at-strike ~0.5 prob, more time spreads toward 0.5, fees are
+  charged by default (None schedule == enabled), resignal is strict AND gate.
+- main_recorder edge cases: 9 tests (overflow gap marker, flush failure
+  loss accounting, book 1/sec throttle, load bounds). Real behavior:
+  flush failure counts batch as dropped; next successful flush records
+  a 'gap' marker with the dropped count (requeue is NOT the contract).
+
+Suite: 1308 passing, 139 skipped
