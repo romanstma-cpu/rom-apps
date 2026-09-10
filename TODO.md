@@ -20,6 +20,10 @@ Rules for this file:
   shapes too. Scope: `electron/ipc.ts`. Test: unit test for bad shapes.
   Rollback: revert.
 
+- [ ] **Verify `crypto15m_ticks` pruning keeps `interval` consistent**
+  After the schema fix, confirm the prune path (`cleanup_old_data`)
+  references only real columns.
+
 ## Later
 
 - [ ] **Docs: DESIGN.md refresh for 2.13 changes**

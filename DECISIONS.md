@@ -42,6 +42,14 @@ duplicating a destructive control in a dense toolbar.
 preserves backward compatibility for "NFL Sunday" style phrases while fixing
 false positives in everyday English.
 
+## 2026-09-10 — keep ALTER loop + add columns to CREATE (schema drift)
+
+The migration ALTER loop is the app's upgrade path and stays. But a fresh
+DB executes SCHEMA first, and six columns referenced by INSERTs existed
+only via ALTER. Added them to the CREATE statements as well — the coupling
+is now explicit in SCHEMA, satisfying both fresh installs and the migrate
+path (which still ALTERs for legacy DBs).
+
 ## 2026-09-10 — NaN guard in sanitize_rules
 
 `float("NaN")` is valid Python but always-false in all comparisons (including
@@ -54,3 +62,17 @@ No focus-trap npm package was added. The hook uses native
 `querySelectorAll(FOCUSABLE)` and `keydown` handler to cycle Tab/Shift+Tab
 within the modal, restore focus on unmount, and lock body scroll. Keeps the
 dependency tree flat.
+
+## 2026-09-10 — schema/insert column drift fix
+
+`crypto15m_signals`/`crypto15m_ticks` INSERTs referenced an `interval`
+column that existed only via the ALTER migration loop, not the base SCHEMA
+CREATE. Same latent drift in `alerts.yes_sub_title`,
+`bot_positions.script_id`, `crypto15m_positions.script_id/tp_pct/sl_cents`.
+Production masked it (init_db runs SCHEMA then ALTERs, so the column got
+added), but any code path building purely from SCHEMA crashed with
+'no such column'. Fixed by adding the columns to the CREATE statements;
+ALTER loop kept for legacy upgrade. Added TestInsertColumnParity, a
+parser-level regression that asserts every static INSERT in db.py
+references only base-SCHEMA columns — this whole bug class is now caught
+at the source.

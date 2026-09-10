@@ -1,13 +1,19 @@
 # ROM Polybot — session progress
 
 ## Current state (2026-09-09 22:18 CDT)
-- **Python:** 1314 pass, 139 skipped
+- **Python:** 1318 pass, 139 skipped
 - **E2E:** 23/23 pass (all 9 suites green)
 - **Typecheck:** clean
 - **Branch:** main
-- **Latest commit:** e03f419 (accessibility focus trap)
+- **Latest commit:** be99c38 (schema/insert column drift fix)
 
 ## Session accomplishments
+
+### Critical bug fixed (would have crashed crypto15m pipeline on schema-only builds)
+`crypto15m_signals`/`crypto15m_ticks` INSERTs referenced `interval` which
+existed only via ALTER, not base SCHEMA. Same for 4 more columns across 3
+tables. Added to CREATE; parser-level TestInsertColumnParity regression
+guards the whole class.
 
 ### Bug fixes (verified in test)
 | Bug | Root cause | Fix |
