@@ -38,17 +38,9 @@ BACKEND_ONLY = {
 # Keys the desktop store has never declared a default for. Writes still
 # persist (patchConfig spreads over current config), but the renderer reads
 # `undefined` until something writes them, so a bound control starts empty.
-# Verified with a live Electron probe. Tracked in TODO.md; the guard below
-# means this list may only ever shrink.
-UNDECLARED_IN_STORE = {
-    "copy_allow_reentries", "copy_lifetime_loss_limit_pct",
-    "copy_lifetime_loss_limit_usd", "copy_only_new_entries",
-    "crypto15m_assets", "crypto15m_daily_loss_limit", "crypto15m_interval",
-    "crypto15m_lifetime_loss_limit_pct", "crypto15m_lifetime_loss_limit_usd",
-    "crypto15m_maker_fill_sec", "crypto15m_take_profit_pct",
-    "lifetime_loss_limit_pct", "lifetime_loss_limit_usd",
-    "max_contracts", "min_contracts", "sizing_mode", "take_profit_pct",
-}
+# Verified with a live Electron probe. The guard below means this list may
+# only ever shrink — it is now empty and should stay that way.
+UNDECLARED_IN_STORE: set[str] = set()
 
 
 def snake(name: str) -> str:

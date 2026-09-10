@@ -37,15 +37,39 @@ lazy-loaded from `Scripts.tsx`; it stays.)
 
 **Verified:** typecheck clean, all e2e suites still pass.
 
+### Config parity: backend vs desktop store vs renderer type
+
+Nothing compared the three places a config key must exist, so a key added to
+Python and forgotten in TypeScript failed silently. Added
+`python/tests/test_config_parity.py` comparing all three.
+
+It immediately flagged `requireEntryDepth` and `exitPriceLossBudgetCents`, both
+added in 2.12. Measured the real impact with a live Electron probe instead of
+assuming: writes *do* persist (`patchConfig` spreads over current config), but
+the renderer read `undefined` instead of `true`/`2`, so a bound control would
+start empty.
+
+Fixed those two, then worked down the whole backlog:
+
+- 6 keys (`crypto15mPollSec`, `dbCleanupInterval`, `scriptHookTimeoutSec` and
+  three crypto15m model knobs) turned out to be genuinely backend-only — absent
+  from the store, the type and `src/` entirely. Classified, not "fixed".
+- 17 real gaps (`sizingMode`, `takeProfitPct`, `lifetimeLossLimitUsd`, the copy
+  and crypto15m limits) got desktop defaults matching the backend.
+
+`UNDECLARED_IN_STORE` is now empty, with a test asserting it may only shrink.
+Verified in a running app: all 166 renderer config keys have a defined value.
+
 ### Current state
 
-- Python: 1,091 passing.
+- Python: 1,129 passing (+38 this session).
 - TypeScript: typecheck and build clean.
 - E2E: 9 of 9 passing.
 - Working tree committed; version 2.12.0 (unreleased changes since publish).
 
 ### Next steps
 
-Working down TODO.md section 1, then section 2. Immediate next task: audit the
-remaining e2e specs for other assertions that no longer match shipped UI, since
-this class of drift hid a real gap for four versions.
+Sections 1 and 2 of TODO.md are clear apart from two remaining test gaps
+(`account_risk.group_key` with an unknown market, and the collection-stats RPC
+shape). Next: those two, then section 3 (performance) — starting with whether
+the `main_replay_events` prune query uses an index or scans the table.
