@@ -18,8 +18,13 @@ POLYMARKET_CATEGORY_MAP = {
     "Crypto": "crypto",
 }
 
+def _word(kw: str) -> str:
+    """Wrap a short bare token so it matches only as a whole word."""
+    return rf"\b{kw}\b"
+
+
 SPORTS_KEYWORDS = [
-    "nba", "nfl", "mlb", "nhl", "mls", "epl", "premier league",
+    "nba", "mlb", "mls", "epl", "premier league",
     "champions league", "world cup", "tennis", "atp", "wta",
     "ufc", "boxing", "mma", "f1", "formula 1", "grand prix", "nascar",
     "cricket", "rugby", "golf", "pga", "olympics",
@@ -27,6 +32,7 @@ SPORTS_KEYWORDS = [
     "stanley cup", "ncaa", "tournament", "mvp", "rushing yards",
     "touchdown", "home run", " vs ", " vs.", "game score", "spread",
     "wnba", "wwe", "esports",
+    _word("nfl"), _word("nhl"),
 ]
 POLITICS_KEYWORDS = [
     "election", "president", "presidential", "congress", "senate",
@@ -47,10 +53,11 @@ ECONOMICS_KEYWORDS = [
     "gold", "silver", "oil", "crude oil", "earnings", "revenue",
 ]
 CRYPTO_KEYWORDS = [
-    "bitcoin", "btc", "ethereum", "eth", "solana", "sol",
+    "bitcoin", "ethereum", "solana",
     "crypto", "token", "defi", "blockchain",
     "doge", "xrp", "cardano", "polkadot",
     "binance", "coinbase", "mining", "halving",
+    _word("btc"), _word("eth"), _word("sol"),
 ]
 CLIMATE_KEYWORDS = [
     "temperature", "hurricane", "tornado", "earthquake",
@@ -59,7 +66,7 @@ CLIMATE_KEYWORDS = [
     "wildfire", "flood", "drought",
 ]
 ENTERTAINMENT_KEYWORDS = [
-    "oscars", "grammy", "emmy", "golden globe", "box office",
+    "oscar", "oscars", "grammy", "emmy", "golden globe", "box office",
     "streaming", "netflix", "disney", "spotify",
     "album", "movie", "tv show", "reality tv",
     "viral", "tiktok",
@@ -74,28 +81,35 @@ _SPORTS_SLUG_RE = re.compile(
 _SPORTS_SLUG_SUBSTRINGS = ("wimbledon", "world-cup", "grand-slam", "-open-tennis")
 
 
+def _matches(kw: str, t: str) -> bool:
+    """Substring match for phrases, whole-word match for bare tokens."""
+    if kw.startswith(r"\b"):
+        return re.search(kw, t) is not None
+    return kw in t
+
+
 def categorize_by_keywords(title: str, slug: str = "") -> str:
     s = (slug or "").lower()
     if s and (_SPORTS_SLUG_RE.search(s) or any(x in s for x in _SPORTS_SLUG_SUBSTRINGS)):
         return "sports"
     t = (title or "").lower()
     for kw in SPORTS_KEYWORDS:
-        if kw in t:
+        if _matches(kw, t):
             return "sports"
     for kw in POLITICS_KEYWORDS:
-        if kw in t:
+        if _matches(kw, t):
             return "politics"
     for kw in ECONOMICS_KEYWORDS:
-        if kw in t:
+        if _matches(kw, t):
             return "economics"
     for kw in CRYPTO_KEYWORDS:
-        if kw in t:
+        if _matches(kw, t):
             return "crypto"
     for kw in CLIMATE_KEYWORDS:
-        if kw in t:
+        if _matches(kw, t):
             return "climate"
     for kw in ENTERTAINMENT_KEYWORDS:
-        if kw in t:
+        if _matches(kw, t):
             return "entertainment"
     return "world"
 
