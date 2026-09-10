@@ -13,35 +13,44 @@ Rules for this file:
 
 ## Now
 
-- [ ] **Keyboard shortcuts**
-  Add Ctrl+1-9 to switch between pages (Dashboard, MainEngine, Positions, etc.)
-  and Ctrl+K for the command palette. Scope: `src/App.tsx`, new hook.
-  Test: `npm run typecheck`. Rollback: revert commit.
+- [ ] **Perf: replay load chunking**
+  `main_recorder.load` caps at 100k events and raises. Streaming readers
+  (Backtest page) would benefit from a chunked iterator. Scope:
+  `python/main_recorder.py` — add `iter_load` returning an iterator that
+  pages through rows with keyset pagination. Test: unit test with 150k
+  rows, assert all reachable. Rollback: revert commit.
 
-- [ ] **Responsive mobile layout**
-  Collapsible sidebar for screens < 768px. Scope: `src/components/Sidebar.tsx`.
-  Test: manual resize in dev mode. Rollback: revert commit.
+- [ ] **Security: bind IPC validation**
+  Electron `ipcMain.handle('trading:flatten', ...)` and other handlers
+  take no validation; ensure the preload `contextIsolation` stays on and
+  that `trading:flatten` requires paper-mode off. Scope: `electron/ipc.ts`.
+  Test: manual + e2e. Rollback: revert commit.
 
-- [ ] **Consolidate stale RELEASE-*.md files**
-  Keep only RELEASE-2.12.md; move older to a `releases/archive/` directory.
-  Test: `git status` clean. Rollback: revert commit.
-
-- [ ] **Re-run full e2e suite**
-  Verify all 9 suites pass after the session's changes. Scope: all e2e/*.mjs.
-  Test: each suite exits 0. Rollback: N/A.
+- [ ] **Accessibility: focus trap in OnboardingModal**
+  The modal has no focus trap; Tab can escape behind the scrim. Add one.
+  Scope: `src/pages/Onboarding.tsx`. Test: keyboard nav e2e. Rollback: revert.
 
 ## Later
 
-- [ ] **Dark mode toggle (if theme is not already dark-only)**
-  Check if app supports light mode. If not, document why. Scope: `src/index.css`.
-  Test: visual. Rollback: revert commit.
+- [ ] **Docs: DESIGN.md refresh for 2.13 changes**
+  After feature work settles, update the architecture doc with the new
+  kill switch, CSV export, shortcuts, rail sidebar.
+
+- [ ] **Dark-mode audit**
+  Confirm every page uses `bg-rom-*` tokens (no hard-coded hex).
 
 ## Done
 
+- [x] Test coverage: scanner scoring (24), market stream (22), account
+      stream (18), categorize (29) — found+fixed 3 real bugs
+- [x] Test coverage: rules (19) — found+fixed NaN leak
+- [x] Test coverage: crypto15m pricing (42)
+- [x] Test coverage: main_recorder edge cases (9)
 - [x] Kill switch banner on Dashboard (2-step confirm → trading.flatten)
 - [x] CSV export of trade history (all resolved, not just 200 in view)
-- [x] Onboarding walkthrough — already a full modal (disclaimer + referral);
-      no work needed
+- [x] Keyboard navigation (Ctrl+1..9)
+- [x] Responsive icon-rail sidebar (< 768px)
+- [x] Onboarding walkthrough — already a full modal; no work needed
 - [x] Guide page — already has real content; no work needed
 - [x] paper-activity e2e fixed (asserts against WorkspaceStatus)
 - [x] Dead TopBar component removed
