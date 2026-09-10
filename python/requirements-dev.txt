@@ -3,3 +3,7 @@
 # in the desktop app.
 -r requirements.txt
 pytest>=8.0
+# Required: the order-recovery and US API adapter suites are async and use
+# explicit @pytest.mark.asyncio marks. Without this plugin those marks are
+# inert and ~29 tests fail rather than skip — silently, on any clean env.
+pytest-asyncio>=1.0

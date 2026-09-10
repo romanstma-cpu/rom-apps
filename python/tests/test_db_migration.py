@@ -28,8 +28,12 @@ def _repo_root() -> str:
 
 def _schema_at(rev: str) -> str:
     """The SCHEMA block from python/db.py at a given git revision."""
+    # Decode as UTF-8 explicitly. `text=True` uses the locale codec, which on
+    # Windows is cp1252 and mangles the non-ASCII bytes in the schema block
+    # (20098 chars -> 20117), so the pinned digest only matched on UTF-8 hosts.
     src = subprocess.check_output(
-        ["git", "show", f"{rev}:python/db.py"], cwd=_repo_root(), text=True
+        ["git", "show", f"{rev}:python/db.py"], cwd=_repo_root(),
+        text=True, encoding="utf-8",
     )
     start = src.index('SCHEMA = """') + len('SCHEMA = """')
     end = src.index('"""', start)
