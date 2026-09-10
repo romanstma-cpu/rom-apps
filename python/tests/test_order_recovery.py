@@ -37,13 +37,13 @@ def test_partial_fill_preserves_remaining_reservation_and_exact_fees():
     r=journal.get('local')
     assert r['state']=='open'
     assert r['filled']==4 and r['avg_price']==.55 and r['fees_usd']==.03
-    assert r['reserved_usd']==pytest.approx(3.6)
+    assert r['reserved_usd']==pytest.approx(3.72)
     pid=seed_position(client_order_id='local',order_id='ex-1',status='submitted',ticker='market',limit_price_cents=60)
     with db.get_db() as c: pos=db.fetch_position_by_id(c,pid)
     updated=trader.sync_journal_position(pos,r)
     assert updated['cost_usd']==pytest.approx(2.23)
     with db.get_db() as c:
-        assert db.current_total_exposure_usd(c,'mainnet')==pytest.approx(5.83)
+        assert db.current_total_exposure_usd(c,'mainnet')==pytest.approx(5.95)
 
 
 @pytest.mark.parametrize('missing', ['avgPx','commissionNotionalTotalCollected'])
@@ -111,7 +111,7 @@ async def test_submission_failure_is_durable_and_cannot_repeat(monkeypatch,failu
         await api.place_limit_order(ticker='market',side='yes',action='buy',count=10,price_cents=60,client_order_id='local')
     journal.init() # Reinitialization simulates recovery from disk, not process memory.
     assert journal.get('local')['state']=='unknown'
-    assert journal.get('local')['reserved_usd']==6
+    assert journal.get('local')['reserved_usd']==6.2
     with pytest.raises(journal.RecoveryRequired):
         await api.place_limit_order(ticker='other',side='yes',action='buy',count=10,price_cents=60,client_order_id='new')
     assert len(calls)==1
@@ -165,7 +165,7 @@ async def test_repeated_404_never_releases_known_order(monkeypatch):
     monkeypatch.setattr(trader,'get_order',missing)
     for _ in range(8):await trader.reconcile_order_journal()
     assert journal.get('local')['state']=='unknown'
-    assert journal.get('local')['reserved_usd']==6
+    assert journal.get('local')['reserved_usd']==6.2
 
 
 @pytest.mark.asyncio
@@ -259,4 +259,5 @@ def test_history_reset_cannot_erase_pending_order_risk(reset):
     begin()
     with pytest.raises(ValueError,match='reconciliation'):
         reset()
-    assert journal.get('local')['reserved_usd']==6
+    assert journal.get('local')['reserved_usd']==6.2
+

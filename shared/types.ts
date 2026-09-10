@@ -663,7 +663,24 @@ export interface TradingStatus {
   };
 }
 
+export interface SignalCalibrationReport {
+  status: 'collecting' | 'qualified' | 'not_qualified';
+  reason: string;
+  eventSamples: number;
+  trainEvents: number;
+  testEvents: number;
+  qualifiedBuckets: number;
+  asOf: number;
+}
+
 export interface Crypto15mBacktest {
+  mode?: 'portfolio';
+  dataStatus?: 'recorded' | 'insufficient_data';
+  cashUsd?: number;
+  reservedUsd?: number;
+  feesUsd?: number;
+  openPositions?: number;
+  independentEvents?: number;
   n: number;
   wins: number;
   winRate: number;
@@ -804,6 +821,7 @@ export interface CollectionStats {
   };
   main: {
     whales: number; whalesResolved: number; alerts: number; alertsResolved: number;
+    alertsWindowed: number;
     firstAt: string | null; lastAt: string | null;
     topCategories: { category: string; n: number }[];
     recent: { ticker: string; category: string; taker_side: string; price: number; dollar_value: number; outcome_correct: number | null; resolved: number; created_at: string }[];
@@ -898,6 +916,7 @@ export interface ROMApi {
     ) => Promise<ActionResult<{ summary: string }>>;
   };
   trading: {
+    calibration: () => Promise<SignalCalibrationReport>;
     setEnabled: (enabled: boolean) => Promise<ActionResult>;
     setPaperEnabled: (enabled: boolean) => Promise<ActionResult>;
     cancelAllOpen: () => Promise<ActionResult<{ canceled: number }>>;

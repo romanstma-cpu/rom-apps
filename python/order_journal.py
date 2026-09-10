@@ -7,6 +7,7 @@ import json
 import math
 import time
 import db
+import fees_us
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS us_order_intents (
@@ -78,7 +79,7 @@ def begin(local_id, ticker, side, action, quantity, price, position_id=None, exi
             raise RecoveryRequired('An order for this market and side is still open')
         now = time.time()
         c.execute('INSERT INTO us_order_intents (local_id,ticker,side,action,quantity,limit_price,reserved_usd,state,created_at,updated_at) VALUES (?,?,?,?,?,?,?,\'sending\',?,?)',
-                  (local_id,ticker,side,action,quantity,price,quantity*price if action=='buy' else 0,now,now))
+                  (local_id,ticker,side,action,quantity,price,fees_us.reserved_cost(quantity,price,now) if action=='buy' else 0,now,now))
         if position_id is not None:
             pos = c.execute('SELECT * FROM bot_positions WHERE id=?', (position_id,)).fetchone()
             if (action != 'sell' or not pos or pos['resolved'] or pos['ticker'] != ticker
@@ -145,7 +146,7 @@ def record_order(raw):
         if row['state'] == 'cancel_pending' and not terminal:
             status = 'cancel_pending'
         remaining = max(0, row['quantity']-filled)
-        reserved = 0 if terminal and accounting_ok else remaining * row['limit_price']
+        reserved = 0 if (terminal and accounting_ok) or row['action'] != 'buy' else fees_us.reserved_cost(remaining,row['limit_price'],time.time())
         if status == 'accounting_pending':
             reserved = max(reserved, row['reserved_usd'])
         c.execute('UPDATE us_order_intents SET state=?,filled=?,avg_price=?,fees_usd=?,reserved_usd=?,updated_at=? WHERE order_id=?',

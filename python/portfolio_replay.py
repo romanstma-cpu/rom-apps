@@ -10,6 +10,7 @@ from collections import Counter
 from datetime import datetime, timezone
 import fees_us
 import trader
+import signal_calibration
 from execution_quality import entry_price, remaining_signal_margin, signal_freshness_problem
 
 
@@ -48,6 +49,7 @@ class Portfolio:
         self.day=None; self.day_start=self.start; self.breach_at=None
         self.realized=0.; self.daily_count=Counter()
         self.events=events
+        self.calibration=None
         self.end=max((e['at'] for e in events),default=0)
         self.now=min((e['at'] for e in events),default=0)
         for e in events:
@@ -153,6 +155,7 @@ class Portfolio:
                 order['done']=True
                 break
         self.close_position(pos)
+        self.mark_curve()
 
     def risk_blocked(self):
         offset=trader.trading_day_offset_min(self.cfg)
@@ -210,6 +213,13 @@ class Portfolio:
             except ValueError as exc:
                 self.rejected[str(exc)]+=1;continue
             edge=remaining_signal_margin(trader._compute_edge(sig,source),signal_cents,limit)
+            if self.cfg.get('sizing_mode') == 'kelly':
+                if self.calibration is None or self.now-self.calibration['asof'] >= 300:
+                    self.calibration=signal_calibration.fit(self.events,self.now)
+                try:
+                    edge=signal_calibration.calibrated_edge(sig,source,limit,self.now,self.calibration)
+                except ValueError:
+                    self.rejected['Kelly calibration unavailable']+=1;continue
             threshold=float(self.cfg['min_edge_pts_momentum' if source=='momentum' else 'min_edge_pts_whale'])
             if edge<max(0,threshold) or limit>self.cfg['max_entry_price_cents'] or limit<(1 if self.cfg.get('use_rules') else self.cfg['min_entry_price_cents']):
                 self.rejected['execution margin or price cap']+=1;continue
@@ -246,7 +256,9 @@ class Portfolio:
     def ingest(self,event):
         kind=event['kind']; ticker=event['ticker']; p=event['payload']
         self.evidence[kind]+=1
-        if kind=='gap':self.books.clear()
+        if kind=='gap':
+            self.books.clear()
+            self.mark_curve()
         elif kind=='market':self.meta[ticker]=p
         elif kind=='book':
             try:
@@ -258,6 +270,7 @@ class Portfolio:
                 self.books.pop(ticker,None);self.evidence['invalid_book']+=1;return
             for order in self.orders:
                 if order['pos']['ticker']==ticker:self.fill(order)
+            self.mark_curve()
         elif kind=='signal':
             sig=dict(p['signal']);source=p['source']
             meta=self.meta.get(ticker,{})

@@ -81,6 +81,7 @@ import db  # noqa: E402
 import polymarket_api  # noqa: E402
 import polymarket_auth  # noqa: E402
 import scanner  # noqa: E402
+import momentum_window  # noqa: E402
 import crypto15m  # noqa: E402
 import trader  # noqa: E402
 import crypto15m_trader  # noqa: E402
@@ -509,6 +510,11 @@ async def _scanner_and_trader_loop() -> None:
         now = asyncio.get_event_loop().time()
         _loop_heartbeat = now
         cfg = STATE.cfg
+        collect_main = (bool(cfg.get("main_record_signals", True))
+                        or bool(cfg.get("enable_trading"))
+                        or bool(cfg.get("main_paper_trading"))
+                        or script_engine.needs_signal_feed())
+        main_recorder.configure(collect_main and not STATE.paused)
 
         if STATE.paused:
             await asyncio.sleep(1)
@@ -538,11 +544,6 @@ async def _scanner_and_trader_loop() -> None:
         except Exception as e:
             logger.warning(f"sync error: {e}")
 
-        collect_main = (bool(cfg.get("main_record_signals", True))
-                        or bool(cfg.get("enable_trading"))
-                        or bool(cfg.get("main_paper_trading"))
-                        or script_engine.needs_signal_feed())
-        main_recorder.configure(collect_main)
         try:
             await asyncio.to_thread(main_recorder.flush)
         except Exception as exc:
@@ -1680,6 +1681,11 @@ async def _h_main_backtest(p: dict) -> dict:
     return await asyncio.to_thread(replay.replay_main, cfg, since_days=since)
 
 
+async def _h_signal_calibration(_p: dict) -> dict:
+    import signal_calibration
+    return (await asyncio.to_thread(signal_calibration.load_model))['report']
+
+
 async def _h_collection_stats(_p: dict) -> dict:
     env = polymarket_auth.get_env()
 
@@ -1705,7 +1711,9 @@ async def _h_collection_stats(_p: dict) -> dict:
             ).fetchone()
             al = conn.execute(
                 """SELECT COUNT(*) n, SUM(resolved) r, MIN(created_at) a,
-                          MAX(created_at) b FROM alerts"""
+                          MAX(created_at) b,
+                          SUM(CASE WHEN score_version=? THEN 1 ELSE 0 END) w
+                   FROM alerts""", (momentum_window.SCORE_VERSION,)
             ).fetchone()
             cats = conn.execute(
                 """SELECT category, COUNT(*) n FROM whale_trades
@@ -1727,6 +1735,9 @@ async def _h_collection_stats(_p: dict) -> dict:
             "main": {
                 "whales": int(wh["n"] or 0), "whalesResolved": int(wh["r"] or 0),
                 "alerts": int(al["n"] or 0), "alertsResolved": int(al["r"] or 0),
+                # Only window-measured momentum is comparable for calibration;
+                # older rows were scored from rolling 24h totals.
+                "alertsWindowed": int(al["w"] or 0),
                 "firstAt": wh["a"] or al["a"], "lastAt": wh["b"] or al["b"],
                 "topCategories": [dict(r) for r in cats],
                 "recent": [dict(r) for r in recent_main],
@@ -2186,6 +2197,7 @@ _HANDLERS = {
     "c15ParlayStatus": _h_c15_parlay_status,
     "c15ParlayArm": _h_c15_parlay_arm,
     "mainBacktest": _h_main_backtest,
+    "signalCalibration": _h_signal_calibration,
     "collectionStats": _h_collection_stats,
     "exportResearch": _h_export_research,
     "scriptsList": _h_scripts_list,

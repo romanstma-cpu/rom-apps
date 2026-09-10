@@ -36,6 +36,13 @@ body {
   letter-spacing: 0;
 }
 
+* {
+  scrollbar-color: rgba(255, 255, 255, 0.16) rgba(255, 255, 255, 0.02);
+  scrollbar-width: thin;
+}
+@media (forced-colors: active) {
+  * { scrollbar-color: auto; }
+}
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

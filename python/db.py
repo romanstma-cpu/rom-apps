@@ -165,6 +165,10 @@ CREATE TABLE IF NOT EXISTS alerts (
     price REAL DEFAULT 0,
     price_change REAL DEFAULT 0,
     confidence REAL DEFAULT 0,
+    score_version TEXT DEFAULT '',
+    window_trades INTEGER DEFAULT NULL,
+    window_dollars REAL DEFAULT NULL,
+    observed_at REAL DEFAULT NULL,
     discord_sent INTEGER DEFAULT 0,
     resolved INTEGER DEFAULT 0,
     outcome_correct INTEGER DEFAULT NULL,
@@ -612,6 +616,10 @@ def _init_db_schema() -> None:
         for migration in [
             "ALTER TABLE bot_positions ADD COLUMN closed_early INTEGER DEFAULT 0",
             "ALTER TABLE alerts ADD COLUMN yes_sub_title TEXT DEFAULT ''",
+            "ALTER TABLE alerts ADD COLUMN score_version TEXT DEFAULT ''",
+            "ALTER TABLE alerts ADD COLUMN window_trades INTEGER DEFAULT NULL",
+            "ALTER TABLE alerts ADD COLUMN window_dollars REAL DEFAULT NULL",
+            "ALTER TABLE alerts ADD COLUMN observed_at REAL DEFAULT NULL",
             "ALTER TABLE bot_runs ADD COLUMN start_trades_opened INTEGER DEFAULT 0",
             "ALTER TABLE bot_runs ADD COLUMN start_trades_won INTEGER DEFAULT 0",
             "ALTER TABLE bot_runs ADD COLUMN start_trades_lost INTEGER DEFAULT 0",
@@ -961,8 +969,9 @@ def insert_alert(conn, alert: dict) -> int:
     cur = conn.execute(
         """
         INSERT INTO alerts (ticker, event_ticker, title, yes_sub_title, category, signal_type,
-            direction, volume_24h, price, price_change, confidence)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            direction, volume_24h, price, price_change, confidence,
+            score_version, window_trades, window_dollars, observed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             alert.get("ticker", ""),
@@ -976,6 +985,10 @@ def insert_alert(conn, alert: dict) -> int:
             alert.get("price", 0),
             alert.get("price_change", 0),
             alert.get("confidence", 0),
+            alert.get("score_version", ""),
+            alert.get("window_trades"),
+            alert.get("window_dollars"),
+            alert.get("observed_at"),
         ),
     )
     return cur.lastrowid
@@ -1477,6 +1490,17 @@ def exists_position_in_market(
 
 
 def current_total_exposure_usd(conn, env: str) -> float:
+    # Journaled orders include a conservative fee reserve. Older unjournaled
+    # positions retain their existing notional fallback until reconciled.
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE name='us_order_intents'").fetchone():
+        return float(conn.execute("""SELECT COALESCE(SUM(
+            CASE WHEN p.cost_usd>0 THEN p.cost_usd
+                WHEN p.status='filled' THEN p.target_contracts*p.limit_price_cents/100.0
+                ELSE p.filled_contracts*p.limit_price_cents/100.0 END
+            + CASE WHEN p.status='filled' THEN 0 ELSE COALESCE(i.reserved_usd,
+                MAX(0,p.target_contracts-p.filled_contracts)*p.limit_price_cents/100.0) END
+            ),0) FROM bot_positions p LEFT JOIN us_order_intents i ON i.local_id=p.client_order_id
+            WHERE p.resolved=0 AND p.status IN ('submitted','partial','filled','unknown') AND p.network=?""", (env,)).fetchone()[0])
     row = conn.execute(
         """SELECT COALESCE(SUM(
                CASE WHEN status='filled' THEN

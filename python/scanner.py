@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections import defaultdict
+import time
+import momentum_window
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 import db
@@ -377,12 +379,9 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
     if not markets:
         return 0, []
 
+    # The tape is fed by the market stream; this call keeps that stream
+    # subscribed and supplies the durable trade history other features read.
     recent_trades = await polymarket_api.fetch_recent_trades(limit=1000)
-    trades_by_ticker: dict[str, list[dict]] = defaultdict(list)
-    for t in recent_trades:
-        ticker = t.get("ticker", "")
-        if ticker and not is_micro_market(t.get("slug", "")):
-            trades_by_ticker[ticker].append(t)
 
     new_alerts: list[dict] = []
     contrarian_only = bool(cfg.get("contrarian_only", True))
@@ -411,76 +410,58 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
                     },
                 )
 
+    now = time.time()
+    skipped: Counter[str] = Counter()
+
     with db.get_db() as conn:
-        prev_snaps = db.get_previous_snapshots_bulk(
-            conn, [m["ticker"] for m in markets]
-        )
         for market in markets:
             ticker = market["ticker"]
             if is_micro_market(market.get("slug", "")):
                 continue
 
             vol_24h = _to_float(market.get("volume_24h", 0))
-            cur_price = _to_float(market.get("yes_bid", 0)) or _to_float(
-                market.get("last_price", 0)
-            )
             oi = _to_float(market.get("open_interest", 0))
             close_time = market.get("close_time", "")
             days_left = _parse_days_to_close(close_time)
 
-            prev = prev_snaps.get(ticker)
-            prev_vol = _to_float(prev.get("volume_24h", 0)) if prev else 0
-            prev_price = (
-                _to_float(prev.get("yes_bid", 0) or prev.get("last_price", 0))
-                if prev
-                else 0
-            )
-
             db.save_snapshot(conn, ticker, market)
 
-            vol_spike = (vol_24h / prev_vol) if prev_vol > 10 else 0
-            price_change = (cur_price - prev_price) if prev_price > 0 else 0
+            # Flow comes only from the deduplicated per-market trade window.
+            # Rolling 24h totals and scan-to-scan diffs cannot distinguish fresh
+            # pressure from old prints, so they no longer feed any signal.
+            window = momentum_window.tape.summarize(ticker, now)
+            if not window.get("ready"):
+                skipped[window.get("reason", "window unavailable")] += 1
+                continue
 
-            ticker_trades = trades_by_ticker.get(ticker, [])
-            yes_trades = [t for t in ticker_trades if t.get("taker_side") == "yes"]
-            no_trades = [t for t in ticker_trades if t.get("taker_side") == "no"]
-            yes_count = len(yes_trades)
-            no_count = len(no_trades)
-            yes_dollars = sum(
-                _to_float(t.get("count_fp", 0))
-                * _to_float(t.get("yes_price_dollars", 0))
-                for t in yes_trades
-            )
-            no_dollars = sum(
-                _to_float(t.get("count_fp", 0))
-                * _to_float(t.get("no_price_dollars", 0))
-                for t in no_trades
-            )
-
-            if yes_count > no_count:
-                cluster_dir = "yes"
-                cluster_count = yes_count
-                cluster_dollars = yes_dollars
-            elif no_count > yes_count:
-                cluster_dir = "no"
-                cluster_count = no_count
-                cluster_dollars = no_dollars
-            else:
-                cluster_dir = "yes" if price_change >= 0 else "no"
-                cluster_count = max(yes_count, no_count)
-                cluster_dollars = max(yes_dollars, no_dollars)
+            cur_price = _to_float(window["price"])
+            change = window["price_change"]
+            price_change = _to_float(change) if change is not None else 0.0
+            ratio = window["volume_ratio"]
+            vol_spike = _to_float(ratio) if ratio is not None else 0.0
+            cluster_dir = window["direction"]
+            cluster_count = int(window["cluster_count"])
+            cluster_dollars = _to_float(window["cluster_dollars"])
 
             signals: list[str] = []
-            if vol_spike >= MIN_VOLUME_SPIKE_RATIO and vol_24h >= MIN_VOLUME_24H:
+            # A ratio needs a full prior window; a move needs a comparable
+            # baseline print. Absent either, the signal is unavailable — not zero.
+            if (
+                ratio is not None
+                and vol_spike >= MIN_VOLUME_SPIKE_RATIO
+                and _to_float(window["current_dollars"]) >= MIN_TRADE_CLUSTER_DOLLARS
+            ):
                 signals.append("volume_spike")
-            if abs(price_change) >= MIN_PRICE_MOVE:
+            if change is not None and abs(price_change) >= MIN_PRICE_MOVE:
                 signals.append("price_move")
             if (
-                cluster_count >= MIN_TRADE_CLUSTER_COUNT
+                cluster_dir
+                and cluster_count >= MIN_TRADE_CLUSTER_COUNT
                 and cluster_dollars >= MIN_TRADE_CLUSTER_DOLLARS
             ):
                 signals.append("trade_cluster")
             if not signals:
+                skipped["no threshold met in window"] += 1
                 continue
 
             price_dir = "yes" if price_change > 0 else "no"
@@ -540,6 +521,12 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
                     "price": cur_price,
                     "price_change": price_change * 100,
                     "confidence": confidence,
+                    # Records which measurement produced this row so calibration
+                    # never pools window flow with legacy 24h-derived scores.
+                    "score_version": momentum_window.SCORE_VERSION,
+                    "window_trades": int(window["trade_count"]),
+                    "window_dollars": _to_float(window["current_dollars"]),
+                    "observed_at": window["newest_at"],
                 }
                 alert_id = db.insert_alert(conn, alert_data)
                 row = conn.execute(
@@ -548,6 +535,12 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
                 if row:
                     new_alerts.append(dict(row))
 
+    if skipped:
+        logger.info(
+            "momentum: %d alerts from %d markets; skipped %s",
+            len(new_alerts), len(markets),
+            ", ".join(f"{n}x {why}" for why, n in skipped.most_common(4)),
+        )
     return len(new_alerts), new_alerts
 
 

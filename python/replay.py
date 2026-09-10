@@ -487,7 +487,7 @@ def _summarize(trades: list[dict], contracts: int, n_windows: int,
     }
 
 
-def replay_main(cfg: dict, *, since_days: int = 60,
+def replay_main_signal_study(cfg: dict, *, since_days: int = 60,
                 slippage_cents: float = 1.0) -> dict:
     import trader as trader_mod
     contracts = 5
@@ -555,3 +555,17 @@ def replay_main(cfg: dict, *, since_days: int = 60,
         "In-sample: signals were only recorded while the app was running.",
     ]
     return _summarize(trades, contracts, scanned, caveats)
+
+
+def replay_main(cfg: dict, *, since_days: int = 60) -> dict:
+    import main_recorder
+    import portfolio_replay
+    scenarios = {
+        'base': dict(latency_ms=250, depth_fraction=1, slippage_cents=0),
+        'delayed': dict(latency_ms=1000, depth_fraction=.5, slippage_cents=0),
+        'stress': dict(latency_ms=2000, depth_fraction=.25, slippage_cents=1),
+    }
+    scenario = cfg.get('replay_scenario', 'base')
+    if scenario not in scenarios:
+        raise ValueError('Unknown replay scenario')
+    return portfolio_replay.replay(cfg, main_recorder.load(since_days), **scenarios[scenario])

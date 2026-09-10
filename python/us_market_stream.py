@@ -9,6 +9,7 @@ import math
 import websockets
 import polymarket_auth as auth
 import main_recorder
+import momentum_window
 
 logger=logging.getLogger(__name__)
 _task=None
@@ -32,6 +33,7 @@ async def stop():
         except asyncio.CancelledError: pass
     _task=None
     _books.clear(); _trades.clear(); _wanted.clear()
+    momentum_window.tape.reset()
 
 def ingest(message):
     book=message.get('marketData')
@@ -40,16 +42,23 @@ def ingest(message):
         main_recorder.book(book['marketSlug'],book)
     trade=message.get('trade')
     if not trade or not trade.get('marketSlug'): return
-    px=float(trade['price']['value']); qty=float(trade['quantity']['value'])
+    try:
+        px=float(trade['price']['value']); qty=float(trade['quantity']['value'])
+    except (KeyError,ValueError,TypeError):
+        return
     side=(trade.get('taker') or {}).get('side')
     if side not in ('ORDER_SIDE_BUY','ORDER_SIDE_SELL'): return
-    if not (0<=px<=1) or qty<=0: return
+    if not (0<px<1) or not math.isfinite(qty) or qty<=0: return
     # Stable exchange payload fingerprint avoids duplicates after reconnect.
     tid=hashlib.sha256(json.dumps(trade,sort_keys=True).encode()).hexdigest()
+    normalized={'trade_id':tid,'ticker':trade['marketSlug'],'slug':trade['marketSlug'],
+                    'created_time':trade.get('tradeTime',''),'count_fp':qty,'yes_price_dollars':px,
+                    'no_price_dollars':1-px,'taker_side':'yes' if side=='ORDER_SIDE_BUY' else 'no'}
+    # Existing consumers keep their own age policy; momentum requires fresh,
+    # unique receipts and maintains a separate bounded ten-minute tape.
+    momentum_window.tape.add(normalized,time.time())
     main_recorder.record('trade',trade['marketSlug'],{'id':tid,'trade':trade})
-    _trades.append({'trade_id':tid,'ticker':trade['marketSlug'],'slug':trade['marketSlug'],
-                    'created_time':trade['tradeTime'],'count_fp':qty,'yes_price_dollars':px,
-                    'no_price_dollars':1-px,'taker_side':'yes' if side=='ORDER_SIDE_BUY' else 'no'})
+    _trades.append(normalized)
 
 def recent(limit): return list(_trades)[-limit:]
 def get_quote_cents(token):
@@ -84,6 +93,7 @@ async def _run():
                     except asyncio.TimeoutError: pass
         except asyncio.CancelledError: raise
         except Exception as exc:
+            momentum_window.tape.reset()
             main_recorder.record('gap','',{'reason':'market stream disconnected'})
             logger.warning('US market stream disconnected: %s',type(exc).__name__)
             await asyncio.sleep(5)

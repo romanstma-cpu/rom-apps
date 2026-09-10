@@ -7,6 +7,7 @@ import { POLYMARKET_REFERRAL_CODE, POLYMARKET_REFERRAL_URL } from '../utils/link
 export function ApiKeysPage() {
  const {backend,refresh}=useApp(); const toast=useToast();
  const [keyId,setKeyId]=useState(''); const [secretKey,setSecretKey]=useState(''); const [busy,setBusy]=useState(false);
+ const [formError,setFormError]=useState('');
  const update=async()=>{await refresh.credentials();await refresh.backend();await refresh.account();};
  const test=async()=>{const r=await window.rom.credentials.test('mainnet'); if(!r.ok) throw new Error(r.message || 'Connection failed'); toast.success(`Connected to Polymarket US · buying power $${(r.data?.balanceUsd ?? 0).toFixed(2)}`);};
  const run=async(fn:()=>Promise<void>)=>{setBusy(true);try{await fn();}catch(e){toast.error(e instanceof Error ? e.message : 'Request failed');}finally{try{await update();}catch(e){toast.error('Could not refresh connection status');}finally{setBusy(false);}}};
@@ -17,9 +18,10 @@ export function ApiKeysPage() {
  </div>
  <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(260px,1fr)]">
  <Card><div className="mb-7"><h3 className="text-base font-semibold">Connect your account</h3><p className="mt-2 text-sm leading-relaxed text-rom-muted">Enter the API credentials from your Polymarket US account.</p></div>
- <form className="space-y-5" onSubmit={e=>{e.preventDefault();void run(async()=>{const r=await window.rom.credentials.save({keyId:keyId.trim(),secretKey:secretKey.trim(),env:'mainnet'});if(!r.ok)throw new Error(r.message || 'Save failed');setSecretKey('');await test();});}}>
- <label className="block text-sm font-medium">Key ID<input className="rom-input mt-2" required autoComplete="off" value={keyId} onChange={e=>setKeyId(e.target.value)} placeholder="Enter your API Key ID" /></label>
- <label className="block text-sm font-medium">Secret Key<input className="rom-input mt-2" required type="password" autoComplete="new-password" value={secretKey} onChange={e=>setSecretKey(e.target.value)} placeholder="Enter your Secret Key" /></label>
+ <form noValidate className="space-y-5" onSubmit={e=>{e.preventDefault();if(busy)return;if(!keyId.trim()||!secretKey.trim()){setFormError('Enter both your Key ID and Secret Key.');e.currentTarget.querySelectorAll('input')[keyId.trim()?1:0]?.focus();return;}setFormError('');void run(async()=>{const r=await window.rom.credentials.save({keyId:keyId.trim(),secretKey:secretKey.trim(),env:'mainnet'});if(!r.ok)throw new Error(r.message || 'Save failed');setSecretKey('');await test();});}}>
+ <label className="block text-sm font-medium">Key ID<input className="rom-input mt-2" required aria-invalid={!!formError&&!keyId.trim()} aria-describedby={formError?'api-form-error':undefined} autoComplete="off" value={keyId} onChange={e=>setKeyId(e.target.value)} placeholder="Enter your API Key ID" /></label>
+ <label className="block text-sm font-medium">Secret Key<input className="rom-input mt-2" required aria-invalid={!!formError&&!secretKey.trim()} aria-describedby={formError?'api-form-error':undefined} type="password" autoComplete="new-password" value={secretKey} onChange={e=>setSecretKey(e.target.value)} placeholder="Enter your Secret Key" /></label>
+ {formError&&<p id="api-form-error" role="alert" className="text-xs text-rom-loss">{formError}</p>}
  <div className="flex items-start gap-2 rounded-lg bg-rom-void/50 p-3 text-xs leading-relaxed text-rom-muted"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-rom-purple" />Credentials are stored locally and encrypted with your Windows account.</div>
  <div className="flex flex-wrap gap-2 border-t border-rom-border pt-5"><button disabled={busy} className="rom-btn-primary" type="submit">{busy?'Connecting…':'Save and connect'}</button><button disabled={busy} className="rom-btn-default" type="button" onClick={()=>void run(test)}>Test saved credentials</button></div>
  <button disabled={busy} className="text-xs text-rom-dim hover:text-rom-loss disabled:opacity-50" type="button" onClick={()=>void run(async()=>{const r=await window.rom.credentials.clear('mainnet');if(!r.ok)throw new Error(r.message);setSecretKey('');toast.success('Credentials removed');})}>Delete credentials</button>

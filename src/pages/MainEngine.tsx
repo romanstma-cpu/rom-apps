@@ -196,7 +196,7 @@ export function MainEnginePage() {
       <details className="mb-5 rounded-xl border border-rom-border p-5">
         <summary className="cursor-pointer text-sm font-medium">How the strategy protects your entry</summary>
         <p className="mt-3 text-sm text-rom-muted">The strategy waits when eligible signals disagree on a market’s direction or a balance refresh fails. Invalid signals and unsuitable quotes are skipped. A market’s minimum order cannot increase your strategy’s selected trade size.</p>
-        <p className="mt-2 text-xs text-rom-dim">Live quotes must have a spread of 3 cents or less and cannot move more than 2 cents above the signal. Practice fills use the selected price plus a 1¢-per-contract cost allowance. These checks improve execution discipline; they do not predict profits.</p>
+        <p className="mt-2 text-xs text-rom-dim">Live quotes must have a spread of 3 cents or less and cannot move more than 2 cents above the signal. Practice fills include date-specific US taker fees. These checks improve execution discipline; they do not predict profits.</p>
       </details>
       <details className="mb-5 rounded-xl border border-rom-border p-5">
       <summary className="cursor-pointer text-sm font-medium">Choose a strategy preset <span className="ml-2 text-xs font-normal text-rom-muted">Optional starting points</span></summary>
@@ -514,11 +514,8 @@ export function MainEnginePage() {
                     onChange={(v) => void update('kellyFraction', v / 100)}
                   />
                 </Field>
-                <Field label="Size floor / ceiling" hint="% of balance — clamps the Kelly result">
+                <Field label="Size ceiling" hint="% of balance — Kelly can recommend less">
                   <div className="flex items-center gap-2">
-                    <NumberInput value={+(config.minSizeFraction * 100).toFixed(2)} step={0.5} min={0.1} max={100} suffix="%"
-                      onChange={(v) => void update('minSizeFraction', v / 100)} />
-                    <span className="text-xs text-rom-muted">to</span>
                     <NumberInput value={+(config.maxSizeFraction * 100).toFixed(2)} step={0.5} min={0.1} max={100} suffix="%"
                       onChange={(v) => void update('maxSizeFraction', v / 100)} />
                   </div>
@@ -551,13 +548,11 @@ export function MainEnginePage() {
 
           {(config.sizingMode ?? 'percent') === 'kelly' && (
             <p className="mt-3 text-xs leading-relaxed text-rom-muted">
-              Kelly sizes each trade from its edge <em>and</em> its entry price:
-              a contract at 90c risks 10c to win 90c, so the same edge supports a
-              larger stake than the same edge at 20c. The Min-size and Max-size
-              edge settings below are not used in this mode — the floor and
-              ceiling above clamp the result instead. Kelly is growth-optimal
-              only if your confidence scores are well calibrated; it does not cap
-              your loss.
+              Kelly requires probability estimates checked against later recorded
+              outcomes. It uses a conservative estimate after fees and can size below
+              your usual minimum. If evidence is missing or fails validation, entries
+              are blocked. See Evidence for the current status. A 90¢ contract risks
+              90¢ to earn 10¢ before fees; Kelly does not guarantee returns or limit losses.
             </p>
           )}
 

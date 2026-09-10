@@ -435,8 +435,8 @@ def test_kelly_respects_clamps_and_hard_cap():
     })
     # Raw Kelly here is 50% of bankroll; the ceiling and hard cap must bind.
     assert trader._compute_target_usd(1000.0, 5.0, 90, c) == 50.0
-    # A sliver of edge still clears the configured floor.
-    assert trader._compute_target_usd(1000.0, 0.1, 20, c) == pytest.approx(20.0)
+    # A minimum floor must not inflate a small Kelly recommendation.
+    assert trader._compute_target_usd(1000.0, 0.1, 20, c) == pytest.approx(1.25)
 
 
 def test_kelly_mode_leaves_other_modes_untouched(cfg):

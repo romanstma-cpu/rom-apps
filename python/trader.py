@@ -12,6 +12,7 @@ import db
 import instance_lock
 import order_journal
 import fees_us
+import signal_calibration
 import rules as rules_engine
 from execution_quality import entry_price, remaining_signal_margin, signal_problem, signal_freshness_problem
 from polymarket_api import (
@@ -84,11 +85,11 @@ def _compute_position_usd(balance_usd: float, edge_pts: float, cfg: dict) -> flo
 def _kelly_fraction(edge_pts: float, limit_cents: int, cfg: dict) -> float:
     """Growth-optimal bankroll fraction for a binary contract, scaled down.
 
-    A contract bought at cost ``c`` paying $1 on resolution risks ``1 - c`` to
-    win ``c``, so the Kelly optimum is ``(p - c) / (1 - c)``. ``edge_pts`` is
+    A contract bought at cost ``c`` paying $1 on resolution risks ``c`` to
+    win ``1 - c``, so the Kelly optimum is ``(p - c) / (1 - c)``. ``edge_pts`` is
     ``(p - c)`` in percentage points, which reduces to ``edge / (100 - cost)``.
-    That denominator is the loss per contract and varies ninefold across the
-    tradeable price band, which is exactly what the percent ramp ignores.
+    Main execution supplies a calibrated conservative probability margin after
+    fee reservation and an uncertainty haircut, never the raw heuristic score.
     """
     loss_cents = 100.0 - max(1, min(99, int(limit_cents)))
     if not math.isfinite(edge_pts) or edge_pts <= 0.0 or loss_cents <= 0.0:
@@ -102,10 +103,8 @@ def _compute_kelly_usd(
     frac = _kelly_fraction(edge_pts, limit_cents, cfg)
     if frac <= 0.0:
         return 0.0
-    frac = max(
-        float(cfg["min_size_fraction"]),
-        min(frac, float(cfg["max_size_fraction"])),
-    )
+    # A minimum-size floor must never enlarge a small Kelly recommendation.
+    frac = min(frac, float(cfg["max_size_fraction"]))
     return min(balance_usd * frac, float(cfg["hard_max_position_usd"]))
 
 
@@ -444,6 +443,14 @@ async def execute_signal(
         logger.info('[skip] %s: %s', signal.get('ticker'), freshness)
         return None
     edge_pts = _compute_edge(signal, source)
+    calibration = None
+    if cfg.get('sizing_mode') == 'kelly':
+        try:
+            calibration = signal_calibration.load_model()
+            signal_calibration.calibrated_edge(signal,source,signal_cost_cents,time.time(),calibration)
+        except Exception as exc:
+            logger.info('[skip] %s: calibration unavailable: %s',signal.get('ticker'),exc)
+            return None
     env = get_env()
 
     with db.get_db() as conn:
@@ -510,6 +517,12 @@ async def execute_signal(
         logger.info("[skip] %s: live price unavailable or unsuitable: %s", signal["ticker"], exc)
         return None
     edge_pts = remaining_signal_margin(edge_pts, signal_cost_cents, limit_cents)
+    if calibration is not None:
+        try:
+            edge_pts = signal_calibration.calibrated_edge(signal,source,limit_cents,time.time(),calibration)
+        except ValueError as exc:
+            logger.info('[skip] %s: %s',signal.get('ticker'),exc)
+            return None
     threshold = float(cfg.get("min_edge_pts_momentum" if source == "momentum" else "min_edge_pts_whale", 0))
     if not math.isfinite(edge_pts) or edge_pts < max(0.0, threshold):
         logger.info("[skip] %s: remaining signal margin %.1f below execution threshold", signal["ticker"], edge_pts)

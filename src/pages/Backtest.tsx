@@ -48,6 +48,7 @@ export function BacktestPage() {
   const [stratSel, setStratSel] = useState('current');
   const [mainSel, setMainSel] = useState('current');
   const [days, setDays] = useState(30);
+  const [scenario, setScenario] = useState('base');
   const [busy, setBusy] = useState(false);
   const [res, setRes] = useState<Crypto15mBacktest | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export function BacktestPage() {
     runGeneration.current += 1;
     setRes(null); setErr(null); setBusy(false);
     return () => { runGeneration.current += 1; };
-  }, [engine, stratSel, mainSel, days]);
+  }, [engine, stratSel, mainSel, days, scenario]);
   const { config, state } = useApp();
   const profiles = state?.customProfiles ?? [];
   const [coll, setColl] = useState<CollectionStats | null>(null);
@@ -123,7 +124,7 @@ export function BacktestPage() {
       const patch = resolvePatch();
       const r = engine === 'crypto15m'
         ? await window.rom.crypto15m.backtest({ sinceDays: days, config: patch })
-        : await window.rom.crypto15m.backtestMain({ sinceDays: days, config: patch });
+        : await window.rom.crypto15m.backtestMain({ sinceDays: days, config: { ...patch, replayScenario: scenario } as Partial<TraderConfig> });
       if (generation !== runGeneration.current) return;
       setRes(r);
       if (!r) setErr('Engine not running — start the app backend first.');
@@ -141,7 +142,7 @@ export function BacktestPage() {
   return (
     <Page
       title="Backtest"
-      subtitle="Explore recorded signals and outcomes. Historical simulations use fee assumptions and do not replay the main strategy’s live quote checks, spread limits or actual fills. Results are not verified Polymarket US returns."
+      subtitle="Test your settings against recorded evidence. Main replay includes cash limits, displayed liquidity, execution delay and US fees. Simulated results are not verified returns."
     >
       <Card header={<div className="text-xs uppercase tracking-wider text-rom-muted">Setup</div>}>
         <div className="flex flex-wrap items-end gap-4">
@@ -193,6 +194,13 @@ export function BacktestPage() {
               </select>
             </Field>
           )}
+          {engine === 'main' && <Field label="Execution scenario">
+            <select aria-label="Execution scenario" value={scenario} onChange={(e) => setScenario(e.target.value)} className="rounded-md border border-rom-border bg-rom-surface2 px-2.5 py-1.5 text-xs text-white outline-none focus:border-rom-purple/60">
+              <option value="base">Base · 250 ms, full depth</option>
+              <option value="delayed">Delayed · 1 second, half depth</option>
+              <option value="stress">Stress · 2 seconds, quarter depth, +1¢</option>
+            </select>
+          </Field>}
           <Field label="Window">
             <Chips
               options={WINDOWS.map((d) => [String(d), `${d}d`] as [string, string])}
@@ -238,6 +246,13 @@ export function BacktestPage() {
                 {coll ? `${coll.main.whales.toLocaleString()} whale signals · ${coll.main.alerts.toLocaleString()} momentum` : '…'}
                 {coll?.main.lastAt ? ` · last ${coll.main.lastAt.slice(5, 16)} UTC` : ''}
               </p>
+              {coll && coll.main.alerts > coll.main.alertsWindowed ? (
+                <p className="mt-1 text-[11px] text-rom-dim">
+                  {coll.main.alertsWindowed.toLocaleString()} measured from live trade
+                  windows. Earlier momentum rows were scored from rolling 24-hour
+                  totals and are calibrated separately.
+                </p>
+              ) : null}
             </div>
           </div>
           <button
@@ -320,7 +335,7 @@ export function BacktestPage() {
         </Card>
       </div>
 
-      {res && res.windowsScanned === 0 && (
+      {res && (res.windowsScanned === 0 || res.dataStatus === 'insufficient_data') && (
         <Card className="mt-4">
           <div className="py-4 text-center">
             <div className="text-sm font-semibold text-white">No collected data yet</div>
@@ -339,7 +354,7 @@ export function BacktestPage() {
           </div>
         </Card>
       )}
-      {res && res.windowsScanned > 0 && (
+      {res && res.windowsScanned > 0 && res.dataStatus !== 'insufficient_data' && (
         <>
           {engine === 'crypto15m' && (
             res.interval ? (
@@ -357,14 +372,22 @@ export function BacktestPage() {
           <div className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-6">
             <Stat label="Trades" value={`${res.n}`} sub={`${res.windowsScanned} ${engine === 'crypto15m' ? 'windows' : 'signals'} scanned`} />
             <Stat label="Win rate" value={res.n ? `${(res.winRate * 100).toFixed(1)}%` : '—'} />
-            <Stat label="Edge / contract" value={`${res.netEvCentsPerContract.toFixed(2)}¢`} tone={res.netEvCentsPerContract >= 0 ? 'good' : 'bad'} />
+            <Stat label="Realized / contract" value={res.n ? `${res.netEvCentsPerContract.toFixed(2)}¢` : '—'} />
             <Stat label="Total P&L" value={fmtUsd(res.totalPnlUsd, { sign: true })} tone={res.totalPnlUsd >= 0 ? 'good' : 'bad'} />
             <Stat label="Max drawdown" value={fmtUsd(res.maxDrawdownUsd)} tone="bad" />
-            <Stat label="Days traded" value={`${res.byDay.length}`} />
+            <Stat label={res.mode === 'portfolio' ? 'Closed events' : 'Days traded'} value={`${res.mode === 'portfolio' ? res.independentEvents : res.byDay.length}`} />
           </div>
+          {res.mode === 'portfolio' && <Card className="mt-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Stat label="Cash" value={fmtUsd(res.cashUsd ?? 0)} />
+              <Stat label="Reserved for orders" value={fmtUsd(res.reservedUsd ?? 0)} />
+              <Stat label="Open positions" value={String(res.openPositions ?? 0)} />
+              <Stat label="Simulated fees" value={fmtUsd(res.feesUsd ?? 0)} />
+            </div>
+          </Card>}
 
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <Card header={<ChartHead title="Equity over time" hint="Cumulative P&L in trade order — a healthy strategy climbs steadily; one big lucky step means one event carried it." />}>
+            <Card header={<ChartHead title="Equity over time" hint={res.mode === 'portfolio' ? 'Portfolio P&L includes open positions at recorded exit depth after fees. Stale or missing depth is valued at zero. Cash reserved for orders is still cash.' : 'Cumulative realized P&L in trade order.'} />}>
               <div className="h-48">
                 <ResponsiveContainer>
                   <AreaChart data={res.equity.map((e, i) => ({ i, at: e.at ? e.at.slice(5, 16) : String(i), value: e.value }))}>

@@ -72,6 +72,7 @@ const api: ROMApi = {
     runOnce: (action) => ipcRenderer.invoke('backend:runOnce', action),
   },
   trading: {
+    calibration: () => ipcRenderer.invoke('trading:calibration'),
     setEnabled: (v: boolean): Promise<ActionResult> =>
       ipcRenderer.invoke('trading:setEnabled', v),
     setPaperEnabled: (v: boolean): Promise<ActionResult> =>
