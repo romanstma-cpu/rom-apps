@@ -49,3 +49,15 @@ RELEASE-2.1..2.8 moved to releases/archive/ (unreferenced; site keeps copies).
 - Confirm the full 9-suite e2e run
 - Consider deeper Python work: trading-loop test coverage, fees modeling,
   order-recovery integration test, or the crypto15m cross-checks
+### Test coverage expansion (post-backlog)
+
+- scanner scoring: 24 tests (whale + momentum confidence, days parsing)
+- market stream ingest: 22 tests (normalization, bounds, tape, dedup,
+  quotes) — discovered _trades is append-only, dedup lives at tape.ids
+- account stream: 18 tests (dirty flag, error, routing)
+- categorize: 29 tests — FOUND 3 REAL BUGS: "inflation"→sports via
+  substring "nfl", "something"→crypto via "eth", "oscar"→world (missing
+  singular). Fixed with \b word-boundary matching + added "oscar".
+  Kept " vs " sports priority as designed.
+
+Suite: 1238 passing, 139 skipped (was 1091 at session start)
