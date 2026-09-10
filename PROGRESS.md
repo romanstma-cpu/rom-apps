@@ -72,3 +72,8 @@ guards the whole class.
 ## 2.13 release prep (external, uncommitted)
 - `package.json` 2.12.0 → 2.13.0, `REVIEW-2.13.0.md`, `e2e/terminal-review.e2e.mjs`
   left uncommitted for the release flow
+## 2.13.0 published (2026-09-10)
+- Installer `release/ROM PolyBot-Setup-2.13.0.exe` (91.5 MB, SHA-256
+  7696E9E8...) published to romapps.xyz; index.html + code-signing-policy.html
+  updated; validator PASS; live checksum 200; live installer byte-identical.
+- Site commit 1a8334a on rom-apps repo.
