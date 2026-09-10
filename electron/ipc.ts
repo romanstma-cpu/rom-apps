@@ -17,6 +17,7 @@ import { setStartWithWindows } from './system/autostart';
 import { pythonBackend } from './system/python-backend';
 import * as accounts from './system/accounts';
 import * as store from './system/settings-store';
+import { validateConfigPatch } from './system/config-validate';
 import { findStrategy, listStrategies } from './system/strategies';
 
 const ok = <T>(data?: T, message?: string): ActionResult<T> => ({
@@ -128,13 +129,21 @@ export function registerIpc(): void {
 
   ipcMain.handle('config:get', () => store.get().config);
   ipcMain.handle('config:update', async (_e, patch: Partial<TraderConfig>) => {
-    const next = store.patchConfig(patch);
+    const v = validateConfigPatch(patch);
+    if (!v.ok) {
+      throw new Error(`Invalid config patch: ${v.errors!.join('; ')}`);
+    }
+    const next = store.patchConfig(v.value! as Partial<TraderConfig>);
     broadcastState(next);
     await pushConfigToBackend();
     return next.config;
   });
   ipcMain.handle('config:replace', async (_e, cfg: TraderConfig) => {
-    const next = store.replaceConfig(cfg);
+    const v = validateConfigPatch(cfg);
+    if (!v.ok) {
+      throw new Error(`Invalid config: ${v.errors!.join('; ')}`);
+    }
+    const next = store.replaceConfig(v.value! as unknown as TraderConfig);
     broadcastState(next);
     await pushConfigToBackend();
     return next.config;
