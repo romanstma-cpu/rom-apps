@@ -17,3 +17,9 @@ Holding a position is now a possible outcome of a liquidation request. Callers a
 The take-profit sweep test now states its concession explicitly rather than assuming touch pricing.
 
 No profitability improvement is claimed. This removes a way to lose money to a data gap; it does not improve exit timing. Forecast-based exits and time-based exits remain unimplemented — they need calibrated probabilities, which upgrade 3 gates behind recorded evidence that does not yet exist locally.
+
+## Release
+
+Published as 2.12.0 on https://romapps.xyz. Installer SHA-256:
+`8539D3BDD094E75C3D1F7D3FD0D9579CCFEDD4879BC4080E0DD7A628F7C20B4D`.
+The live download was fetched back and verified byte-identical to the local build.
