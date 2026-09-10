@@ -158,6 +158,7 @@ CREATE TABLE IF NOT EXISTS alerts (
     ticker TEXT NOT NULL,
     event_ticker TEXT DEFAULT '',
     title TEXT DEFAULT '',
+    yes_sub_title TEXT DEFAULT '',
     category TEXT DEFAULT '',
     signal_type TEXT DEFAULT '',
     direction TEXT DEFAULT '',
@@ -245,6 +246,7 @@ CREATE TABLE IF NOT EXISTS bot_positions (
     balance_before_usd REAL DEFAULT NULL,
     mark_price_cents REAL DEFAULT NULL,
     network TEXT DEFAULT 'mainnet',
+    script_id TEXT DEFAULT NULL,
     created_at TEXT DEFAULT (datetime('now')),
     last_updated TEXT DEFAULT (datetime('now')),
     resolved_at TEXT DEFAULT NULL,
@@ -324,6 +326,9 @@ CREATE TABLE IF NOT EXISTS crypto15m_positions (
     strategy TEXT DEFAULT NULL,         -- which strategy opened it (favorite|contrarian|rules)
     fees_usd REAL DEFAULT 0,            -- venue-reported entry fees (0 if none reported)
     exit_fees_usd REAL DEFAULT 0,       -- venue-reported exit fees
+    script_id TEXT DEFAULT NULL,
+    tp_pct REAL DEFAULT NULL,
+    sl_cents INTEGER DEFAULT NULL,
     created_at TEXT DEFAULT (datetime('now')),
     last_updated TEXT DEFAULT (datetime('now')),
     resolved_at TEXT DEFAULT NULL
@@ -362,7 +367,8 @@ CREATE TABLE IF NOT EXISTS crypto15m_signals (
     strike REAL,                       -- window-open reference at the decision point (USD)
     model_prob REAL,                   -- terminal-spot model P(up) at the decision point
     edge_net_cents REAL,               -- model's fee-net edge at the decision point (cents)
-    network TEXT DEFAULT 'mainnet'
+    network TEXT DEFAULT 'mainnet',
+    interval TEXT DEFAULT '15m'
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_c15sig_ticker ON crypto15m_signals(ticker);
 CREATE INDEX IF NOT EXISTS idx_c15sig_resolved ON crypto15m_signals(resolved, close_time);
@@ -413,7 +419,8 @@ CREATE TABLE IF NOT EXISTS crypto15m_ticks (
     velocity1m_pct REAL,               -- 1-min percent change
     change5m_pct REAL,                 -- 5-min percent change
     change15m_pct REAL,                -- 15-min percent change
-    network TEXT DEFAULT 'mainnet'
+    network TEXT DEFAULT 'mainnet',
+    interval TEXT DEFAULT '15m'
 );
 CREATE INDEX IF NOT EXISTS idx_c15tick_ticker ON crypto15m_ticks(ticker, observed_at);
 CREATE INDEX IF NOT EXISTS idx_c15tick_time ON crypto15m_ticks(observed_at);

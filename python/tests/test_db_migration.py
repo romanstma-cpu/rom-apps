@@ -124,3 +124,78 @@ class TestUpgradeFrom28:
         with db.get_db() as conn:
             cols = _columns(conn, "alerts")
             assert "score_version" in cols
+
+
+class TestBaseSchemaSatisfiesInserts:
+    """The base SCHEMA (fresh install, no ALTER loop) must satisfy the
+    insert statements that reference every column. The 2.13-era bug:
+    `interval` was only added by ALTER, so a fresh DB built from SCHEMA
+    alone (or a test DB) crashed on insert with
+    'no such column: interval'."""
+
+    def test_signals_insert_against_base_schema(self):
+        conn = sqlite3.connect(":memory:")
+        conn.executescript(db.SCHEMA)
+        ok = db.insert_crypto15m_signal(conn, {
+            "ticker": "t1", "asset": "BTC", "series": "", "close_time": "",
+            "entry_cost": 0.5, "up_prob": 0.6, "network": "mainnet",
+            "interval": "15m",
+        })
+        assert ok is True
+        conn.close()
+
+    def test_ticks_insert_against_base_schema(self):
+        conn = sqlite3.connect(":memory:")
+        conn.executescript(db.SCHEMA)
+        db.insert_crypto15m_tick(conn, {
+            "ticker": "t1", "asset": "BTC",
+            "network": "mainnet", "interval": "15m",
+        })
+        assert conn.execute(
+            "SELECT interval FROM crypto15m_ticks WHERE ticker='t1'"
+        ).fetchone()[0] == "15m"
+        conn.close()
+
+    def test_base_schema_has_interval_columns(self):
+        conn = sqlite3.connect(":memory:")
+        conn.executescript(db.SCHEMA)
+        for table in ("crypto15m_signals", "crypto15m_ticks"):
+            cols = _columns(conn, table)
+            assert "interval" in cols, f"{table} missing interval in SCHEMA"
+        conn.close()
+
+
+@pytest.fixture(scope="module")
+def schema_cols():
+    conn = sqlite3.connect(":memory:")
+    conn.executescript(db.SCHEMA)
+    out = {}
+    for (name,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'"):
+        out[name] = {r[1] for r in conn.execute(f"PRAGMA table_info({name})")}
+    conn.close()
+    return out
+
+
+class TestInsertColumnParity:
+    """Every static INSERT in db.py must reference only columns present in
+    the base SCHEMA — not columns that exist only via the ALTER loop.
+    A fresh DB executes SCHEMA then ALTERs, so a mismatch is masked in
+    production; this test makes it visible."""
+
+    def test_static_inserts_reference_only_base_columns(self, schema_cols):
+        import re as _re
+        src = open(db.__file__, encoding="utf-8").read()
+        bad: list[str] = []
+        for m in _re.finditer(
+            r"INSERT (?:OR IGNORE |OR REPLACE )?INTO (\w+)\s*\(([^)]*)\)", src
+        ):
+            table = m.group(1)
+            cols = [c.strip().strip('"') for c in m.group(2).split(",")]
+            # Templated inserts ({cols}) are filled at runtime — skip.
+            if any("{" in c or "}" in c for c in cols):
+                continue
+            if table in schema_cols:
+                missing = [c for c in cols if c and c not in schema_cols[table]]
+                if missing:
+                    bad.append(f"{table}:{missing}")
+        assert not bad, f"INSERTs reference columns missing from base SCHEMA: {bad}"
