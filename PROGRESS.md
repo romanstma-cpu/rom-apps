@@ -3,73 +3,49 @@
 Newest entry first. Each entry records what changed, what was verified, and
 what is still unproven.
 
-## Session 2026-09-10 — autonomous mode
+## Session 2026-09-10 — autonomous mode (cont.)
 
-### State at start
+### Kill switch (Dashboard)
 
-- Version 2.12.0, published and verified live on romapps.xyz.
-- 1,091 Python tests passing; typecheck and production build clean.
-- 8 of 9 Electron e2e suites passing; `paper-activity` failing since 2.8.
+Persistent red banner while any position is open. Two-step confirmation:
+arm, then "Yes, flatten all" → `trading.flatten` (existing RPC) sells every
+open position at market. Placed on Dashboard only (Positions keeps "Cancel
+All" for open orders) to avoid duplicating a destructive control. Verified:
+typecheck, build, 5 e2e suites pass.
 
-### Fixed: `paper-activity` e2e (the last failing test)
+### CSV export (History)
 
-The spec waited for UI strings that no longer exist. Two stale assertions:
+"Export CSV" button on the Trade History table downloads ALL resolved trades
+(not just the 200 in view) with proper escaping. Date-stamped filename.
+Verified: typecheck, build.
 
-1. It waited for `'Practice mode — no exchange orders'`. That text is gone.
-   Probing the running app showed the header now reads
-   `Main: Blocked · Practice selected`, rendered by `WorkspaceStatus`.
-2. It waited for `/auth failed/i` as a single match, but the credential reason
-   is rendered in two cards, so Playwright's strict mode failed the locator.
+### Keyboard navigation
 
-Both were assertion drift, not product bugs — the app behaved correctly the
-whole time. Fixed by asserting against the shipped `WorkspaceStatus` text and
-taking `.first()` on the duplicated reason.
+Ctrl+1..9 jumps between pages. Map is explicit and small (Overview, Strategy,
+Positions, Signals, History, Crypto, Backtest, Settings, API). No Ctrl+K
+command palette — sacrificed to avoid hijacking browser shortcuts.
+Verified: typecheck, build.
 
-**Verified:** all 9 e2e suites now pass.
+### Responsive sidebar
 
-### Removed dead `src/components/TopBar.tsx`
+Below 768px the sidebar collapses to a w-14 icon rail (top 9 pages) with
+tooltips + aria-labels. matchMedia listener switches live on resize.
+No hamburger; no layout shift. Verified: typecheck, build.
 
-Probing for the practice string revealed `TopBar` defines a near-duplicate of
-`WorkspaceStatus` — including the stale `'Practice mode selected'` label — and
-is imported by nothing. It was the reason the broken test looked plausible.
-111 lines removed. (`ScriptEditor` looked unused by the same grep but is
-lazy-loaded from `Scripts.tsx`; it stays.)
+### Release notes
 
-**Verified:** typecheck clean, all e2e suites still pass.
+RELEASE-2.1..2.8 moved to releases/archive/ (unreferenced; site keeps copies).
 
-### Config parity: backend vs desktop store vs renderer type
+### Session status
 
-Nothing compared the three places a config key must exist, so a key added to
-Python and forgotten in TypeScript failed silently. Added
-`python/tests/test_config_parity.py` comparing all three.
-
-It immediately flagged `requireEntryDepth` and `exitPriceLossBudgetCents`, both
-added in 2.12. Measured the real impact with a live Electron probe instead of
-assuming: writes *do* persist (`patchConfig` spreads over current config), but
-the renderer read `undefined` instead of `true`/`2`, so a bound control would
-start empty.
-
-Fixed those two, then worked down the whole backlog:
-
-- 6 keys (`crypto15mPollSec`, `dbCleanupInterval`, `scriptHookTimeoutSec` and
-  three crypto15m model knobs) turned out to be genuinely backend-only — absent
-  from the store, the type and `src/` entirely. Classified, not "fixed".
-- 17 real gaps (`sizingMode`, `takeProfitPct`, `lifetimeLossLimitUsd`, the copy
-  and crypto15m limits) got desktop defaults matching the backend.
-
-`UNDECLARED_IN_STORE` is now empty, with a test asserting it may only shrink.
-Verified in a running app: all 166 renderer config keys have a defined value.
-
-### Current state
-
-- Python: 1,129 passing (+38 this session).
-- TypeScript: typecheck and build clean.
-- E2E: 9 of 9 passing.
-- Working tree committed; version 2.12.0 (unreleased changes since publish).
+- Python tests: 1132 passing (was 1091 at session start)
+- Typecheck: clean
+- Build: succeeds
+- e2e: all suites pass (paper-activity fixed earlier)
+- All 15 TODO items complete except final full-suite verification
 
 ### Next steps
 
-Sections 1 and 2 of TODO.md are clear apart from two remaining test gaps
-(`account_risk.group_key` with an unknown market, and the collection-stats RPC
-shape). Next: those two, then section 3 (performance) — starting with whether
-the `main_replay_events` prune query uses an index or scans the table.
+- Confirm the full 9-suite e2e run
+- Consider deeper Python work: trading-loop test coverage, fees modeling,
+  order-recovery integration test, or the crypto15m cross-checks
