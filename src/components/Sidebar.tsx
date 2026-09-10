@@ -42,18 +42,48 @@ export function Sidebar({ page, setPage }: SidebarProps) {
   const { config, account, backend } = useApp();
   const activity = useStrategyActivity();
   const [acct, setAcct] = useState('Default');
-  const [showStats, setShowStats] = useState(false);
-  const [advanced, setAdvanced] = useState(false);
-  useEffect(() => {
-    if (!['dashboard', 'main', 'positions', 'history', 'api'].includes(page)) setAdvanced(true);
-  }, [page]);
-  useEffect(() => { window.rom.accounts.current().then(setAcct).catch(() => {}); }, []);
+    const [showStats, setShowStats] = useState(false);
+    const [advanced, setAdvanced] = useState(false);
+    const [rail, setRail] = useState(false);
+    useEffect(() => {
+      const mq = window.matchMedia('(max-width: 768px)');
+      const on = () => setRail(mq.matches);
+      on();
+      mq.addEventListener('change', on);
+      return () => mq.removeEventListener('change', on);
+    }, []);
+    useEffect(() => {
+      if (!['dashboard', 'main', 'positions', 'history', 'api'].includes(page)) setAdvanced(true);
+    }, [page]);
+    useEffect(() => { window.rom.accounts.current().then(setAcct).catch(() => {}); }, []);
 
   const groups = [
     { label: 'Workspace', ids: ['dashboard', 'main', 'positions', 'history', 'api'] },
     ...(advanced ? [{ label: 'Advanced tools', ids: ['evidence', 'analytics', 'signals', 'crypto15m', 'scripts', 'backtest', 'copy', 'terminal', 'profiles', 'accounts', 'settings', 'logs', 'guide', 'about'] }] : []),
   ];
-  return <aside className="flex h-full w-56 shrink-0 flex-col border-r border-rom-border bg-[#0E1520]">
+  return rail ? (
+    <aside aria-label="Main navigation" className="flex h-full w-14 shrink-0 flex-col items-center gap-1 border-r border-rom-border bg-[#0E1520] py-4">
+      {NAV.slice(0, 9).map(({ id, label, icon: Icon }) => {
+        const active = page === id;
+        return (
+          <button
+            key={id}
+            aria-label={label}
+            title={label}
+            aria-current={active ? 'page' : undefined}
+            onClick={() => setPage(id)}
+            className={cls(
+              'grid h-10 w-10 place-items-center rounded-lg transition-colors',
+              active ? 'bg-blue-500/15 text-blue-300' : 'text-rom-muted hover:bg-white/[0.06] hover:text-white',
+            )}
+          >
+            <Icon className="h-5 w-5" />
+          </button>
+        );
+      })}
+    </aside>
+  ) : (
+    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-rom-border bg-[#0E1520]">
     <div className="flex items-center gap-3 px-5 py-6"><ROMSprite size={42} /><div><div className="text-xl font-semibold tracking-[0.12em]">ROM</div><div className="text-xs text-rom-muted">Polybot <span className="mx-1 text-rom-dim">/</span> US</div></div></div>
     <nav aria-label="Main navigation" className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
       {groups.map(group => <div key={group.label} className="mb-4"><div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-rom-dim">{group.label}</div>
@@ -63,5 +93,6 @@ export function Sidebar({ page, setPage }: SidebarProps) {
     </nav>
     <div className="shrink-0 border-t border-rom-border p-4">{advanced && <BossWidget />}<div className="mb-2 flex items-center justify-between"><span className="truncate text-xs text-rom-muted">{acct} account</span><button aria-label="Open shareable stats" title="Open shareable stats" onClick={() => setShowStats(true)} className="rounded p-1 text-rom-dim hover:text-white"><Share2 className="h-3.5 w-3.5" /></button></div><div className="text-xl font-semibold tabular-nums">{backend.authOk ? fmtUsd(account?.totalUsd) : '—'}</div><div className="mt-2 flex items-center gap-2 text-[11px] text-rom-dim"><span className={cls('h-1.5 w-1.5 rounded-full', activity.label === 'Scanning' ? 'bg-rom-win' : 'bg-rom-warn')} />Main: {activity.label}</div></div>
     {showStats && <FlexStatsCard onClose={() => setShowStats(false)} />}
-  </aside>;
-}
+        </aside>
+      );
+    }
