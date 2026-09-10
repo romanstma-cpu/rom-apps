@@ -86,6 +86,38 @@ def test_group_falls_back_to_event_then_ticker(fresh_db):
         assert account_risk.group_key(conn, "UNKNOWN", "") == "UNKNOWN"
 
 
+def test_unknown_market_still_groups_by_its_event(fresh_db):
+    """A market absent from `markets` must not collapse into one shared group.
+
+    Metadata can lag a fresh signal. Falling back to the event keeps related
+    outcomes together; falling back to a constant would pool unrelated ones.
+    """
+    with db.get_db() as conn:
+        assert account_risk.group_key(conn, "NEVER-SEEN", "EV-1") == "EV-1"
+        assert account_risk.group_key(conn, "OTHER", "EV-2") == "EV-2"
+        # With no event either, each ticker is its own group.
+        assert account_risk.group_key(conn, "LONE-A", "") == "LONE-A"
+        assert account_risk.group_key(conn, "LONE-B", "") == "LONE-B"
+
+
+def test_unknown_market_budget_is_bounded_not_unlimited(fresh_db, cfg):
+    """Missing metadata must not hand an entry an unbounded group budget."""
+    cfg["max_group_exposure_fraction"] = 0.10
+    seed_position("NEVER-SEEN", 60.0, event="EV-1")
+    with db.get_db() as conn:
+        budget = account_risk.group_budget_usd(
+            conn, ENV, "NEVER-SEEN", "EV-1", 1000.0, cfg)
+    assert budget == pytest.approx(40.0)
+
+
+def test_blank_and_null_series_are_treated_as_absent(fresh_db):
+    """An empty series column must fall through, not become a real group."""
+    seed_market("BLANK", series="", event="EV-B")
+    with db.get_db() as conn:
+        conn.execute("UPDATE markets SET series_ticker=NULL WHERE ticker='BLANK'")
+        assert account_risk.group_key(conn, "BLANK", "EV-B") == "EV-B"
+
+
 def test_exposure_from_different_events_accumulates_in_one_group(fresh_db):
     seed_market("A", series="TOURNEY", event="E1")
     seed_market("B", series="TOURNEY", event="E2")

@@ -23,7 +23,8 @@ _(none — picked up from the top of the list below)_
 - [ ] No test asserts the *whole* config round-trips through the electron
       settings store; a key added to Python but not `settings-store.ts` is
       silently dropped
-- [ ] `account_risk.group_key` has no test for a market absent from `markets`
+- [x] `account_risk.group_key` covered for absent markets, null/blank series,
+      and bounded budget under missing metadata
 - [ ] No coverage for `service.py` collection-stats RPC shape (regressed once
       already when `alertsWindowed` was added)
 
