@@ -76,6 +76,8 @@ export const DEFAULT_CONFIG: TraderConfig = {
   maxDailyNewPositions: 40,
   unlimitedDailyNewPositions: false,
   maxTotalExposureFraction: 0.75,
+  maxGroupExposureFraction: 0.0,
+  maxDrawdownFraction: 0.0,
 
   tradeScanInterval: 20,
   positionPollInterval: 30,

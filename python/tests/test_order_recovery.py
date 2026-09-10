@@ -9,6 +9,7 @@ import trader
 import us_account_stream as stream
 from test_engine_integration import whale_signal, seed_position
 from config import merge_with_defaults
+from conftest import quote_with_depth
 
 
 @pytest.fixture(autouse=True)
@@ -184,7 +185,7 @@ async def test_operator_recovery_requires_authenticated_matching_order(monkeypat
 @pytest.mark.asyncio
 async def test_main_intent_exists_during_post_and_survives_cancellation(monkeypatch):
     cfg=merge_with_defaults({'enable_trading':True})
-    async def quote(*a):return {'bid_cents':59,'ask_cents':60}
+    async def quote(*a):return quote_with_depth({'bid_cents':59,'ask_cents':60})
     async def meta(*a):return {'min_size':1}
     async def post(**kw):
         with db.get_db() as c:

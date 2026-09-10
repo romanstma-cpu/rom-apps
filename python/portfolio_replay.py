@@ -206,6 +206,9 @@ class Portfolio:
             event=sig.get('event_ticker') or meta.get('event_ticker') or ticker
             if sum(p['event']==event for p in active)>=int(self.cfg['max_positions_per_event']):
                 self.rejected['event concentration cap']+=1;continue
+            # Same correlated-outcome grouping as live: series when the recorded
+            # metadata supplies one, otherwise the event.
+            group=str(meta.get('series_ticker') or '') or event
             if any(p['ticker']==ticker and p['side']==side for p in active):
                 self.rejected['market already open']+=1;continue
             try:
@@ -229,14 +232,22 @@ class Portfolio:
                 self.rejected['invalid tick']+=1;continue
             filled=sum(p['cost'] for p in active)
             reserved=sum(self.reservation(o) for o in self.orders)
-            budget=trader.entry_budget(self.cash,filled,filled+reserved,edge,limit,self.cfg)
+            fraction=float(self.cfg.get('max_group_exposure_fraction') or 0)
+            group_budget=None
+            if fraction>0:
+                used=sum(p['cost'] for p in active if p.get('group')==group)
+                group_budget=max(0.,(self.cash+filled)*fraction-used)
+                if group_budget<=0:
+                    self.rejected['related-outcome exposure cap']+=1;continue
+            budget=trader.entry_budget(self.cash,filled,filled+reserved,edge,limit,self.cfg,
+                                       group_budget_usd=group_budget)
             if budget<1 or self.cash<5:
                 self.rejected['cash or exposure budget']+=1;continue
             qty=fees_us.affordable_contracts(budget,px,self.now)
             minimum=math.ceil(float(meta.get('min_size',1)))
             if qty<minimum:
                 self.rejected['market minimum exceeds budget']+=1;continue
-            pos={'ticker':ticker,'event':event,'side':side,'category':sig.get('category') or source,
+            pos={'ticker':ticker,'event':event,'group':group,'side':side,'category':sig.get('category') or source,
                  'qty':0,'cost':0.,'bought':0,'entry_cost':0.,'pnl':0.,'entered':self.now,'closed':False}
             self.positions.append(pos);self.seen.add(key);self.daily_count[self.day]+=1
             self.submit(pos,'buy',qty,px)

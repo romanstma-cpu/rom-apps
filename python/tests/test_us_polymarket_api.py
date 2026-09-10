@@ -96,7 +96,29 @@ async def test_positions_follow_all_pages(creds,monkeypatch):
 async def test_no_quotes_complement_yes_book(monkeypatch):
     async def book(ticker):return {'bids':[{'px':{'value':'.61'},'qty':'2'}],'offers':[{'px':{'value':'.65'},'qty':'3'}]}
     monkeypatch.setattr(api,'_book',book)
-    assert await api.get_quote('a','no')=={'bid_cents':35,'ask_cents':39}
+    q=await api.get_quote('a','no')
+    assert q['bid_cents']==35 and q['ask_cents']==39
+    # Buying NO consumes the YES bid ladder, so its size comes from that side.
+    assert q['ask_levels']==[[39,2.0]] and q['bid_levels']==[[35,3.0]]
+
+@pytest.mark.asyncio
+async def test_quote_reports_depth_in_improving_order(monkeypatch):
+    async def book(ticker):return {'bids':[{'px':{'value':'.60'},'qty':'5'},{'px':{'value':'.58'},'qty':'9'}],
+                                   'offers':[{'px':{'value':'.64'},'qty':'4'},{'px':{'value':'.62'},'qty':'7'}]}
+    monkeypatch.setattr(api,'_book',book)
+    q=await api.get_quote('a','yes')
+    assert q['bid_cents']==60 and q['ask_cents']==62
+    assert q['ask_levels']==[[62,7.0],[64,4.0]]
+    assert q['bid_levels']==[[60,5.0],[58,9.0]]
+
+@pytest.mark.asyncio
+async def test_zero_size_levels_are_not_quotable(monkeypatch):
+    async def book(ticker):return {'bids':[{'px':{'value':'.60'},'qty':'0'}],
+                                   'offers':[{'px':{'value':'.62'},'qty':'0'}]}
+    monkeypatch.setattr(api,'_book',book)
+    q=await api.get_quote('a','yes')
+    assert q['bid_cents'] is None and q['ask_cents'] is None
+    assert q['ask_levels']==[] and q['bid_levels']==[]
 
 def test_us_trade_stream_normalizes_taker():
     stream.ingest({'trade':{'marketSlug':'example','price':{'value':'.6'},'quantity':{'value':'50'},

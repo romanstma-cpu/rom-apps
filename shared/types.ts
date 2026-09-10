@@ -59,6 +59,8 @@ export interface TraderConfig {
 
   unlimitedDailyNewPositions: boolean;
   maxTotalExposureFraction: number;
+  maxGroupExposureFraction: number;
+  maxDrawdownFraction: number;
 
   tradeScanInterval: number;
   positionPollInterval: number;

@@ -9,7 +9,7 @@ import pytest
 import db
 import polymarket_api
 import trader
-from conftest import US_FEE_JULY
+from conftest import US_FEE_JULY, quote_with_depth
 from config import merge_with_defaults
 from polymarket_api import PolymarketAPIError
 
@@ -90,7 +90,7 @@ def test_expiry_during_metadata_wait_never_submits(fresh_db, env_net, cfg, monke
     signal = whale_signal()
     cfg['enable_trading'] = True
     async def quote(*args):
-        return {'bid_cents':59, 'ask_cents':60}
+        return quote_with_depth({'bid_cents':59, 'ask_cents':60})
     async def meta(*args):
         if delay_kind == 'signal':
             signal['created_at'] = '2000-01-01T00:00:00Z'
@@ -114,7 +114,7 @@ def fetch(pid: int) -> dict:
 
 async def _stub_no_quote(_ticker, _side=None):
     # Valid liquidity for tests focused on accounting/order persistence.
-    return {"bid_cents": 59, "ask_cents": 60}
+    return quote_with_depth({"bid_cents": 59, "ask_cents": 60})
 
 
 @pytest.mark.parametrize('quote', [
@@ -136,7 +136,7 @@ def test_execution_quality_rejects_without_order_or_position(fresh_db, env_net, 
 
 def test_deteriorated_margin_rejects_before_sizing(fresh_db, env_net, cfg, monkeypatch):
     async def quote(*args):
-        return {'bid_cents': 60, 'ask_cents': 62}
+        return quote_with_depth({'bid_cents': 60, 'ask_cents': 62})
     async def forbidden(**kwargs):
         pytest.fail('Exhausted signal margin must not reach order placement')
     monkeypatch.setattr(trader, 'get_quote', quote)
@@ -276,7 +276,7 @@ def test_flatten_on_daily_stop_sells_when_enabled(fresh_db, env_net, cfg, monkey
 
 def _install_sell_stubs(monkeypatch, *, bid_cents):
     async def _quote(_ticker, _side=None):
-        return {"bid_cents": bid_cents, "ask_cents": (bid_cents or 0) + 1}
+        return quote_with_depth({"bid_cents": bid_cents, "ask_cents": (bid_cents or 0) + 1})
 
     async def _place(**_kw):
         return {"order": {"order_id": "OID-TP", "status": "matched"}}
@@ -294,6 +294,9 @@ def _install_sell_stubs(monkeypatch, *, bid_cents):
 
 def test_take_profit_sweep_sells_winner_and_books_reason(fresh_db, env_net, cfg, monkeypatch):
     cfg["take_profit_pct"] = 0.20
+    # Price the exit at the touch so this test measures the sweep, not the
+    # concession budget (covered in test_exit_discipline).
+    cfg["exit_price_loss_budget_cents"] = 0
     pid = seed_position(status="filled", cost_usd=5.0, filled_contracts=10, direction="yes")
     _install_sell_stubs(monkeypatch, bid_cents=80)
 
@@ -486,7 +489,7 @@ def test_execute_skips_when_live_cross_exceeds_entry_cap(fresh_db, env_net, cfg,
     cfg["enable_trading"] = True
 
     async def _moved_quote(_ticker, _side=None):
-        return {"bid_cents": 90, "ask_cents": 95}
+        return quote_with_depth({"bid_cents": 90, "ask_cents": 95})
 
     monkeypatch.setattr(trader, "get_quote", _moved_quote)
 
@@ -776,7 +779,7 @@ def test_flatten_sells_open_positions_and_books_pnl(fresh_db, env_net, cfg, monk
                         cost_usd=5.0, limit_price_cents=50, order_id="o-buy")
 
     async def _quote(_ticker, _side):
-        return {"bid_cents": 70, "ask_cents": 72}
+        return quote_with_depth({"bid_cents": 70, "ask_cents": 72})
 
     async def _place(**kw):
         assert kw["action"] == "sell" and kw["count"] == 10

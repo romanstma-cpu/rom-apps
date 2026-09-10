@@ -36,3 +36,6 @@ LiveReview owns the main strategy's live-start review. Show current saved limits
 
 ## 2.11 momentum evidence
 Momentum flow is measured from bounded per-market trade windows, never from rolling 24-hour totals or scan-to-scan snapshot differences. An unavailable window is shown as warming up or stale, not as zero flow. Backtest reports window-measured momentum separately from older rows so the two are never presented as one comparable sample.
+
+## 2.12 risk and execution honesty
+MainEngine owns the related-outcome exposure cap and the peak-equity drawdown pause; both show zero as off, never as unlimited. Entry size is bounded by displayed book depth, so a quoted price must never be presented as executable for a size the book cannot support. Exits require a live quote: a missing bid holds the position and says so, and must never be described as a completed exit. Risk controls reduce the size of a bad outcome and must not be described as preventing loss or producing profit.

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pytest
 
 import trader
-from conftest import US_FEE_APRIL, US_FEE_JULY
+from conftest import US_FEE_APRIL, US_FEE_JULY, quote_with_depth
 import db
 from config import merge_with_defaults
 from execution_quality import signal_problem
@@ -103,7 +103,7 @@ def test_practice_trade_uses_live_entry_path_without_exchange_order(
     monkeypatch.setattr(trader, "get_env", lambda: "mainnet")
 
     async def quote(*_a):
-        return {"bid_cents": 59, "ask_cents": 60}
+        return quote_with_depth({"bid_cents": 59, "ask_cents": 60})
 
     async def meta(*_a):
         return {"min_size": 1}
@@ -151,7 +151,7 @@ def test_practice_trade_charges_the_schedule_in_force_at_the_time(
         monkeypatch.setattr(trader, "get_env", lambda: "mainnet")
 
         async def quote(*_a):
-            return {"bid_cents": 59, "ask_cents": 60}
+            return quote_with_depth({"bid_cents": 59, "ask_cents": 60})
 
         async def meta(*_a):
             return {"min_size": 1}

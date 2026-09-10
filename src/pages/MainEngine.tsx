@@ -577,6 +577,14 @@ export function MainEnginePage() {
               <NumberInput value={+(config.maxTotalExposureFraction * 100).toFixed(0)} step={5} min={0} max={100} suffix="%"
                 onChange={(v) => void update('maxTotalExposureFraction', v / 100)} />
             </Field>
+            <Field label="Max related-outcome exposure" hint="0 = off; one tournament or series">
+              <NumberInput value={+(config.maxGroupExposureFraction * 100).toFixed(0)} step={1} min={0} max={100} suffix="%"
+                onChange={(v) => void update('maxGroupExposureFraction', v / 100)} />
+            </Field>
+            <Field label="Pause after drawdown" hint="0 = off; measured from peak equity">
+              <NumberInput value={+(config.maxDrawdownFraction * 100).toFixed(0)} step={1} min={0} max={100} suffix="%"
+                onChange={(v) => void update('maxDrawdownFraction', v / 100)} />
+            </Field>
             <Field label="Starting bankroll" hint="0 = auto-detect">
               <NumberInput value={config.startBankrollUsd} step={50} min={0} prefix="$"
                 onChange={(v) => void update('startBankrollUsd', v)} />

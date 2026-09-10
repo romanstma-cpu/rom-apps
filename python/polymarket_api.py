@@ -142,11 +142,27 @@ async def _book(ticker):
 async def get_quote(ticker,side):
     if side not in ('yes','no'): raise ValueError('Side must be yes or no')
     book=await _book(ticker)
-    bids=[_money(x['px']) for x in book.get('bids',[]) if _money(x.get('qty'))>0]
-    asks=[_money(x['px']) for x in book.get('offers',[]) if _money(x.get('qty'))>0]
-    bid=max(bids) if bids else None; ask=min(asks) if asks else None
-    if side=='no': bid,ask=(1-ask if ask is not None else None),(1-bid if bid is not None else None)
-    return {'bid_cents':math.floor(bid*100+1e-8) if bid is not None else None,'ask_cents':math.ceil(ask*100-1e-8) if ask is not None else None}
+    return quote_from_book(book,side)
+
+def quote_from_book(book,side):
+    """Best prices plus the resting size behind them.
+
+    ``ask_levels`` are the executable buy levels in improving order, so a
+    caller can price a specific order size instead of assuming the touch
+    absorbs it. Sizes are contract quantities at that price.
+    """
+    bid_rows=sorted(((_money(x['px']),_money(x.get('qty'))) for x in book.get('bids',[])
+                     if _money(x.get('qty'))>0),reverse=True)
+    ask_rows=sorted((_money(x['px']),_money(x.get('qty'))) for x in book.get('offers',[])
+                    if _money(x.get('qty'))>0)
+    if side=='no':
+        # NO is the mirror of YES: buying NO consumes the YES bid ladder.
+        bid_rows,ask_rows=([(1-p,q) for p,q in ask_rows],[(1-p,q) for p,q in bid_rows])
+    bid=bid_rows[0][0] if bid_rows else None; ask=ask_rows[0][0] if ask_rows else None
+    return {'bid_cents':math.floor(bid*100+1e-8) if bid is not None else None,
+            'ask_cents':math.ceil(ask*100-1e-8) if ask is not None else None,
+            'ask_levels':[[math.ceil(p*100-1e-8),q] for p,q in ask_rows],
+            'bid_levels':[[math.floor(p*100+1e-8),q] for p,q in bid_rows]}
 
 async def get_orderbook(ticker):
     b=await _book(ticker)

@@ -11,10 +11,14 @@ from typing import Optional
 import db
 import instance_lock
 import order_journal
+import account_risk
 import fees_us
 import signal_calibration
 import rules as rules_engine
-from execution_quality import entry_price, remaining_signal_margin, signal_problem, signal_freshness_problem
+from execution_quality import (
+    affordable_at_depth, entry_price, entry_vwap_cents, remaining_signal_margin,
+    signal_problem, signal_freshness_problem,
+)
 from polymarket_api import (
     PolymarketAPIError, cancel_order, fetch_market, fetch_markets_map,
     get_activity, get_balance,
@@ -124,10 +128,11 @@ def _compute_target_usd(
 
 
 async def _compute_limit_price_cents(
-    ticker: str, direction: str, signal_price_cents: int, cfg: dict
-) -> int:
+    ticker: str, direction: str, signal_cents: int, cfg: dict
+) -> tuple[int, dict]:
+    """Entry price and the quote it came from, so depth can be checked once."""
     q = await get_quote(ticker, direction.lower())
-    return entry_price(q, signal_price_cents, cfg)
+    return entry_price(q, signal_cents, cfg), q
 
 
 def _signal_cost_cents(signal: dict, source: str) -> tuple[str, int]:
@@ -318,6 +323,18 @@ def _is_blocked_by_daily_risk(cfg: dict, env: str) -> tuple[bool, str]:
         return False, ""
     sl = float(cfg.get("stop_loss_on_day", 0))
     tp = float(cfg.get("take_profit_on_day", 0))
+    # A realized loss is evidence, not a noisy mark: block immediately once
+    # settled results alone breach the limit. The persistence delay stays for
+    # breaches that depend on unrealized marks, which can flicker.
+    if sl < 0:
+        with db.get_db() as conn:
+            realized = db.engine_today_pnl(conn, "main", env)
+        if realized <= sl:
+            _breach_persists(env, "sl", True)
+            return True, (
+                f"daily stop-loss hit on realized results "
+                f"(today realized=${realized:+.2f}, limit=${sl:+.2f})"
+            )
     sl_hit = _breach_persists(env, "sl", sl < 0 and pnl <= sl)
     tp_hit = _breach_persists(env, "tp", tp > 0 and pnl >= tp)
     if sl_hit:
@@ -419,14 +436,22 @@ def _is_blocked_by_trading_hours(cfg: dict, *, now: float | None = None) -> tupl
     return False, ""
 
 
-def entry_budget(balance_usd, filled_exposure, exposure, edge_pts, limit_cents, cfg):
-    """Shared live/replay dollar budget; reservations never count as equity."""
+def entry_budget(balance_usd, filled_exposure, exposure, edge_pts, limit_cents, cfg,
+                 *, group_budget_usd=None):
+    """Shared live/replay dollar budget; reservations never count as equity.
+
+    ``group_budget_usd`` bounds what this entry may add to its correlated
+    outcome group. ``None`` means the caller did not evaluate a group.
+    """
     bankroll = max(0,balance_usd)+max(0,filled_exposure)
     pending = max(0,exposure-filled_exposure)
-    return max(0,min(_compute_target_usd(bankroll,edge_pts,limit_cents,cfg),
+    limits = [_compute_target_usd(bankroll,edge_pts,limit_cents,cfg),
         float(cfg['hard_max_position_usd']),
         bankroll*float(cfg['max_total_exposure_fraction'])-exposure,
-        balance_usd-pending-bankroll*float(cfg['min_cash_reserve_fraction'])))
+        balance_usd-pending-bankroll*float(cfg['min_cash_reserve_fraction'])]
+    if group_budget_usd is not None:
+        limits.append(max(0.0,float(group_budget_usd)))
+    return max(0,min(*limits))
 
 
 async def execute_signal(
@@ -507,10 +532,24 @@ async def execute_signal(
         filled_exposure = (
             exposure if paper else db.current_filled_exposure_usd(conn, env)
         )
+        # Related outcomes can sit in different events, so the per-event cap
+        # above does not bound them. Evaluated on the same connection as the
+        # exposure read so both describe one consistent account state.
+        group_budget = account_risk.group_budget_usd(
+            conn, env, signal["ticker"], signal.get("event_ticker") or "",
+            max(0.0, balance_usd)+max(0.0, filled_exposure), cfg,
+        )
+        if group_budget <= 0:
+            logger.info(
+                f"[skip] {signal['ticker']}: related-outcome exposure cap reached "
+                f"for group "
+                f"{account_risk.group_key(conn, signal['ticker'], signal.get('event_ticker') or '')}"
+            )
+            return None
 
     quote_started = time.monotonic()
     try:
-        limit_cents = await asyncio.wait_for(_compute_limit_price_cents(
+        limit_cents, entry_quote = await asyncio.wait_for(_compute_limit_price_cents(
             signal["ticker"], direction, signal_cost_cents, cfg
         ), timeout=5.0)
     except Exception as exc:
@@ -542,7 +581,8 @@ async def execute_signal(
         )
         return None
 
-    target_usd = entry_budget(balance_usd,filled_exposure,exposure,edge_pts,limit_cents,cfg)
+    target_usd = entry_budget(balance_usd,filled_exposure,exposure,edge_pts,limit_cents,cfg,
+                              group_budget_usd=group_budget)
     risk_ceiling_usd = target_usd
 
     if target_usd < 1.0:
@@ -574,6 +614,38 @@ async def execute_signal(
                 f"[skip] {signal['ticker']}: market minimum {min_size} @ "
                 f"{limit_cents}c = ${bumped_cost:.2f} exceeds risk budget "
                 f"${risk_ceiling_usd:.2f}"
+            )
+            return None
+
+    # Displayed depth must support the final size at an acceptable price.
+    # Without this the touch price is assumed to absorb the whole order, which
+    # overstates a thin market's edge. Shrink to what is shown, never invent it.
+    if cfg.get("require_entry_depth", True):
+        levels = entry_quote.get("ask_levels") or []
+        available = affordable_at_depth(levels, limit_cents)
+        if available < max(1, min_size):
+            logger.info(
+                f"[skip] {signal['ticker']}: displayed depth {available} below "
+                f"the minimum tradable size at {limit_cents}c"
+            )
+            return None
+        if available < contracts:
+            logger.info(
+                f"[{source}] {signal['ticker']}: sizing {contracts}->{available} "
+                f"to stay within displayed depth at {limit_cents}c"
+            )
+            contracts = available
+        try:
+            vwap = entry_vwap_cents(levels, contracts, limit_cents)
+        except ValueError as exc:
+            logger.info(f"[skip] {signal['ticker']}: {exc}")
+            return None
+        # Charge the depth-weighted cost, not the touch, before re-testing edge.
+        depth_edge = edge_pts - max(0.0, vwap - limit_cents)
+        if depth_edge < max(0.0, threshold):
+            logger.info(
+                f"[skip] {signal['ticker']}: margin {depth_edge:.1f} after "
+                f"{vwap:.2f}c depth-weighted entry is below threshold"
             )
             return None
 
@@ -735,6 +807,10 @@ async def scan_for_trades(cfg: dict) -> list[dict]:
             _skip_log(reason)
             return []
         tripped, reason = _lifetime_loss_tripped_main(cfg, env)
+        if tripped:
+            _skip_log(reason)
+            return []
+        tripped, reason = account_risk.drawdown_block(cfg, env)
         if tripped:
             _skip_log(reason)
             return []
@@ -2240,20 +2316,48 @@ async def _liquidate_position(pos: dict, cfg: dict, *, reason: str) -> tuple[int
     pos_proceeds = 0.0
     journal_exit = False
     prior_exits = order_journal.exit_totals(pos['id'])
+    # An exit must be priced from a live quote. Selling at 1c because no quote
+    # arrived converts a temporary data gap into a near-total realized loss.
+    try:
+        budget_cents = max(0, int(cfg.get("exit_price_loss_budget_cents", 2) or 0))
+    except (TypeError, ValueError):
+        budget_cents = 2
     for _attempt in range(6):
         if remaining <= 0:
             break
         try:
             q = await get_quote(ticker, direction)
             bid = q.get("bid_cents")
-        except Exception:
-            bid = None
-        sell_px = max(1, min(99, int(bid) if bid else 1))
+            bid_levels = q.get("bid_levels") or []
+        except Exception as exc:
+            logger.warning(
+                f"[{reason}] {ticker}: no executable quote ({exc}); "
+                f"still holding {remaining}. Not selling blind."
+            )
+            break
+        if not bid or not isinstance(bid, int) or not 0 < int(bid) < 100:
+            logger.warning(
+                f"[{reason}] {ticker}: no usable bid; still holding {remaining}. "
+                f"Not selling blind."
+            )
+            break
+        # Concede at most the configured budget below the touch, and only as
+        # far as displayed size actually supports.
+        sell_px = max(1, min(99, int(bid) - budget_cents))
+        supported = affordable_at_depth(
+            [[100 - p, s] for p, s in bid_levels], 100 - sell_px) if bid_levels else remaining
+        sellable = min(remaining, supported) if supported > 0 else 0
+        if sellable <= 0:
+            logger.warning(
+                f"[{reason}] {ticker}: no displayed bid depth at {sell_px}c; "
+                f"still holding {remaining}"
+            )
+            break
         coid = f"rom-{reason[:4]}-{pos['id']}-{uuid.uuid4().hex[:6]}"
         try:
             resp = await place_limit_order(
                 ticker=ticker, side=direction, action="sell",
-                count=remaining, price_cents=sell_px, client_order_id=coid,
+                count=sellable, price_cents=sell_px, client_order_id=coid,
                 position_id=pos['id'], exit_reason=reason,
             )
         except Exception as e:
@@ -2264,7 +2368,7 @@ async def _liquidate_position(pos: dict, cfg: dict, *, reason: str) -> tuple[int
         journal_exit = order_journal.get(coid) is not None
         order = (resp.get("order") if isinstance(resp, dict) else None) or {}
         oid = order.get("order_id")
-        sold, avg_cents = await _confirm_sell(oid, remaining, sell_px)
+        sold, avg_cents = await _confirm_sell(oid, sellable, sell_px)
         if sold <= 0:
             if oid:
                 try:

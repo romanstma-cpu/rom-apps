@@ -70,6 +70,16 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "max_daily_new_positions": 40,
     "unlimited_daily_new_positions": False,
     "max_total_exposure_fraction": 0.75,
+    # Correlated-outcome cap and peak-equity drawdown pause. Both default to
+    # off so an existing installation keeps its current behaviour until the
+    # user opts in; zero disables each control.
+    "max_group_exposure_fraction": 0.0,
+    "max_drawdown_fraction": 0.0,
+    # Require displayed depth to support the order size before entering.
+    "require_entry_depth": True,
+    # Cents below the touch an exit may concede. Exits are never priced
+    # without a live quote.
+    "exit_price_loss_budget_cents": 2,
 
     "trade_scan_interval": 20,
     "position_poll_interval": 30,
@@ -515,6 +525,7 @@ def _clampi(v: Any, lo: int, hi: int, default: int) -> int:
 _FRACTION_KEYS = [
     "base_size_fraction", "min_size_fraction", "max_size_fraction",
     "min_cash_reserve_fraction", "max_total_exposure_fraction",
+    "max_group_exposure_fraction", "max_drawdown_fraction",
 ]
 _UNIT_KEYS = [
     "crypto15m_entry_threshold", "crypto15m_entry_max", "crypto15m_exit_threshold",

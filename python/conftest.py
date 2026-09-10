@@ -36,11 +36,29 @@ def _hermetic_quote(request, monkeypatch):
         import polymarket_api
 
         async def _no_quote(_ticker, _side):
-            return {"bid_cents": None, "ask_cents": None}
+            return {"bid_cents": None, "ask_cents": None,
+                    "ask_levels": [], "bid_levels": []}
 
         monkeypatch.setattr(polymarket_api, "get_quote", _no_quote, raising=False)
     except Exception:
         pass
+
+
+def quote_with_depth(quote: dict, *, size: float = 10_000.0) -> dict:
+    """Fill in book depth for a test quote that only names best prices.
+
+    A real quote always reports the resting size behind its touch, so entry
+    sizing can price the order. Tests that care about thin books state their
+    own ``ask_levels``; this only backfills ample depth for the tests whose
+    subject is something else.
+    """
+    out = dict(quote)
+    ask, bid = out.get("ask_cents"), out.get("bid_cents")
+    if "ask_levels" not in out:
+        out["ask_levels"] = [[int(ask), size]] if isinstance(ask, int) else []
+    if "bid_levels" not in out:
+        out["bid_levels"] = [[int(bid), size]] if isinstance(bid, int) else []
+    return out
 
 
 @pytest.fixture(autouse=True)

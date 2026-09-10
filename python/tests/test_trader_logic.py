@@ -219,7 +219,7 @@ def test_limit_cross_does_not_pay_above_current_ask(cfg, monkeypatch):
     async def _q(_t, _side):
         return {"bid_cents": 59, "ask_cents": 62}
     monkeypatch.setattr(trader, "get_quote", _q)
-    px = asyncio.run(trader._compute_limit_price_cents("X", "yes", 60, cfg))
+    px, _quote = asyncio.run(trader._compute_limit_price_cents("X", "yes", 60, cfg))
     assert px == 62
 
 
@@ -228,7 +228,7 @@ def test_limit_cross_caps_at_max_entry(cfg, monkeypatch):
     async def _q(_t, _side):
         return {"bid_cents": 61, "ask_cents": 64}
     monkeypatch.setattr(trader, "get_quote", _q)
-    px = asyncio.run(trader._compute_limit_price_cents("X", "yes", 62, cfg))
+    px, _quote = asyncio.run(trader._compute_limit_price_cents("X", "yes", 62, cfg))
     assert px == 64
 
 
@@ -237,7 +237,7 @@ def test_limit_cross_returns_ask_above_cap_so_caller_skips(cfg, monkeypatch):
     async def _q(_t, _side):
         return {"bid_cents": 70, "ask_cents": 72}
     monkeypatch.setattr(trader, "get_quote", _q)
-    px = asyncio.run(trader._compute_limit_price_cents("X", "yes", 71, cfg))
+    px, _quote = asyncio.run(trader._compute_limit_price_cents("X", "yes", 71, cfg))
     assert px == 72
 
 
@@ -246,7 +246,7 @@ def test_limit_mid_uses_midpoint(cfg, monkeypatch):
     async def _q(_t, _side):
         return {"bid_cents": 59, "ask_cents": 62}
     monkeypatch.setattr(trader, "get_quote", _q)
-    px = asyncio.run(trader._compute_limit_price_cents("X", "yes", 60, cfg))
+    px, _quote = asyncio.run(trader._compute_limit_price_cents("X", "yes", 60, cfg))
     assert px == 60
 
 
@@ -264,10 +264,10 @@ def test_market_style_is_bounded_at_current_ask(cfg, monkeypatch):
     monkeypatch.setattr(trader, "get_quote", _q)
     cfg["order_style"] = "market"
     cfg["max_entry_price_cents"] = 85
-    px = asyncio.run(trader._compute_limit_price_cents("X", "yes", 60, cfg))
+    px, _quote = asyncio.run(trader._compute_limit_price_cents("X", "yes", 60, cfg))
     assert px == 61
     cfg["max_entry_price_cents"] = 99
-    px = asyncio.run(trader._compute_limit_price_cents("X", "yes", 60, cfg))
+    px, _quote = asyncio.run(trader._compute_limit_price_cents("X", "yes", 60, cfg))
     assert px == 61
 
 

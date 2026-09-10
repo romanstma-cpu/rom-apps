@@ -68,3 +68,52 @@ def remaining_signal_margin(raw_margin: float, signal_cents: int, entry_cents: i
     This heuristic score must not be described as expected profit or win probability.
     """
     return raw_margin - max(0, entry_cents - signal_cents) - 1.0
+
+
+def entry_vwap_cents(levels, contracts: int, limit_cents: int) -> float:
+    """Average cost per contract to buy ``contracts`` at or under ``limit_cents``.
+
+    Only displayed size at an acceptable price counts. Raises when the book
+    cannot fill the order, so a caller can shrink or skip rather than assume
+    the touch price applies to the whole quantity.
+    """
+    if contracts <= 0:
+        raise ValueError("Order size must be positive")
+    remaining = contracts
+    cost = 0.0
+    for level in levels or []:
+        try:
+            price, size = int(level[0]), float(level[1])
+        except (TypeError, ValueError, IndexError):
+            raise ValueError("Invalid book level")
+        if not math.isfinite(size) or size <= 0 or not 0 < price < 100:
+            continue
+        if price > limit_cents:
+            break
+        take = min(remaining, math.floor(size))
+        if take <= 0:
+            continue
+        cost += take * price
+        remaining -= take
+        if remaining <= 0:
+            return cost / contracts
+    raise ValueError(
+        f"Displayed depth fills only {contracts - remaining} of {contracts} "
+        f"contracts at or under {limit_cents}c"
+    )
+
+
+def affordable_at_depth(levels, limit_cents: int) -> int:
+    """Contracts displayed at or under ``limit_cents``. Never a guarantee of a fill."""
+    total = 0
+    for level in levels or []:
+        try:
+            price, size = int(level[0]), float(level[1])
+        except (TypeError, ValueError, IndexError):
+            continue
+        if not math.isfinite(size) or size <= 0 or not 0 < price < 100:
+            continue
+        if price > limit_cents:
+            break
+        total += math.floor(size)
+    return total
