@@ -3,6 +3,66 @@
 Assumptions made while working without confirmation. Each entry states the
 ambiguity, the choice, and why it is the safest reasonable option.
 
+## 2026-09-10 — resolve the correlated-exposure series through the events table
+
+`account_risk` grouped a prospective entry by `markets.series_ticker` first and
+fell back to the event. That column is written from the market payload, and
+every producer of that payload — `polymarket_api._normalize_market`,
+`scanner`'s two market dicts — hardcodes an empty string, because the US
+markets feed carries no series. The first branch of the COALESCE therefore
+never fired, the group was always the event, and the cap bounded exactly what
+`max_positions_per_event` already bounds. The tournament case the control
+exists for was unimplemented.
+
+The series does arrive, on the events feed: `fetch_events` reads `seriesSlug`
+and `scanner` writes it to `events.series_ticker`. Two ways to reach it were
+possible: populate `markets.series_ticker` by looking the event up at scan
+time, or join `events` where the group is resolved. Chose the join.
+Denormalising into `markets` would need a backfill for every market already
+stored, would go stale whenever the events feed is ahead of the markets feed,
+and would have meant editing `scanner`'s market dicts while other work is in
+flight there. The join reads the same row the scanner already maintains.
+`markets.series_ticker` is kept as the first branch so a populated column would
+still win, which costs nothing and keeps the fix forward-compatible.
+
+Both the aggregate (`GROUP_SQL`) and the single-entry lookup (`group_key`)
+resolve the same chain — market series, then event series, then event, then
+ticker — and both join on the position's own `event_ticker`, so an entry and
+the exposure it is measured against always land in the same group. An
+installation with no events rows, or with rows carrying no series, gets the
+old behaviour byte for byte.
+
+The change can only tighten. Merging two event groups into one series group
+raises the exposure already counted against an entry, so the remaining
+allowance shrinks or stays equal; it can never grow. `max_group_exposure_fraction`
+stays at `0.0`, so nothing changes for anyone who has not opted in — this
+repairs a control that was dead, it does not switch one on.
+
+Replay had the same dead branch: `portfolio_replay` read `series_ticker` from
+recorded market metadata, and `main_recorder` records only min_size, tick_size,
+event_ticker, close_time and active. Two options again: start recording a
+series, or resolve it at replay time. Recording was rejected. The series is not
+in the market payload at all, so recording it would itself require an events
+lookup at record time, and it would only apply to evidence gathered from now
+on — every existing recording would keep grouping by event while live grouped
+by series, which is precisely the live/replay disagreement that must not exist.
+Replay now resolves through the same `events` table, via
+`account_risk.event_series_map`.
+
+Reading that table while replaying older evidence is not look-ahead. Series
+membership is static: a market does not move between series and an event does
+not change the series it belongs to, so the mapping is the same fact at replay
+time that it was at record time. It says nothing about prices, fills or
+settlements — nothing that was unknown at the recorded instant. The alternative,
+grouping a backtest by event while live groups by series, would let a replay
+report exposure live would have refused, which is the failure mode the caveat
+in UPGRADE-5 promised against.
+
+The lookup is skipped entirely while the fraction is zero, so the default
+configuration never touches the database from a replay, and an unreadable or
+absent events table degrades to no series rather than raising — the same
+"no series available, group by event" path an empty installation takes.
+
 ## 2026-09-10 — price the live crypto fee from the dated US schedule
 
 `crypto15m._fee_cents` hard-coded `FEE_RATE_CRYPTO = 0.07`, an international

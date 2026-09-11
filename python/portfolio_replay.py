@@ -32,7 +32,7 @@ def levels(raw):
 
 
 class Portfolio:
-    def __init__(self,cfg,events,*,latency_ms=250,depth_fraction=1,slippage_cents=0,cancel_latency_ms=250):
+    def __init__(self,cfg,events,*,latency_ms=250,depth_fraction=1,slippage_cents=0,cancel_latency_ms=250,series=None):
         self.cfg=cfg
         self.start=float(cfg.get('main_paper_bankroll_usd',1000))
         self.cash=self.start
@@ -41,6 +41,7 @@ class Portfolio:
         self.depth_fraction=depth_fraction
         self.slip=slippage_cents/100
         self.books={}; self.meta={}; self.settled=set(); self.candidates={}
+        self.series=series
         self.positions=[]; self.orders=[]; self.trades=[]; self.curve=[]
         self.rejected=Counter(); self.evidence=Counter(); self.seen=set()
         self.seq=itertools.count(); self.heap=[]
@@ -57,6 +58,28 @@ class Portfolio:
         if events:
             self.push(self.now,'scan',None)
             self.push(self.now,'poll',None)
+
+    def series_for(self,event):
+        """The series this event belongs to, from the local metadata store.
+
+        Series membership is static — a market never moves between series, and
+        an event never changes the series it belongs to — so reading today's
+        mapping while replaying older evidence is not look-ahead: it reveals
+        nothing about prices, settlements or anything else that was unknown at
+        the recorded instant. Live grouping reads the same table, so a replay
+        cannot show exposure live would have refused. An unreadable or absent
+        events table yields no series, and grouping falls back to the event
+        exactly as it did before.
+        """
+        if self.series is None:
+            try:
+                import account_risk
+                import db
+                with db.get_db() as conn:
+                    self.series=account_risk.event_series_map(conn)
+            except Exception:
+                self.series={}
+        return self.series.get(event,'')
 
     def push(self,at,kind,value):
         if at<=self.end:
@@ -206,9 +229,12 @@ class Portfolio:
             event=sig.get('event_ticker') or meta.get('event_ticker') or ticker
             if sum(p['event']==event for p in active)>=int(self.cfg['max_positions_per_event']):
                 self.rejected['event concentration cap']+=1;continue
-            # Same correlated-outcome grouping as live: series when the recorded
-            # metadata supplies one, otherwise the event.
-            group=str(meta.get('series_ticker') or '') or event
+            # Same correlated-outcome grouping as live: the series when the
+            # recorded metadata supplies one, otherwise the market's series from
+            # the local events table, otherwise the event. The lookup is skipped
+            # entirely while the cap is off, so grouping costs nothing then.
+            fraction=float(self.cfg.get('max_group_exposure_fraction') or 0)
+            group=str(meta.get('series_ticker') or '') or (self.series_for(event) if fraction>0 else '') or event
             if any(p['ticker']==ticker and p['side']==side for p in active):
                 self.rejected['market already open']+=1;continue
             try:
@@ -232,7 +258,6 @@ class Portfolio:
                 self.rejected['invalid tick']+=1;continue
             filled=sum(p['cost'] for p in active)
             reserved=sum(self.reservation(o) for o in self.orders)
-            fraction=float(self.cfg.get('max_group_exposure_fraction') or 0)
             group_budget=None
             if fraction>0:
                 used=sum(p['cost'] for p in active if p.get('group')==group)

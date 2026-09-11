@@ -25,6 +25,16 @@ def evidence(ticker='A', event_id='E', side='yes'):
                   confidence=90, price=.60, taker_side=side, created_at=iso(T))}, ticker=ticker)]
 
 
+def staged(ticker, event_id, at):
+    """Evidence for a market whose signal arrives in a later scan."""
+    return [event('market', dict(active=True, min_size=1, tick_size=.01,
+                                 event_ticker=event_id), at, ticker),
+            book(ticker=ticker, at=at),
+            event('signal', {'source': 'whale', 'signal': dict(id=ticker, ticker=ticker,
+                  confidence=90, price=.60, taker_side='yes', created_at=iso(T+at))},
+                  at, ticker)]
+
+
 def config(**patch):
     return merge_with_defaults(dict(main_paper_bankroll_usd=100, min_size_fraction=.1,
         max_size_fraction=.1, hard_max_position_usd=6.2, min_cash_reserve_fraction=0,
@@ -89,6 +99,39 @@ def test_caps_include_pending_positions(patch, reason):
     assert result['submittedOrders']==1
     assert result['rejections'][reason]>=1
     assert result['reservedUsd']==6.2
+
+
+def test_replay_groups_separate_events_of_one_series_like_live():
+    """Replay must refuse what live would refuse.
+
+    Live resolves an entry's group through the events table, so a backtest that
+    grouped these two markets by event alone would report exposure live would
+    have blocked. Series membership is static, so reading it while replaying
+    older evidence is not look-ahead.
+    """
+    evidence_both = (evidence('A', event_id='E1')+staged('B', 'E2', 10)
+                     +[event('trade', {}, 1)])
+    cfg = config(max_positions_per_event=10, max_group_exposure_fraction=.05)
+    grouped = replay(cfg, evidence_both, series={'E1': 'TOURNEY', 'E2': 'TOURNEY'})
+    # One series, one allowance: the second market gets no room of its own.
+    assert grouped['submittedOrders'] == 1
+    assert sum(grouped['rejections'].get(reason, 0) for reason in
+               ('related-outcome exposure cap', 'cash or exposure budget')) >= 1
+    # Without a recorded series the two events stay separate groups, unchanged.
+    apart = replay(cfg, evidence_both, series={})
+    assert apart['submittedOrders'] == 2
+    assert 'related-outcome exposure cap' not in apart['rejections']
+    assert grouped['equityUsd'] <= apart['equityUsd'] or grouped['openPositions'] < apart['openPositions']
+
+
+def test_replay_group_lookup_is_skipped_while_the_cap_is_off():
+    """The default configuration must not consult the metadata store at all."""
+    events = evidence('A', event_id='E1')+evidence('B', event_id='E2')+[event('trade', {}, 1)]
+    cfg = config(max_positions_per_event=10)
+    assert cfg['max_group_exposure_fraction'] == 0.0
+    result = replay(cfg, events)  # no `series` injected; must not read the db
+    assert result['submittedOrders'] == 2
+    assert 'related-outcome exposure cap' not in result['rejections']
 
 
 def test_missing_metadata_and_missing_evidence_are_not_successful_backtests():

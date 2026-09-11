@@ -47,6 +47,19 @@ def seed_market(ticker, *, series="", event=""):
         })
 
 
+def seed_event(event, *, series=""):
+    """Record an event the way the scanner does from the events feed.
+
+    Only this feed carries a series today; `markets.series_ticker` is written
+    from market payloads that never supply one.
+    """
+    with db.get_db() as conn:
+        db.upsert_event(conn, {
+            "event_ticker": event, "series_ticker": series, "title": event,
+            "sub_title": "", "category": "sports", "status": "open",
+        })
+
+
 def seed_position(ticker, cost_usd, *, event="", status="filled"):
     n = next(_ids)
     with db.get_db() as conn:
@@ -77,6 +90,71 @@ def test_markets_in_one_series_share_a_group(fresh_db):
     with db.get_db() as conn:
         assert account_risk.group_key(conn, "A", "E1") == "TOURNEY"
         assert account_risk.group_key(conn, "B", "E2") == "TOURNEY"
+
+
+def test_markets_in_one_series_share_a_group_through_the_events_table(fresh_db):
+    """The tournament case the cap exists for.
+
+    No market payload has ever carried a series, so the series has to come from
+    the event's row. Two markets in different events of one tournament must be
+    one group; grouping them by event alone only repeats `max_positions_per_event`.
+    """
+    seed_event("E1", series="TOURNEY")
+    seed_event("E2", series="TOURNEY")
+    seed_market("A", series="", event="E1")
+    seed_market("B", series="", event="E2")
+    with db.get_db() as conn:
+        assert account_risk.group_key(conn, "A", "E1") == "TOURNEY"
+        assert account_risk.group_key(conn, "B", "E2") == "TOURNEY"
+
+
+def test_series_exposure_across_events_accumulates_through_the_events_table(fresh_db):
+    seed_event("E1", series="TOURNEY")
+    seed_event("E2", series="TOURNEY")
+    seed_market("A", series="", event="E1")
+    seed_market("B", series="", event="E2")
+    seed_position("A", 30.0, event="E1")
+    seed_position("B", 20.0, event="E2")
+    with db.get_db() as conn:
+        exposure = account_risk.group_exposure_usd(conn, ENV)
+    assert exposure["TOURNEY"] == pytest.approx(50.0)
+    assert "E1" not in exposure and "E2" not in exposure
+
+
+def test_series_group_budget_binds_across_separate_events(fresh_db, cfg):
+    cfg["max_group_exposure_fraction"] = 0.10
+    seed_event("E1", series="TOURNEY")
+    seed_event("E2", series="TOURNEY")
+    seed_market("A", series="", event="E1")
+    seed_market("B", series="", event="E2")
+    seed_position("A", 60.0, event="E1")
+    with db.get_db() as conn:
+        assert account_risk.group_budget_usd(
+            conn, ENV, "B", "E2", 1000.0, cfg) == pytest.approx(40.0)
+
+
+def test_market_series_column_wins_over_the_event_row(fresh_db):
+    """Kept first so a populated market column would take precedence."""
+    seed_event("E1", series="FROM-EVENT")
+    seed_market("A", series="FROM-MARKET", event="E1")
+    with db.get_db() as conn:
+        assert account_risk.group_key(conn, "A", "E1") == "FROM-MARKET"
+
+
+def test_event_row_without_a_series_changes_nothing(fresh_db, cfg):
+    """An installation with events data but no series must behave as before."""
+    cfg["max_group_exposure_fraction"] = 0.10
+    seed_event("E1", series="")
+    seed_market("A", series="", event="E1")
+    seed_market("B", series="", event="E2")  # no events row at all
+    seed_position("A", 60.0, event="E1")
+    with db.get_db() as conn:
+        assert account_risk.group_key(conn, "A", "E1") == "E1"
+        assert account_risk.group_key(conn, "B", "E2") == "E2"
+        assert account_risk.group_exposure_usd(conn, ENV)["E1"] == pytest.approx(60.0)
+        # A separate event is still a separate group, so its budget is untouched.
+        assert account_risk.group_budget_usd(
+            conn, ENV, "B", "E2", 1000.0, cfg) == pytest.approx(100.0)
 
 
 def test_group_falls_back_to_event_then_ticker(fresh_db):
@@ -182,6 +260,25 @@ def test_entry_budget_is_capped_by_the_group_allowance(cfg):
     tight = trader.entry_budget(1000.0, 0.0, 0.0, 20.0, 50, cfg, group_budget_usd=7.0)
     assert tight == pytest.approx(7.0)
     assert tight < wide
+
+
+def test_series_group_allowance_is_the_smallest_binding_limit(fresh_db, cfg):
+    """The series allowance must win only while it is the tightest limit."""
+    cfg["max_group_exposure_fraction"] = 0.05
+    seed_event("E1", series="TOURNEY")
+    seed_event("E2", series="TOURNEY")
+    seed_market("A", series="", event="E1")
+    seed_market("B", series="", event="E2")
+    seed_position("A", 43.0, event="E1")
+    with db.get_db() as conn:
+        allowance = account_risk.group_budget_usd(conn, ENV, "B", "E2", 1000.0, cfg)
+    assert allowance == pytest.approx(7.0)
+    wide = trader.entry_budget(1000.0, 0.0, 0.0, 20.0, 50, cfg)
+    assert trader.entry_budget(1000.0, 0.0, 0.0, 20.0, 50, cfg,
+                               group_budget_usd=allowance) == pytest.approx(7.0)
+    # A roomy allowance leaves the other limits in charge.
+    assert trader.entry_budget(1000.0, 0.0, 0.0, 20.0, 50, cfg,
+                               group_budget_usd=10_000.0) == pytest.approx(wide)
 
 
 def test_entry_budget_without_a_group_is_unchanged(cfg):

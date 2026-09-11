@@ -19,12 +19,19 @@ HWM_KEY = 'risk:hwm:'
 # Related-outcome grouping is deliberately coarse. It groups by the market's
 # series (all markets of one tournament or recurring release) and falls back to
 # the event. It cannot detect correlation between different series.
+#
+# The series is read from `markets` first and from the market's row in `events`
+# second. Only the events feed carries a series today; the market column is kept
+# first so a populated one would win. With neither, the group falls back to the
+# event and then the ticker, exactly as before.
 GROUP_SQL = """SELECT COALESCE(NULLIF(m.series_ticker,''),
+                               NULLIF(e.series_ticker,''),
                                NULLIF(p.event_ticker,''),
                                p.ticker) AS grp,
                       SUM(CASE WHEN p.cost_usd>0 THEN p.cost_usd
                                ELSE p.filled_contracts*p.limit_price_cents/100.0 END) AS usd
                FROM bot_positions p LEFT JOIN markets m ON m.ticker=p.ticker
+                    LEFT JOIN events e ON p.event_ticker<>'' AND e.event_ticker=p.event_ticker
                WHERE p.resolved=0 AND p.status IN ('submitted','partial','filled','unknown')
                  AND p.network=? GROUP BY grp"""
 
@@ -37,11 +44,34 @@ def _f(value, default=0.0):
     return out if math.isfinite(out) else default
 
 
-def group_key(conn, ticker, event_ticker):
-    """The correlated-exposure group a prospective entry would join."""
+def series_ticker(conn, ticker, event_ticker):
+    """The series this market belongs to, or '' when none is recorded.
+
+    `markets.series_ticker` is checked first and the market's event row second,
+    matching GROUP_SQL. A market absent from both simply has no series.
+    """
     row = conn.execute('SELECT series_ticker FROM markets WHERE ticker=?', (ticker,)).fetchone()
     series = str(row['series_ticker'] or '') if row else ''
-    return series or str(event_ticker or '') or str(ticker or '')
+    if series:
+        return series
+    event = str(event_ticker or '')
+    if not event:
+        return ''
+    row = conn.execute('SELECT series_ticker FROM events WHERE event_ticker=?', (event,)).fetchone()
+    return str(row['series_ticker'] or '') if row else ''
+
+
+def event_series_map(conn):
+    """event_ticker -> series_ticker for every event that records a series."""
+    rows = conn.execute("SELECT event_ticker, series_ticker FROM events"
+                        " WHERE COALESCE(event_ticker,'')<>''"
+                        " AND COALESCE(series_ticker,'')<>''")
+    return {str(r['event_ticker']): str(r['series_ticker']) for r in rows}
+
+
+def group_key(conn, ticker, event_ticker):
+    """The correlated-exposure group a prospective entry would join."""
+    return series_ticker(conn, ticker, event_ticker) or str(event_ticker or '') or str(ticker or '')
 
 
 def group_exposure_usd(conn, env):
