@@ -79,11 +79,24 @@ async def main_async(args) -> int:
             print(f'No stage {args.stage}', file=sys.stderr)
             return 2
 
+    # A stage that can place an order is never reachable from here. `--all`
+    # excludes it by construction rather than refusing the whole run, and
+    # naming it explicitly is refused with somewhere to go: it must be an
+    # separate, deliberate command, not one character different from a
+    # read-only one.
     live = [s for s in stages if not s.read_only]
-    if live:
-        print('Refusing to run a non-read-only stage from this entry point.',
+    if args.stage is not None and live:
+        print(f'Stage {args.stage} can place a real order and will not run from '
+              'this entry point.',
               file=sys.stderr)
+        print('Use:  python -m livecheck.live_order --help', file=sys.stderr)
         return 2
+    if live:
+        for stage in live:
+            print(f'skip  stage {stage.number}: {stage.name} '
+                  '(places real orders; run it deliberately via '
+                  'python -m livecheck.live_order)')
+        stages = [s for s in stages if s.read_only]
 
     disarm = safety.arm()
     started = time.time()
