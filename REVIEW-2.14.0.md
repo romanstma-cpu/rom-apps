@@ -80,6 +80,13 @@ remains unverified.** Stage 5 preflight was run and stopped at the credential
 check, as designed; no order has been placed by this project against any
 account.
 
+## Superseded by 2.14.1
+
+2.14.0 was built but never published. Its installer has been replaced in
+`release/` by 2.14.1, which contains everything here plus the account-wide
+group-cap fix. The checksum below still describes the 2.14.0 binary correctly;
+that binary is simply no longer on disk. Read REVIEW-2.14.1.md instead.
+
 ## Installer
 
 The installer is `release/ROM PolyBot-Setup-2.14.0.exe` (92.2 MB). Close your

@@ -252,3 +252,15 @@ guards the whole class.
   group already past its limit. Full suite 1829 collected / 0 failures.
 - **The 2.14.0 installer predates this change.** It was built at 4652a9d;
   shipping this needs a new build.
+
+## 2.14.1 built, NOT published (2026-09-11)
+- Point release over 2.14.0 carrying the account-wide group-cap fix above.
+  2.14.0 was built but never published; its binary has been replaced in
+  `release/` by this one, and REVIEW-2.14.0.md is marked superseded.
+- Verification: Python 1829 collected / 1690 pass / 139 skip / 0 fail;
+  typecheck clean both projects; e2e 13/13 suites green against the packaged
+  app; locator drift clean (58 locators, 14 specs); exe stamps 2.14.1.0.
+- Installer `release/ROM PolyBot-Setup-2.14.1.exe` (92.2 MB), SHA-256
+  84795A6337DF5EE462005AE82CCDB1747AABA22CFE132ACEA09984E57124EAE5.
+- **Not published.** Still no git remote on this repo, the rom-apps site repo
+  is not on this machine, and `build.publish` is null.
