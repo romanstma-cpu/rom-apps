@@ -19,12 +19,38 @@ _meta = {}
 _crypto_market_cache = (0.0, [])
 _crypto_market_task = None
 
+ERROR_DETAIL_CHARS = 500
+
 class PolymarketAPIError(Exception):
-    def __init__(self, status_code, message):
+    def __init__(self, status_code, message, *, detail=''):
         self.status_code = status_code
         self.status = status_code
-        self.body = message
-        super().__init__(f'Polymarket US ({status_code}): {message}')
+        self.reason = message
+        self.detail = detail or ''
+        # `.body` stays the one string callers log, now carrying the server's
+        # own explanation after the reason phrase. Locally raised errors pass
+        # no detail and read exactly as before.
+        self.body = f'{message}: {detail}' if detail else message
+        super().__init__(f'Polymarket US ({status_code}): {self.body}')
+
+
+def _error_detail(response):
+    """The server's own words for a rejection, so it can be diagnosed.
+
+    `reason_phrase` alone flattens every rejection to 'Unprocessable Entity',
+    which says nothing about which field the exchange objected to. The body is
+    returned verbatim, whitespace-collapsed and truncated: no key of a US error
+    payload has ever been observed here, so picking one to surface would be a
+    guess about a contract we have not seen.
+    """
+    try:
+        raw = response.text
+    except (UnicodeDecodeError, ValueError, httpx.ResponseNotRead):
+        return f'<{len(response.content)} undecodable bytes>'
+    text = ' '.join(raw.split())
+    if len(text) > ERROR_DETAIL_CHARS:
+        return text[:ERROR_DETAIL_CHARS] + '...'
+    return text
 
 def geoblock_active(): return False
 def register_recycle_hook(fn): pass
@@ -46,7 +72,8 @@ async def _request(method, path, *, private=False, params=None, body=None):
     response=await _client.request(method, (PRIVATE_BASE if private else PUBLIC_BASE)+path,
                                    headers=headers, params=params, json=body)
     if response.status_code >= 300:
-        raise PolymarketAPIError(response.status_code, response.reason_phrase)
+        raise PolymarketAPIError(response.status_code, response.reason_phrase,
+                                 detail=_error_detail(response))
     return response.json() if response.content else {}
 
 def _money(value, default=0.0):

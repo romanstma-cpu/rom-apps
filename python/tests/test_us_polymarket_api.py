@@ -126,3 +126,60 @@ def test_us_trade_stream_normalizes_taker():
     t=stream.recent(1)[0]
     assert t['taker_side']=='no' and t['count_fp']==50
     assert t['no_price_dollars']==.4
+
+# --- rejections must carry the server's own explanation ---------------------
+#
+# reason_phrase alone reduces every rejection to "Unprocessable Entity", which
+# names neither the field nor the rule. A live order rejected that way is not
+# diagnosable, and these paths have never been exercised against a real server.
+
+async def _raises_from(monkeypatch, response):
+    async with httpx.AsyncClient(transport=httpx.MockTransport(lambda r: response)) as client:
+        monkeypatch.setattr(api, '_client', client)
+        with pytest.raises(api.PolymarketAPIError) as excinfo:
+            await api.get_balance()
+    return excinfo.value
+
+@pytest.mark.asyncio
+async def test_rejection_surfaces_the_server_explanation(creds, monkeypatch):
+    err = await _raises_from(monkeypatch, httpx.Response(
+        422, json={'code': 'INVALID_PRICE', 'message': 'price must be a multiple of the tick size'}))
+    assert err.status == 422 and err.status_code == 422
+    assert 'price must be a multiple of the tick size' in err.detail
+    assert 'INVALID_PRICE' in err.body
+    # The reason phrase is kept, not replaced.
+    assert err.reason == err.body.split(':')[0]
+    assert 'price must be a multiple of the tick size' in str(err)
+
+@pytest.mark.asyncio
+async def test_error_body_is_whitespace_collapsed(creds, monkeypatch):
+    err = await _raises_from(monkeypatch, httpx.Response(400, text='line one\n\n   line two\t'))
+    assert err.detail == 'line one line two'
+
+@pytest.mark.asyncio
+async def test_oversized_error_body_is_truncated(creds, monkeypatch):
+    err = await _raises_from(monkeypatch, httpx.Response(500, text='x'*5000))
+    assert err.detail == 'x'*api.ERROR_DETAIL_CHARS + '...'
+    assert len(err.detail) == api.ERROR_DETAIL_CHARS + 3
+
+@pytest.mark.asyncio
+async def test_empty_error_body_reads_exactly_as_before(creds, monkeypatch):
+    err = await _raises_from(monkeypatch, httpx.Response(401))
+    assert err.detail == ''
+    assert err.body == err.reason
+    assert str(err) == f'Polymarket US (401): {err.reason}'
+
+@pytest.mark.asyncio
+async def test_undecodable_error_body_does_not_mask_the_status(creds, monkeypatch):
+    err = await _raises_from(monkeypatch, httpx.Response(
+        503, content=b'\xff\xfe\x00\x81', headers={'content-type': 'text/plain; charset=utf-8'}))
+    assert err.status == 503
+    assert err.detail  # something was reported, whatever it decoded to
+
+def test_locally_raised_errors_are_unchanged():
+    # The 502/400/404 errors this module raises itself pass no detail; callers
+    # that log `.body` must see the same string they saw before.
+    err = api.PolymarketAPIError(502, 'USD buying power missing')
+    assert err.body == 'USD buying power missing'
+    assert err.detail == ''
+    assert str(err) == 'Polymarket US (502): USD buying power missing'
