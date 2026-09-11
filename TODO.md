@@ -13,31 +13,19 @@ Rules for this file:
 
 ## Now
 
-- [ ] **`PolymarketAPIError` throws away the server's reason**
-  `polymarket_api.py:48` builds the error from `reason_phrase`, never
-  `response.text`, so a rejection records "Unprocessable Entity" and the
-  exchange's actual explanation is lost. Blocks diagnosing the first live
-  order — fix before any Stage 5 run.
-    Scope: polymarket_api.py + test. Test: py:test. Rollback: revert.
+- [ ] **crypto15m and copy_trader do not consult the group cap**
+  Their exposure is now COUNTED (account_risk unions crypto15m_positions), but
+  neither engine calls `group_budget_usd`, so they can still open past the cap.
+  Blocked on a decision: crypto15m sizes from `_bankroll_usd`, a different
+  quantity from the balance main measures fractions against, so which bankroll
+  a group fraction means must be settled first.
+    Scope: crypto15m_trader.py, copy_trader.py. Test: py:test. Rollback: revert.
 
-- [ ] **No UI surface for order recovery**
-  The IPC now carries `recoverOrder` and the backend validates it, but nothing
-  in the renderer calls it. An operator still needs a console. Smallest honest
-  fix: a recovery panel wherever the journal blocker is surfaced.
-    Scope: src/pages + shared/types. Test: e2e. Rollback: revert.
-
-- [ ] **Group cap cannot see `crypto15m_positions`**
-  Upgrade 5 is titled "account-wide" but `GROUP_SQL` reads `bot_positions`
-  only, and neither `crypto15m_trader` nor `copy_trader` calls
-  `group_budget_usd`. Cross-engine correlated risk is unbounded.
-    Scope: account_risk.py + callers. Test: py:test. Rollback: revert.
-
-- [ ] **Exit can offer the whole position with no depth evidence**
-  `trader.py:2347` — `supported = affordable_at_depth(...) if bid_levels else
-  remaining`. UPGRADE-7 states size is bounded by displayed bid depth.
-  Unreachable through the real adapter today, but contrary to the stated
-  invariant and live against any quote source reporting a touch without levels.
-    Scope: trader.py + test. Test: py:test. Rollback: revert.
+- [ ] **Livecheck stages 1 and 4 are unwritten; 2 and 3 are unverified**
+  stage2_streams.py and stage3_quotes.py exist untracked from an interrupted
+  run and import cleanly, but have no tests and have not been reviewed.
+  Stage 1 (account read surface) and stage 4 (dry-run submission) do not exist.
+    Scope: python/livecheck/**. Test: py:test + import. Rollback: delete.
 
 - [ ] **Automated e2e coverage for CSV export and kill switch path**
   History CSV export and the Dashboard kill-switch flow are covered by
@@ -76,6 +64,15 @@ Rules for this file:
 
 ## Done
 
+- [x] `PolymarketAPIError` carries the server's own explanation (reason +
+      detail, truncated), so a live rejection names the field it objected to
+- [x] Order recovery panel on Overview + blocked_intents in trading status;
+      15-case e2e seeding a real journal row through the whole chain
+- [x] Group cap counts crypto15m exposure (union in GROUP_SQL); 10 tests
+- [x] Exit holds instead of offering the whole position when a quote reports a
+      touch with no depth ladder; 2 tests, fail-before/pass-after verified
+- [x] UI audit: 4 unnamed risk switches named (enforced in the type), 8px
+      legibility floor raised to 10px, onboarding leads with risk not the offer
 - [x] Test suite reproducible off this machine: pytest-asyncio pinned in
       requirements-dev.txt (29 async tests were failing, incl. in CI);
       test_db_migration decodes git output as UTF-8, not cp1252

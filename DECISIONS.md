@@ -3,6 +3,58 @@
 Assumptions made while working without confirmation. Each entry states the
 ambiguity, the choice, and why it is the safest reasonable option.
 
+## 2026-09-11 — count crypto15m exposure in the group cap, but do not yet gate that engine
+
+UPGRADE-5 is titled "account-wide risk controls" and opens by saying the
+existing limits were per-engine. Its exposure query read `bot_positions`
+alone. crypto15m keeps its own table and can already hold real money in a
+series that a main-strategy entry is about to join, so the cap was measuring
+one engine and calling it the account.
+
+`GROUP_SQL` now unions `crypto15m_positions`. Those rows carry their own
+`series` column, so they group natively; open exposure is `submitted`,
+`filled` and `exiting`, excluding practice rows and resolved ones. Counting
+them can only raise a group total, so an entry's remaining allowance shrinks
+or stays equal — never grows.
+
+The other half is deliberately not done here. `crypto15m_trader` and
+`copy_trader` still never call `group_budget_usd`, so they can still open past
+the cap; only the main strategy consults it. Wiring it in is not mechanical:
+crypto15m sizes from `_bankroll_usd`, which is a different quantity from the
+balance the main strategy measures fractions against, so someone has to decide
+which bankroll a group fraction means before that engine can honour it.
+Choosing silently would put a number on real orders that nobody had agreed on.
+Counting the exposure is strictly an improvement on its own — the main engine
+now sees the whole picture — and the remainder is recorded in TODO.md.
+
+## 2026-09-11 — a touch without a ladder is not evidence of size
+
+`_liquidate_position` sized an exit with
+`affordable_at_depth(...) if bid_levels else remaining`. With no levels the
+fallback was the entire remaining position, offered with nothing showing
+behind the bid. UPGRADE-7 states exit size is bounded by displayed bid depth
+and lists a test for holding when no bid depth exists, so the code contradicted
+its own documented invariant.
+
+Two readings were possible: an empty ladder means "depth unknown, proceed on
+the touch", or it means "no depth evidence". Chose the second. The whole point
+of upgrade 7 is that the exit never sells blind, and it already holds for a
+failed quote, a missing bid and an out-of-range bid; a quote that reports a
+touch with no ladder is the same class of missing evidence reached by another
+door.
+
+This is currently unreachable through the real adapter, because
+`quote_from_book` returns `bid=None` when there are no bid rows and the earlier
+guard catches it. It is fixed anyway: it is live against any quote source that
+reports a touch without levels, and the old behaviour was one substitution away
+from dumping a whole position into an unpriced book.
+
+The trade-off is stated plainly: holding is now possible where an order would
+previously have been placed, so a position can sit through a move that a blind
+sale would have exited. That is the direction upgrade 7 chose deliberately —
+the bad outcome it removes is selling a position still worth most of its cost
+for almost nothing.
+
 ## 2026-09-10 — resolve the correlated-exposure series through the events table
 
 `account_risk` grouped a prospective entry by `markets.series_ticker` first and

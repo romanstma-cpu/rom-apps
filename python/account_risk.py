@@ -24,16 +24,32 @@ HWM_KEY = 'risk:hwm:'
 # second. Only the events feed carries a series today; the market column is kept
 # first so a populated one would win. With neither, the group falls back to the
 # event and then the ticker, exactly as before.
-GROUP_SQL = """SELECT COALESCE(NULLIF(m.series_ticker,''),
-                               NULLIF(e.series_ticker,''),
-                               NULLIF(p.event_ticker,''),
-                               p.ticker) AS grp,
-                      SUM(CASE WHEN p.cost_usd>0 THEN p.cost_usd
-                               ELSE p.filled_contracts*p.limit_price_cents/100.0 END) AS usd
-               FROM bot_positions p LEFT JOIN markets m ON m.ticker=p.ticker
-                    LEFT JOIN events e ON p.event_ticker<>'' AND e.event_ticker=p.event_ticker
-               WHERE p.resolved=0 AND p.status IN ('submitted','partial','filled','unknown')
-                 AND p.network=? GROUP BY grp"""
+#
+# Both engines are counted. The control is named account-wide, but it read
+# `bot_positions` alone, so exposure the crypto15m engine already held was
+# invisible to a main-strategy entry measured against the same series.
+# crypto15m carries its own `series` column, so its rows group natively.
+# Counting them can only raise a group's total, never lower it, so an entry
+# sees an allowance that is the same or smaller than before.
+GROUP_SQL = """SELECT grp, SUM(usd) AS usd FROM (
+                 SELECT COALESCE(NULLIF(m.series_ticker,''),
+                                 NULLIF(e.series_ticker,''),
+                                 NULLIF(p.event_ticker,''),
+                                 p.ticker) AS grp,
+                        CASE WHEN p.cost_usd>0 THEN p.cost_usd
+                             ELSE p.filled_contracts*p.limit_price_cents/100.0 END AS usd
+                 FROM bot_positions p LEFT JOIN markets m ON m.ticker=p.ticker
+                      LEFT JOIN events e ON p.event_ticker<>'' AND e.event_ticker=p.event_ticker
+                 WHERE p.resolved=0 AND p.status IN ('submitted','partial','filled','unknown')
+                   AND p.network=?
+                 UNION ALL
+                 SELECT COALESCE(NULLIF(c.series,''), c.ticker) AS grp,
+                        CASE WHEN c.cost_usd>0 THEN c.cost_usd
+                             ELSE c.filled_contracts*c.entry_limit_cents/100.0 END AS usd
+                 FROM crypto15m_positions c
+                 WHERE c.resolved=0 AND c.status IN ('submitted','filled','exiting')
+                   AND c.network=? AND COALESCE(c.dry_run,0)=0
+               ) GROUP BY grp"""
 
 
 def _f(value, default=0.0):
@@ -75,7 +91,7 @@ def group_key(conn, ticker, event_ticker):
 
 
 def group_exposure_usd(conn, env):
-    return {str(r['grp']): _f(r['usd']) for r in conn.execute(GROUP_SQL, (env,)) if r['grp']}
+    return {str(r['grp']): _f(r['usd']) for r in conn.execute(GROUP_SQL, (env, env)) if r['grp']}
 
 
 def group_budget_usd(conn, env, ticker, event_ticker, bankroll_usd, cfg):

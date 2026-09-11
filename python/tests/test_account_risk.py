@@ -352,3 +352,64 @@ def test_config_clamps_the_new_fractions_into_range():
         "maxGroupExposureFraction": 5.0, "maxDrawdownFraction": -2.0})
     assert 0.0 <= c["max_group_exposure_fraction"] <= 1.0
     assert 0.0 <= c["max_drawdown_fraction"] <= 1.0
+
+
+# --- the cap is account-wide, not main-strategy-wide -----------------------
+#
+# UPGRADE-5 calls these "account-wide risk controls", but the exposure query
+# read bot_positions alone. The crypto15m engine keeps its own table and can
+# already hold real exposure in a series a main entry is about to join.
+
+def seed_c15(series, cost_usd, *, ticker=None, status="filled", dry_run=0, resolved=0):
+    n = next(_ids)
+    with db.get_db() as conn:
+        conn.execute(
+            "INSERT INTO crypto15m_positions (asset, series, ticker, side, direction,"
+            " target_contracts, filled_contracts, entry_limit_cents, cost_usd,"
+            " client_order_id, status, resolved, network, dry_run)"
+            " VALUES ('BTC',?,?,'up','yes',10,10,50,?,?,?,?,?,?)",
+            (series, ticker or f"{series}-{n}", cost_usd, f"c15-{n}",
+             status, resolved, ENV, dry_run),
+        )
+        conn.commit()
+
+
+def test_crypto15m_exposure_counts_toward_the_group(fresh_db):
+    seed_c15("BTC-UPDOWN", 40.0)
+    with db.get_db() as conn:
+        assert account_risk.group_exposure_usd(conn, ENV) == {"BTC-UPDOWN": 40.0}
+
+
+def test_both_engines_sum_into_one_group(fresh_db):
+    # The case the control is named for: two engines holding the same series.
+    seed_market("BTC-UPDOWN-1130", series="BTC-UPDOWN")
+    seed_position("BTC-UPDOWN-1130", 25.0)
+    seed_c15("BTC-UPDOWN", 40.0)
+    with db.get_db() as conn:
+        assert account_risk.group_exposure_usd(conn, ENV) == {"BTC-UPDOWN": 65.0}
+
+
+def test_crypto15m_exposure_shrinks_a_main_entry_allowance(fresh_db, cfg):
+    cfg["max_group_exposure_fraction"] = 0.10  # $100 of a $1000 bankroll
+    seed_market("BTC-UPDOWN-1130", series="BTC-UPDOWN")
+    seed_c15("BTC-UPDOWN", 40.0)
+    with db.get_db() as conn:
+        allowance = account_risk.group_budget_usd(
+            conn, ENV, "BTC-UPDOWN-1130", "", 1000.0, cfg)
+    assert allowance == pytest.approx(60.0)  # 100 cap less the 40 already held
+
+
+@pytest.mark.parametrize("kw", [
+    {"status": "exited"}, {"status": "settled"}, {"status": "canceled"},
+    {"status": "dry_run"}, {"dry_run": 1}, {"resolved": 1},
+])
+def test_closed_and_practice_crypto15m_rows_are_not_exposure(fresh_db, kw):
+    seed_c15("BTC-UPDOWN", 40.0, **kw)
+    with db.get_db() as conn:
+        assert account_risk.group_exposure_usd(conn, ENV) == {}
+
+
+def test_crypto15m_rows_of_another_network_are_ignored(fresh_db):
+    seed_c15("BTC-UPDOWN", 40.0)
+    with db.get_db() as conn:
+        assert account_risk.group_exposure_usd(conn, "someothernet") == {}

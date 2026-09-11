@@ -2344,8 +2344,19 @@ async def _liquidate_position(pos: dict, cfg: dict, *, reason: str) -> tuple[int
         # Concede at most the configured budget below the touch, and only as
         # far as displayed size actually supports.
         sell_px = max(1, min(99, int(bid) - budget_cents))
+        # A quote carrying a touch but no ladder is not evidence of size. This
+        # previously fell back to `remaining`, offering the whole position with
+        # nothing showing behind the bid -- the unpriced dump this upgrade
+        # exists to remove. Holding is the documented outcome when depth cannot
+        # be established, so no-levels is treated as no-depth.
+        if not bid_levels:
+            logger.warning(
+                f"[{reason}] {ticker}: quote gave a {bid}c bid with no depth ladder; "
+                f"still holding {remaining}. Not selling into an unpriced book."
+            )
+            break
         supported = affordable_at_depth(
-            [[100 - p, s] for p, s in bid_levels], 100 - sell_px) if bid_levels else remaining
+            [[100 - p, s] for p, s in bid_levels], 100 - sell_px)
         sellable = min(remaining, supported) if supported > 0 else 0
         if sellable <= 0:
             logger.warning(

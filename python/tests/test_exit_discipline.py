@@ -174,3 +174,27 @@ def test_invalid_budget_setting_falls_back_to_the_default(fresh_db, cfg, monkeyp
                      quote=quote_with_depth({"bid_cents": 80, "ask_cents": 82}))
     liquidate(pid, cfg)
     assert placed and placed[0]["price_cents"] == 78
+
+
+def test_a_touch_without_a_ladder_is_not_evidence_of_size(fresh_db, cfg, monkeypatch):
+    """A quote can report a bid and no depth at all.
+
+    That case used to fall back to the full remaining size, so the position was
+    offered whole with nothing showing behind the bid — the unpriced dump this
+    upgrade removes, reached by a different door. UPGRADE-7 states exit size is
+    bounded by displayed bid depth, so absent depth means hold.
+    """
+    pid = seed_filled()
+    install(monkeypatch, quote={
+        "bid_cents": 80, "ask_cents": 82, "bid_levels": [], "ask_levels": [],
+    }, orders_allowed=False)
+    assert liquidate(pid, cfg) == (0, 0.0)
+    with db.get_db() as conn:
+        assert db.fetch_position_by_id(conn, pid)["filled_contracts"] == 10
+
+
+def test_a_missing_levels_key_is_also_treated_as_no_depth(fresh_db, cfg, monkeypatch):
+    # `bid_levels` absent entirely, as an older quote source would return.
+    pid = seed_filled()
+    install(monkeypatch, quote={"bid_cents": 80, "ask_cents": 82}, orders_allowed=False)
+    assert liquidate(pid, cfg) == (0, 0.0)
