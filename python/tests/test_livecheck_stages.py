@@ -206,3 +206,97 @@ def test_spread_stats_report_what_the_three_cent_rule_admits():
 
 def test_no_spreads_sampled_reports_a_bare_count():
     assert s3.spread_stats([]) == {'count': 0}
+
+
+# --- stage 4: it must be incapable of placing an order --------------------
+
+import asyncio  # noqa: E402
+
+import db  # noqa: E402
+import order_journal  # noqa: E402
+import polymarket_api as api  # noqa: E402
+from livecheck import safety  # noqa: E402
+from livecheck.stages import stage4_dryrun as s4  # noqa: E402
+
+TICKER = 'livecheck-probe-market'
+
+
+@pytest.fixture
+def dryrun_env(tmp_path, monkeypatch):
+    """A real journal database plus a transport that must never see a POST."""
+    real_db = tmp_path / 'real.db'
+    monkeypatch.setattr(db, 'db_path', lambda: real_db)
+    db.init_db()
+    monkeypatch.setitem(api._meta, TICKER, {'min_size': 1, 'tick_size': 0.01})
+
+    sent = []
+
+    async def transport(method, path, **kwargs):
+        sent.append((str(method).upper(), path))
+        if method == 'GET' and path == '/v1/markets':
+            return {'markets': [{'slug': TICKER, 'ticker': TICKER}]}
+        if method == 'POST':
+            pytest.fail(f'stage 4 sent a real {method} {path} — it must never send')
+        return {}
+
+    monkeypatch.setattr(api, '_request', transport)
+    return sent, real_db
+
+
+def test_dry_run_never_sends_an_order(dryrun_env):
+    sent, _ = dryrun_env
+    asyncio.run(s4.run())
+    assert not [c for c in sent if c[0] == 'POST']
+
+
+def test_dry_run_proves_the_journal_is_written_before_the_post(dryrun_env):
+    checks = {c.name: c for c in asyncio.run(s4.run())}
+    before = checks["the intent is committed as 'sending' BEFORE the POST"]
+    assert before.ok is True, before.detail
+
+
+def test_dry_run_captures_the_payload_without_sending_it(dryrun_env):
+    checks = {c.name: c for c in asyncio.run(s4.run())}
+    assert checks['no order was sent'].ok is True
+    assert checks['payload carries exactly the documented fields'].ok is True
+    assert checks['the local order id is not sent to the exchange'].ok is True
+
+
+def test_dry_run_leaves_no_blocking_intent_behind(dryrun_env):
+    _, real_db = dryrun_env
+    checks = {c.name: c for c in asyncio.run(s4.run())}
+    assert checks['the stage leaves no blocking intent behind'].ok is True
+    # And the real journal — the one an engine consults — is untouched.
+    assert order_journal.blocker() is None
+    assert order_journal.blocked_intents() == []
+
+
+def test_dry_run_writes_only_to_its_throwaway_database(dryrun_env):
+    _, real_db = dryrun_env
+    asyncio.run(s4.run())
+    # db.db_path must be handed back exactly as it was found.
+    assert str(db.db_path()) == str(real_db)
+    with db.get_db() as conn:
+        rows = conn.execute('SELECT COUNT(*) FROM us_order_intents').fetchone()[0]
+    assert rows == 0
+
+
+def test_dry_run_restores_the_interlock_it_borrowed(dryrun_env):
+    """The interceptor must hand `_request` back, never leave itself installed."""
+    disarm = safety.arm()
+    try:
+        armed = api._request
+        asyncio.run(s4.run())
+        assert api._request is armed
+    finally:
+        disarm()
+
+
+def test_a_post_slipping_past_the_stage_is_still_refused(dryrun_env):
+    """The interlock is the backstop, and stage 4 runs underneath it."""
+    disarm = safety.arm()
+    try:
+        with pytest.raises(safety.MutationRefused):
+            asyncio.run(api._request('POST', '/v1/orders', private=True, body={}))
+    finally:
+        disarm()
