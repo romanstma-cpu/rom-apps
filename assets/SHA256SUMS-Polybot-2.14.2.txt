@@ -1,0 +1,12 @@
+SHA-256 checksum for ROM Polybot 2.14.2 Windows installer.
+
+E534DB4393A294BC978ECB49F04FDAB2D81B495BDB9A786AC60FA02A8010DCC5  ROM-Polybot-Setup-2.14.2.exe
+
+To verify (PowerShell):
+  Get-FileHash "ROM-Polybot-Setup-2.14.2.exe" -Algorithm SHA256
+
+To verify (cmd):
+  certutil -hashfile "ROM-Polybot-Setup-2.14.2.exe" SHA256
+
+A matching hash confirms the file has not been altered in transit.
+It does not certify the software's behaviour or safety.
