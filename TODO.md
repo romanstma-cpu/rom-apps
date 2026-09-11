@@ -21,11 +21,13 @@ Rules for this file:
   a group fraction means must be settled first.
     Scope: crypto15m_trader.py, copy_trader.py. Test: py:test. Rollback: revert.
 
-- [ ] **Livecheck stages 1 and 4 are unwritten; 2 and 3 are unverified**
-  stage2_streams.py and stage3_quotes.py exist untracked from an interrupted
-  run and import cleanly, but have no tests and have not been reviewed.
-  Stage 1 (account read surface) and stage 4 (dry-run submission) do not exist.
-    Scope: python/livecheck/**. Test: py:test + import. Rollback: delete.
+- [ ] **No livecheck stage has been run against a real account**
+  Stages 0-4 are read-only and stage 5 places one cancellable order. All are
+  built and tested against mocks; none has spoken to Polymarket US. This needs
+  the user's credentials and is theirs to execute:
+  `python -m livecheck.live_order --preflight-only` first, then `--all` on the
+  read-only runner, then the live order.
+    Scope: operator action. Test: the harness reports. Rollback: n/a.
 
 - [ ] **Automated e2e coverage for CSV export and kill switch path**
   History CSV export and the Dashboard kill-switch flow are covered by
@@ -64,6 +66,9 @@ Rules for this file:
 
 ## Done
 
+- [x] Livecheck stages 1-5: account reads, stream health (clock-skew gate),
+      quote/depth fidelity, dry-run submission, and one real cancellable order
+      behind a typed confirmation. 51 tests on the decision and safety logic
 - [x] `PolymarketAPIError` carries the server's own explanation (reason +
       detail, truncated), so a live rejection names the field it objected to
 - [x] Order recovery panel on Overview + blocked_intents in trading status;
