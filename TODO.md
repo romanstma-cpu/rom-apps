@@ -55,6 +55,12 @@ Rules for this file:
 
 ## Done
 
+- [x] **Config parity: `signalDisplay`/`ledger` shape drift check — closed, not
+      needed.** The drift-guard concern is already covered by the existing
+      config-parity suite (backend->store, backend->type, store-backlog shrink,
+      validator coverage). The named keys do not exist in any of the three
+      config sources; grep returned zero hits and the only "display"/"ledger"
+      occurrences are prose. No keys to add, no drift to guard (0967d00).
 - [x] Livecheck stages 1-5: account reads, stream health (clock-skew gate),
       quote/depth fidelity, dry-run submission, and one real cancellable order
       behind a typed confirmation. 51 tests on the decision and safety logic
