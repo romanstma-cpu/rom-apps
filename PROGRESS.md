@@ -201,3 +201,31 @@ guards the whole class.
 - Installer 2.13.1: SHA 3450096E0C45D0FA1C65F032B5AEFC6C56AD221BC231D3CF9036DF0636DBD71A
   published to romapps.xyz (site commit aedf39d); live byte-identical.
 - Python 1538 pass, all 9 e2e suites green.
+
+## 2.14.0 built, NOT published (2026-09-11)
+- Merged master (2.13.1) into the branch before building — 64c9f0d. That
+  release shipped while this wave was in progress; building without it would
+  have regressed focus traps, Positions virtualization and the startup fix.
+- Livecheck harness stages 0-5 (`python/livecheck`). Read-only stages run under
+  an interlock that refuses any non-GET at `polymarket_api._request`. Stage 5
+  places one real 1c order far below the ask and cancels it, behind a typed
+  confirmation on a separate entry point. Source-only: deliberately not frozen
+  into the shipped backend.
+- Stage 5 preflight RUN against the real userdata dir: journal clean PASS,
+  account readable FAIL (no credentials configured). Stopped as designed,
+  nothing sent. **No livecheck stage has yet spoken to Polymarket US.**
+- Exit no longer offers the whole position when a quote reports a touch with no
+  depth ladder; group cap counts crypto15m exposure; momentum rejection
+  counters; `PolymarketAPIError` keeps the server's body; order recovery panel
+  on Overview; 4 unnamed risk switches named and enforced in the type.
+- Verification: Python 1804 collected / 1665 pass / 139 skip / 0 fail;
+  typecheck clean both projects; e2e 13/13 suites green against the packaged
+  app; locator drift clean (58 locators, 14 specs).
+- `test_loop_watchdog_restarts_stalled_loop` failed once under full-suite load
+  and passed in isolation and on whole-suite re-runs. Predates this release,
+  untouched by it. Flake, not regression — worth stabilising.
+- Installer `release/ROM PolyBot-Setup-2.14.0.exe` (92.2 MB), SHA-256
+  47F27319A45FCF55B55EC897F3D42E1FB9EA776E06D5FCE9C441DED53BB8940B.
+  **Not published.** The rom-apps site repo is not on this machine, the repo
+  has no git remote, and `build.publish` is null. Publishing needs the site
+  repo and the owner's go-ahead.
