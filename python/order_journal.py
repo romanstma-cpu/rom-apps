@@ -5,6 +5,7 @@ require an operator-supplied exchange order ID; matching by price/time is unsafe
 """
 import json
 import math
+import sqlite3
 import time
 import db
 import fees_us
@@ -215,7 +216,13 @@ def attach_verified_order(local_id, raw):
     if (not raw.get('id') or raw.get('marketSlug') != row['ticker'] or raw.get('intent') != expected
             or number(raw.get('quantity')) != row['quantity'] or price is None or abs(price-row['limit_price']) > 1e-8):
         raise RecoveryRequired('Exchange order does not match the selected local intent')
-    acknowledge(local_id, raw['id'])
+    try:
+        acknowledge(local_id, raw['id'])
+    except sqlite3.IntegrityError:
+        # ORDER_ID is UNIQUE: the exchange order is already attached to a
+        # different local intent. Nothing was written (the update rolled back);
+        # surface it as a recovery decision, not an opaque database error.
+        raise RecoveryRequired('Exchange order id is already attached to another local order; reconcile before retrying') from None
     record_order(raw)
 
 

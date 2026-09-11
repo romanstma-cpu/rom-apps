@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 import sqlite3
 import pytest
@@ -157,6 +158,34 @@ async def test_cancel_ack_without_terminal_state_keeps_reservation(monkeypatch):
     with pytest.raises(journal.RecoveryRequired):await api.cancel_order('ex-1')
     assert journal.get('local')['state']=='cancel_pending'
     assert journal.get('local')['reserved_usd']>0
+
+
+@pytest.mark.asyncio
+async def test_cancel_pending_write_is_journalized_like_begin(monkeypatch):
+    """The pre-network cancel_pending write must follow order_journal.begin()'s
+    durability discipline: synchronous=FULL then BEGIN IMMEDIATE before the
+    UPDATE, so a power loss after the write but before the cancel POST cannot
+    leave the intent stuck at cancel_pending without a recovery path."""
+    begin()
+    observed=[]
+    class FakeConn:
+        def __init__(self,real):self._real=real
+        def __getattr__(self,name):return getattr(self._real,name)
+        def execute(self,stmt,params=()):
+            observed.append(stmt)
+            return self._real.execute(stmt,params)
+    orig_get_db = db.get_db
+    @contextlib.contextmanager
+    def fake_get_db():
+        with orig_get_db() as real:
+            yield FakeConn(real)
+    monkeypatch.setattr(db,'get_db',fake_get_db)
+    async def request(method,path,**kwargs):return {} if method=='POST' else {'order':raw_order()}
+    monkeypatch.setattr(api,'_request',request)
+    with pytest.raises(journal.RecoveryRequired):await api.cancel_order('ex-1')
+    idx=next(i for i,s in enumerate(observed) if 'cancel_pending' in s)
+    assert observed[idx-2].strip().upper()=='PRAGMA SYNCHRONOUS=FULL'
+    assert observed[idx-1].strip().upper()=='BEGIN IMMEDIATE'
 
 
 @pytest.mark.asyncio

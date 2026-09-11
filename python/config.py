@@ -591,6 +591,7 @@ def _validate_config(cfg: dict[str, Any]) -> dict[str, Any]:
     )
     cfg["take_profit_on_day"] = _clampf(cfg.get("take_profit_on_day"), 0.0, 1e9, d["take_profit_on_day"])
     cfg["flatten_on_daily_stop"] = bool(cfg.get("flatten_on_daily_stop", d["flatten_on_daily_stop"]))
+    cfg["require_entry_depth"] = bool(cfg.get("require_entry_depth", d["require_entry_depth"]))
 
     for _k, _lo, _hi in [
         ("crypto15m_poll_sec", 2, 3600),
