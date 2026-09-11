@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties, UIEvent } from 'react';
 import { Ban, RefreshCw } from 'lucide-react';
 import type { BotPosition } from '@shared/types';
 import { useApp } from '../state/AppStateProvider';
@@ -20,12 +21,55 @@ const STATUS_COLORS: Record<string, string> = {
 
 type Tab = 'open' | 'pending' | 'practice' | 'won' | 'lost' | 'errors' | 'all';
 
+// Windowing knobs: the page caps the table at MAX_TABLE_H px and only renders
+// the rows inside that window plus OVERSCAN on each side. ROW_H_FALLBACK is
+// corrected from the real rendered row height on first paint.
+const ROW_H_FALLBACK = 36;
+const OVERSCAN = 5;
+const MAX_TABLE_H = 520;
+
+/** Renders only the slice of `rows` inside the current scroll window, padded
+ *  top/bottom with empty spacer rows so the table keeps its full natural
+ *  height (and thus its real scrollbar). */
+function VirtualizedRows({ rows, top, rowHeight }: {
+  rows: BotPosition[];
+  top: number;
+  rowHeight: number;
+}) {
+  const safeTop = Math.min(top, Math.max(0, rows.length * rowHeight - MAX_TABLE_H));
+  const start = Math.min(
+    Math.max(0, Math.floor(safeTop / rowHeight) - OVERSCAN),
+    Math.max(0, rows.length - 1),
+  );
+  const end = Math.min(rows.length, Math.ceil((safeTop + MAX_TABLE_H) / rowHeight) + OVERSCAN);
+  const visible = useMemo(() => rows.slice(start, end), [rows, start, end]);
+
+  const spacer = (h: number): CSSProperties => ({ height: h, padding: 0, border: 0 });
+
+  return (
+    <>
+      <tr aria-hidden="true" style={spacer(start * rowHeight)}>
+        <td style={spacer(start * rowHeight)} />
+      </tr>
+      {visible.map((p) => (
+        <PositionRow key={p.id} p={p} />
+      ))}
+      <tr aria-hidden="true" style={spacer((rows.length - end) * rowHeight)}>
+        <td style={spacer((rows.length - end) * rowHeight)} />
+      </tr>
+    </>
+  );
+}
+
 export function PositionsPage() {
   const { positions, refresh } = useApp();
   const toast = useToast();
   const [tab, setTab] = useState<Tab>('open');
   const [src, setSrc] = useState<'all' | 'whale' | 'momentum'>('all');
   const [busy, setBusy] = useState<string | null>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [rowHeight, setRowHeight] = useState(ROW_H_FALLBACK);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const filtered = useMemo(() => {
     return positions.filter((p) => {
@@ -49,6 +93,20 @@ export function PositionsPage() {
       }
     });
   }, [positions, tab, src]);
+
+  // Rows are uniform, so one measurement of the first rendered row gives an
+    // exact spacing for the spacer rows — no scroll jump or accumulating drift.
+    // Also re-sync our scrollTop state to the element's real position after the
+    // list shrinks (tab/filter/source changes can clamp or reset it).
+    useEffect(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      if (Math.abs(el.scrollTop - scrollTop) > 1) setScrollTop(el.scrollTop);
+      const tr = el.querySelector('tbody tr:not([aria-hidden])');
+      if (!tr) return;
+      const h = tr.getBoundingClientRect().height;
+      if (h > 0 && Math.abs(h - rowHeight) > 0.5) setRowHeight(h);
+    }, [filtered, rowHeight, scrollTop]);
 
   const counts = useMemo(() => {
     let open = 0, pending = 0, practice = 0, won = 0, lost = 0, errors = 0;
@@ -136,26 +194,32 @@ export function PositionsPage() {
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-rom-border">
-          <table className="rom-table">
-            <thead>
-              <tr>
-                <th>When</th>
-                <th>Source</th>
-                <th>Ticker</th>
-                <th>Title</th>
-                <th>Side</th>
-                <th>Filled</th>
-                <th>Cost</th>
-                <th>Status</th>
-                <th>Outcome</th>
-                <th>Edge</th>
-                <th>P&amp;L</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => <PositionRow key={p.id} p={p} />)}
-            </tbody>
-          </table>
+          <div
+            ref={scrollRef}
+            className="max-h-[520px] overflow-y-auto overflow-x-hidden"
+            onScroll={(e: UIEvent<HTMLDivElement>) => setScrollTop(e.currentTarget.scrollTop)}
+          >
+            <table className="rom-table">
+              <thead className="sticky top-0 z-10 bg-rom-surface">
+                <tr>
+                  <th>When</th>
+                  <th>Source</th>
+                  <th>Ticker</th>
+                  <th>Title</th>
+                  <th>Side</th>
+                  <th>Filled</th>
+                  <th>Cost</th>
+                  <th>Status</th>
+                  <th>Outcome</th>
+                  <th>Edge</th>
+                  <th>P&amp;L</th>
+                </tr>
+              </thead>
+              <tbody>
+                <VirtualizedRows rows={filtered} top={scrollTop} rowHeight={rowHeight} />
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </Page>
