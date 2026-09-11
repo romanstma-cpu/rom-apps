@@ -13,6 +13,32 @@ Rules for this file:
 
 ## Now
 
+- [ ] **`PolymarketAPIError` throws away the server's reason**
+  `polymarket_api.py:48` builds the error from `reason_phrase`, never
+  `response.text`, so a rejection records "Unprocessable Entity" and the
+  exchange's actual explanation is lost. Blocks diagnosing the first live
+  order — fix before any Stage 5 run.
+    Scope: polymarket_api.py + test. Test: py:test. Rollback: revert.
+
+- [ ] **No UI surface for order recovery**
+  The IPC now carries `recoverOrder` and the backend validates it, but nothing
+  in the renderer calls it. An operator still needs a console. Smallest honest
+  fix: a recovery panel wherever the journal blocker is surfaced.
+    Scope: src/pages + shared/types. Test: e2e. Rollback: revert.
+
+- [ ] **Group cap cannot see `crypto15m_positions`**
+  Upgrade 5 is titled "account-wide" but `GROUP_SQL` reads `bot_positions`
+  only, and neither `crypto15m_trader` nor `copy_trader` calls
+  `group_budget_usd`. Cross-engine correlated risk is unbounded.
+    Scope: account_risk.py + callers. Test: py:test. Rollback: revert.
+
+- [ ] **Exit can offer the whole position with no depth evidence**
+  `trader.py:2347` — `supported = affordable_at_depth(...) if bid_levels else
+  remaining`. UPGRADE-7 states size is bounded by displayed bid depth.
+  Unreachable through the real adapter today, but contrary to the stated
+  invariant and live against any quote source reporting a touch without levels.
+    Scope: trader.py + test. Test: py:test. Rollback: revert.
+
 - [ ] **Automated e2e coverage for CSV export and kill switch path**
   History CSV export and the Dashboard kill-switch flow are covered by
   manual/terminal e2e but not as standalone suites. Add `e2e/history-csv.e2e.mjs`
@@ -21,6 +47,26 @@ Rules for this file:
 
 ## Later
 
+- [ ] **`require_entry_depth` is unvalidated config**
+  Not in any clamp list in `_validate_config`; read as a bare
+  `cfg.get(..., True)`. Any falsy stored value silently disables the whole
+  Upgrade 6 depth gate.
+- [ ] **`cancel_pending` write skips the FULL-sync discipline**
+  `polymarket_api.py:316` writes it before the cancel POST without
+  `synchronous=FULL` or `BEGIN IMMEDIATE`, unlike every other pre-network
+  journal write. Power loss there could leave the intent at `open`.
+- [ ] **Attaching an already-owned exchange id raises `sqlite3.IntegrityError`**
+  Correctly refused and nothing written, but the message is opaque. Should be
+  `RecoveryRequired`.
+- [ ] **Undocumented hard-coded execution limits**
+  `execution_quality.entry_price` enforces a 3c max spread and 2c max chase.
+  No config key, no doc, no settings surface.
+- [ ] **`use_rules=True` silently drops the entry price floor to 1c**
+  `trader.py:570`. Undocumented interaction with `min_entry_price_cents`.
+- [ ] **Stream modules expose no health state**
+  No reconnect count, message count or connected flag on the two authenticated
+  US streams; `stats()` on activity/rtds/spot has zero callers. Blocks the
+  stream-health harness stage.
 - [ ] **Focus trap for remaining modals**
   OnboardingModal, NameDialog done. Apply the same pattern to RiskLimits
   and Accounts full-screen overlays if they ever become dialogs.
@@ -30,30 +76,13 @@ Rules for this file:
 
 ## Done
 
-- [x] Dark-mode audit: sidebar bg-[#0E1520] → rom.sidebar token
-- [x] Security: IPC config validation (config-validate.ts + test;
-      config:update/replace reject bad shapes, NaN/Inf, wrong enums)
-- [x] Accessibility: OnboardingModal focus trap (Tab cycle, body scroll lock)
-- [x] DB migration test: 2.8 schema to current — verified upgrade path
-- [x] Schema/insert column drift fix: interval + 4 columns in base SCHEMA,
-      TestInsertColumnParity regression
-- [x] Test coverage: scanner scoring (20), market stream (22), account
-      stream (18), categorize (29) — found+fixed 3 real bugs
-- [x] Test coverage: rules (19) — found+fixed NaN leak
-- [x] Test coverage: crypto15m pricing (42)
-- [x] Test coverage: main_recorder edge cases (9)
-- [x] Kill switch banner on Dashboard (2-step confirm → trading.flatten)
-- [x] CSV export of trade history (all resolved, not just 200 in view)
-- [x] Keyboard navigation (Ctrl+1..9)
-- [x] Responsive icon-rail sidebar (< 768px)
-- [x] Onboarding walkthrough — already a full modal; no work needed
-- [x] Guide page — already has real content; no work needed
-- [x] paper-activity e2e fixed (asserts against WorkspaceStatus)
-- [x] Dead TopBar component removed
-- [x] Config parity tests + all 17 UI defaults fixed
-- [x] Backend-only config keys classified
-- [x] Replay pruning indexed + save_snapshots_bulk batched
-- [x] group_key edge cases tested
-- [x] collection_stats RPC shape test added
-- [x] main_recorder tests (age/count prune, dedup, index save)
-- [x] Script sandbox recursion test added
+- [x] Test suite reproducible off this machine: pytest-asyncio pinned in
+      requirements-dev.txt (29 async tests were failing, incl. in CI);
+      test_db_migration decodes git output as UTF-8, not cp1252
+- [x] Momentum rejection accounting: per-reason counters surfaced in scanner's
+      momentum log; clock-behind separated from staleness; gate unchanged
+- [x] Series grouping repaired in account_risk + portfolio_replay via the
+      events join; 4 tests fail-before/pass-after
+- [x] Order recovery drill (35 network-free tests) + operator runbook
+- [x] runOnce IPC carries recoverOrder with an action allowlist and validated
+      payload rebuild; backend fails legibly instead of KeyError
