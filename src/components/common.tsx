@@ -254,19 +254,33 @@ export function Empty({
   );
 }
 
-export function Switch({
-  checked, onChange, label, description, disabled,
-}: {
+type SwitchBase = {
   checked: boolean;
   onChange: (next: boolean) => void;
-  label?: string;
   description?: string;
   disabled?: boolean;
-}) {
+};
+
+/**
+ * A switch must carry its own accessible name. Several of these control real
+ * money — the daily-entry cap, flatten-on-stop, the live-orders master switch —
+ * and when the visible label lives outside the button (the `Field` pattern
+ * renders it as a sibling) the control announces only as "switch, off".
+ *
+ * The union makes that unrepresentable: pass `label` to render text inside the
+ * button, or `ariaLabel` when something else renders the text. Not neither.
+ */
+export type SwitchProps = SwitchBase &
+  ({ label: string; ariaLabel?: string } | { label?: undefined; ariaLabel: string });
+
+export function Switch({
+  checked, onChange, label, description, disabled, ariaLabel,
+}: SwitchProps) {
   return (
     <button
       role="switch"
       aria-checked={checked}
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cls(

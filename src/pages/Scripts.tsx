@@ -384,6 +384,7 @@ export function ScriptsPage() {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <div className="flex items-center gap-3">
             <Toggle
+              label="Scripts live - master switch for real orders"
               checked={!!config?.scriptsLiveEnabled}
               onChange={(v) => void window.rom.config.update({ scriptsLiveEnabled: v })}
             />
@@ -477,7 +478,7 @@ export function ScriptsPage() {
                   )}
                 </div>
                 <label className="flex items-center gap-1.5 text-[11px] text-rom-muted">
-                  <Toggle checked={sel.enabled} onChange={(v) => void setEnabled(sel, v)} />
+                  <Toggle label={`Enable script ${sel.name}`} checked={sel.enabled} onChange={(v) => void setEnabled(sel, v)} />
                   Enabled
                 </label>
                 <button
@@ -990,8 +991,8 @@ function DocsPanel({ docs }: { docs: ScriptApiDocs | null }) {
               <td className="py-1 pr-3 text-rom-muted">{f.doc}</td>
               <td className="py-1">
                 {f.backtestable
-                  ? <span className="rounded bg-rom-win/10 px-1.5 py-0.5 text-[9px] uppercase text-rom-win">backtestable</span>
-                  : <span className="rounded bg-rom-warn/10 px-1.5 py-0.5 text-[9px] uppercase text-rom-warn">live-only</span>}
+                  ? <span className="rounded bg-rom-win/10 px-1.5 py-0.5 text-[10px] uppercase text-rom-win">backtestable</span>
+                  : <span className="rounded bg-rom-warn/10 px-1.5 py-0.5 text-[10px] uppercase text-rom-warn">live-only</span>}
               </td>
             </tr>
           ))}
@@ -1176,11 +1177,14 @@ function ShadowLedger({
   );
 }
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+// `label` is required, not optional: this switch arms real orders, and the
+// visible text sits outside the control.
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button
       role="switch"
       aria-checked={checked}
+      aria-label={label}
       onClick={() => onChange(!checked)}
       className={cls(
         'relative h-5 w-9 shrink-0 rounded-full border transition-colors',

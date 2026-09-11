@@ -294,7 +294,7 @@ function ProfileCard({
 function Mini({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-rom-border bg-rom-surface2 px-2 py-1">
-      <div className="text-[9px] uppercase tracking-wider text-rom-dim">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-rom-dim">{label}</div>
       <div className="font-mono text-[11px] text-white">{value}</div>
     </div>
   );

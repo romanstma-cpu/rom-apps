@@ -663,6 +663,7 @@ export function MainEnginePage() {
               hint="Off = enforce the daily cap above. On = the only entry limit is Max open positions.">
               <div className="flex h-9 items-center">
                 <Switch
+                  ariaLabel="Unlimited daily new positions"
                   checked={!!config.unlimitedDailyNewPositions}
                   onChange={(v) => void update('unlimitedDailyNewPositions', v)}
                 />
@@ -676,6 +677,7 @@ export function MainEnginePage() {
               hint="Off = only halt new entries (open positions ride to settlement). On = also market-sell every open position when the daily loss limit trips, hard-capping the day's loss.">
               <div className="flex h-9 items-center">
                 <Switch
+                  ariaLabel="Sell out on daily loss"
                   checked={!!config.flattenOnDailyStop}
                   onChange={(v) => void update('flattenOnDailyStop', v)}
                 />
@@ -727,6 +729,7 @@ export function MainEnginePage() {
           <div className="mb-3 flex items-center justify-between">
             <div className="text-sm text-white">Restrict trading to a weekly window</div>
             <Switch
+              ariaLabel="Restrict trading to a weekly window"
               checked={config.tradingHoursEnabled}
               onChange={(v) => void update('tradingHoursEnabled', v)}
             />
@@ -844,7 +847,7 @@ export function MainEnginePage() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-rom-border bg-rom-surface2 px-2 py-1">
-      <div className="text-[9px] uppercase tracking-wider text-rom-dim">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-rom-dim">{label}</div>
       <div className="font-mono text-[11px] text-white">{value}</div>
     </div>
   );

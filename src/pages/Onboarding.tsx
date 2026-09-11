@@ -1,5 +1,5 @@
 import { ROMSprite } from '../components/ROMSprite';
-import { ArrowUpRight, Gift } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Gift } from 'lucide-react';
 import { POLYMARKET_REFERRAL_CODE, POLYMARKET_REFERRAL_URL } from '../utils/links';
 import { useEffect, useRef } from 'react';
 
@@ -79,6 +79,31 @@ export function OnboardingModal({onDone}:{onDone:()=>void}) {
           dashboard, strategies, history and settings run locally.
         </p>
 
+        {/* Risk before inducement. This card previously sat below the referral
+            offer as an unstyled paragraph, so the one element promising money
+            carried a gradient, an icon and a full-width button while the one
+            warning about losing it carried none. On a product that places real
+            orders, the warning gets at least equal weight and comes first. */}
+        <div className="mt-5 rounded-xl border border-rom-warn/30 bg-rom-warn/[0.07] p-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-rom-warn/10 text-rom-warn">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-rom-warn">Automated trading can lose money.</p>
+              <p className="mt-1 text-xs leading-relaxed text-rom-muted">
+                This app places real orders on your behalf once you enable live trading.
+                Review your strategy and risk limits first, and start in practice mode.
+                Risk limits reduce losses; they do not guarantee a maximum loss.
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-rom-muted">
+                Some international market feeds and wallet-copy features are unavailable
+                on the US exchange.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="mt-5 rounded-xl border border-blue-400/20 bg-gradient-to-br from-blue-500/10 to-rom-purple/5 p-4">
           <div className="flex items-start gap-3">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-400/10 text-blue-300">
@@ -103,17 +128,13 @@ export function OnboardingModal({onDone}:{onDone:()=>void}) {
             Claim new-user offer
             <ArrowUpRight className="h-4 w-4" />
           </button>
-          <p className="mt-3 text-[10px] leading-relaxed text-rom-dim">
-            Eligibility and Polymarket terms apply. Offer may change or expire. ROM may
-            also receive a referral reward.
+          <p className="mt-3 text-xs leading-relaxed text-rom-muted">
+            Eligibility and Polymarket terms apply. Offer may change or expire.{' '}
+            <span className="font-semibold text-rom-text">
+              ROM may also receive a referral reward.
+            </span>
           </p>
         </div>
-
-        <p className="mt-4 text-sm text-rom-muted">
-          Automated trading can lose money. Review your strategy and risk limits before
-          enabling live trading. Some international market feeds and wallet-copy features
-          are unavailable on the US exchange.
-        </p>
 
         <button
           className="rom-btn-primary mt-6"

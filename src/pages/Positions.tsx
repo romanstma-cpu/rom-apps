@@ -274,7 +274,7 @@ function PositionRow({ p }: { p: BotPosition }) {
           }>
             {fmtUsd(pnl, { sign: true })}
             {!realized && (
-              <span className="ml-1 text-[9px] uppercase tracking-wide text-rom-dim">live</span>
+              <span className="ml-1 text-[10px] uppercase tracking-wide text-rom-dim">live</span>
             )}
           </span>
         )}

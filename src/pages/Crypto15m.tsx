@@ -1119,9 +1119,9 @@ function NumField({
 
   return (
     <label className="block rounded-lg border border-rom-border bg-rom-surface2 px-2.5 py-1.5" title={hint}>
-      <div className="flex items-center justify-between text-[9px] uppercase tracking-wider text-rom-dim">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-rom-dim">
         <span>{label}</span>
-        {suffix && <span className="text-rom-dim/70">{suffix}</span>}
+        {suffix && <span className="text-rom-dim">{suffix}</span>}
       </div>
       <input
         type="number"
@@ -1150,7 +1150,7 @@ function SelectField({
 }) {
   return (
     <label className="block rounded-lg border border-rom-border bg-rom-surface2 px-2.5 py-1.5" title={hint}>
-      <div className="text-[9px] uppercase tracking-wider text-rom-dim">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-rom-dim">{label}</div>
       <select
         value={value}
         onChange={(e) => onCommit(e.target.value)}
@@ -1380,7 +1380,7 @@ function SideBox({
 function Foot({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-rom-surface px-2 py-2">
-      <div className="text-[9px] uppercase tracking-wider text-rom-dim">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-rom-dim">{label}</div>
       <div className="mt-0.5 font-mono text-white">{value}</div>
     </div>
   );
