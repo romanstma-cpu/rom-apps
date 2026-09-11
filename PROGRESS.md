@@ -264,3 +264,21 @@ guards the whole class.
   84795A6337DF5EE462005AE82CCDB1747AABA22CFE132ACEA09984E57124EAE5.
 - **Not published.** Still no git remote on this repo, the rom-apps site repo
   is not on this machine, and `build.publish` is null.
+
+## 2.14.2 built, NOT published (2026-09-11)
+- Point release over 2.14.1 carrying a full interface measurement-and-fix pass
+  and three backend failure-mode closures.
+- Interface: all sub-11px text raised, Terminal contrast ramp fixed (--dim and
+  --dimmer now clear 4.5:1), loss/indigo text shades added (106 call sites),
+  type/spacing/radius scales unified, duplicate timestamps stripped from trade
+  log, Guide rewritten, shared Field component, Scripts toggle enlarged.
+- Backend: cancel_pending journaling discipline, attach_exchange_id raises
+  RecoveryRequired instead of raw IntegrityError, require_entry_depth validated.
+- Probe: `npm run check:ui` drives the packaged app and measures contrast,
+  type scale, spacing, radii, hit targets, accessible names, overflow.
+- Verification: Python 1831 collected / 1692 pass / 139 skip / 0 fail;
+  typecheck clean; e2e 11/13 then 13/13 on re-run (kill-switch and
+  order-recovery are timing-flaky, not regressions); 58 locators no drift.
+- Installer `release/ROM PolyBot-Setup-2.14.2.exe` (92.2 MB), SHA-256
+  E534DB4393A294BC978ECB49F04FDAB2D81B495BDB9A786AC60FA02A8010DCC5.
+- **Not published.** Still no git remote; rom-apps site repo not on this machine.

@@ -76,6 +76,13 @@ execution remains unverified.** No livecheck stage has yet run against a real
 Polymarket US account; stage 5 preflight was run and stopped at the credential
 check, as designed.
 
+## Superseded by 2.14.2
+
+2.14.1 was built but never published. Its installer has been replaced in
+`release/` by 2.14.2, which contains everything here plus an interface pass
+and three backend fixes. The checksum below still describes the 2.14.1 binary
+correctly; that binary is no longer on disk. Read REVIEW-2.14.2.md instead.
+
 ## Installer
 
 The installer is `release/ROM PolyBot-Setup-2.14.1.exe` (92.2 MB). Close
