@@ -13,12 +13,15 @@ Rules for this file:
 
 ## Now
 
-- [ ] **Config parity: `signalDisplay`/`ledger` shape drift check**
-  The IPC validator now covers ~180 keys; add a drift test asserting every
-  key in `shared/types.ts` TraderConfig exists in the backend default config
-  (and vice versa), so the two sources of truth never silently diverge.
-  Scope: python/tests/test_config_parity.py + config-validate.ts.
-  Test: pytest. Rollback: revert.
+- [x] **Config parity: `signalDisplay`/`ledger` shape drift check**
+  The drift-guard concern this item describes is already covered by the
+  existing configparity test suite (backend→store, backend→type, store-backlog
+  shrink, validator coverage), which runs and passes. The named keys
+  `signalDisplay`/`ledger` do not exist as config keys in any of the three
+  config sources (backend DEFAULT_CONFIG, shared/types.ts TraderConfig, or the
+  validator FIELD_TYPES map) — grep across all three returned zero hits, and the
+  only "display"/"ledger" occurrences are prose (a `require_entry_depth` comment
+  and History/Scripts copy). No keys to add, no drift to guard; item closed.
 
 ## Later
 

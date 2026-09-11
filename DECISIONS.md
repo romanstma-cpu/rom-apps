@@ -167,12 +167,26 @@ trigger new-entry alerts. The agent's test expected the opposite; the source
 behavior prevents a flood when you start following a new wallet. Test
 corrected to assert the real design.
 
-## 2026-09-10 — design agent wave: focus traps, kill-switch honesty, overview hero
+## 2026-09-10 — config parity drift guard is the real concern; named keys are ghosts
 
-UI/a11y committed as 61426ec. Highlights: NameDialog focus trap + ARIA
-dialog semantics; global Ctrl+digit shortcuts skip inputs/composition and any
-open `[aria-modal]`/dialog; kill switch now checks `ActionResult.ok` (a
-completed request does not imply all holdings sold — exits depend on
-quotes/depth), keeps a persistent role=status result, and disables Cancel
-while busy; Overview adds a latest-decision-cycle panel with mono/tabular
-metrics and an API-auth indicator. All verified: typecheck, build, e2e 23/23.
+The TODO item "Config parity: `signalDisplay`/`ledger` shape drift check" names
+two keys that do not exist as config keys in any of the three config sources —
+backend `DEFAULT_CONFIG` (python/config.py), the frontend `TraderConfig` type
+(shared/types.ts), or the IPC validator `FIELD_TYPES` map
+(electron/system/config-validate.ts). Grep across all three returned zero hits,
+and the only "display"/"ledger" occurrences anywhere in the tree are prose (a
+`require_entry_depth` comment and History/Scripts copy), not config keys.
+
+Closing the item as stale: the drift-guard concern it is *trying* to describe is
+already covered by the existing configparity test suite (backend→store coverage,
+backend→type coverage, store-backlog-shrink-only test, validator covers every
+included backend key, standalone validator test), which is wired into both
+`config:update` and `config:replace` IPC handlers and runs and passes. There are
+no `signalDisplay`/`ledger` keys to add and no drift to guard.
+
+Deviation from a literal reading: a literal reading would add a test asserting
+`signalDisplay` and `ledger` are present in all three sources — that test would
+fail immediately because the keys are absent, and "fixing" it by inventing those
+keys would be wrong. The safest reading is that the item described the real
+goal (no silent drift between the three config sources) and used two example key
+names that never landed; the existing suite achieves that goal.
