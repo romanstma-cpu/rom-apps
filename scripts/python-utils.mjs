@@ -87,5 +87,9 @@ export function ensureVenv({ force = false } = {}) {
   }
   console.log('>> Installing Python deps into venv (one-time, ~30s)');
   run(VENV_PY, ['-m', 'pip', 'install', '--upgrade', 'pip', 'wheel', '--disable-pip-version-check']);
-  run(VENV_PY, ['-m', 'pip', 'install', '-r', 'requirements.txt', '--disable-pip-version-check']);
+  // macOS source builds can link to the runner's Homebrew OpenSSL, which
+  // conflicts with the Python runtime's libssl when PyInstaller bundles them.
+  run(VENV_PY, ['-m', 'pip', 'install', '-r', 'requirements.txt',
+    ...(process.platform === 'darwin' ? ['--only-binary=cryptography'] : []),
+    '--disable-pip-version-check']);
 }
