@@ -96,8 +96,62 @@ function drawCard(ctx: CanvasRenderingContext2D, sprite: HTMLImageElement, frame
   ctx.restore();
 }
 
-export function FlexStatsCard({ onClose }: { onClose: () => void }) {
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+function useFocusTrap(open: boolean, containerRef: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    if (!open || !containerRef.current) return;
+
+    const el = containerRef.current;
+    const prevFocus = document.activeElement as HTMLElement | null;
+
+    // Focus first focusable element in the dialog on open
+    const first = el.querySelector<HTMLElement>(FOCUSABLE);
+    first?.focus();
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Let the caller handle close via onClose
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      const nodes = el.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+
+    // Disable scroll behind the dialog
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+      prevFocus?.focus();
+    };
+  }, [open, containerRef]);
+}
+
+  export function FlexStatsCard({ onClose }: { onClose: () => void }) {
+
   const { account, positions } = useApp();
+  const cardRef = useRef<HTMLDivElement>(null);
+
+
   const toast = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [sprite, setSprite] = useState<HTMLImageElement | null>(null);
@@ -158,9 +212,17 @@ export function FlexStatsCard({ onClose }: { onClose: () => void }) {
     }, 'image/png');
   };
 
+  useFocusTrap(true, cardRef);
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm" onMouseDown={onClose}>
-      <div className="flex flex-col items-center gap-4" onMouseDown={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Shareable stats"
+      onMouseDown={onClose}
+    >
+      <div ref={cardRef} className="flex flex-col items-center gap-4" onMouseDown={(e) => e.stopPropagation()}>
         <canvas
           ref={canvasRef}
           width={W}

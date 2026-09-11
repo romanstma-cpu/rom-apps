@@ -5,6 +5,58 @@ import { useApp } from '../state/AppStateProvider';
 import { useToast } from '../state/ToastProvider';
 import { Card, Page, Section, Switch } from '../components/common';
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function useFocusTrap(open: boolean, containerRef: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    if (!open || !containerRef.current) return;
+
+    const el = containerRef.current;
+    const prevFocus = document.activeElement as HTMLElement | null;
+
+    // Focus first focusable element in the dialog on open
+    const first = el.querySelector<HTMLElement>(FOCUSABLE);
+    first?.focus();
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Let the caller handle close via onClose
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      const nodes = el.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+
+    // Disable scroll behind the dialog
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+      prevFocus?.focus();
+    };
+  }, [open, containerRef]);
+}
+
+
 export function SettingsPage() {
   const { config, refresh, state, backend } = useApp();
   const toast = useToast();
@@ -108,6 +160,8 @@ function DangerZone({
   const toast = useToast();
 
   const [showModal, setShowModal] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(showModal, modalRef);
   const [phrase, setPhrase] = useState('');
 
   const openModal = (): void => {
@@ -181,9 +235,13 @@ function DangerZone({
       {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm full reset"
           onClick={cancel}
         >
           <div
+            ref={modalRef}
             className="w-full max-w-md rounded-2xl border border-rose-500/50 bg-rom-panel p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -246,6 +304,7 @@ function UrlField({
   const [text, setText] = useState(value);
   const focused = useRef(false);
   useEffect(() => { if (!focused.current) setText(value); }, [value]);
+
   return (
     <div>
       <label className="rom-label">{label} webhook</label>

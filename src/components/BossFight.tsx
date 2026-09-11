@@ -3,6 +3,57 @@ import { X, Swords } from 'lucide-react';
 import { useApp } from '../state/AppStateProvider';
 import spriteUrl from '../assets/rom-mark.png';
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function useFocusTrap(open: boolean, containerRef: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    if (!open || !containerRef.current) return;
+
+    const el = containerRef.current;
+    const prevFocus = document.activeElement as HTMLElement | null;
+
+    // Focus first focusable element in the dialog on open
+    const first = el.querySelector<HTMLElement>(FOCUSABLE);
+    first?.focus();
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Let the caller handle close via onClose
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      const nodes = el.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+
+    // Disable scroll behind the dialog
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+      prevFocus?.focus();
+    };
+  }, [open, containerRef]);
+}
+
 const MIL = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
 const NAMES = [
   'Slimeling', 'Gnawbat', 'Penny Wraith', 'Bench Golem', 'Margin Imp',
@@ -162,6 +213,8 @@ function BossArena({ onClose, sprite }: { onClose: () => void; sprite: HTMLImage
   const g = gameState(pnl);
   const gRef = useRef(g); gRef.current = g;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(true, containerRef);
 
   useEffect(() => {
     if (!sprite) return;
@@ -183,12 +236,19 @@ function BossArena({ onClose, sprite }: { onClose: () => void; sprite: HTMLImage
   const toGo = next == null ? 0 : Math.max(0, next - pnl);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm" onMouseDown={onClose}>
       <div
-        className="w-full max-w-2xl rounded-2xl border border-rom-border bg-rom-surface p-5 shadow-rom-strong"
-        onMouseDown={(e) => e.stopPropagation()}
+        className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Boss Fight"
+        onMouseDown={onClose}
       >
-        <div className="mb-3 flex items-center gap-2">
+        <div
+          ref={containerRef}
+          className="w-full max-w-2xl rounded-2xl border border-rom-border bg-rom-surface p-5 shadow-rom-strong"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="mb-3 flex items-center gap-2">
           <Swords className="h-5 w-5 text-rom-purple" />
           <h3 className="font-pixel text-[11px] uppercase tracking-[0.18em] text-white">Boss Fight</h3>
           <button onClick={onClose} className="rom-btn-ghost ml-auto" aria-label="Close"><X className="h-4 w-4" /></button>
