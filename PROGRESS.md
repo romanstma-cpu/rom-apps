@@ -177,3 +177,27 @@ guards the whole class.
   7696E9E8...) published to romapps.xyz; index.html + code-signing-policy.html
   updated; validator PASS; live checksum 200; live installer byte-identical.
 - Site commit 1a8334a on rom-apps repo.
+
+## Backlog agent wave (2nd wave, 2026-09-10)
+- E2E: history-csv.e2e.mjs (Blob CSV intercept, resolved-only assert) and
+  kill-switch.e2e.mjs (rejected + zero-fill honest feedback) — fixed
+  selectors: Trade-history tab has count badge, Dashboard is under
+  Advanced tools. Committed f02d53e.
+- A11y: audited Accounts/RiskLimits — no new overlays (Accounts uses
+  trapped NameDialog; RiskLimits is inline form). No change needed.
+- Icon: verified resources/rom.ico is pixel-perfect from rom.png; installer
+  + exe embed matching icon. No change needed.
+- DISPLAY ORIGINAL / manual main-strategy display toggle: audited the full
+  src/ tree (and package.json) for every spelling — zero hits; the legacy
+  path does not survive in the current codebase; no fix or regression test
+  needed; item closed.
+
+## 2.13.1 published (2026-09-10)
+- Focus traps for all remaining overlays (BossFight/Scripts/Settings/
+  FlexStatsCard); fixed startup crash (useApp at module scope) — d6fb3e8
+- Positions virtualization — f105792 (agent)
+- Config parity drift test (3-way) — 4022417 (agent)
+- arming e2e clickText retry (cold-start race) — d6fb3e8
+- Installer 2.13.1: SHA 3450096E0C45D0FA1C65F032B5AEFC6C56AD221BC231D3CF9036DF0636DBD71A
+  published to romapps.xyz (site commit aedf39d); live byte-identical.
+- Python 1538 pass, all 9 e2e suites green.

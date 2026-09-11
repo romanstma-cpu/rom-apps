@@ -15,6 +15,58 @@ import { cls, fmtUsd } from '../utils/format';
 const ScriptEditor = lazy(() =>
   import('../components/ScriptEditor').then((m) => ({ default: m.ScriptEditor })));
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function useFocusTrap(open: boolean, containerRef: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    if (!open || !containerRef.current) return;
+
+    const el = containerRef.current;
+    const prevFocus = document.activeElement as HTMLElement | null;
+
+    // Focus first focusable element in the dialog on open
+    const first = el.querySelector<HTMLElement>(FOCUSABLE);
+    first?.focus();
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Let the caller handle close via onClose
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      const nodes = el.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+
+    // Disable scroll behind the dialog
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+      prevFocus?.focus();
+    };
+  }, [open, containerRef]);
+}
+
+
 const NEW_SCRIPT_TEMPLATE = `# rom-script v1
 # name: My Strategy
 # description: Describe what this strategy does.
@@ -78,6 +130,8 @@ export function ScriptsPage() {
   const [logs, setLogs] = useState<Record<string, string[]>>({});
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [armModal, setArmModal] = useState(false);
+  const armRef = useRef<HTMLDivElement>(null);
+  const packRef = useRef<HTMLDivElement>(null);
 
   const [audit, setAudit] = useState<ScriptAudit | null>(null);
   const [packText, setPackText] = useState<string | null>(null);
@@ -359,6 +413,9 @@ export function ScriptsPage() {
 
   const selLogs = sel ? (logs[sel.id] ?? []) : [];
 
+  useFocusTrap(armModal && !!sel, armRef);
+  useFocusTrap(showPack, packRef);
+
   return (
     <Page
       title="Scripts"
@@ -635,8 +692,14 @@ export function ScriptsPage() {
       </div>
 
       {armModal && sel && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onMouseDown={() => setArmModal(false)}>
-          <div className="w-full max-w-md rounded-xl border border-rom-loss/50 bg-rom-surface p-5" onMouseDown={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Arm script ${sel.name}`}
+          onMouseDown={() => setArmModal(false)}
+        >
+          <div ref={armRef} className="w-full max-w-md rounded-xl border border-rom-loss/50 bg-rom-surface p-5" onMouseDown={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2 text-rom-loss">
               <Zap className="h-5 w-5" />
               <h3 className="text-sm font-semibold">Arm “{sel.name}” for real orders?</h3>
@@ -700,8 +763,14 @@ export function ScriptsPage() {
       )}
 
       {showPack && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onMouseDown={() => setShowPack(false)}>
-          <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl border border-rom-border bg-rom-surface p-5" onMouseDown={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="AI Context Pack"
+          onMouseDown={() => setShowPack(false)}
+        >
+          <div ref={packRef} className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl border border-rom-border bg-rom-surface p-5" onMouseDown={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bot className="h-4 w-4 text-rom-purple" />

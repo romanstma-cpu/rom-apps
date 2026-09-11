@@ -70,17 +70,23 @@ try {
   }
 
   const clickText = async (t) => {
-    const hit = await page.evaluate((txt) => {
-      const els = [...document.querySelectorAll('button, a, [role="button"]')];
-      const el = els.find((e) => (e.textContent || '').trim() === txt)
-              ?? els.find((e) => (e.textContent || '').includes(txt));
-      if (!el) return false;
-      el.click();
-      return true;
-    }, t);
-    if (!hit) throw new Error(`control not found: ${JSON.stringify(t)}`);
-    return true;
-  };
+      // Retry up to ~6s: cold Electron starts are slow with the larger bundle
+      // and the sidebar/buttons may not be in the DOM on the first attempt.
+      const deadline = Date.now() + 6000;
+      while (Date.now() < deadline) {
+        const hit = await page.evaluate((txt) => {
+          const els = [...document.querySelectorAll('button, a, [role="button"]')];
+          const el = els.find((e) => (e.textContent || '').trim() === txt)
+                  ?? els.find((e) => (e.textContent || '').includes(txt));
+          if (!el) return false;
+          el.click();
+          return true;
+        }, t);
+        if (hit) return true;
+        await sleep(250);
+      }
+      throw new Error(`control not found: ${JSON.stringify(t)}`);
+    };
 
   const modalText = () => page.evaluate(
     () => document.querySelector('.fixed.inset-0')?.innerText ?? '');
