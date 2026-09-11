@@ -463,3 +463,56 @@ async def test_exchange_id_already_owned_by_another_intent_is_not_stolen(monkeyp
         journal.attach_verified_order('second', raw_order(marketSlug='market-b'))
     assert journal.get('second')['order_id'] is None
     assert journal.get('first')['order_id'] == 'ex-1'
+
+
+# --- what the operator UI is shown ----------------------------------------
+#
+# blocker() names one row so an engine can refuse and move on. The recovery
+# panel needs every halted intent plus the detail an operator matches against
+# the exchange's order list, so blocked_intents() is its own contract.
+
+def _seed_intent(local_id, state, ticker='m', created=1000.0, order_id=None):
+    with db.get_db() as c:
+        c.execute(
+            "INSERT INTO us_order_intents (local_id, order_id, ticker, side, action,"
+            " quantity, limit_price, reserved_usd, state, created_at, updated_at)"
+            " VALUES (?,?,?,'yes','buy',3,0.42,1.29,?,?,?)",
+            (local_id, order_id, ticker, state, created, created),
+        )
+
+
+@pytest.mark.parametrize('state', list(journal.BLOCKING_STATES))
+def test_every_blocking_state_is_reported(state):
+    journal.init()
+    _seed_intent('x', state)
+    assert [r['local_id'] for r in journal.blocked_intents()] == ['x']
+    assert journal.blocker() is not None
+
+
+@pytest.mark.parametrize('state', ['filled', 'canceled', 'rejected'])
+def test_terminal_states_are_not_reported(state):
+    journal.init()
+    _seed_intent('x', state)
+    assert journal.blocked_intents() == []
+    assert journal.blocker() is None
+
+
+def test_open_intents_do_not_halt_the_operator_panel():
+    # `open` blocks only a matching ticker/side/action, not the whole adapter,
+    # so it must not appear as something needing recovery.
+    journal.init()
+    _seed_intent('x', 'open', order_id='ex-1')
+    assert journal.blocked_intents() == []
+
+
+def test_reported_oldest_first_with_the_fields_an_operator_needs():
+    journal.init()
+    _seed_intent('newer', 'unknown', ticker='m2', created=2000.0)
+    _seed_intent('older', 'sending', ticker='m1', created=1000.0)
+    rows = journal.blocked_intents()
+    assert [r['local_id'] for r in rows] == ['older', 'newer']
+    assert set(rows[0]) == {
+        'local_id', 'order_id', 'ticker', 'side', 'action', 'quantity',
+        'limit_price', 'reserved_usd', 'state', 'created_at', 'error',
+    }
+    assert rows[0]['ticker'] == 'm1' and rows[0]['quantity'] == 3

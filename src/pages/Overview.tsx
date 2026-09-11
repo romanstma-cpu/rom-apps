@@ -1,10 +1,13 @@
+import { useEffect, useState } from 'react';
 import { ArrowRight, Check, ShieldCheck, SlidersHorizontal, Radio, ScanLine } from 'lucide-react';
+import type { BlockedIntent } from '@shared/types';
 import { Card, Page } from '../components/common';
 import { useApp } from '../state/AppStateProvider';
 import { fmtUsd } from '../utils/format';
 import type { PageId } from '../App';
 import { MainActivity } from '../components/MainActivity';
 import { useStrategyActivity } from '../state/StrategyActivity';
+import { OrderRecovery } from '../components/OrderRecovery';
 
 export function OverviewPage({ onNav }: { onNav: (page: PageId) => void }) {
   const { backend, account, config, positions } = useApp();
@@ -12,7 +15,39 @@ export function OverviewPage({ onNav }: { onNav: (page: PageId) => void }) {
   const connected = backend.authOk;
   const open = positions.filter(p => !p.resolved && ['filled', 'partial', 'submitted'].includes(p.status));
   const practicing = !!config?.mainPaperTrading && !config?.enableTrading;
+  // A halted journal stops every engine with no timeout and no automatic
+  // forget path, so it is polled on the landing page rather than only where
+  // trading status happens to be fetched.
+  const [blockedIntents, setBlockedIntents] = useState<BlockedIntent[]>([]);
+  useEffect(() => {
+    let alive = true;
+    // Replace state only when the set of halted orders actually changes.
+    // Handing back a fresh array every five seconds re-renders the whole page
+    // for nothing, and on a normal run the answer is empty forever.
+    const sameAs = (prev: BlockedIntent[], next: BlockedIntent[]) =>
+      prev.length === next.length
+      && prev.every((a, i) => a.localId === next[i].localId && a.state === next[i].state);
+    const pull = async () => {
+      let next: BlockedIntent[] = [];
+      try {
+        const st = await window.rom.trading.status();
+        next = st?.recovery?.intents ?? [];
+      } catch {
+        // Backend down: other banners already say so, and a stale list here
+        // would claim a halt that may no longer exist.
+        next = [];
+      }
+      if (alive) setBlockedIntents((prev) => (sameAs(prev, next) ? prev : next));
+    };
+    void pull();
+    const t = setInterval(pull, 5000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
   return <Page title="Overview" subtitle="Your account, performance and risk limits." actions={<button className="rom-btn-default" onClick={()=>onNav('evidence')}>Review evidence</button>}>
+      {/* Above everything else: a blocking journal row halts submissions from
+          every engine, and this is the page the user lands on. */}
+      <OrderRecovery intents={blockedIntents} />
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="terminal-command terminal-command-detailed">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-rom-borderHi pb-4 text-xs text-rom-muted">

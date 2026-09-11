@@ -58,11 +58,34 @@ def unresolved():
         return [dict(r) for r in c.execute("SELECT * FROM us_order_intents WHERE state NOT IN ('filled','canceled','rejected')")]
 
 
+BLOCKING_STATES = ('sending', 'unknown', 'cancel_pending', 'accounting_pending')
+
+
 def blocker():
     init()
     with db.get_db() as c:
         r = c.execute("SELECT local_id FROM us_order_intents WHERE state IN ('sending','unknown','cancel_pending','accounting_pending') LIMIT 1").fetchone()
     return f'Order recovery required ({r[0]}); new orders paused' if r else None
+
+
+def blocked_intents():
+    """Every intent currently halting submissions, oldest first.
+
+    `blocker()` names one row so an engine can refuse and move on. An operator
+    needs all of them, plus the identifying detail to match each against the
+    exchange's own order list -- the ticker, side, size and price they would
+    search for -- because recovery requires supplying the real exchange id and
+    `attach_verified_order` refuses a mismatch.
+    """
+    init()
+    with db.get_db() as c:
+        rows = c.execute(
+            "SELECT local_id, order_id, ticker, side, action, quantity, limit_price,"
+            " reserved_usd, state, created_at, error FROM us_order_intents"
+            " WHERE state IN ('sending','unknown','cancel_pending','accounting_pending')"
+            " ORDER BY created_at"
+        ).fetchall()
+    return [dict(r) for r in rows]
 
 
 def begin(local_id, ticker, side, action, quantity, price, position_id=None, exit_reason='exit'):

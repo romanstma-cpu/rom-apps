@@ -11,6 +11,7 @@ import sys
 import traceback
 import us_account_stream
 import main_recorder
+import order_journal
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -1859,7 +1860,31 @@ async def _h_trading_status(_p: dict) -> dict:
         )
 
     c15 = await crypto15m_trader.status(cfg, authed=STATE.auth_ok)
+    # Surfaced so the UI can offer recovery. A blocking intent halts EVERY
+    # engine with no timeout and no automatic forget path, so leaving this
+    # backend-only means an operator's only route out is a console.
+    try:
+        blocked = order_journal.blocked_intents()
+    except Exception:
+        blocked = []
+
     return {
+        "recovery": {
+            "blocked": bool(blocked),
+            "intents": [{
+                "localId": r.get("local_id"),
+                "orderId": r.get("order_id"),
+                "ticker": r.get("ticker"),
+                "side": r.get("side"),
+                "action": r.get("action"),
+                "quantity": r.get("quantity"),
+                "limitPrice": r.get("limit_price"),
+                "reservedUsd": r.get("reserved_usd"),
+                "state": r.get("state"),
+                "createdAt": r.get("created_at"),
+                "error": r.get("error"),
+            } for r in blocked],
+        },
         "main": main,
         "mainMode": mode,
         "mainState": main_state,

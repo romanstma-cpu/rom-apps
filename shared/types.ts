@@ -640,7 +640,28 @@ export interface TradingGate {
   reason: string;
 }
 
+/** An order intent whose outcome the journal cannot prove. */
+export interface BlockedIntent {
+  localId: string;
+  orderId: string | null;
+  ticker: string;
+  side: string;
+  action: string;
+  quantity: number;
+  limitPrice: number;
+  reservedUsd: number;
+  state: 'sending' | 'unknown' | 'cancel_pending' | 'accounting_pending';
+  createdAt: number;
+  error: string | null;
+}
+
 export interface TradingStatus {
+  /**
+   * Any intent here halts submissions from every engine until an operator
+   * links it to its real exchange order. There is no timeout and no automatic
+   * forget path, so the UI must offer a way out.
+   */
+  recovery: { blocked: boolean; intents: BlockedIntent[] };
   main: TradingGate[];
   mainMode: 'paused' | 'paper' | 'live';
   mainState: 'paused' | 'scanning' | 'waiting' | 'blocked';
