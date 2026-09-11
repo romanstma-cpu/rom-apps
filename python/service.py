@@ -1836,7 +1836,11 @@ async def _h_trading_status(_p: dict) -> dict:
         g for g in main if g["state"] == "blocked" and g["id"] != "cycle"
     ]
     if mode == "paused":
-        main_state, main_summary = "paused", "The main strategy is paused."
+        # The headline above this already reads "Main strategy: paused", so
+        # restating it spent the only line that could tell the user what to do.
+        main_state = "paused"
+        main_summary = ("Nothing will be submitted until you start practice or "
+                        "live mode on the Strategy page.")
     elif hard_blocks:
         main_state = "blocked"
         main_summary = hard_blocks[0].get("reason") or hard_blocks[0]["label"]
