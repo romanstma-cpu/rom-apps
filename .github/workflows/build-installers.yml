@@ -13,7 +13,7 @@ name: Build Installers
 # python/rom-polybot-backend.spec, incl. the --selftest gate) + electron-builder.
 on:
   push:
-    branches: [main, build]
+    branches: [main, build, codex/polybot-macos]
   workflow_dispatch: {}
 
 # contents: write is required to create the release and upload installer assets.
@@ -26,13 +26,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            name: linux            # AppImage + deb
-          - os: windows-latest
-            name: windows          # nsis .exe
-          - os: macos-13
+          - os: macos-15-intel
             name: mac-intel        # x64 .dmg
-          - os: macos-latest
+          - os: macos-15
             name: mac-apple-silicon # arm64 .dmg
     runs-on: ${{ matrix.os }}
     steps:
@@ -41,7 +37,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -49,7 +45,10 @@ jobs:
           python-version: '3.11'
 
       - name: Install Node dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Check types
+        run: npm run typecheck
 
       - name: Build app, bundle backend, package installer
         run: npm run dist
@@ -59,6 +58,15 @@ jobs:
           # > Open the first time). No-op on Linux/Windows.
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
+      - name: Verify packaged backend and installer
+        shell: bash
+        run: |
+          APP=$(find release -maxdepth 3 -name 'ROM PolyBot.app' -type d | head -1)
+          test -n "$APP"
+          "$APP/Contents/Resources/python/rom-polybot-backend" --selftest
+          hdiutil verify release/*.dmg
+          shasum -a 256 release/*.dmg > release/SHA256SUMS-${{ matrix.name }}.txt
+
       # Publish installers as assets on a per-run prerelease. Each matrix job
       # uploads only its own platform's files to the shared tag; concurrent jobs
       # are safe because softprops creates-or-updates the release idempotently
@@ -67,9 +75,10 @@ jobs:
       - name: Publish installers to a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
+          tag_name: polybot-mac-${{ github.run_number }}
           name: CI build ${{ github.run_number }} (${{ github.sha }})
           prerelease: true
+          make_latest: false
           body: >
             Unsigned CI installers built from ${{ github.sha }}.
             Windows: SmartScreen "More info → Run anyway". macOS: unsigned —
@@ -79,3 +88,4 @@ jobs:
             release/*.deb
             release/*.exe
             release/*.dmg
+            release/SHA256SUMS-*.txt

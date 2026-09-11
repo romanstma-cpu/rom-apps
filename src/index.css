@@ -153,4 +153,9 @@ button {
 }
 
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #6ea8fe; outline-offset: 3px; }
+/* Keep compact terminal controls usable without increasing card density. */
+main button, main select, main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) { min-height: 28px; }
+main button { min-width: 28px; }
+main input[type="checkbox"], main input[type="radio"] { min-width: 18px; min-height: 18px; }
+main summary { padding-block: 6px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }

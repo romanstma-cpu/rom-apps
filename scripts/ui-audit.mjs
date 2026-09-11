@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const OUT = process.env.SHOTS;
+const OUT = process.env.SHOTS || path.resolve('.work', 'ui-audit');
 fs.mkdirSync(OUT, {recursive: true});
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rom-uiaudit-'));
 for (const d of ['Roaming', 'Local']) fs.mkdirSync(path.join(root, d));
