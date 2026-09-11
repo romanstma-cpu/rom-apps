@@ -36,6 +36,7 @@ import sys
 import order_journal
 import polymarket_api as api
 
+from . import safety
 from .stages import stage5_live_order as stage5
 
 
@@ -61,8 +62,16 @@ async def _amain(args):
               'and which journal to use.', file=sys.stderr)
         return 2
 
+    # Preflight is read-only, but it should not be read-only merely because
+    # the control flow happens to return before the send. Arm the same
+    # interlock the read-only stages run under, so a mutation here is refused
+    # rather than relying on this function's shape staying correct.
     print('Preflight (nothing is sent during this):')
-    checks, plan = await stage5.preflight()
+    disarm = safety.arm()
+    try:
+        checks, plan = await stage5.preflight()
+    finally:
+        disarm()
     for check in checks:
         print(_line(check))
 
