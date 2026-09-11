@@ -87,6 +87,10 @@ guards the whole class.
   trapped NameDialog; RiskLimits is inline form). No change needed.
 - Icon: verified resources/rom.ico is pixel-perfect from rom.png; installer
   + exe embed matching icon. No change needed.
+- DISPLAY ORIGINAL / manual main-strategy display toggle: audited the full
+  src/ tree (and package.json) for every spelling — zero hits; the legacy
+  path does not survive in the current codebase; no fix or regression test
+  needed; item closed.
 
 ## 2.13.1 published (2026-09-10)
 - Focus traps for all remaining overlays (BossFight/Scripts/Settings/
