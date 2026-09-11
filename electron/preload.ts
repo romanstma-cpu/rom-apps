@@ -69,7 +69,8 @@ const api: ROMApi = {
     stop: () => ipcRenderer.invoke('backend:stop'),
     restart: () => ipcRenderer.invoke('backend:restart'),
     onInfo: (cb) => sub<BackendInfo>('backend:info', cb),
-    runOnce: (action) => ipcRenderer.invoke('backend:runOnce', action),
+    runOnce: (action: string, payload?: unknown) =>
+      ipcRenderer.invoke('backend:runOnce', action, payload),
   },
   trading: {
     calibration: () => ipcRenderer.invoke('trading:calibration'),

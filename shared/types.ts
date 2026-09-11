@@ -907,17 +907,28 @@ export interface ROMApi {
     stop: () => Promise<ActionResult>;
     restart: () => Promise<ActionResult>;
     onInfo: (cb: (info: BackendInfo) => void) => () => void;
-    runOnce: (
-      action:
-        | 'syncMarkets'
-        | 'pollOrders'
-        | 'resolveAll'
-        | 'reconcilePositions'
-        | 'syncPositions'
-        | 'recomputePnl'
-        | 'reconcileFills'
-        | 'auditPnl'
-    ) => Promise<ActionResult<{ summary: string }>>;
+    runOnce: {
+      /**
+       * Link a stuck local intent to its real exchange order. This is the
+       * operator escape hatch for a journal row in sending/unknown, which
+       * blocks submissions from every engine until it is cleared.
+       */
+      (
+        action: 'recoverOrder',
+        payload: { localOrderId: string; exchangeOrderId: string },
+      ): Promise<ActionResult<{ summary: string; state: string }>>;
+      (
+        action:
+          | 'syncMarkets'
+          | 'pollOrders'
+          | 'resolveAll'
+          | 'reconcilePositions'
+          | 'syncPositions'
+          | 'recomputePnl'
+          | 'reconcileFills'
+          | 'auditPnl',
+      ): Promise<ActionResult<{ summary: string }>>;
+    };
   };
   trading: {
     calibration: () => Promise<SignalCalibrationReport>;

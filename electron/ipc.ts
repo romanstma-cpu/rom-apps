@@ -83,6 +83,12 @@ async function pushConfigToBackend(): Promise<void> {
   } catch (e) {}
 }
 
+const RUN_ONCE_ACTIONS = new Set([
+  'syncMarkets', 'pollOrders', 'resolveAll', 'reconcilePositions',
+  'syncPositions', 'recomputePnl', 'reconcileFills', 'auditPnl',
+  'recoverOrder',
+]);
+
 export function registerIpc(): void {
   ipcMain.handle('app:version', () => app.getVersion());
   ipcMain.handle('app:openExternal', async (_e, url: string) => {
@@ -374,10 +380,32 @@ export function registerIpc(): void {
     await pythonBackend.restart();
     return ok();
   });
-  ipcMain.handle('backend:runOnce', async (_e, action: string) => {
+  ipcMain.handle('backend:runOnce', async (_e, action: string, payload?: unknown) => {
     if (!pythonBackend.isRunning()) return err('Backend not running');
+    if (typeof action !== 'string' || !RUN_ONCE_ACTIONS.has(action)) {
+      return err('Unknown action');
+    }
+    // Only recoverOrder carries arguments, and the backend indexes them
+    // directly. Build the request from validated fields rather than
+    // forwarding the renderer's object, so nothing else can reach the
+    // backend through this channel.
+    const request: Record<string, unknown> = { action };
+    if (action === 'recoverOrder') {
+      const ids = (payload ?? {}) as Record<string, unknown>;
+      const localOrderId = typeof ids.localOrderId === 'string' ? ids.localOrderId.trim() : '';
+      const exchangeOrderId =
+        typeof ids.exchangeOrderId === 'string' ? ids.exchangeOrderId.trim() : '';
+      if (!localOrderId || !exchangeOrderId) {
+        return err('Recovery needs both the local order ID and the exchange order ID');
+      }
+      if (localOrderId.length > 200 || exchangeOrderId.length > 200) {
+        return err('Order IDs are too long');
+      }
+      request.localOrderId = localOrderId;
+      request.exchangeOrderId = exchangeOrderId;
+    }
     try {
-      const data = await pythonBackend.request('runOnce', { action });
+      const data = await pythonBackend.request('runOnce', request);
       return ok(data, (data as any)?.summary || 'Done');
     } catch (e: any) {
       return err(`${e?.message || e}`);

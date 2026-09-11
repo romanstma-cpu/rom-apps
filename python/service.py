@@ -1344,7 +1344,14 @@ async def _h_runOnce(p: dict) -> dict:
     action = (p or {}).get("action")
     if action == 'recoverOrder':
         import polymarket_api
-        evidence = await polymarket_api.recover_order(p['localOrderId'], p['exchangeOrderId'])
+        # Indexing raised KeyError for a caller that omitted either id, which
+        # surfaced as an opaque backend crash. An operator reaches this handler
+        # while trading is already halted, so it must fail legibly.
+        local_id = str((p or {}).get('localOrderId') or '').strip()
+        exchange_id = str((p or {}).get('exchangeOrderId') or '').strip()
+        if not local_id or not exchange_id:
+            raise ValueError('Recovery needs both localOrderId and exchangeOrderId')
+        evidence = await polymarket_api.recover_order(local_id, exchange_id)
         await trader.poll_open_orders(STATE.cfg)
         return {'summary': 'Order linked and reconciled', 'state': evidence['state']}
     if action == "syncMarkets":
