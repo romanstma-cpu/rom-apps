@@ -1,5 +1,56 @@
 # ROM Polybot — session progress
 
+## Current state (2026-09-11, public-readiness wave)
+- **Python:** 1668 pass, 139 skipped
+- **E2E:** 10/10 suites pass  **Typecheck:** clean  **Drift:** clean
+- **Branch:** claude/polymarket-bot-orchestrator-5f788e
+- **Commits:** 050b835, 2783435, aca551e, 7f859ed, 6a5a700 + copy fixes
+
+### UI audit (050b835)
+All 19 pages driven with Playwright and measured, not read. Four switches
+had no accessible name — unlimited daily new positions, sell out on daily
+loss, restrict trading to a weekly window, and Scripts live, the master
+switch for real orders. All four came from `Field` rendering its label as a
+sibling. `SwitchProps` is now a union requiring `label` or `ariaLabel`, so an
+unnamed switch fails typecheck. Legibility floor was 8px in Terminal's inline
+stylesheet at roughly 2.8:1; every sub-10px declaration is now 10px on a
+lighter token. Onboarding led with a $50 referral in a gradient card while
+"automated trading can lose money" was an unstyled paragraph and ROM's own
+referral interest was the smallest text on screen; risk now leads with equal
+weight.
+
+### Order recovery is reachable from the app (2783435)
+A blocking journal row halts every engine with no timeout and no forget path,
+and nothing in the renderer ever called the recovery IPC. `blocked_intents()`
+feeds trading status; the panel sits at the top of Overview. Its e2e seeds a
+real `sending` row into the backend's own SQLite and drives the whole chain —
+window.rom is frozen by contextBridge, so a renderer stub would have proven
+only a mock.
+
+### Two risk controls made honest (aca551e)
+UPGRADE-5's cap read `bot_positions` alone while calling itself account-wide;
+GROUP_SQL now unions `crypto15m_positions`. UPGRADE-7 promised exit size is
+bounded by displayed depth, but an empty ladder fell back to the whole
+position; a touch without a ladder is not evidence of size. Both changes
+tighten only. Still open and recorded: crypto15m and copy_trader count toward
+the cap but do not consult it.
+
+### Livecheck stages 1-4 (7f859ed, 6a5a700)
+Stage 1 checks the response fields the adapter indexes, including whether an
+empty account returns `{}` or omits `positions` — the difference between
+working and a 502 on every poll. Stage 2 measures the clock-skew gate that can
+silently kill momentum. Stage 3 checks the ladders sizing depends on,
+including the NO mirror. Stage 4 builds the real payload, proves the journal
+commit precedes the POST, and stops; it borrows the interlock and hands it
+back, and 7 tests pin that it cannot send, cannot leave a blocking row, and
+cannot touch the real database.
+
+### Not done, deliberately
+No stage has been run against a real account — that needs credentials and is
+the user's call. Stage 5 (a single live order) is unbuilt by design.
+
+---
+
 ## Current state (2026-09-10, live-validation wave — recon + repairs)
 - **Python:** 1584 pass, 139 skipped (+49)
 - **Typecheck:** clean  **E2E drift:** clean (54 locators, no drift)
