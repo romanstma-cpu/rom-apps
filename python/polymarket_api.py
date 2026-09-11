@@ -341,6 +341,8 @@ async def place_limit_order(*,ticker,side,action,count,price_cents,client_order_
 async def cancel_order(order_id):
     order=(await get_order(order_id))['order']
     with order_journal.db.get_db() as c:
+        c.execute('PRAGMA synchronous=FULL')
+        c.execute('BEGIN IMMEDIATE')
         c.execute("UPDATE us_order_intents SET state='cancel_pending' WHERE order_id=? AND state NOT IN ('filled','canceled','rejected')",(order_id,))
     await _request('POST','/v1/order/'+quote(order_id,safe='')+'/cancel',private=True,body={'marketSlug':order['marketSlug']})
     confirmed=(await get_order(order_id))['order']
