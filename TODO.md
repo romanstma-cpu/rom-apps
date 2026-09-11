@@ -13,23 +13,38 @@ Rules for this file:
 
 ## Now
 
-- [ ] **Automated e2e coverage for CSV export and kill switch path**
-  History CSV export and the Dashboard kill-switch flow are covered by
-  manual/terminal e2e but not as standalone suites. Add `e2e/history-csv.e2e.mjs`
-  and fold kill-switch feedback assertions into the paper-activity suite.
-    Scope: e2e/* only. Test: node e2e/<file>.e2e.mjs. Rollback: revert.
+- [ ] **Config parity: `signalDisplay`/`ledger` shape drift check**
+  The IPC validator now covers ~180 keys; add a drift test asserting every
+  key in `shared/types.ts` TraderConfig exists in the backend default config
+  (and vice versa), so the two sources of truth never silently diverge.
+  Scope: python/tests/test_config_parity.py + config-validate.ts.
+  Test: pytest. Rollback: revert.
 
 ## Later
 
-- [ ] **Focus trap for remaining modals**
-  OnboardingModal, NameDialog done. Apply the same pattern to RiskLimits
-  and Accounts full-screen overlays if they ever become dialogs.
-- [ ] **Window icon .ico regeneration**
-  The installer bundles an icon; confirm the generated .ico matches the
-  current ROM branding (visual check, not code).
+- [ ] **Focus trap for remaining dialogs**
+  OnboardingModal, NameDialog done. `BossFight.tsx` (line 186),
+  `Scripts.tsx` (637, 702), `Settings.tsx` (183), `FlexStatsCard.tsx` (162)
+  still have fixed inset-0 overlays without the trap. Apply same pattern.
+- [ ] **Performance: virtualize Positions table**
+  Positions page renders all rows; add windowing when >200 in the active
+  filter. Scope: src/pages/Positions.tsx. Test: e2e positions suite.
+  Rollback: revert.
 
 ## Done
 
+- [x] E2E: automated CSV export (history-csv.e2e.mjs) + kill-switch feedback
+      (kill-switch.e2e.mjs) — committed f02d53e
+- [x] Focus trap audit — Accounts uses shared NameDialog (already trapped);
+      RiskLimits has no overlays. No changes needed (agent verified)
+- [x] Window icon verification — resources/rom.ico is pixel-perfect LANCZOS
+      downscale of rom.png; installer/exe embed matching icon; no change needed
+- [x] 2.13.0 published to romapps.xyz (site commit 1a8334a); live installer
+      byte-identical, checksum 200
+- [x] Design+a11y wave: modal focus traps, dashboard kill-switch honesty,
+      overview hero (61426ec)
+- [x] Indicator/clob/copy-trader edge cases + 183 tests (a42283b)
+- [x] Backtest pure-helper units (af06eda)
 - [x] Dark-mode audit: sidebar bg-[#0E1520] → rom.sidebar token
 - [x] Security: IPC config validation (config-validate.ts + test;
       config:update/replace reject bad shapes, NaN/Inf, wrong enums)

@@ -77,3 +77,13 @@ guards the whole class.
   7696E9E8...) published to romapps.xyz; index.html + code-signing-policy.html
   updated; validator PASS; live checksum 200; live installer byte-identical.
 - Site commit 1a8334a on rom-apps repo.
+
+## Backlog agent wave (2nd wave, 2026-09-10)
+- E2E: history-csv.e2e.mjs (Blob CSV intercept, resolved-only assert) and
+  kill-switch.e2e.mjs (rejected + zero-fill honest feedback) — fixed
+  selectors: Trade-history tab has count badge, Dashboard is under
+  Advanced tools. Committed f02d53e.
+- A11y: audited Accounts/RiskLimits — no new overlays (Accounts uses
+  trapped NameDialog; RiskLimits is inline form). No change needed.
+- Icon: verified resources/rom.ico is pixel-perfect from rom.png; installer
+  + exe embed matching icon. No change needed.
