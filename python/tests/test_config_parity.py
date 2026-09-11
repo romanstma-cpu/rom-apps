@@ -11,6 +11,7 @@ These tests compare the three sources directly.
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,7 @@ from config import DEFAULT_CONFIG, merge_with_defaults
 REPO = Path(__file__).resolve().parents[2]
 STORE = REPO / "electron" / "system" / "settings-store.ts"
 TYPES = REPO / "shared" / "types.ts"
+VALIDATOR = REPO / "electron" / "system" / "config-validate.ts"
 
 # Backend-only keys: internal tuning or runtime state with no UI control.
 # Anything listed here must be genuinely unreachable from the renderer —
@@ -52,12 +54,23 @@ def camel(name: str) -> str:
     return head + "".join(p.title() for p in rest)
 
 
+def _strip_comments_and_strings(source: str) -> str:
+    """Blank out //, /* */ and quoted strings so embedded braces don't fool the
+    depth tracker and quoted keys aren't read as real keys."""
+    return re.sub(
+        r"//[^\n]*|/\*.*?\*/|'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\""
+        r"|`(?:\\.|[^`\\])*`",
+        "", source, flags=re.DOTALL,
+    )
+
+
 def ts_object_keys(source: str, start_marker: str) -> set[str]:
     """Collect the top-level keys of the object literal after a marker."""
     start = source.index(start_marker)
+    cleaned = _strip_comments_and_strings(source[start:])
     depth = 0
     keys: set[str] = set()
-    for match in re.finditer(r"[{}]|^\s*(\w+)\s*:", source[start:], re.MULTILINE):
+    for match in re.finditer(r"\{|\}|\b(\w+)\s*:", cleaned):
         token = match.group(0).strip()
         if token == "{":
             depth += 1
@@ -81,6 +94,13 @@ def type_keys() -> set[str]:
     start = source.index("interface TraderConfig")
     body = source[start:source.index("\n}", start)]
     return set(re.findall(r"^\s*(\w+)\??:", body, re.MULTILINE))
+
+
+@pytest.fixture(scope="module")
+def validator_keys() -> set[str]:
+    return ts_object_keys(
+        VALIDATOR.read_text(encoding="utf-8"), "FIELD_TYPES"
+    )
 
 
 def test_no_new_key_is_missing_a_desktop_default(store_keys):
@@ -153,3 +173,47 @@ def test_camel_key_from_the_ui_maps_back_to_its_backend_key(key):
 def test_snake_and_camel_conversions_are_inverse():
     for key in DEFAULT_CONFIG:
         assert snake(camel(key)) == key, f"{key} does not survive a round trip"
+
+
+# --- IPC validator parity (electron/system/config-validate.ts FIELD_TYPES) ---
+# The validator is the store's gatekeeper: it silently drops keys it does not
+# know, so a backend key missing from FIELD_TYPES is dropped before it ever
+# reaches the store — the same silent-loss failure the tests above catch.
+# These keys are the ones rendered to the UI, so BACKEND_ONLY /
+# UNDECLARED_IN_STORE apply here exactly as they do above.
+_INCLUDED_CAMEL = {camel(k) for k in DEFAULT_CONFIG
+                   if k not in BACKEND_ONLY and k not in UNDECLARED_IN_STORE}
+_ALL_BACKEND_CAMEL = {camel(k) for k in DEFAULT_CONFIG}
+
+
+def test_validator_covers_every_included_backend_key(validator_keys):
+    """A backend key missing from FIELD_TYPES is silently dropped on write."""
+    missing = sorted(_INCLUDED_CAMEL - set(validator_keys))
+    assert not missing, (
+        "these backend config keys are missing from the FIELD_TYPES map in "
+        f"electron/system/config-validate.ts, so patches setting them are "
+        f"silently dropped: {missing}"
+    )
+
+
+def test_validator_has_no_keys_the_backend_ignores(validator_keys):
+    """A FIELD_TYPES key with no backend counterpart is dead validation."""
+    extra = sorted(set(validator_keys) - _ALL_BACKEND_CAMEL)
+    assert not extra, (
+        "these FIELD_TYPES keys have no backend config counterpart: "
+        f"{extra}"
+    )
+
+
+def test_trader_config_type_covers_every_validator_key(type_keys,
+                                                       validator_keys):
+    """TraderConfig must stay a superset of FIELD_TYPES.
+
+    Every key the validator is willing to accept must also exist in the
+    frontend type, or the two files drift in opposite directions.
+    """
+    missing = sorted(set(validator_keys) - set(type_keys))
+    assert not missing, (
+        "these FIELD_TYPES keys are missing from shared/types.ts "
+        f"TraderConfig: {missing}"
+    )
