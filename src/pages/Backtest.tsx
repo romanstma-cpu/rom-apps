@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { C15_PRESET_CORE } from '@shared/c15Presets';
 import type { CollectionStats, Crypto15mBacktest, TraderConfig } from '@shared/types';
-import { Card, Page, Switch } from '../components/common';
+import { Card, Field, Page, Switch } from '../components/common';
 import { useApp } from '../state/AppStateProvider';
 import { cls, fmtUsd } from '../utils/format';
 
@@ -217,7 +217,7 @@ export function BacktestPage() {
             {busy ? 'Replaying…' : 'Run backtest'}
           </button>
         </div>
-        {err && <p className="mt-2 text-xs text-rom-loss">{err}</p>}
+        {err && <p className="mt-2 text-xs text-rom-lossText">{err}</p>}
       </Card>
 
       <div className="mt-4">
@@ -271,7 +271,7 @@ export function BacktestPage() {
           {showData && coll && (
             <div className="mt-3 grid gap-4 lg:grid-cols-2">
               <div>
-                <div className="mb-1 text-[10px] uppercase tracking-wide text-rom-dim">Latest crypto windows</div>
+                <div className="mb-1 text-[11px] uppercase tracking-wide text-rom-dim">Latest crypto windows</div>
                 <table className="w-full text-[11px]">
                   <thead><tr className="text-left text-rom-dim">
                     <th className="py-0.5 pr-2 font-normal">Asset</th>
@@ -290,7 +290,7 @@ export function BacktestPage() {
                         <td className="py-1">
                           {!r.resolved ? <span className="text-rom-dim">open</span>
                             : r.up_won ? <span className="text-rom-win">UP won</span>
-                              : <span className="text-rom-loss">DOWN won</span>}
+                              : <span className="text-rom-lossText">DOWN won</span>}
                         </td>
                       </tr>
                     ))}
@@ -301,7 +301,7 @@ export function BacktestPage() {
                 </table>
               </div>
               <div>
-                <div className="mb-1 text-[10px] uppercase tracking-wide text-rom-dim">Latest whale signals</div>
+                <div className="mb-1 text-[11px] uppercase tracking-wide text-rom-dim">Latest whale signals</div>
                 <table className="w-full text-[11px]">
                   <thead><tr className="text-left text-rom-dim">
                     <th className="py-0.5 pr-2 font-normal">Category</th>
@@ -320,7 +320,7 @@ export function BacktestPage() {
                         <td className="py-1">
                           {!r.resolved ? <span className="text-rom-dim">open</span>
                             : r.outcome_correct ? <span className="text-rom-win">won</span>
-                              : <span className="text-rom-loss">lost</span>}
+                              : <span className="text-rom-lossText">lost</span>}
                         </td>
                       </tr>
                     ))}
@@ -359,12 +359,12 @@ export function BacktestPage() {
           {engine === 'crypto15m' && (
             res.interval ? (
               <div className="mt-4">
-                <span className="rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[10px] text-rom-dim">
+                <span className="rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[11px] text-rom-dim">
                   replayed {res.interval} windows
                 </span>
               </div>
             ) : (
-              <p className="mt-4 text-[10px] text-rom-warn/80">
+              <p className="mt-4 text-[11px] text-rom-warn/80">
                 backend predates per-interval backtests — update/rebuild the app
               </p>
             )
@@ -446,8 +446,8 @@ export function BacktestPage() {
           {Object.keys(res.byAsset).length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {Object.entries(res.byAsset).map(([a, st]) => (
-                <span key={a} className="rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[10px] text-rom-dim">
-                  {a} {st.wins}/{st.n} <span className={st.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-loss'}>{fmtUsd(st.pnlUsd, { sign: true })}</span>
+                <span key={a} className="rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[11px] text-rom-dim">
+                  {a} {st.wins}/{st.n} <span className={st.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-lossText'}>{fmtUsd(st.pnlUsd, { sign: true })}</span>
                 </span>
               ))}
             </div>
@@ -455,7 +455,7 @@ export function BacktestPage() {
 
           <ul className="mt-3 space-y-0.5">
             {res.caveats.map((c, i) => (
-              <li key={i} className="text-[10px] leading-relaxed text-rom-warn/80">⚠ {c}</li>
+              <li key={i} className="text-[11px] leading-relaxed text-rom-warn/80">⚠ {c}</li>
             ))}
           </ul>
         </>
@@ -464,14 +464,6 @@ export function BacktestPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="mb-1 text-[10px] uppercase tracking-wide text-rom-dim">{label}</div>
-      {children}
-    </div>
-  );
-}
 
 function Chips({ options, value, onPick }: {
   options: [string, string][]; value: string; onPick: (v: string) => void;
@@ -499,9 +491,9 @@ function Chips({ options, value, onPick }: {
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'good' | 'bad' }) {
   return (
     <div className="rounded-lg bg-rom-surface2/60 p-2">
-      <div className="text-[10px] uppercase tracking-wide text-rom-dim">{label}</div>
-      <div className={cls('font-mono text-sm', tone === 'good' ? 'text-rom-win' : tone === 'bad' ? 'text-rom-loss' : 'text-white')}>{value}</div>
-      {sub && <div className="text-[10px] text-rom-dim">{sub}</div>}
+      <div className="text-[11px] uppercase tracking-wide text-rom-dim">{label}</div>
+      <div className={cls('font-mono text-sm', tone === 'good' ? 'text-rom-win' : tone === 'bad' ? 'text-rom-lossText' : 'text-white')}>{value}</div>
+      {sub && <div className="text-[11px] text-rom-dim">{sub}</div>}
     </div>
   );
 }
@@ -510,7 +502,7 @@ function ChartHead({ title, hint }: { title: string; hint: string }) {
   return (
     <div>
       <div className="text-xs uppercase tracking-wider text-rom-muted">{title}</div>
-      <div className="mt-0.5 text-[10px] normal-case tracking-normal text-rom-dim">{hint}</div>
+      <div className="mt-0.5 text-[11px] normal-case tracking-normal text-rom-dim">{hint}</div>
     </div>
   );
 }

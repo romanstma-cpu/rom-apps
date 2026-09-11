@@ -8,7 +8,7 @@ const tone = {
   paused: 'text-rom-dim bg-rom-dim/10 border-rom-border',
   scanning: 'text-rom-win bg-rom-win/10 border-rom-win/25',
   waiting: 'text-rom-warn bg-rom-warn/10 border-rom-warn/25',
-  blocked: 'text-rom-loss bg-rom-loss/10 border-rom-loss/25',
+  blocked: 'text-rom-lossText bg-rom-loss/10 border-rom-loss/25',
 };
 
 export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void }) {
@@ -29,10 +29,10 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">What Polybot is doing</h3>
-            <span className={cls('rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide', tone[status.mainState])}>
+            <span className={cls('rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide', tone[status.mainState])}>
               {status.mainState}
             </span>
-            {status.mainMode !== 'paused' && <span className="rounded-full border border-rom-border px-2 py-0.5 text-[10px] uppercase text-rom-muted">
+            {status.mainMode !== 'paused' && <span className="rounded-full border border-rom-border px-2 py-0.5 text-[11px] uppercase text-rom-muted">
               {status.mainMode === 'paper' ? 'Practice' : status.mainMode}
             </span>}
           </div>
@@ -76,5 +76,5 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
 }
 
 function PaperStat({ label, value }: { label: string; value: string }) {
-  return <div><div className="text-[10px] uppercase tracking-wide text-rom-dim">{label}</div><div className="mt-1 text-sm font-semibold tabular-nums">{value}</div></div>;
+  return <div><div className="text-[11px] uppercase tracking-wide text-rom-dim">{label}</div><div className="mt-1 text-sm font-semibold tabular-nums">{value}</div></div>;
 }

@@ -100,7 +100,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
         className={cls(
           'mt-0.5 h-5 w-5 shrink-0',
           toast.kind === 'success' && 'text-rom-win',
-          toast.kind === 'error' && 'text-rom-loss',
+          toast.kind === 'error' && 'text-rom-lossText',
           toast.kind === 'warn' && 'text-rom-warn',
           toast.kind === 'info' && 'text-rom-purple',
         )}

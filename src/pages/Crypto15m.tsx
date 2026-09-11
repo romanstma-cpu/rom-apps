@@ -186,7 +186,7 @@ export function Crypto15mPage() {
           </div>
         )}
         {enabled && status?.modelCalibration && !status.modelCalibration.ok && (
-          <div className="mt-2 rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-2 text-[11px] leading-relaxed text-rom-loss">
+          <div className="mt-2 rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-2 text-[11px] leading-relaxed text-rom-lossText">
             ⛔ <span className="font-semibold">Model calibration degraded</span> — high-confidence
             calls hit {Math.round((status.modelCalibration.rate ?? 0) * 100)}% over the last{' '}
             {status.modelCalibration.n} windows, and the statistical floor on that record
@@ -198,9 +198,9 @@ export function Crypto15mPage() {
         {enabled && (status?.byStrategy?.length ?? 0) > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {status!.byStrategy!.map((st) => (
-              <span key={st.strategy} className="rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[10px] text-rom-dim" title={st.fees_usd > 0 ? `fees $${st.fees_usd.toFixed(2)}` : undefined}>
+              <span key={st.strategy} className="rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[11px] text-rom-dim" title={st.fees_usd > 0 ? `fees $${st.fees_usd.toFixed(2)}` : undefined}>
                 {st.strategy} {st.wins}/{st.n}{' '}
-                <span className={st.pnl_usd >= 0 ? 'text-rom-win' : 'text-rom-loss'}>
+                <span className={st.pnl_usd >= 0 ? 'text-rom-win' : 'text-rom-lossText'}>
                   {st.pnl_usd >= 0 ? '+' : ''}${st.pnl_usd.toFixed(2)}
                 </span>
               </span>
@@ -231,7 +231,7 @@ export function Crypto15mPage() {
       {uiMode === 'advanced' && <BacktestPanel />}
 
       {err && (
-        <div className="mb-4 rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-2 text-xs text-rom-loss">
+        <div className="mb-4 rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-2 text-xs text-rom-lossText">
           {err}
         </div>
       )}
@@ -446,7 +446,7 @@ function Crypto15mRules({ config }: { config?: TraderConfig | null }) {
 function ModePill({ mode }: { mode: 'OFF' | 'WAITING' | 'LIVE' }) {
   const sty =
     mode === 'LIVE'
-      ? 'border-rom-loss/50 bg-rom-loss/15 text-rom-loss'
+      ? 'border-rom-loss/50 bg-rom-loss/15 text-rom-lossText'
       : mode === 'WAITING'
         ? 'border-rom-warn/50 bg-rom-warn/15 text-rom-warn'
         : 'border-rom-border bg-rom-surface2 text-rom-muted';
@@ -461,7 +461,7 @@ function KV({ label, value, accent }: { label: string; value: string; accent?: '
   return (
     <span className="inline-flex items-center gap-1.5 text-rom-dim">
       {label}
-      <span className={cls('font-mono', accent === 'good' ? 'text-rom-win' : accent === 'bad' ? 'text-rom-loss' : 'text-white')}>
+      <span className={cls('font-mono', accent === 'good' ? 'text-rom-win' : accent === 'bad' ? 'text-rom-lossText' : 'text-white')}>
         {value}
       </span>
     </span>
@@ -1083,7 +1083,7 @@ function SizingPreview({ sizing, mode, orderSize }: {
       {known && <span className="ml-auto text-rom-dim">balance {fmtUsd(balanceUsd)}</span>}
       {note && <span className="w-full text-rom-warn">{note}</span>}
       {belowMin && (
-        <span className="w-full text-rom-loss">
+        <span className="w-full text-rom-lossText">
           {balanceLimited
             ? `Your ${fmtUsd(balanceUsd)} balance only funds ${estContracts} contract${estContracts === 1 ? '' : 's'} at ~${estPriceCents}¢ — below Polymarket's ${MIN_CONTRACTS}-contract minimum, so orders won't place. Add funds to trade.`
             : `Below Polymarket's ${MIN_CONTRACTS}-contract minimum — orders won't place. Raise your order size to ${MIN_CONTRACTS}+ contracts.`}
@@ -1119,7 +1119,7 @@ function NumField({
 
   return (
     <label className="block rounded-lg border border-rom-border bg-rom-surface2 px-2.5 py-1.5" title={hint}>
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-rom-dim">
+      <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-rom-dim">
         <span>{label}</span>
         {suffix && <span className="text-rom-dim">{suffix}</span>}
       </div>
@@ -1150,7 +1150,7 @@ function SelectField({
 }) {
   return (
     <label className="block rounded-lg border border-rom-border bg-rom-surface2 px-2.5 py-1.5" title={hint}>
-      <div className="text-[10px] uppercase tracking-wider text-rom-dim">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-rom-dim">{label}</div>
       <select
         value={value}
         onChange={(e) => onCommit(e.target.value)}
@@ -1195,7 +1195,7 @@ function AssetCard({ a }: { a: Crypto15mAsset }) {
         </div>
         <div className="leading-tight">
           <div className="text-sm font-semibold text-white">{a.asset}</div>
-          <div className="font-mono text-[10px] text-rom-dim">{a.series}</div>
+          <div className="font-mono text-[11px] text-rom-dim">{a.series}</div>
         </div>
         <div className="ml-auto">
           <StatePill state={state} />
@@ -1203,7 +1203,7 @@ function AssetCard({ a }: { a: Crypto15mAsset }) {
       </div>
 
       {a.error ? (
-        <div className="rounded-md border border-rom-loss/30 bg-rom-loss/5 px-2 py-1.5 text-[11px] text-rom-loss">
+        <div className="rounded-md border border-rom-loss/30 bg-rom-loss/5 px-2 py-1.5 text-[11px] text-rom-lossText">
           {a.error}
         </div>
       ) : !a.hasMarket ? (
@@ -1249,7 +1249,7 @@ function AssetCard({ a }: { a: Crypto15mAsset }) {
               <span className="font-mono">
                 {Math.round(a.modelProb * 100)}%{a.modelProb >= 0.5 ? '↑' : '↓'}
                 {a.edgeNetCents != null && (
-                  <span className={cls('ml-2', a.edgeNetCents >= 0 ? 'text-rom-win' : 'text-rom-loss')}>
+                  <span className={cls('ml-2', a.edgeNetCents >= 0 ? 'text-rom-win' : 'text-rom-lossText')}>
                     {a.edgeNetCents >= 0 ? '+' : ''}{a.edgeNetCents.toFixed(1)}¢
                   </span>
                 )}
@@ -1263,7 +1263,7 @@ function AssetCard({ a }: { a: Crypto15mAsset }) {
               <span className={cls(
                 'font-mono',
                 a.bookImbalance > 0.15 ? 'text-rom-win'
-                  : a.bookImbalance < -0.15 ? 'text-rom-loss'
+                  : a.bookImbalance < -0.15 ? 'text-rom-lossText'
                     : 'text-rom-dim',
               )}>
                 {a.bookImbalance > 0 ? '+' : ''}{a.bookImbalance.toFixed(2)}
@@ -1277,7 +1277,7 @@ function AssetCard({ a }: { a: Crypto15mAsset }) {
               <span className={cls(
                 'font-mono',
                 a.peersAgree >= 0.6 ? 'text-rom-win'
-                  : a.peersAgree <= 0.3 ? 'text-rom-loss'
+                  : a.peersAgree <= 0.3 ? 'text-rom-lossText'
                     : 'text-rom-dim',
               )}>
                 {Math.round(a.peersAgree * 100)}%
@@ -1289,7 +1289,7 @@ function AssetCard({ a }: { a: Crypto15mAsset }) {
               <span className="text-rom-muted">MACD (underlying)</span>
               <span className={cls(
                 'font-mono',
-                a.macdHist > 0 ? 'text-rom-win' : a.macdHist < 0 ? 'text-rom-loss' : 'text-rom-dim',
+                a.macdHist > 0 ? 'text-rom-win' : a.macdHist < 0 ? 'text-rom-lossText' : 'text-rom-dim',
               )}>
                 {a.macdHist > 0 ? 'bull' : a.macdHist < 0 ? 'bear' : 'flat'}
                 {a.macdCross === 1 ? ' ↑' : a.macdCross === -1 ? ' ↓' : ''}
@@ -1309,7 +1309,7 @@ function AssetCard({ a }: { a: Crypto15mAsset }) {
                 </span>
                 <span className={cls(
                   'font-mono',
-                  Math.abs(gap) >= 5 ? 'text-rom-loss' : 'text-rom-dim',
+                  Math.abs(gap) >= 5 ? 'text-rom-lossText' : 'text-rom-dim',
                 )}>
                   {a.wsAsk}¢ <span className="text-rom-muted">vs {gammaC}¢ Gamma</span>
                   {` (${gap >= 0 ? '+' : ''}${gap}¢)`}
@@ -1332,7 +1332,7 @@ function AssetCard({ a }: { a: Crypto15mAsset }) {
 function StatePill({ state }: { state: CardState }) {
   if (state === 'signal') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-rom-win/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rom-win">
+      <span className="inline-flex items-center gap-1 rounded-full bg-rom-win/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-rom-win">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rom-win shadow-[0_0_8px_currentColor]" />
         Signal
       </span>
@@ -1340,19 +1340,19 @@ function StatePill({ state }: { state: CardState }) {
   }
   if (state === 'window') {
     return (
-      <span className="rounded-full bg-rom-warn/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-rom-warn">
+      <span className="rounded-full bg-rom-warn/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-rom-warn">
         In window
       </span>
     );
   }
   if (state === 'watching') {
     return (
-      <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-rom-muted">
+      <span className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] uppercase tracking-wider text-rom-muted">
         watching
       </span>
     );
   }
-  return <span className="text-[10px] uppercase tracking-wider text-rom-dim">idle</span>;
+  return <span className="text-[11px] uppercase tracking-wider text-rom-dim">idle</span>;
 }
 
 function SideBox({
@@ -1369,7 +1369,7 @@ function SideBox({
           : 'border-rom-border bg-rom-surface2',
       )}
     >
-      <div className={cls('text-[10px] uppercase tracking-wider', fav ? (good ? 'text-rom-win' : 'text-rom-loss') : 'text-rom-dim')}>
+      <div className={cls('text-[11px] uppercase tracking-wider', fav ? (good ? 'text-rom-win' : 'text-rom-lossText') : 'text-rom-dim')}>
         {label}{fav ? ' ★' : ''}
       </div>
       <div className="font-mono text-lg text-white">{pct(prob)}</div>
@@ -1380,7 +1380,7 @@ function SideBox({
 function Foot({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-rom-surface px-2 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-rom-dim">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-rom-dim">{label}</div>
       <div className="mt-0.5 font-mono text-white">{value}</div>
     </div>
   );
@@ -1431,8 +1431,8 @@ function PositionRow({ p }: { p: Crypto15mPosition }) {
       <td><TickerLink ticker={p.ticker} env={p.network} label={p.asset} /></td>
       <td>
         <span className={cls(
-          'rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase',
-          p.side === 'up' ? 'bg-rom-win/10 text-rom-win' : 'bg-rom-loss/10 text-rom-loss',
+          'rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase',
+          p.side === 'up' ? 'bg-rom-win/10 text-rom-win' : 'bg-rom-loss/10 text-rom-lossText',
         )}>
           {p.side || p.direction}
         </span>
@@ -1450,7 +1450,7 @@ function PositionRow({ p }: { p: Crypto15mPosition }) {
             {reason.label}
           </span>
         ) : p.status === 'error' ? (
-          <span className="text-rom-loss" title={p.error || 'Order error'}>error</span>
+          <span className="text-rom-lossText" title={p.error || 'Order error'}>error</span>
         ) : (
           <>{p.status}</>
         )}
@@ -1460,7 +1460,7 @@ function PositionRow({ p }: { p: Crypto15mPosition }) {
       <td className="font-mono text-xs text-rom-muted">{fmtUsd(p.costUsd)}</td>
       <td className={cls(
         'font-mono text-xs',
-        p.pnlUsd === null ? 'text-rom-dim' : p.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-loss',
+        p.pnlUsd === null ? 'text-rom-dim' : p.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-lossText',
       )}>
         {p.pnlUsd === null ? '—' : fmtUsd(p.pnlUsd, { sign: true })}
       </td>

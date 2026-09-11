@@ -336,7 +336,7 @@ export function VisualizerPage() {
             <div className="text-lg font-mono text-white">{fmtUsd(account?.totalUsd)}</div>
             <div className={cls(
               'text-xs',
-              sessionPnl >= 0 ? 'text-rom-win' : 'text-rom-loss',
+              sessionPnl >= 0 ? 'text-rom-win' : 'text-rom-lossText',
             )}>
               {fmtUsd(sessionPnl, { sign: true })} session &middot;{' '}
               <span className="text-rom-dim">{sessionRoi >= 0 ? '+' : ''}{sessionRoi.toFixed(2)}%</span>
@@ -412,10 +412,10 @@ export function VisualizerPage() {
                       {t.ticker.split('-').pop() || t.ticker}
                     </span>
                     <span className="ml-auto text-rom-win">{t.wins}W</span>
-                    <span className="text-rom-loss">{t.losses}L</span>
+                    <span className="text-rom-lossText">{t.losses}L</span>
                     <span className={cls(
                       'min-w-[52px] text-right font-mono',
-                      t.pnl >= 0 ? 'text-rom-win' : 'text-rom-loss',
+                      t.pnl >= 0 ? 'text-rom-win' : 'text-rom-lossText',
                     )}>
                       {fmtUsd(t.pnl, { sign: true })}
                     </span>
@@ -436,20 +436,20 @@ export function VisualizerPage() {
               <LegendDot color="#FFFFFF" label="Open position (orbiting)" outline />
               <LegendDot color="#22C55E" label="Won → wins pot" />
               <LegendDot color="#EF4444" label="Lost → losses pot" />
-              <div className="mt-1 text-[10px] text-rom-dim">orb size = potential profit</div>
+              <div className="mt-1 text-[11px] text-rom-dim">orb size = potential profit</div>
             </div>
 
             <div className="absolute left-3 top-3 flex items-center gap-2 rounded-lg border border-rom-border bg-rom-void/80 px-3 py-2 text-[11px] backdrop-blur">
               <Wallet className="h-3.5 w-3.5 text-rom-purple" />
               <div>
-                <div className="text-[10px] uppercase tracking-wider text-rom-muted">Session P&amp;L</div>
+                <div className="text-[11px] uppercase tracking-wider text-rom-muted">Session P&amp;L</div>
                 <div className={cls(
                   'font-mono text-sm',
-                  (account?.sessionPnlUsd ?? 0) >= 0 ? 'text-rom-win' : 'text-rom-loss',
+                  (account?.sessionPnlUsd ?? 0) >= 0 ? 'text-rom-win' : 'text-rom-lossText',
                 )}>
                   {fmtUsd(account?.sessionPnlUsd ?? 0, { sign: true })}
                 </div>
-                <div className="text-[10px] text-rom-dim">
+                <div className="text-[11px] text-rom-dim">
                   visualized: {pot.wins}W / {pot.losses}L this session
                 </div>
               </div>
@@ -714,7 +714,7 @@ function Mini({ label, value, tone }: { label: string; value: string; tone?: 'go
   const cn = (() => {
     switch (tone) {
       case 'good': return 'text-rom-win';
-      case 'bad': return 'text-rom-loss';
+      case 'bad': return 'text-rom-lossText';
       case 'purple': return 'text-rom-purple';
       case 'pink': return 'text-rom-pink';
       default: return 'text-white';
@@ -722,7 +722,7 @@ function Mini({ label, value, tone }: { label: string; value: string; tone?: 'go
   })();
   return (
     <div className="rounded-md border border-rom-border bg-rom-surface2 px-2 py-1.5">
-      <div className="text-[10px] uppercase tracking-wider text-rom-muted">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-rom-muted">{label}</div>
       <div className={cls('font-mono text-sm', cn)}>{value}</div>
     </div>
   );
@@ -755,7 +755,7 @@ interface BucketTileProps {
 function BucketTile({ tone, label, count, pnl, icon: Icon }: BucketTileProps) {
   const bg = tone === 'good'
     ? 'border-rom-win/50 bg-rom-win/10 text-rom-win'
-    : 'border-rom-loss/50 bg-rom-loss/10 text-rom-loss';
+    : 'border-rom-loss/50 bg-rom-loss/10 text-rom-lossText';
   return (
     <div className={cls('flex items-center gap-3 rounded-xl border px-4 py-3 backdrop-blur', bg)}>
       <div className={cls(
@@ -765,7 +765,7 @@ function BucketTile({ tone, label, count, pnl, icon: Icon }: BucketTileProps) {
         <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1">
-        <div className="text-[10px] uppercase tracking-wider opacity-70">{label}</div>
+        <div className="text-[11px] uppercase tracking-wider opacity-70">{label}</div>
         <div className="font-mono text-base">{count} · {fmtUsd(pnl, { sign: true })}</div>
       </div>
     </div>
@@ -775,7 +775,7 @@ function BucketTile({ tone, label, count, pnl, icon: Icon }: BucketTileProps) {
 function TradeRow({ p }: { p: BotPosition }) {
   const tone = p.resolved
     ? p.outcomeCorrect === 1 ? 'text-rom-win'
-    : p.outcomeCorrect === 0 ? 'text-rom-loss'
+    : p.outcomeCorrect === 0 ? 'text-rom-lossText'
     : 'text-rom-muted'
     : 'text-rom-muted';
   return (

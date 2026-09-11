@@ -6,7 +6,7 @@ import {
 import type { StrategyPreset, TraderConfig } from '@shared/types';
 import { useApp } from '../state/AppStateProvider';
 import { useToast } from '../state/ToastProvider';
-import { Card, NameDialog, NumberInput, Page, RuleBuilder, Section, Switch } from '../components/common';
+import { Card, Field, NameDialog, NumberInput, Page, RuleBuilder, Section, Switch } from '../components/common';
 import { cls, fmtPct, fmtUsd } from '../utils/format';
 import { RiskLimits } from '../components/RiskLimits';
 import { useStrategyActivity } from '../state/StrategyActivity';
@@ -171,7 +171,7 @@ export function MainEnginePage() {
           </button>
           <div className="min-w-[240px] flex-1">
             <div className={cls('text-sm font-semibold',
-              tradingOn ? 'text-rom-loss' : paperOn ? 'text-rom-purple' : 'text-rom-dim')}>
+              tradingOn ? 'text-rom-lossText' : paperOn ? 'text-rom-purple' : 'text-rom-dim')}>
               {tradingOn ? 'Live enabled' : paperOn ? 'Practice enabled' : 'No mode enabled'} · {activity.label}
             </div>
             <div className="text-[11px] text-rom-dim">
@@ -223,7 +223,7 @@ export function MainEnginePage() {
               >
                 {s.badge && (
                   <span className={cls(
-                    'absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
+                    'absolute right-3 top-3 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider',
                     s.badge === 'recommended' && 'bg-rom-glow text-white shadow-rom-soft',
                     s.badge === 'new' && 'border border-rom-pink/40 bg-rom-pink/10 text-rom-pink',
                     s.badge === 'soon' && 'border border-rom-border bg-rom-surface2 text-rom-muted',
@@ -236,7 +236,7 @@ export function MainEnginePage() {
                     'grid h-9 w-9 place-items-center rounded-lg',
                     s.riskLabel === 'safe' && 'bg-rom-win/10 text-rom-win',
                     s.riskLabel === 'balanced' && 'bg-rom-purple/15 text-rom-purple',
-                    s.riskLabel === 'aggressive' && 'bg-rom-loss/10 text-rom-loss',
+                    s.riskLabel === 'aggressive' && 'bg-rom-loss/10 text-rom-lossText',
                     s.riskLabel === 'experimental' && 'bg-rom-warn/10 text-rom-warn',
                   )}>
                     <Sparkles className="h-4 w-4" />
@@ -312,8 +312,10 @@ export function MainEnginePage() {
             </div>
             <div className="flex flex-col gap-2">
               <p className="text-sm text-rom-muted">Use the mode controls in Your starting setup to start or pause. All starts use the same connection and saved-limit checks.</p>
-              <div>
-                <label className="rom-label">Practice bankroll</label>
+              <Field
+                label="Practice bankroll"
+                hint="Pause practice mode before changing its starting balance."
+              >
                 <NumberInput
                   value={config.mainPaperBankrollUsd}
                   min={25}
@@ -323,8 +325,7 @@ export function MainEnginePage() {
                   disabled={paperOn}
                   onChange={(v) => void update('mainPaperBankrollUsd', v)}
                 />
-                <p className="rom-help">Pause practice mode before changing its starting balance.</p>
-              </div>
+              </Field>
             </div>
           </div>
         </Card>
@@ -739,6 +740,7 @@ export function MainEnginePage() {
               <Field label="Start (HH:MM)" hint="Local time, 24h format">
                 <input
                   type="time"
+                  aria-label="Trading window start, 24h local time"
                   value={config.tradingHoursStart}
                   onChange={(e) => void update('tradingHoursStart', e.target.value)}
                   className="w-full rounded-md border border-rom-border bg-rom-surface2 px-3 py-1.5 font-mono text-sm text-white"
@@ -747,6 +749,7 @@ export function MainEnginePage() {
               <Field label="End (HH:MM)" hint="Same day or next-morning (overnight ranges supported)">
                 <input
                   type="time"
+                  aria-label="Trading window end, 24h local time"
                   value={config.tradingHoursEnd}
                   onChange={(e) => void update('tradingHoursEnd', e.target.value)}
                   className="w-full rounded-md border border-rom-border bg-rom-surface2 px-3 py-1.5 font-mono text-sm text-white"
@@ -847,20 +850,8 @@ export function MainEnginePage() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-rom-border bg-rom-surface2 px-2 py-1">
-      <div className="text-[10px] uppercase tracking-wider text-rom-dim">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-rom-dim">{label}</div>
       <div className="font-mono text-[11px] text-white">{value}</div>
-    </div>
-  );
-}
-
-function Field({
-  label, hint, children,
-}: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="rom-label">{label}</label>
-      {children}
-      {hint && <p className="rom-help">{hint}</p>}
     </div>
   );
 }
@@ -918,7 +909,7 @@ function SourceCategoryPicker({
         })}
       </div>
       {empty && (
-        <div className="text-xs text-rom-loss">
+        <div className="text-xs text-rom-lossText">
           Nothing selected — this engine will skip every signal.
         </div>
       )}
@@ -967,7 +958,7 @@ function CategoryPicker({
         )}
       </div>
       {empty && (
-        <div className="flex items-start gap-2 rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-2 text-xs text-rom-loss">
+        <div className="flex items-start gap-2 rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-2 text-xs text-rom-lossText">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             <b>The bot will not trade.</b> An empty list means every signal is

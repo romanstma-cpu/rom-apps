@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, createContext, useContext, useEffect, useId, useRef, useState } from 'react';
 import { Share2 } from 'lucide-react';
 import { cls } from '../utils/format';
 import { shareToX, X_PROFILE } from '../utils/share';
@@ -392,7 +392,7 @@ export function RuleBuilder({
               />
               <button
                 onClick={() => setRules(rules.filter((_, j) => j !== i))}
-                className="px-1 text-rom-loss/80 hover:text-rom-loss"
+                className="px-1 text-rom-lossText/80 hover:text-rom-lossText"
                 title="Remove condition"
               >✕</button>
             </div>
@@ -403,15 +403,42 @@ export function RuleBuilder({
           >
             + Add condition
           </button>
-          {tip && <div className="text-[10px] text-rom-dim">{tip}</div>}
+          {tip && <div className="text-[11px] text-rom-dim">{tip}</div>}
         </div>
       )}
     </div>
   );
 }
 
+/** The id a `Field` has assigned to the single control it wraps. */
+const FieldIdContext = createContext<string | undefined>(undefined);
+
+/**
+ * A labelled form row.
+ *
+ * The label is rendered as a sibling of the control, so it is not an
+ * accessible name on its own -- a screen reader reaching the input announces
+ * only "edit text". `Field` mints an id, points its `<label htmlFor>` at it,
+ * and hands it down so the control can claim it. Controls that read the
+ * context (`NumberInput`) need nothing at the call site.
+ */
+export function Field({
+  label, hint, children,
+}: { label: string; hint?: string; children: ReactNode }) {
+  const id = useId();
+  return (
+    <FieldIdContext.Provider value={id}>
+      <div>
+        <label className="rom-label" htmlFor={id}>{label}</label>
+        {children}
+        {hint && <p className="rom-help">{hint}</p>}
+      </div>
+    </FieldIdContext.Provider>
+  );
+}
+
 export function NumberInput({
-  value, onChange, min, max, step, suffix, prefix, disabled,
+  value, onChange, min, max, step, suffix, prefix, disabled, ariaLabel,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -421,7 +448,10 @@ export function NumberInput({
   suffix?: string;
   prefix?: string;
   disabled?: boolean;
+  /** Only needed outside a `Field`, which supplies the name via context. */
+  ariaLabel?: string;
 }) {
+  const fieldId = useContext(FieldIdContext);
   const [text, setText] = useState(() => (Number.isFinite(value) ? String(value) : ''));
   const focused = useRef(false);
   useEffect(() => {
@@ -450,6 +480,8 @@ export function NumberInput({
       )}
       <input
         type="number"
+        id={fieldId}
+        aria-label={fieldId ? undefined : ariaLabel}
         value={text}
         min={min}
         max={max}

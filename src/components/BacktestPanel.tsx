@@ -42,7 +42,7 @@ export function BacktestPanel() {
           {busy ? 'Replaying…' : 'Run backtest'}
         </button>
       </div>
-      {err && <p className="mt-2 text-[11px] text-rom-loss">{err}</p>}
+      {err && <p className="mt-2 text-[11px] text-rom-lossText">{err}</p>}
       {res && (
         <div className="mt-3">
           <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5">
@@ -61,15 +61,15 @@ export function BacktestPanel() {
           {Object.keys(res.byAsset).length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {Object.entries(res.byAsset).map(([a, st]) => (
-                <span key={a} className="rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[10px] text-rom-dim">
-                  {a} {st.wins}/{st.n} <span className={st.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-loss'}>{fmtUsd(st.pnlUsd, { sign: true })}</span>
+                <span key={a} className="rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[11px] text-rom-dim">
+                  {a} {st.wins}/{st.n} <span className={st.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-lossText'}>{fmtUsd(st.pnlUsd, { sign: true })}</span>
                 </span>
               ))}
             </div>
           )}
           <ul className="mt-2 space-y-0.5">
             {res.caveats.map((c, i) => (
-              <li key={i} className="text-[10px] leading-relaxed text-rom-warn/80">⚠ {c}</li>
+              <li key={i} className="text-[11px] leading-relaxed text-rom-warn/80">⚠ {c}</li>
             ))}
           </ul>
         </div>
@@ -81,9 +81,9 @@ export function BacktestPanel() {
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'good' | 'bad' }) {
   return (
     <div className="rounded-lg bg-rom-surface2/60 p-2">
-      <div className="text-[10px] uppercase tracking-wide text-rom-dim">{label}</div>
-      <div className={cls('font-mono text-sm', tone === 'good' ? 'text-rom-win' : tone === 'bad' ? 'text-rom-loss' : 'text-white')}>{value}</div>
-      {sub && <div className="text-[10px] text-rom-dim">{sub}</div>}
+      <div className="text-[11px] uppercase tracking-wide text-rom-dim">{label}</div>
+      <div className={cls('font-mono text-sm', tone === 'good' ? 'text-rom-win' : tone === 'bad' ? 'text-rom-lossText' : 'text-white')}>{value}</div>
+      {sub && <div className="text-[11px] text-rom-dim">{sub}</div>}
     </div>
   );
 }

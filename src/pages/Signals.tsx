@@ -51,8 +51,9 @@ export function SignalsPage() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <label className="text-xs text-rom-muted">Min confidence</label>
+          <label className="text-xs text-rom-muted" htmlFor="signals-min-confidence">Min confidence</label>
           <input
+            id="signals-min-confidence"
             type="range"
             min={0}
             max={100}
@@ -107,7 +108,7 @@ function SignalRowView({ s, inPosition }: { s: SignalRow; inPosition: boolean })
       <td className="text-xs text-rom-muted">{fmtRelative(s.createdAt)}</td>
       <td>
         <span className={cls(
-          'inline-flex rounded-md px-1.5 py-0.5 text-[10px] uppercase',
+          'inline-flex rounded-md px-1.5 py-0.5 text-[11px] uppercase',
           s.source === 'whale'
             ? 'bg-rom-purple/15 text-rom-purple'
             : 'bg-rom-pink/15 text-rom-pink',
@@ -120,8 +121,8 @@ function SignalRowView({ s, inPosition }: { s: SignalRow; inPosition: boolean })
       <td className="text-xs text-rom-muted">{s.category || '—'}</td>
       <td>
         <span className={cls(
-          'rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase',
-          s.direction === 'yes' ? 'bg-rom-win/10 text-rom-win' : 'bg-rom-loss/10 text-rom-loss',
+          'rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase',
+          s.direction === 'yes' ? 'bg-rom-win/10 text-rom-win' : 'bg-rom-loss/10 text-rom-lossText',
         )}>
           {s.direction}
         </span>
@@ -135,24 +136,24 @@ function SignalRowView({ s, inPosition }: { s: SignalRow; inPosition: boolean })
       <td>
         {s.resolved ? (
           <span className={cls(
-            'rounded-md px-1.5 py-0.5 text-[10px] uppercase',
-            s.outcomeCorrect === 1 ? 'bg-rom-win/10 text-rom-win' : 'bg-rom-loss/10 text-rom-loss',
+            'rounded-md px-1.5 py-0.5 text-[11px] uppercase',
+            s.outcomeCorrect === 1 ? 'bg-rom-win/10 text-rom-win' : 'bg-rom-loss/10 text-rom-lossText',
           )}>
             {s.outcomeCorrect === 1 ? 'won' : 'lost'}
           </span>
         ) : s.traded ? (
-          <span className="rounded-md bg-rom-indigo/10 px-1.5 py-0.5 text-[10px] uppercase text-rom-indigo">
+          <span className="rounded-md bg-rom-indigo/10 px-1.5 py-0.5 text-[11px] uppercase text-rom-indigoText">
             traded
           </span>
         ) : inPosition ? (
           <span
-            className="rounded-md bg-rom-indigo/10 px-1.5 py-0.5 text-[10px] uppercase text-rom-indigo"
+            className="rounded-md bg-rom-indigo/10 px-1.5 py-0.5 text-[11px] uppercase text-rom-indigoText"
             title="The bot already holds a position in this market/event — the per-event cap skips the duplicate (not a missed trade)."
           >
             in position
           </span>
         ) : (
-          <span className="text-[10px] text-rom-dim">open</span>
+          <span className="text-[11px] text-rom-dim">open</span>
         )}
       </td>
     </tr>

@@ -20,6 +20,13 @@ export default {
           win: '#40C9A2',
           loss: '#EF4444',
           warn: '#F59E0B',
+
+          // Text-weight shades. `loss` and `indigo` are fill/border values:
+          // at body size on our surfaces they read 4.20:1 and 2.36:1, under
+          // the 4.5:1 floor. These are the same hues lifted to pass, so a
+          // colour can mean the same thing whether it is a fill or a word.
+          lossText: '#F87171',
+          indigoText: '#93B4FF',
         },
       },
       fontFamily: {

@@ -93,7 +93,7 @@ export function HistoryPage() {
         <button
           onClick={clearHistory}
           disabled={clearing}
-          className="rom-btn-default border-rom-loss/40 text-rom-loss hover:bg-rom-loss/10 disabled:opacity-50"
+          className="rom-btn-default border-rom-loss/40 text-rom-lossText hover:bg-rom-loss/10 disabled:opacity-50"
           title="Wipe trade history, P&L, and sessions — keeps your settings and wallet"
         >
           <Trash2 className="h-4 w-4" />
@@ -104,11 +104,11 @@ export function HistoryPage() {
       <div className="mb-4 inline-flex rounded-md border border-rom-border bg-rom-surface2 p-0.5">
         <TabButton active={tab === 'runs'} onClick={() => setTab('runs')} icon={<HistoryIcon className="h-3.5 w-3.5" />}>
           Run history
-          <span className="ml-1.5 rounded bg-rom-surface px-1.5 py-0.5 text-[10px]">{runs.length}</span>
+          <span className="ml-1.5 rounded bg-rom-surface px-1.5 py-0.5 text-[11px]">{runs.length}</span>
         </TabButton>
         <TabButton active={tab === 'trades'} onClick={() => setTab('trades')} icon={<Receipt className="h-3.5 w-3.5" />}>
           Trade history
-          <span className="ml-1.5 rounded bg-rom-surface px-1.5 py-0.5 text-[10px]">{resolved.length}</span>
+          <span className="ml-1.5 rounded bg-rom-surface px-1.5 py-0.5 text-[11px]">{resolved.length}</span>
         </TabButton>
         <TabButton active={tab === 'crypto15m'} onClick={() => setTab('crypto15m')} icon={<Timer className="h-3.5 w-3.5" />}>
           15m trades
@@ -133,7 +133,7 @@ function Crypto15mHistory({ rows }: { rows: Crypto15mPosition[] }) {
       <div className="mb-3 flex flex-wrap gap-4 text-xs text-rom-dim">
         <span>{rows.length} trades</span>
         <span>{wins}W / {rows.length - wins}L</span>
-        <span>P&L <span className={cls('font-mono', total >= 0 ? 'text-rom-win' : 'text-rom-loss')}>{fmtUsd(total, { sign: true })}</span></span>
+        <span>P&L <span className={cls('font-mono', total >= 0 ? 'text-rom-win' : 'text-rom-lossText')}>{fmtUsd(total, { sign: true })}</span></span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
@@ -159,7 +159,7 @@ function Crypto15mHistory({ rows }: { rows: Crypto15mPosition[] }) {
                 <td className="py-1.5 pr-3 font-mono text-rom-dim">{r.filledContracts}</td>
                 <td className="py-1.5 pr-3 font-mono text-rom-dim">{r.avgEntryCents != null ? `${Math.round(r.avgEntryCents)}¢` : '—'}</td>
                 <td className="py-1.5 pr-3 text-rom-dim">{r.exitReason || r.status}</td>
-                <td className={cls('py-1.5 font-mono', (r.pnlUsd ?? 0) >= 0 ? 'text-rom-win' : 'text-rom-loss')}>
+                <td className={cls('py-1.5 font-mono', (r.pnlUsd ?? 0) >= 0 ? 'text-rom-win' : 'text-rom-lossText')}>
                   {fmtUsd(r.pnlUsd ?? 0, { sign: true })}
                 </td>
               </tr>
@@ -330,7 +330,7 @@ function RunHistory({ runs, env }: { runs: BotRun[]; env?: string }) {
                     : fmtDateTime(r.endedAt || '')}
                 </td>
                 <td>
-                  <span className="rounded-md bg-rom-purple/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-rom-purple">
+                  <span className="rounded-md bg-rom-purple/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-rom-purple">
                     {r.network || 'mainnet'}
                   </span>
                 </td>
@@ -339,7 +339,7 @@ function RunHistory({ runs, env }: { runs: BotRun[]; env?: string }) {
                 </td>
                 <td className={cls(
                   'font-mono text-xs',
-                  r.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-loss',
+                  r.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-lossText',
                 )}>
                   {fmtUsd(r.pnlUsd, { sign: true })}
                 </td>
@@ -347,7 +347,7 @@ function RunHistory({ runs, env }: { runs: BotRun[]; env?: string }) {
                 <td className="font-mono text-xs">
                   <span className="text-rom-win">{r.tradesWon}</span>
                   <span className="mx-0.5 text-rom-dim">/</span>
-                  <span className="text-rom-loss">{r.tradesLost}</span>
+                  <span className="text-rom-lossText">{r.tradesLost}</span>
                 </td>
               </tr>
             ))}
@@ -380,7 +380,7 @@ function RunStandout({
         <span className="font-mono text-sm">{shortDate(run.startedAt)}</span>
         <span className={cls(
           'font-mono text-sm',
-          accent === 'good' ? 'text-rom-win' : 'text-rom-loss',
+          accent === 'good' ? 'text-rom-win' : 'text-rom-lossText',
         )}>
           {fmtUsd(run.pnlUsd, { sign: true })}
         </span>
@@ -579,7 +579,7 @@ function TradeHistory({ resolved, account }: {
                 <td className="text-xs text-rom-muted">{fmtDateTime(p.resolvedAt || p.lastUpdated)}</td>
                 <td>
                   <span className={cls(
-                    'inline-flex rounded-md px-1.5 py-0.5 text-[10px] uppercase',
+                    'inline-flex rounded-md px-1.5 py-0.5 text-[11px] uppercase',
                     p.signalSource === 'whale'
                       ? 'bg-rom-purple/15 text-rom-purple'
                       : 'bg-rom-pink/15 text-rom-pink',
@@ -591,8 +591,8 @@ function TradeHistory({ resolved, account }: {
                 <td className="max-w-[260px] truncate text-xs text-rom-muted">{p.title}</td>
                 <td>
                   <span className={cls(
-                    'rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase',
-                    p.direction === 'yes' ? 'bg-rom-win/10 text-rom-win' : 'bg-rom-loss/10 text-rom-loss',
+                    'rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase',
+                    p.direction === 'yes' ? 'bg-rom-win/10 text-rom-win' : 'bg-rom-loss/10 text-rom-lossText',
                   )}>
                     {p.direction}
                   </span>
@@ -602,14 +602,14 @@ function TradeHistory({ resolved, account }: {
                   {p.outcomeCorrect === 1 ? (
                     <span className="rom-pill border-rom-win/40 bg-rom-win/10 text-rom-win">won</span>
                   ) : p.outcomeCorrect === 0 ? (
-                    <span className="rom-pill border-rom-loss/40 bg-rom-loss/10 text-rom-loss">lost</span>
+                    <span className="rom-pill border-rom-loss/40 bg-rom-loss/10 text-rom-lossText">lost</span>
                   ) : (
                     <span className="rom-pill text-rom-muted">n/a</span>
                   )}
                 </td>
                 <td className={cls(
                   'font-mono text-xs',
-                  (p.pnlUsd ?? 0) >= 0 ? 'text-rom-win' : 'text-rom-loss',
+                  (p.pnlUsd ?? 0) >= 0 ? 'text-rom-win' : 'text-rom-lossText',
                 )}>
                   {fmtUsd(p.pnlUsd, { sign: true })}
                 </td>
@@ -644,7 +644,7 @@ function Standout({
         <span className="font-mono text-sm">{day.day}</span>
         <span className={cls(
           'font-mono text-sm',
-          accent === 'good' ? 'text-rom-win' : 'text-rom-loss',
+          accent === 'good' ? 'text-rom-win' : 'text-rom-lossText',
         )}>
           {fmtUsd(day.pnl, { sign: true })}
         </span>
@@ -660,10 +660,10 @@ function EnvStat({ env, v }: { env: string; v?: { wins: number; losses: number; 
   const wr = v && (v.wins + v.losses) ? (v.wins / (v.wins + v.losses)) * 100 : 0;
   return (
     <div className="rounded-lg border border-rom-border bg-rom-surface2 p-2">
-      <div className="text-[10px] uppercase tracking-wider text-rom-dim">{env}</div>
+      <div className="text-[11px] uppercase tracking-wider text-rom-dim">{env}</div>
       <div className={cls(
         'font-mono text-sm',
-        (v?.realizedPnl ?? 0) >= 0 ? 'text-rom-win' : 'text-rom-loss',
+        (v?.realizedPnl ?? 0) >= 0 ? 'text-rom-win' : 'text-rom-lossText',
       )}>
         {fmtUsd(v?.realizedPnl ?? 0, { sign: true })}
       </div>

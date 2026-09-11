@@ -26,7 +26,7 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
       <Card><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg font-semibold">Can the signal scores be trusted?</h3><button className="rom-btn-default" disabled={loading} onClick={()=>setRevision(value=>value+1)}>Refresh evidence</button></div>
         <div className="min-h-28 pt-4" aria-live="polite" aria-busy={loading}>
           {loading && <p className="text-sm text-rom-muted">Checking recorded event outcomes…</p>}
-          {error && <p role="alert" className="text-sm text-rom-loss">{error}</p>}
+          {error && <p role="alert" className="text-sm text-rom-lossText">{error}</p>}
           {calibration && <><p className="text-sm leading-6 text-rom-muted">{calibration.reason}</p><dl className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
             {[['Settled event samples',calibration.eventSamples],['Training events',calibration.trainEvents],['Later test events',calibration.testEvents],['Qualified score groups',calibration.qualifiedBuckets]].map(([label,value])=><div key={label}><dt className="text-xs text-rom-dim">{label}</dt><dd className="mt-1 font-semibold tabular-nums">{value}</dd></div>)}
           </dl><p className="mt-4 text-xs leading-5 text-rom-dim">One recorded signal per event. Later outcomes test earlier estimates against market prices. Kelly requires a qualified group and a positive margin after fees; other sizing modes still use heuristic scores. Enable main data collection in Backtest to build this record.</p></>}

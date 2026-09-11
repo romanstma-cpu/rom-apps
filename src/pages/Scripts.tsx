@@ -102,13 +102,13 @@ const STATE_LABEL: Record<string, string> = {
 const STATE_TONE: Record<string, string> = {
   off: 'text-rom-dim',
   blocked: 'text-rom-warn',
-  error: 'text-rom-loss',
+  error: 'text-rom-lossText',
   starting: 'text-rom-muted',
   running: 'text-rom-win',
 };
 
 const SEVERITY_TONE: Record<string, string> = {
-  critical: 'border-rom-loss/40 bg-rom-loss/10 text-rom-loss',
+  critical: 'border-rom-loss/40 bg-rom-loss/10 text-rom-lossText',
   warning: 'border-rom-warn/40 bg-rom-warn/10 text-rom-warn',
   info: 'border-rom-border bg-rom-surface2/40 text-rom-muted',
 };
@@ -493,7 +493,7 @@ export function ScriptsPage() {
                 <span className="truncate text-sm text-white">{s.name}</span>
                 {s.audit && !s.audit.ok && (
                   <ShieldAlert
-                    className="h-3.5 w-3.5 shrink-0 text-rom-loss"
+                    className="h-3.5 w-3.5 shrink-0 text-rom-lossText"
                     aria-label={`${s.audit.critical} critical risk finding(s)`}
                   />
                 )}
@@ -504,7 +504,7 @@ export function ScriptsPage() {
                   <span className={STATE_TONE[s.status?.state ?? 'off']}>
                     {STATE_LABEL[s.status?.state ?? 'off']}
                   </span>
-                  <span className={s.dryRun ? 'text-rom-purple' : 'text-rom-loss'}>
+                  <span className={s.dryRun ? 'text-rom-purple' : 'text-rom-lossText'}>
                     {s.dryRun ? 'shadow' : 'LIVE'}
                   </span>
                 </span>
@@ -512,7 +512,7 @@ export function ScriptsPage() {
                   <span className="font-mono text-rom-dim">
                     {(s.dryRun ? s.shadowStats! : s.stats!).wins}W/
                     {(s.dryRun ? s.shadowStats! : s.stats!).losses}L{' '}
-                    <span className={(s.dryRun ? s.shadowStats! : s.stats!).pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-loss'}>
+                    <span className={(s.dryRun ? s.shadowStats! : s.stats!).pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-lossText'}>
                       {fmtUsd((s.dryRun ? s.shadowStats! : s.stats!).pnlUsd, { sign: true })}
                     </span>
                   </span>
@@ -544,7 +544,7 @@ export function ScriptsPage() {
                     'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition-colors',
                     sel.dryRun
                       ? 'border-rom-border bg-rom-purple/10 text-rom-purple'
-                      : 'border-rom-loss/50 bg-rom-loss/10 text-rom-loss',
+                      : 'border-rom-loss/50 bg-rom-loss/10 text-rom-lossText',
                   )}
                   title={sel.dryRun
                     ? 'Shadow — records what it would trade. Click to arm for real orders.'
@@ -558,7 +558,7 @@ export function ScriptsPage() {
                   className={cls(
                     'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition-colors',
                     (audit ?? sel.audit)?.ok === false
-                      ? 'border-rom-loss/50 bg-rom-loss/10 text-rom-loss'
+                      ? 'border-rom-loss/50 bg-rom-loss/10 text-rom-lossText'
                       : 'border-rom-border text-rom-muted hover:text-white',
                   )}
                   title="What this script's code does — network, filesystem, credential and dynamic-execution access. Scripts are full Python, so read this before enabling one you didn't write."
@@ -580,11 +580,11 @@ export function ScriptsPage() {
                   {busy === 'save' ? 'Saving…' : 'Save'}
                 </button>
                 {confirmDelete ? (
-                  <button onClick={() => void doDelete()} className="inline-flex items-center gap-1 rounded-md border border-rom-loss/60 bg-rom-loss/10 px-2.5 py-1.5 text-xs text-rom-loss">
+                  <button onClick={() => void doDelete()} className="inline-flex items-center gap-1 rounded-md border border-rom-loss/60 bg-rom-loss/10 px-2.5 py-1.5 text-xs text-rom-lossText">
                     <Trash2 className="h-3.5 w-3.5" /> Confirm delete
                   </button>
                 ) : (
-                  <button onClick={() => setConfirmDelete(true)} className="rounded-md border border-rom-border p-1.5 text-rom-dim hover:text-rom-loss" title="Delete script">
+                  <button onClick={() => setConfirmDelete(true)} className="rounded-md border border-rom-border p-1.5 text-rom-dim hover:text-rom-lossText" title="Delete script">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
@@ -593,13 +593,13 @@ export function ScriptsPage() {
               <StatusLine script={sel} onScope={(a) => void applyAssets(a)} />
 
               {sel.lastError && (
-                <div className="flex items-start gap-2 rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-2 text-[11px] text-rom-loss">
+                <div className="flex items-start gap-2 rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-2 text-[11px] text-rom-lossText">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <span className="min-w-0 break-words">Last error: {sel.lastError}</span>
                 </div>
               )}
               {errors.map((e, i) => (
-                <div key={i} className="rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-1.5 text-[11px] text-rom-loss">{e}</div>
+                <div key={i} className="rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-1.5 text-[11px] text-rom-lossText">{e}</div>
               ))}
               {warnings.map((w, i) => (
                 <div key={i} className="rounded-lg border border-rom-warn/40 bg-rom-warn/10 px-3 py-1.5 text-[11px] text-rom-warn">{w}</div>
@@ -700,7 +700,7 @@ export function ScriptsPage() {
           onMouseDown={() => setArmModal(false)}
         >
           <div ref={armRef} className="w-full max-w-md rounded-xl border border-rom-loss/50 bg-rom-surface p-5" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-2 text-rom-loss">
+            <div className="flex items-center gap-2 text-rom-lossText">
               <Zap className="h-5 w-5" />
               <h3 className="text-sm font-semibold">Arm “{sel.name}” for real orders?</h3>
             </div>
@@ -714,7 +714,7 @@ export function ScriptsPage() {
                 <p>
                   Its shadow record so far: <b className="text-white">{sel.shadowStats.n}</b> order(s),{' '}
                   {sel.shadowStats.wins}W / {sel.shadowStats.losses}L, simulated{' '}
-                  <b className={sel.shadowStats.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-loss'}>
+                  <b className={sel.shadowStats.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-lossText'}>
                     {fmtUsd(sel.shadowStats.pnlUsd)}
                   </b>.
                 </p>
@@ -736,7 +736,7 @@ export function ScriptsPage() {
               </p>
               {sel.audit && !sel.audit.ok && (
                 <div className="rounded-lg border border-rom-loss/50 bg-rom-loss/15 p-2.5">
-                  <div className="flex items-center gap-1.5 font-semibold text-rom-loss">
+                  <div className="flex items-center gap-1.5 font-semibold text-rom-lossText">
                     <ShieldAlert className="h-3.5 w-3.5" />
                     The risk audit flagged this script
                   </div>
@@ -753,7 +753,7 @@ export function ScriptsPage() {
               <button onClick={() => setArmModal(false)} className="rom-btn-default">Cancel</button>
               <button
                 onClick={() => void applyDryRun(false)}
-                className="rounded-md border border-rom-loss/60 bg-rom-loss/15 px-3 py-1.5 text-xs font-semibold text-rom-loss"
+                className="rounded-md border border-rom-loss/60 bg-rom-loss/15 px-3 py-1.5 text-xs font-semibold text-rom-lossText"
               >
                 Arm for real orders
               </button>
@@ -812,7 +812,7 @@ export function ScriptsPage() {
                 </span>
               )}
             </div>
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-lg border border-rom-border bg-rom-void/50 p-3 font-mono text-[10px] leading-relaxed text-rom-dim whitespace-pre-wrap">
+            <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-lg border border-rom-border bg-rom-void/50 p-3 font-mono text-[11px] leading-relaxed text-rom-dim whitespace-pre-wrap">
               {packText ? `${packText.slice(0, 2500)}\n…` : 'Building the pack from your config, sandbox and recorded data…'}
             </div>
             <div className="mt-3">
@@ -886,7 +886,7 @@ function StatusLine({ script, onScope }: {
                 key={a}
                 onClick={() => toggleAsset(a)}
                 className={cls(
-                  'rounded px-2 py-0.5 font-mono text-[10px] transition-colors',
+                  'rounded px-2 py-0.5 font-mono text-[11px] transition-colors',
                   on ? 'bg-rom-purple/20 text-rom-purple' : 'bg-rom-surface2 text-rom-dim',
                 )}
               >
@@ -894,7 +894,7 @@ function StatusLine({ script, onScope }: {
               </button>
             );
           })}
-          <span className="ml-2 text-[10px] text-rom-dim">
+          <span className="ml-2 text-[11px] text-rom-dim">
             This script only. Independent of the 15m Crypto engine.
           </span>
         </div>
@@ -916,14 +916,14 @@ function AuditPanel({ audit, stale }: { audit: ScriptAudit | null; stale: boolea
       <div className="flex items-start gap-2">
         {audit.ok
           ? <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-rom-win" />
-          : <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-rom-loss" />}
+          : <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-rom-lossText" />}
         <div className="min-w-0">
           <div className={cls('text-xs font-semibold',
-            audit.ok ? 'text-rom-win' : 'text-rom-loss')}>
+            audit.ok ? 'text-rom-win' : 'text-rom-lossText')}>
             {audit.summary}
           </div>
           {stale && (
-            <div className="mt-0.5 text-[10px] text-rom-warn">
+            <div className="mt-0.5 text-[11px] text-rom-warn">
               The editor differs from the saved script — this scan covers what is
               saved. Save or Validate to rescan.
             </div>
@@ -939,7 +939,7 @@ function AuditPanel({ audit, stale }: { audit: ScriptAudit | null; stale: boolea
               className={cls('rounded border px-2 py-1.5 text-[11px] leading-relaxed',
                 SEVERITY_TONE[f.severity] ?? SEVERITY_TONE.info)}
             >
-              <span className="font-mono text-[10px] uppercase opacity-70">
+              <span className="font-mono text-[11px] uppercase opacity-70">
                 {f.severity}
                 {f.line ? ` · line ${f.line}` : ''} · {f.category}
               </span>
@@ -949,7 +949,7 @@ function AuditPanel({ audit, stale }: { audit: ScriptAudit | null; stale: boolea
         </div>
       )}
 
-      <p className="border-t border-rom-border/60 pt-2 text-[10px] leading-relaxed text-rom-dim">
+      <p className="border-t border-rom-border/60 pt-2 text-[11px] leading-relaxed text-rom-dim">
         Scripts run as <b className="text-rom-muted">full Python</b>, in the same process
         that holds your <b className="text-rom-warn">decrypted API credentials</b>. This scan reads
         the source and reports what it recognizes — it is a smoke detector, not a lock, and it
@@ -977,7 +977,7 @@ function BacktestResult({ res, busy }: { res: ScriptBacktest | null; busy: boole
   return (
     <div className="space-y-2">
       {res.scriptError && (
-        <div className="rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-2 text-[11px] text-rom-loss">
+        <div className="rounded-lg border border-rom-loss/40 bg-rom-loss/10 px-3 py-2 text-[11px] text-rom-lossText">
           Script died mid-run: {res.scriptError}
         </div>
       )}
@@ -992,16 +992,16 @@ function BacktestResult({ res, busy }: { res: ScriptBacktest | null; busy: boole
       {Object.keys(res.byAsset).length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {Object.entries(res.byAsset).map(([a, st]) => (
-            <span key={a} className="rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[10px] text-rom-dim">
+            <span key={a} className="rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[11px] text-rom-dim">
               {a} {st.wins}/{st.n}{' '}
-              <span className={st.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-loss'}>{fmtUsd(st.pnlUsd, { sign: true })}</span>
+              <span className={st.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-lossText'}>{fmtUsd(st.pnlUsd, { sign: true })}</span>
             </span>
           ))}
         </div>
       )}
       {res.signalResult && (
         <div className="rounded-lg border border-rom-border/70 bg-rom-surface2/30 p-2">
-          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-rom-muted">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-rom-muted">
             Whale / momentum signal replay (decide_signal)
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5">
@@ -1013,19 +1013,19 @@ function BacktestResult({ res, busy }: { res: ScriptBacktest | null; busy: boole
           </div>
           <ul className="mt-1.5 space-y-0.5">
             {(res.signalResult.caveats ?? []).map((c, i) => (
-              <li key={i} className="text-[10px] leading-relaxed text-rom-warn/70">⚠ {c}</li>
+              <li key={i} className="text-[11px] leading-relaxed text-rom-warn/70">⚠ {c}</li>
             ))}
           </ul>
         </div>
       )}
       {(res.scriptLogs?.length ?? 0) > 0 && (
-        <div className="max-h-32 overflow-y-auto rounded-lg border border-rom-border bg-rom-void/50 p-2 font-mono text-[10px] text-rom-muted">
+        <div className="max-h-32 overflow-y-auto rounded-lg border border-rom-border bg-rom-void/50 p-2 font-mono text-[11px] text-rom-muted">
           {res.scriptLogs!.map((l, i) => <div key={i}>{l}</div>)}
         </div>
       )}
       <ul className="space-y-0.5">
         {res.caveats.map((c, i) => (
-          <li key={i} className="text-[10px] leading-relaxed text-rom-warn/80">⚠ {c}</li>
+          <li key={i} className="text-[11px] leading-relaxed text-rom-warn/80">⚠ {c}</li>
         ))}
       </ul>
     </div>
@@ -1041,11 +1041,11 @@ function DocsPanel({ docs }: { docs: ScriptApiDocs | null }) {
     <div className="max-h-[420px] space-y-3 overflow-y-auto rounded-lg border border-rom-border bg-rom-void/40 p-4">
       <div className="flex items-center gap-2 text-sm font-semibold text-white">
         <BookOpen className="h-4 w-4 text-rom-purple" /> Script API
-        <span className="text-[10px] font-normal text-rom-dim">
+        <span className="text-[11px] font-normal text-rom-dim">
           — generated live from the engine; always current
         </span>
       </div>
-      <pre className="whitespace-pre-wrap rounded-lg bg-rom-surface2/50 p-3 font-mono text-[10.5px] leading-relaxed text-rom-muted">
+      <pre className="whitespace-pre-wrap rounded-lg bg-rom-surface2/50 p-3 font-mono text-[11px] leading-relaxed text-rom-muted">
         {docs.contract}
       </pre>
 
@@ -1060,8 +1060,8 @@ function DocsPanel({ docs }: { docs: ScriptApiDocs | null }) {
               <td className="py-1 pr-3 text-rom-muted">{f.doc}</td>
               <td className="py-1">
                 {f.backtestable
-                  ? <span className="rounded bg-rom-win/10 px-1.5 py-0.5 text-[10px] uppercase text-rom-win">backtestable</span>
-                  : <span className="rounded bg-rom-warn/10 px-1.5 py-0.5 text-[10px] uppercase text-rom-warn">live-only</span>}
+                  ? <span className="rounded bg-rom-win/10 px-1.5 py-0.5 text-[11px] uppercase text-rom-win">backtestable</span>
+                  : <span className="rounded bg-rom-warn/10 px-1.5 py-0.5 text-[11px] uppercase text-rom-warn">live-only</span>}
               </td>
             </tr>
           ))}
@@ -1080,7 +1080,7 @@ function DocsPanel({ docs }: { docs: ScriptApiDocs | null }) {
         <div>
           Injected without an import:{' '}
           {(docs.injected ?? []).map((b) => (
-            <span key={b} className="mr-1 rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[10px] text-rom-dim">{b}</span>
+            <span key={b} className="mr-1 rounded bg-rom-surface2 px-1.5 py-0.5 font-mono text-[11px] text-rom-dim">{b}</span>
           ))}
         </div>
         <div>
@@ -1107,7 +1107,7 @@ function DocsPanel({ docs }: { docs: ScriptApiDocs | null }) {
       {showExamples && docs.examples.map((ex) => (
         <div key={ex.name}>
           <div className="mb-1 text-[11px] font-semibold text-white">{ex.name}</div>
-          <pre className="overflow-x-auto rounded-lg bg-rom-surface2/50 p-3 font-mono text-[10.5px] leading-relaxed text-rom-muted">{ex.code}</pre>
+          <pre className="overflow-x-auto rounded-lg bg-rom-surface2/50 p-3 font-mono text-[11px] leading-relaxed text-rom-muted">{ex.code}</pre>
         </div>
       ))}
     </div>
@@ -1168,7 +1168,7 @@ function ShadowLedger({
         </span>
         <span className="text-rom-muted">
           simulated{' '}
-          <b className={pnl >= 0 ? 'text-rom-win' : 'text-rom-loss'}>
+          <b className={pnl >= 0 ? 'text-rom-win' : 'text-rom-lossText'}>
             {fmtUsd(pnl, { sign: true })}
           </b>
         </span>
@@ -1224,11 +1224,11 @@ function ShadowLedger({
                         ? <span className="text-rom-purple">open</span>
                         : o.won
                           ? <span className="text-rom-win">won</span>
-                          : <span className="text-rom-loss">lost</span>}
+                          : <span className="text-rom-lossText">lost</span>}
                   </td>
                   <td className="px-3 py-1.5 text-right">
                     {o.pnlUsd === null || o.pnlUsd === undefined ? '—' : (
-                      <span className={o.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-loss'}>
+                      <span className={o.pnlUsd >= 0 ? 'text-rom-win' : 'text-rom-lossText'}>
                         {fmtUsd(o.pnlUsd, { sign: true })}
                       </span>
                     )}
@@ -1256,14 +1256,14 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={cls(
-        'relative h-5 w-9 shrink-0 rounded-full border transition-colors',
+        'relative h-6 w-11 shrink-0 rounded-full border transition-colors',
         checked ? 'border-rom-purple/60 bg-rom-purple/40' : 'border-rom-border bg-rom-surface2',
       )}
     >
       <span
         className={cls(
-          'absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-all',
-          checked ? 'left-[18px]' : 'left-0.5',
+          'absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all',
+          checked ? 'left-[22px]' : 'left-0.5',
         )}
       />
     </button>
@@ -1273,9 +1273,9 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'good' | 'bad' }) {
   return (
     <div className="rounded-lg bg-rom-surface2/60 p-2">
-      <div className="text-[10px] uppercase tracking-wide text-rom-dim">{label}</div>
-      <div className={cls('font-mono text-sm', tone === 'good' ? 'text-rom-win' : tone === 'bad' ? 'text-rom-loss' : 'text-white')}>{value}</div>
-      {sub && <div className="text-[10px] text-rom-dim">{sub}</div>}
+      <div className="text-[11px] uppercase tracking-wide text-rom-dim">{label}</div>
+      <div className={cls('font-mono text-sm', tone === 'good' ? 'text-rom-win' : tone === 'bad' ? 'text-rom-lossText' : 'text-white')}>{value}</div>
+      {sub && <div className="text-[11px] text-rom-dim">{sub}</div>}
     </div>
   );
 }

@@ -130,9 +130,9 @@ export function DashboardPage({ onNav }: DashboardProps) {
     <Page title="Dashboard" subtitle="Live snapshot of your portfolio, signals, and bot health.">
       {engineDown && (
         <div className="mb-4 flex flex-col gap-3 rounded-xl border border-rom-loss/50 bg-rom-loss/10 p-4 sm:flex-row sm:items-center">
-          <AlertTriangle className="h-6 w-6 shrink-0 text-rom-loss" />
+          <AlertTriangle className="h-6 w-6 shrink-0 text-rom-lossText" />
           <div className="flex-1">
-            <div className="text-sm font-semibold text-rom-loss">
+            <div className="text-sm font-semibold text-rom-lossText">
               Trading engine is {backend.status === 'stopped' ? 'stopped' : 'offline'}
             </div>
             <div className="mt-0.5 text-xs text-rom-muted">
@@ -154,9 +154,9 @@ export function DashboardPage({ onNav }: DashboardProps) {
       {killResult && <p role="status" className="mb-4 rounded-xl border border-rom-border bg-rom-surface p-4 text-sm text-rom-muted">{killResult}</p>}
       {openPositions.length > 0 && (
         <div className="mb-4 flex flex-col gap-3 rounded-xl border border-rom-loss/30 bg-rom-loss/5 p-4 sm:flex-row sm:items-center">
-          <Ban className="h-6 w-6 shrink-0 text-rom-loss" />
+          <Ban className="h-6 w-6 shrink-0 text-rom-lossText" />
           <div className="flex-1">
-            <div className="text-sm font-semibold text-rom-loss">
+            <div className="text-sm font-semibold text-rom-lossText">
               {killArmed
                 ? `Confirm: flatten ${openPositions.length} open position${openPositions.length > 1 ? 's' : ''}?`
                 : `${openPositions.length} open position${openPositions.length > 1 ? 's' : ''} active`}
@@ -361,7 +361,7 @@ export function DashboardPage({ onNav }: DashboardProps) {
                   'flex items-start gap-2 rounded-lg border p-2 text-xs',
                   i.tone === 'good' && 'border-rom-win/30 bg-rom-win/5 text-rom-win',
                   i.tone === 'warn' && 'border-rom-warn/30 bg-rom-warn/5 text-rom-warn',
-                  i.tone === 'bad' && 'border-rom-loss/30 bg-rom-loss/5 text-rom-loss',
+                  i.tone === 'bad' && 'border-rom-loss/30 bg-rom-loss/5 text-rom-lossText',
                 )}
               >
                 {i.tone === 'good' ? (
@@ -414,7 +414,7 @@ export function DashboardPage({ onNav }: DashboardProps) {
               {signals.slice(0, 7).map((s) => (
                 <div key={`${s.source}:${s.id}`} className="flex items-center gap-3 py-2 text-sm">
                   <span className={cls(
-                    'inline-flex h-6 w-14 items-center justify-center rounded-md text-[10px] font-medium uppercase',
+                    'inline-flex h-6 w-14 items-center justify-center rounded-md text-[11px] font-medium uppercase',
                     s.source === 'whale' ? 'bg-rom-purple/15 text-rom-purple' : 'bg-rom-pink/15 text-rom-pink',
                   )}>
                     {s.source}
@@ -423,7 +423,7 @@ export function DashboardPage({ onNav }: DashboardProps) {
                   <span className="ml-auto truncate text-xs text-rom-muted">{s.title}</span>
                   <span className={cls(
                     'min-w-[44px] text-right font-mono text-xs',
-                    s.direction === 'yes' ? 'text-rom-win' : 'text-rom-loss',
+                    s.direction === 'yes' ? 'text-rom-win' : 'text-rom-lossText',
                   )}>
                     {s.direction.toUpperCase()} {s.priceCents}¢
                   </span>
@@ -431,7 +431,7 @@ export function DashboardPage({ onNav }: DashboardProps) {
                     +{s.edgePts.toFixed(1)}
                   </span>
                   {s.traded && (
-                    <span className="rom-pill border-rom-indigo/40 bg-rom-indigo/10 text-rom-indigo">
+                    <span className="rom-pill border-rom-indigo/40 bg-rom-indigo/10 text-rom-indigoText">
                       traded
                     </span>
                   )}
@@ -464,7 +464,7 @@ export function DashboardPage({ onNav }: DashboardProps) {
                   {p.outcomeCorrect === 1 ? (
                     <TrendingUp className="h-4 w-4 text-rom-win" />
                   ) : p.outcomeCorrect === 0 ? (
-                    <TrendingDown className="h-4 w-4 text-rom-loss" />
+                    <TrendingDown className="h-4 w-4 text-rom-lossText" />
                   ) : (
                     <span className="h-4 w-4" />
                   )}
@@ -472,7 +472,7 @@ export function DashboardPage({ onNav }: DashboardProps) {
                   <span className="ml-auto truncate text-xs text-rom-muted">{p.title}</span>
                   <span className={cls(
                     'min-w-[60px] text-right font-mono text-sm',
-                    (p.pnlUsd ?? 0) >= 0 ? 'text-rom-win' : 'text-rom-loss',
+                    (p.pnlUsd ?? 0) >= 0 ? 'text-rom-win' : 'text-rom-lossText',
                   )}>
                     {fmtUsd(p.pnlUsd, { sign: true })}
                   </span>
@@ -489,7 +489,7 @@ export function DashboardPage({ onNav }: DashboardProps) {
 function Mini({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-rom-border bg-rom-surface2 px-2 py-1.5">
-      <div className="text-[10px] uppercase tracking-wider text-rom-muted">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-rom-muted">{label}</div>
       <div className="font-mono text-sm text-white">{value}</div>
     </div>
   );

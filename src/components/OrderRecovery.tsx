@@ -65,11 +65,11 @@ export function OrderRecovery({ intents }: { intents: BlockedIntent[] }) {
       className="mb-4 rounded-xl border border-rom-loss/40 bg-rom-loss/[0.07] p-4"
     >
       <div className="flex items-start gap-3">
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-rom-loss/10 text-rom-loss">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-rom-loss/10 text-rom-lossText">
           <AlertOctagon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 id="order-recovery-heading" className="text-sm font-semibold text-rom-loss">
+          <h2 id="order-recovery-heading" className="text-sm font-semibold text-rom-lossText">
             Trading is halted — {intents.length} order{intents.length > 1 ? 's' : ''} need
             {intents.length > 1 ? '' : 's'} recovery
           </h2>
@@ -100,7 +100,7 @@ export function OrderRecovery({ intents }: { intents: BlockedIntent[] }) {
                   <span className="text-xs tabular-nums text-rom-muted">
                     {intent.quantity} @ {Math.round(intent.limitPrice * 100)}c
                   </span>
-                  <span className="text-[10px] uppercase tracking-wide text-rom-dim">
+                  <span className="text-[11px] uppercase tracking-wide text-rom-dim">
                     {intent.state.replace('_', ' ')} · {fmtAge(intent.createdAt)}
                   </span>
                 </div>
@@ -108,11 +108,11 @@ export function OrderRecovery({ intents }: { intents: BlockedIntent[] }) {
                   {STATE_MEANING[intent.state]}
                 </p>
                 {intent.error && (
-                  <p className="mt-1 font-mono text-[10px] leading-relaxed text-rom-dim">
+                  <p className="mt-1 font-mono text-[11px] leading-relaxed text-rom-dim">
                     {intent.error}
                   </p>
                 )}
-                <div className="mt-1.5 text-[10px] text-rom-dim">
+                <div className="mt-1.5 text-[11px] text-rom-dim">
                   Local ID <span className="font-mono text-rom-muted">{intent.localId}</span>
                   {intent.orderId && (
                     <>

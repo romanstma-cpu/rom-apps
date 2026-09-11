@@ -9,8 +9,8 @@ const LEVEL_COLORS: Record<string, string> = {
   DEBUG: 'text-rom-dim',
   INFO: 'text-white/80',
   WARN: 'text-rom-warn',
-  ERROR: 'text-rom-loss',
-  CRITICAL: 'text-rom-loss',
+  ERROR: 'text-rom-lossText',
+  CRITICAL: 'text-rom-lossText',
 };
 
 export function LogsPage() {

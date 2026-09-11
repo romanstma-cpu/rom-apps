@@ -139,7 +139,7 @@ function OriginalCopyTradingPage() {
           </div>
         )}
         {status?.lossLimitHit && (
-          <div className="mt-3 rounded-lg border border-rom-loss/30 bg-rom-loss/5 px-3 py-2 text-xs text-rom-loss">
+          <div className="mt-3 rounded-lg border border-rom-loss/30 bg-rom-loss/5 px-3 py-2 text-xs text-rom-lossText">
             Daily loss limit hit — no new copies today. Open positions are still managed.
           </div>
         )}
@@ -178,7 +178,7 @@ function OriginalCopyTradingPage() {
                   <button
                     onClick={() => void removeWallet(w)}
                     disabled={busy}
-                    className="ml-auto rounded-md p-1 text-rom-muted hover:bg-rom-loss/10 hover:text-rom-loss"
+                    className="ml-auto rounded-md p-1 text-rom-muted hover:bg-rom-loss/10 hover:text-rom-lossText"
                     title="Stop following"
                   >
                     <X className="h-4 w-4" />
@@ -303,9 +303,9 @@ function Label({ children }: { children: React.ReactNode }) {
 function KV({ label, value, tone }: { label: string; value: string; tone?: 'good' | 'bad' }) {
   return (
     <div className="flex flex-col items-end leading-tight">
-      <span className="text-[10px] uppercase tracking-wider text-rom-muted">{label}</span>
+      <span className="text-[11px] uppercase tracking-wider text-rom-muted">{label}</span>
       <span className={cls('font-mono text-sm',
-        tone === 'good' ? 'text-rom-win' : tone === 'bad' ? 'text-rom-loss' : 'text-white')}>
+        tone === 'good' ? 'text-rom-win' : tone === 'bad' ? 'text-rom-lossText' : 'text-white')}>
         {value}
       </span>
     </div>
@@ -316,7 +316,7 @@ function ModePill({ mode }: { mode: 'OFF' | 'WAITING' | 'LIVE' }) {
   return (
     <span className={cls(
       'rounded-md border px-2 py-1 text-[11px] font-semibold uppercase tracking-wider',
-      mode === 'LIVE' && 'border-rom-loss/40 bg-rom-loss/10 text-rom-loss',
+      mode === 'LIVE' && 'border-rom-loss/40 bg-rom-loss/10 text-rom-lossText',
       mode === 'WAITING' && 'border-rom-warn/40 bg-rom-warn/10 text-rom-warn',
       mode === 'OFF' && 'border-rom-border bg-rom-surface2 text-rom-muted',
     )}>

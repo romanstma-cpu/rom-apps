@@ -14,7 +14,7 @@ button:not(:disabled),summary{cursor:pointer}
 .terminal-command{background:linear-gradient(115deg,#152638,#111c29 70%);border:1px solid #2b4258;border-radius:16px;padding:28px}
 .terminal-mode{display:inline-flex;align-items:center;gap:8px;border:1px solid #40536a;border-radius:6px;padding:6px 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#b9cfeb}
 .terminal-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#283647;border:1px solid #283647;border-radius:12px;overflow:hidden}
-.terminal-metrics>div{background:#111d2a;padding:20px 24px}.terminal-metrics dt{font-size:11px;color:#a4b1c4}.terminal-metrics dd{margin:8px 0 0;font-size:28px;line-height:1.2;letter-spacing:-.03em;font-weight:600;font-variant-numeric:tabular-nums}.terminal-metrics small{display:block;margin-top:8px;color:#9cacbf;font-size:11px}
+.terminal-metrics>div{background:#111d2a;padding:20px 24px}.terminal-metrics dt{font-size:11px;color:#a4b1c4}.terminal-metrics dd{margin:8px 0 0;font-size:30px;line-height:1.2;letter-spacing:-.03em;font-weight:600;font-variant-numeric:tabular-nums}.terminal-metrics small{display:block;margin-top:8px;color:#9cacbf;font-size:11px}
 @media(max-width:1050px){.terminal-metrics>div{padding:16px}.terminal-metrics dd{font-size:23px}.terminal-command{padding:22px}}
 .terminal-command-detailed{position:relative;border-top:2px solid theme('colors.rom.purple');background:linear-gradient(125deg,theme('colors.rom.surface2'),theme('colors.rom.surface'))}
 .terminal-command-detailed h3{line-height:1.2}

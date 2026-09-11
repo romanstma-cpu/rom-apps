@@ -39,7 +39,7 @@ export function WhyNotTrading() {
             )} />
             <span className={g.state === 'blocked' ? 'text-white' : 'text-rom-dim'}>
               {g.label}
-              {g.reason && <span className="ml-1 text-rom-loss">— {g.reason}</span>}
+              {g.reason && <span className="ml-1 text-rom-lossText">— {g.reason}</span>}
             </span>
           </li>
         ))}

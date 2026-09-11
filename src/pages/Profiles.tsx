@@ -283,7 +283,7 @@ function ProfileCard({
         <button onClick={onExport} className="rom-btn-ghost text-xs">
           <Download className="h-3.5 w-3.5" /> Export
         </button>
-        <button onClick={onDelete} className="rom-btn-ghost text-xs text-rom-loss/80 hover:text-rom-loss">
+        <button onClick={onDelete} className="rom-btn-ghost text-xs text-rom-lossText/80 hover:text-rom-lossText">
           <Trash2 className="h-3.5 w-3.5" /> Delete
         </button>
       </div>
@@ -294,7 +294,7 @@ function ProfileCard({
 function Mini({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-rom-border bg-rom-surface2 px-2 py-1">
-      <div className="text-[10px] uppercase tracking-wider text-rom-dim">{label}</div>
+      <div className="text-[11px] uppercase tracking-wider text-rom-dim">{label}</div>
       <div className="font-mono text-[11px] text-white">{value}</div>
     </div>
   );

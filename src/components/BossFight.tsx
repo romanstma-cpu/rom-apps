@@ -289,7 +289,7 @@ function BossArena({ onClose, sprite }: { onClose: () => void; sprite: HTMLImage
                     opacity: beaten ? 1 : current ? 1 : 0.5,
                   }}
                 />
-                <span className={`text-[10px] ${current ? 'text-white' : 'text-rom-dim'}`}>
+                <span className={`text-[11px] ${current ? 'text-white' : 'text-rom-dim'}`}>
                   {m >= 1000 ? `${m / 1000}k` : m}
                 </span>
               </div>

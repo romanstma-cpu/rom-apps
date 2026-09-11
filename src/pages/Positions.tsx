@@ -11,11 +11,11 @@ import { cls, fmtCents, fmtRelative, fmtUsd } from '../utils/format';
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-rom-warn/15 text-rom-warn border-rom-warn/30',
   partial: 'bg-rom-warn/15 text-rom-warn border-rom-warn/30',
-  filled: 'bg-rom-indigo/15 text-rom-indigo border-rom-indigo/30',
+  filled: 'bg-rom-indigo/15 text-rom-indigoText border-rom-indigo/30',
   canceled: 'bg-rom-dim/15 text-rom-muted border-rom-border',
   expired: 'bg-rom-dim/15 text-rom-muted border-rom-border',
   gone: 'bg-rom-dim/15 text-rom-muted border-rom-border',
-  error: 'bg-rom-loss/15 text-rom-loss border-rom-loss/30',
+  error: 'bg-rom-loss/15 text-rom-lossText border-rom-loss/30',
   dry_run: 'bg-rom-purple/15 text-rom-purple border-rom-purple/30',
 };
 
@@ -262,11 +262,11 @@ function PositionRow({ p }: { p: BotPosition }) {
       <td>
         <span
           className={cls(
-            'inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] uppercase',
+            'inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] uppercase',
             p.signalSource === 'whale'
               ? 'bg-rom-purple/15 text-rom-purple'
               : p.signalSource === 'copy'
-                ? 'bg-rom-indigo/15 text-rom-indigo'
+                ? 'bg-rom-indigo/15 text-rom-indigoText'
                 : p.signalSource === 'external'
                   ? 'bg-rom-dim/15 text-rom-muted'
                   : 'bg-rom-pink/15 text-rom-pink',
@@ -280,10 +280,10 @@ function PositionRow({ p }: { p: BotPosition }) {
       <td>
         <span
           className={cls(
-            'rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase',
+            'rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase',
             p.direction === 'yes'
               ? 'bg-rom-win/10 text-rom-win'
-              : 'bg-rom-loss/10 text-rom-loss',
+              : 'bg-rom-loss/10 text-rom-lossText',
           )}
         >
           {p.direction}
@@ -299,7 +299,7 @@ function PositionRow({ p }: { p: BotPosition }) {
       <td>
         <span
           className={cls(
-            'inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium uppercase',
+            'inline-flex items-center rounded-md border px-1.5 py-0.5 text-[11px] font-medium uppercase',
             STATUS_COLORS[p.status] ?? 'border-rom-border bg-rom-surface2 text-rom-muted',
           )}
         >
@@ -308,11 +308,11 @@ function PositionRow({ p }: { p: BotPosition }) {
       </td>
       <td>
         {!p.resolved ? (
-          <span className="text-[10px] uppercase tracking-wider text-rom-dim">{p.status === 'dry_run' ? 'practice' : 'live'}</span>
+          <span className="text-[11px] uppercase tracking-wider text-rom-dim">{p.status === 'dry_run' ? 'practice' : 'live'}</span>
         ) : p.outcomeCorrect === 1 ? (
           <span className="rom-pill border-rom-win/40 bg-rom-win/10 text-rom-win">won</span>
         ) : p.outcomeCorrect === 0 ? (
-          <span className="rom-pill border-rom-loss/40 bg-rom-loss/10 text-rom-loss">lost</span>
+          <span className="rom-pill border-rom-loss/40 bg-rom-loss/10 text-rom-lossText">lost</span>
         ) : (
           <span className="rom-pill text-rom-muted">closed</span>
         )}
@@ -325,7 +325,7 @@ function PositionRow({ p }: { p: BotPosition }) {
       <td
         className={cls(
           'font-mono text-xs',
-          pnl == null ? 'text-rom-dim' : pnl >= 0 ? 'text-rom-win' : 'text-rom-loss',
+          pnl == null ? 'text-rom-dim' : pnl >= 0 ? 'text-rom-win' : 'text-rom-lossText',
         )}
       >
         {pnl == null ? (
@@ -338,7 +338,7 @@ function PositionRow({ p }: { p: BotPosition }) {
           }>
             {fmtUsd(pnl, { sign: true })}
             {!realized && (
-              <span className="ml-1 text-[10px] uppercase tracking-wide text-rom-dim">live</span>
+              <span className="ml-1 text-[11px] uppercase tracking-wide text-rom-dim">live</span>
             )}
           </span>
         )}

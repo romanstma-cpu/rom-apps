@@ -453,13 +453,16 @@ export function TerminalPage() {
 
           <div className="kt-panel">
             <div className="kt-lbl"><b>◈</b> LAST 10 FILLS <span className="tag">SETTLED</span></div>
-            <div className="kt-fills">
+            {fills.length === 0 && (
+              <div className="kt-empty">no settled fills yet</div>
+            )}
+            {fills.length > 0 && <div className="kt-fills">
               {Array.from({ length: 10 }).map((_, i) => {
                 const f = fills[fills.length - 10 + i];
                 const tip = f ? `${f.label} ${f.side} · entry ${Math.round(f.entry)}c · ${f.pnl != null ? fmtMoney(f.pnl) : 'n/a'} · ${f.w ? 'WON' : 'LOST'}` : 'no fill yet';
                 return <div key={i} title={tip} className={'kt-cell' + (f === undefined ? '' : f.w ? ' w' : ' l')} />;
               })}
-            </div>
+            </div>}
           </div>
 
           <div className="kt-panel">
@@ -487,7 +490,7 @@ export function TerminalPage() {
         <div className="kt-col kt-center">
           <div className="kt-panel kt-field">
             <canvas ref={fieldRef} />
-            <div className="kt-title kt-lbl"><b>◈</b> CONVERGENCE FIELD — LIVE SIGNAL FLOW</div>
+            <div className="kt-title kt-lbl"><b>◈</b> CONVERGENCE FIELD — SIGNAL FLOW</div>
             <div className="kt-ov a"><div className="k">SIGNALS / MIN</div><div className="v kt-num" style={{ color: 'var(--pri2)' }}>{signalsMin}</div></div>
             <div className="kt-ov b"><div className="k">MARKETS SCANNED</div><div className="v kt-num" style={{ color: 'var(--pri2)' }}>{marketsScanned.toLocaleString()}</div></div>
             <div className="kt-ov c"><div className="k">TRADES / HR</div><div className="v kt-num" style={{ color: 'var(--hot)' }}>{tradesHr}</div></div>
@@ -514,7 +517,7 @@ export function TerminalPage() {
             <table className="kt-table">
               <thead><tr><th>MKT</th><th>SIDE</th><th>ENTRY</th><th>SZ</th><th>P&amp;L</th></tr></thead>
               <tbody>
-                {openRows.length === 0 && <tr><td colSpan={5} style={{ color: 'var(--dim)', textAlign: 'center', padding: '14px 0' }}>no open positions</td></tr>}
+                {openRows.length === 0 && <tr><td colSpan={5} style={{ color: 'var(--dim)', textAlign: 'center', padding: '16px 0' }}>no open positions</td></tr>}
                 {openRows.map(r => {
                   const up = r.side === 'up' || r.side === 'yes';
                   return (
@@ -534,12 +537,12 @@ export function TerminalPage() {
             <div className="kt-lbl"><b>◈</b> TRADE LOG — LIVE STREAM <span className="tag">logs:append</span></div>
             <div className="kt-log">
               {logs.slice(-22).map((l, i) => (
-                <div className="ln" key={l.ts + i}>
+                <div className="ln" key={l.ts + i} title={l.msg}>
                   <span className="t">{new Date(l.ts).toLocaleTimeString('en-GB')}</span>{' '}
                   <span style={{ color: l.level === 'ERROR' || l.level === 'CRITICAL' ? 'var(--loss)' : l.level === 'WARN' ? 'var(--warn)' : logColor[l.source] || 'var(--mut)' }}>
                     [{l.source}]
                   </span>{' '}
-                  <span style={{ color: l.level === 'ERROR' || l.level === 'CRITICAL' ? 'var(--loss)' : 'var(--mut)' }}>{l.msg}</span>
+                  <span style={{ color: l.level === 'ERROR' || l.level === 'CRITICAL' ? 'var(--loss)' : 'var(--mut)' }}>{stripEchoedTimestamp(l.msg)}</span>
                 </div>
               ))}
               {logs.length === 0 && <div className="ln" style={{ color: 'var(--dim)' }}>awaiting backend log stream…</div>}
@@ -583,104 +586,119 @@ function makeOrb(cv: HTMLCanvasElement | null, kind: Orb['kind'], nodes: { x: nu
   return { x, y, kind, tx: tgt.x, ty: tgt.y, ph: 0, r: kind === 'whale' ? 3 + Math.random() * 2.5 : 1.8 + Math.random() * 1.4 };
 }
 
+/**
+ * Backend lines arrive as "[2026-09-11 15:27:46] INFO ...". The row already
+ * prints that time on the left, and in a 330px panel the duplicate costs more
+ * characters than the message has left -- it was truncating the actual text.
+ * The full untouched line stays available as the row's tooltip.
+ */
+function stripEchoedTimestamp(msg: string): string {
+  return String(msg ?? '').replace(
+    /^\s*\[\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:[.,]\d+)?\]\s*/, '');
+}
+
 const KT_CSS = `
 .kt-root{--ground:#04070e;--panel:#080f1e;--panel2:#0a1324;--line:#16233f;--line2:#1f3358;
   --pri:#2f81f7;--pri2:#38bdf8;--hot:#5ab0ff;--win:#34d399;--loss:#fb7185;--warn:#fbbf24;
-  --tx:#dbe8ff;--mut:#8098c4;--dim:#4a5d84;--dimmer:#33456a;
+  --tx:#dbe8ff;--mut:#8098c4;--dim:#7089b8;--dimmer:#6b82ad;
   --mono:ui-monospace,"Cascadia Code","SF Mono",Menlo,Consolas,monospace;
   height:100%;width:100%;overflow:auto;padding:12px;font-family:var(--mono);color:var(--tx);
   background:radial-gradient(1200px 600px at 50% -8%,rgba(47,129,247,.10),transparent 60%),linear-gradient(180deg,#04070e,#03060d)}
-.kt-app{max-width:1520px;margin:0 auto;display:grid;gap:10px;grid-template-columns:262px minmax(0,1fr) 352px;
+.kt-app{max-width:1520px;margin:0 auto;display:grid;gap:8px;grid-template-columns:262px minmax(0,1fr) 352px;
   grid-template-areas:"ticker ticker ticker" "left center right";grid-template-rows:auto auto;align-items:start}
 @media (max-width:1180px){.kt-app{grid-template-columns:1fr;grid-template-areas:"ticker" "center" "left" "right";grid-template-rows:auto}}
 .kt-num{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .kt-panel{position:relative;background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
-  border-radius:9px;padding:11px 12px;overflow:hidden;box-shadow:inset 0 1px 0 rgba(120,170,255,.05),0 8px 26px rgba(0,0,0,.45)}
-.kt-lbl{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:7px}
+  border-radius:8px;padding:12px 12px;overflow:hidden;box-shadow:inset 0 1px 0 rgba(120,170,255,.05),0 8px 26px rgba(0,0,0,.45)}
+.kt-lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:8px;
+  min-width:0;white-space:nowrap;overflow:hidden}
+.kt-lbl .tag{margin-left:auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.kt-lbl.kt-title{white-space:normal;overflow:visible}
 .kt-lbl b{color:var(--pri2);font-weight:600}
-.kt-lbl .tag{margin-left:auto;color:var(--dimmer);letter-spacing:.14em}
+.kt-lbl .tag{margin-left:auto;color:var(--dimmer);letter-spacing:.1em}
 .kt-ticker{grid-area:ticker;display:flex;align-items:center;gap:16px;background:linear-gradient(180deg,#0a1428,#070d1c);
-  border:1px solid var(--line);border-radius:9px;padding:9px 14px}
-.kt-brand h1{font-size:15px;letter-spacing:.30em;font-weight:700;color:#eaf2ff}
-.kt-brand .kt-sub{font-size:10px;letter-spacing:.26em;color:var(--dim);margin-top:2px}
-.kt-live{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.2em;color:var(--pri2);padding:4px 10px;
-  border:1px solid rgba(56,189,248,.3);border-radius:20px;background:rgba(47,129,247,.08);min-width:max-content}
+  border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.kt-brand h1{font-size:16px;letter-spacing:.12em;font-weight:700;color:#eaf2ff}
+.kt-brand .kt-sub{font-size:11px;letter-spacing:.16em;color:var(--dim);margin-top:4px}
+.kt-live{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.1em;color:var(--pri2);padding:4px 8px;
+  border:1px solid rgba(56,189,248,.3);border-radius:16px;background:rgba(47,129,247,.08);min-width:max-content}
 .kt-live.off{color:var(--warn);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.06)}
 .kt-live .kt-dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor;animation:ktblink 1.5s infinite}
 @keyframes ktblink{0%,100%{opacity:1}50%{opacity:.25}}
-.kt-spots{display:flex;gap:9px;flex:1;overflow:hidden;margin-left:4px}
-.kt-spot{flex:1;min-width:0;border-left:1px solid var(--line);padding-left:9px}
-.kt-spot .s{font-size:10px;letter-spacing:.14em;color:var(--dim)}
+.kt-spots{display:flex;gap:8px;flex:1;overflow:hidden;margin-left:4px}
+.kt-spot{flex:1;min-width:0;border-left:1px solid var(--line);padding-left:8px}
+.kt-spot .s{font-size:11px;letter-spacing:.1em;color:var(--dim)}
 .kt-spot .v{font-size:14px;font-weight:600;color:#eaf2ff}
-.kt-drow{display:flex;align-items:center;gap:6px;font-size:10px;margin-top:1px}
-.kt-macd{font-size:10px;letter-spacing:.03em;color:var(--dim)}
+.kt-drow{display:flex;align-items:center;gap:4px;font-size:11px;margin-top:4px}
+.kt-macd{font-size:11px;letter-spacing:.03em;color:var(--dim)}
 .kt-macd.up{color:var(--win)}.kt-macd.down{color:var(--loss)}
 .kt-cell[title]{cursor:help}
 .up{color:var(--win)!important}.down{color:var(--loss)!important}
 .kt-clock{text-align:right;min-width:max-content}
 .kt-clock .t{font-size:13px;font-weight:600;color:#eaf2ff}
-.kt-clock .u{font-size:10px;letter-spacing:.18em;color:var(--dim)}
-.kt-col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.kt-clock .u{font-size:11px;letter-spacing:.12em;color:var(--dim)}
+.kt-col{display:flex;flex-direction:column;gap:8px;min-width:0}
 .kt-left{grid-area:left}.kt-center{grid-area:center}.kt-right{grid-area:right}
 .kt-center .kt-panel:first-child{height:clamp(300px,40vh,440px)}
-.kt-pnl-top{display:flex;align-items:flex-end;justify-content:space-between;margin-top:9px}
-.kt-pnl-big{font-size:31px;font-weight:700;line-height:1;letter-spacing:-.03em}
-.kt-pnl-sub{font-size:10px;color:var(--dim);letter-spacing:.12em;margin-top:6px}
-.kt-chips{display:flex;gap:6px;margin-top:9px}
-.kt-chip{flex:1;background:var(--ground);border:1px solid var(--line);border-radius:6px;padding:6px 7px;text-align:center}
-.kt-chip .k{font-size:10px;letter-spacing:.14em;color:var(--mut)}
-.kt-chip .v{font-size:13px;font-weight:600;margin-top:2px}
+.kt-pnl-top{display:flex;align-items:flex-end;justify-content:space-between;margin-top:8px}
+.kt-pnl-big{font-size:30px;font-weight:700;line-height:1;letter-spacing:-.03em}
+.kt-pnl-sub{font-size:11px;color:var(--dim);letter-spacing:.12em;margin-top:4px}
+.kt-chips{display:flex;gap:4px;margin-top:8px}
+.kt-chip{flex:1;min-width:0;background:var(--ground);border:1px solid var(--line);border-radius:6px;padding:4px 4px;text-align:center}
+.kt-chip .k{font-size:11px;letter-spacing:.06em;color:var(--mut);white-space:nowrap}
+.kt-chip .v{font-size:13px;font-weight:600;margin-top:4px}
 .g-win{color:var(--win)}.g-loss{color:var(--loss)}
 .kt-root canvas{display:block;width:100%}
-.kt-gauge-wrap{display:flex;align-items:center;gap:12px;margin-top:6px}
+.kt-gauge-wrap{display:flex;align-items:center;gap:12px;margin-top:4px}
 .kt-gauge-wrap canvas{width:88px!important;flex:none}
-.kt-gauge-meta .g1{font-size:25px;font-weight:700;letter-spacing:-.02em;color:var(--pri2)}
-.kt-gauge-meta .g2{font-size:10px;letter-spacing:.12em;color:var(--dim);margin-top:2px}
-.kt-gauge-meta .g3{font-size:10px;color:var(--mut);margin-top:6px;line-height:1.5}
-.kt-fills{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:9px}
-.kt-cell{aspect-ratio:1;border-radius:3px;background:var(--dimmer);transition:background .3s}
+.kt-gauge-meta .g1{font-size:24px;font-weight:700;letter-spacing:-.02em;color:var(--pri2)}
+.kt-gauge-meta .g2{font-size:11px;letter-spacing:.12em;color:var(--dim);margin-top:4px}
+.kt-gauge-meta .g3{font-size:11px;color:var(--mut);margin-top:4px;line-height:1.5}
+.kt-fills{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:8px}
+.kt-empty{margin-top:8px;font-size:11px;color:var(--dim);letter-spacing:.06em}
+.kt-cell{aspect-ratio:1;border-radius:4px;background:var(--dimmer);transition:background .3s}
 .kt-cell.w{background:var(--win);box-shadow:0 0 8px rgba(52,211,153,.55)}
 .kt-cell.l{background:var(--loss);box-shadow:0 0 8px rgba(251,113,133,.5)}
-.kt-feeds{display:flex;flex-direction:column;gap:5px;margin-top:9px}
-.kt-feed-row{display:flex;align-items:center;gap:8px;font-size:10px}
+.kt-feeds{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.kt-feed-row{display:flex;align-items:center;gap:8px;font-size:11px}
 .kt-feed-row .fn{color:var(--mut);width:86px}
-.kt-feed-row .bar{flex:1;height:4px;background:var(--ground);border-radius:3px;overflow:hidden}
+.kt-feed-row .bar{flex:1;height:4px;background:var(--ground);border-radius:4px;overflow:hidden}
 .kt-feed-row .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--pri),var(--pri2))}
-.kt-feed-row .st{width:32px;text-align:right;font-size:10px;letter-spacing:.1em}
+.kt-feed-row .st{width:32px;text-align:right;font-size:11px;letter-spacing:.1em}
 .kt-feed-row .st.on{color:var(--pri2)}.kt-feed-row .st.off{color:var(--dimmer)}
 .kt-field{position:relative}
 .kt-field canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
 .kt-ov{position:absolute;z-index:3;pointer-events:none}
-.kt-ov .k{font-size:10px;letter-spacing:.18em;color:var(--mut)}
-.kt-ov .v{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 0 18px rgba(47,129,247,.55)}
+.kt-ov .k{font-size:11px;letter-spacing:.12em;color:var(--mut)}
+.kt-ov .v{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 0 18px rgba(47,129,247,.55)}
 .kt-ov.a{top:12px;left:14px}.kt-ov.b{top:12px;right:14px;text-align:right}
 .kt-ov.c{bottom:12px;left:14px}.kt-ov.d{bottom:12px;right:14px;text-align:right}
 .kt-field .kt-title{position:absolute;top:11px;left:50%;transform:translateX(-50%);z-index:3}
-.kt-legend{position:absolute;bottom:11px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:14px;font-size:10px;letter-spacing:.12em;color:var(--dim)}
-.kt-legend i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.kt-legend{position:absolute;bottom:11px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:12px;font-size:11px;letter-spacing:.12em;color:var(--dim)}
+.kt-legend i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
 .kt-chart-head{display:flex;justify-content:space-between;align-items:baseline}
 .kt-chart-head .kt-now{font-size:11px;color:var(--pri2)}
 .kt-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-.kt-table th{font-size:10px;letter-spacing:.12em;color:var(--dim);text-align:right;padding:7px 6px 6px;font-weight:500;border-bottom:1px solid var(--line)}
+.kt-table th{font-size:11px;letter-spacing:.12em;color:var(--dim);text-align:right;padding:8px 4px 4px;font-weight:500;border-bottom:1px solid var(--line)}
 .kt-table th:first-child,.kt-table td:first-child{text-align:left}
-.kt-table td{font-size:11px;padding:6px;border-bottom:1px solid rgba(22,35,63,.5);color:var(--mut);text-align:right}
+.kt-table td{font-size:11px;padding:4px;border-bottom:1px solid rgba(22,35,63,.5);color:var(--mut);text-align:right}
 .kt-table td .sym{color:#eaf2ff;font-weight:600}
-.kt-side{font-size:10px;letter-spacing:.08em;padding:1px 5px;border-radius:4px}
+.kt-side{font-size:11px;letter-spacing:.08em;padding:4px 4px;border-radius:4px}
 .kt-side.up{background:rgba(52,211,153,.13);color:var(--win)}
 .kt-side.dn{background:rgba(251,113,133,.13);color:var(--loss)}
 .kt-term{display:flex;flex-direction:column}
-.kt-log{height:270px;overflow:hidden;margin-top:8px;font-size:10.5px;line-height:1.62;display:flex;flex-direction:column;justify-content:flex-end;
+.kt-log{height:270px;overflow:hidden;margin-top:8px;font-size:11px;line-height:1.62;display:flex;flex-direction:column;justify-content:flex-end;
   -webkit-mask-image:linear-gradient(180deg,transparent,#000 22px)}
-.kt-tracev{display:flex;flex-direction:column;gap:5px;margin-top:8px}
-.kt-tracev .kt-tchip{white-space:normal;font-size:10px}
+.kt-tracev{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.kt-tracev .kt-tchip{white-space:normal;font-size:11px}
 .kt-log .ln{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kt-log .t{color:var(--dimmer)}
-.kt-tchip{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--mut);border:1px solid var(--line);border-radius:6px;
-  padding:4px 9px;white-space:nowrap;background:var(--ground)}
+.kt-tchip{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:6px;
+  padding:4px 8px;white-space:nowrap;background:var(--ground)}
 .kt-tchip b{color:var(--pri2);font-weight:600}
 .kt-tchip .arw{color:var(--dimmer)}
-.kt-spread-hl{margin-top:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px;padding:7px 10px;
-  border:1px solid rgba(56,189,248,.22);border-radius:7px;background:linear-gradient(90deg,rgba(47,129,247,.10),transparent)}
-.kt-spread-hl .big{font-size:15px;font-weight:700;color:var(--pri2)}
+.kt-spread-hl{margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;padding:8px 8px;
+  border:1px solid rgba(56,189,248,.22);border-radius:8px;background:linear-gradient(90deg,rgba(47,129,247,.10),transparent)}
+.kt-spread-hl .big{font-size:16px;font-weight:700;color:var(--pri2)}
 @media (prefers-reduced-motion:reduce){.kt-live .kt-dot{animation:none}}
 `;
