@@ -6,6 +6,7 @@ import time
 import uuid
 from typing import Optional
 
+import account_risk
 import db
 import polymarket_api
 import polymarket_auth
@@ -618,6 +619,11 @@ async def run_tick(cfg: dict, *, authed: bool) -> list[dict]:
     with db.get_db() as conn:
         exposure = db.current_total_exposure_usd(conn, env)
         filled_exposure = db.current_filled_exposure_usd(conn, env)
+        # Read once for the whole tick; entries below charge against it as
+        # they commit, so two copies of the same correlated market in one
+        # pass cannot both be granted the group's last dollars.
+        group_used = account_risk.group_exposure_usd(conn, env)
+        group_keys = {}
         held_rows = conn.execute(
             """SELECT ticker, direction FROM bot_positions
                WHERE resolved=0 AND status IN ('submitted','partial','filled')
@@ -626,7 +632,7 @@ async def run_tick(cfg: dict, *, authed: bool) -> list[dict]:
         ).fetchall()
     held_keys = {(r["ticker"], r["direction"]) for r in held_rows}
     pending_notional = max(0.0, exposure - filled_exposure)
-    total_bankroll = max(0.0, balance_usd) + max(0.0, filled_exposure)
+    total_bankroll = account_risk.cap_bankroll_usd(balance_usd, filled_exposure)
     reserve = total_bankroll * float(cfg.get("min_cash_reserve_fraction", 0.0) or 0.0)
     max_exposure = total_bankroll * float(cfg.get("max_total_exposure_fraction", 1.0) or 1.0)
     spendable_cash = max(0.0, balance_usd) - pending_notional
@@ -666,8 +672,24 @@ async def run_tick(cfg: dict, *, authed: bool) -> list[dict]:
             continue
         if not addon and open_count >= max_conc:
             continue
+        # UPGRADE-5 is account-wide: copied positions were already counted
+        # against the cap, but this engine never consulted it, so it could
+        # open past a limit its own fills were helping to reach.
+        tkr = h.get("ticker") or ""
+        if tkr not in group_keys:
+            with db.get_db() as gconn:
+                group_keys[tkr] = account_risk.group_key(
+                    gconn, tkr, h.get("event_ticker") or "")
+        grp = group_keys[tkr]
+        grp_budget = account_risk.group_budget_for_key(
+            None, env, grp, total_bankroll, cfg, used=group_used)
+        if grp_budget <= 0:
+            logger.info(
+                f"[copy] {tkr}: related-outcome exposure cap reached for group {grp}")
+            continue
         try:
-            row = await _enter_copy(h, cfg, env, balance_usd, available_usd)
+            row = await _enter_copy(h, cfg, env, balance_usd,
+                                    min(available_usd, grp_budget))
             if row is None or row.get("status") == "error":
                 _copy_cooldown[key] = now
                 trader.cap_dict_size(_copy_cooldown)
@@ -685,6 +707,7 @@ async def run_tick(cfg: dict, *, authed: bool) -> list[dict]:
                                      * int(row.get("limit_price_cents") or 0) / 100.0)
                     balance_usd = max(0.0, balance_usd - committed)
                     available_usd = max(0.0, available_usd - committed)
+                    group_used[grp] = group_used.get(grp, 0.0) + committed
         except Exception as e:
             _copy_cooldown[key] = now
             trader.cap_dict_size(_copy_cooldown)

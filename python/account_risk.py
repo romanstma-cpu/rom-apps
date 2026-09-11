@@ -94,19 +94,55 @@ def group_exposure_usd(conn, env):
     return {str(r['grp']): _f(r['usd']) for r in conn.execute(GROUP_SQL, (env, env)) if r['grp']}
 
 
+def cap_bankroll_usd(balance_usd, filled_exposure_usd):
+    """The one quantity a group fraction is measured against.
+
+    An account-wide cap is only account-wide if every engine divides the same
+    number. All three engines already computed cash-plus-filled-cost
+    identically and separately; naming it here is what stops them drifting
+    apart later and turning one configured fraction into three different
+    dollar limits.
+    """
+    return max(0.0, _f(balance_usd)) + max(0.0, _f(filled_exposure_usd))
+
+
+def crypto15m_group_key(series, ticker):
+    """The group a crypto15m entry will land in.
+
+    GROUP_SQL buckets those rows by COALESCE(NULLIF(series,''), ticker) and
+    does NOT consult `markets`, so a prospective crypto15m entry must be keyed
+    the same way. Routing it through `group_key` instead would look the ticker
+    up in `markets` and could measure the entry against a different bucket
+    from the one its own position lands in.
+    """
+    return str(series or '').strip() or str(ticker or '').strip()
+
+
+def group_budget_for_key(conn, env, key, bankroll_usd, cfg, used=None):
+    """Dollars still available to an already-resolved group key.
+
+    `used` lets a caller entering several positions in one pass read exposure
+    once and account for what it has just committed, instead of re-querying
+    and re-approving the same dollars for every entry in the batch. `conn` is
+    only read when `used` is omitted, and may be None otherwise.
+    """
+    fraction = _f(cfg.get('max_group_exposure_fraction'), 0.0)
+    bankroll = _f(bankroll_usd)
+    if fraction <= 0 or bankroll <= 0:
+        return float('inf')
+    if used is None:
+        used = group_exposure_usd(conn, env)
+    return max(0.0, bankroll*fraction-_f(used.get(str(key), 0.0)))
+
+
 def group_budget_usd(conn, env, ticker, event_ticker, bankroll_usd, cfg):
     """Dollars this entry may still add to its correlated group.
 
     Returns 0 when the group is full. A non-positive configured fraction
     disables the control rather than blocking every entry.
     """
-    fraction = _f(cfg.get('max_group_exposure_fraction'), 0.0)
-    bankroll = _f(bankroll_usd)
-    if fraction <= 0 or bankroll <= 0:
-        return float('inf')
-    key = group_key(conn, ticker, event_ticker)
-    used = group_exposure_usd(conn, env).get(key, 0.0)
-    return max(0.0, bankroll*fraction-used)
+    return group_budget_for_key(
+        conn, env, group_key(conn, ticker, event_ticker), bankroll_usd, cfg)
 
 
 def equity_usd(conn, env):

@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+import account_risk
 import crypto15m
 import db
 import polymarket_api
@@ -1920,8 +1921,12 @@ async def run_tick(cfg: dict, *, authed: bool) -> list[dict]:
     with db.get_db() as conn:
         _exposure = db.current_total_exposure_usd(conn, env)
         _filled_exposure = db.current_filled_exposure_usd(conn, env)
+        # Read once for the whole tick. Entries below decrement it as they
+        # commit, so several assets in one pass cannot each be granted the
+        # same correlated dollars.
+        _group_used = account_risk.group_exposure_usd(conn, env)
     _pending_notional = max(0.0, _exposure - _filled_exposure)
-    _total_bankroll = max(0.0, balance_usd) + max(0.0, _filled_exposure)
+    _total_bankroll = account_risk.cap_bankroll_usd(balance_usd, _filled_exposure)
     _reserve = _total_bankroll * float(cfg.get("min_cash_reserve_fraction", 0.0) or 0.0)
     _max_exposure = _total_bankroll * float(cfg.get("max_total_exposure_fraction", 1.0) or 1.0)
     _spendable_cash = max(0.0, balance_usd) - _pending_notional
@@ -1968,11 +1973,22 @@ async def run_tick(cfg: dict, *, authed: bool) -> list[dict]:
         if not ok:
             _block_reasons[a.get("asset") or sym or "?"] = _why
             continue
+        # UPGRADE-5 is account-wide: this engine's positions were already
+        # counted against the cap, but it never consulted it, so it could open
+        # past a limit it was helping to fill.
+        _grp = account_risk.crypto15m_group_key(a.get("series"), a.get("ticker"))
+        _grp_budget = account_risk.group_budget_for_key(
+            None, env, _grp, _total_bankroll, eff_cfg, used=_group_used)
+        if _grp_budget <= 0:
+            _block_reasons[a.get("asset") or sym or "?"] = (
+                f"related-outcome exposure cap reached for group {_grp}")
+            continue
+        _entry_budget = min(budget_usd, _grp_budget)
         try:
             if eff_cfg.get("crypto15m_paired_mode"):
-                rows = await _open_paired_entry(a, eff_cfg, env, budget_usd)
+                rows = await _open_paired_entry(a, eff_cfg, env, _entry_budget)
             else:
-                one = await _open_entry(a, eff_cfg, env, budget_usd)
+                one = await _open_entry(a, eff_cfg, env, _entry_budget)
                 rows = [one] if one else []
             if rows:
                 open_count += 1
@@ -1984,6 +2000,7 @@ async def run_tick(cfg: dict, *, authed: bool) -> list[dict]:
                         committed = (int(row.get("target_contracts") or 0)
                                      * int(row.get("entry_limit_cents") or 0) / 100.0)
                     budget_usd = max(0.0, budget_usd - committed)
+                    _group_used[_grp] = _group_used.get(_grp, 0.0) + committed
         except Exception as e:
             logger.warning(f"[crypto15m] entry {sym} failed: {e}")
 

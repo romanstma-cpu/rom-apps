@@ -229,3 +229,26 @@ guards the whole class.
   **Not published.** The rom-apps site repo is not on this machine, the repo
   has no git remote, and `build.publish` is null. Publishing needs the site
   repo and the owner's go-ahead.
+
+## Group cap enforced in every engine (2026-09-11)
+- UPGRADE-5 counted all three engines' positions but only `trader` read the
+  allowance. crypto15m and copy_trader could open past a limit their own fills
+  were filling. crypto15m is the worst case: every 15m window on one asset
+  shares a series and moves with the same spot price.
+- Both engines now refuse a full group and size down a partly-used one.
+- A prospective crypto15m entry is keyed `series or ticker`, matching how
+  GROUP_SQL buckets the row it becomes. Routing it through `group_key` would
+  consult `markets` — which crypto15m rows are not joined against — and could
+  measure an entry against a different group's usage.
+- Each engine reads group exposure once per tick and charges its own
+  commitments against that reading, so several entries in one pass cannot each
+  be granted the same correlated dollars.
+- `cap_bankroll_usd` is now the single definition of the bankroll a fraction
+  divides. All three engines computed cash-plus-filled-cost separately.
+- Can only tighten. `max_group_exposure_fraction` still defaults to 0.0, which
+  disables the control rather than reading as a cap of zero.
+- 25 tests; 23 confirmed to fail against the previous source, including a
+  copy_trader case where the old code placed a real 20-contract order into a
+  group already past its limit. Full suite 1829 collected / 0 failures.
+- **The 2.14.0 installer predates this change.** It was built at 4652a9d;
+  shipping this needs a new build.

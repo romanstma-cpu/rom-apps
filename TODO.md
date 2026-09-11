@@ -13,14 +13,6 @@ Rules for this file:
 
 ## Now
 
-- [ ] **crypto15m and copy_trader do not consult the group cap**
-  Their exposure is now COUNTED (account_risk unions crypto15m_positions), but
-  neither engine calls `group_budget_usd`, so they can still open past the cap.
-  Blocked on a decision: crypto15m sizes from `_bankroll_usd`, a different
-  quantity from the balance main measures fractions against, so which bankroll
-  a group fraction means must be settled first.
-    Scope: crypto15m_trader.py, copy_trader.py. Test: py:test. Rollback: revert.
-
 - [ ] **No livecheck stage has been run against a real account**
   Stages 0-4 are read-only and stage 5 places one cancellable order. All are
   built and tested against mocks; none has spoken to Polymarket US. Preflight
@@ -55,6 +47,13 @@ Rules for this file:
 
 ## Done
 
+- [x] **crypto15m and copy_trader now consult the group cap.** Their exposure
+      was already counted; neither read the allowance, so both could open past
+      a limit their own fills were filling. Both now refuse a full group and
+      size down a partly-used one, keyed to the bucket their own row lands in
+      and charging intra-tick commitments as they go. `cap_bankroll_usd` gives
+      the three engines one definition of the bankroll a fraction divides.
+      25 tests, 23 confirmed failing against the previous source.
 - [x] **Config parity: `signalDisplay`/`ledger` shape drift check — closed, not
       needed.** The drift-guard concern is already covered by the existing
       config-parity suite (backend->store, backend->type, store-backlog shrink,
