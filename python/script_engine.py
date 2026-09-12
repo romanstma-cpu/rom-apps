@@ -9,6 +9,7 @@ from typing import Any, Callable, Optional
 from datetime import datetime, timezone
 
 import categorize
+import account_risk
 import crypto15m
 import crypto15m_trader
 import db
@@ -309,6 +310,36 @@ def _notional_capped(contracts: int, limit_cents: int, ask_cents: int,
     return max(1, min(contracts, int(affordable)))
 
 
+def _group_capped_contracts(*, ticker: str, event_ticker: str = "",
+                            series: str = "", crypto_entry: bool = False,
+                            contracts: int, limit_cents: int, floor: int,
+                            cfg: dict, env: str,
+                            balance_usd: Optional[float]) -> tuple[int, str]:
+    """Apply the same account-wide related-outcome cap as every other engine."""
+    try:
+        fraction = float(cfg.get("max_group_exposure_fraction") or 0.0)
+    except (TypeError, ValueError):
+        fraction = 0.0
+    if fraction <= 0:
+        return contracts, ""
+    if balance_usd is None:
+        return 0, "account balance unavailable while related-outcome cap is enabled"
+    with db.get_db() as conn:
+        filled = db.current_filled_exposure_usd(conn, env)
+        bankroll = account_risk.cap_bankroll_usd(balance_usd, filled)
+        key = (account_risk.crypto15m_group_key(series, ticker)
+               if crypto_entry else
+               account_risk.group_key(conn, ticker, event_ticker))
+        budget = account_risk.group_budget_for_key(
+            conn, env, key, bankroll, cfg)
+    if budget == float("inf"):
+        return contracts, ""
+    allowed = min(contracts, int((max(0.0, budget) * 100.0 + 1e-7) // limit_cents))
+    if allowed < floor:
+        return 0, f"related-outcome exposure cap reached for group {key}"
+    return allowed, ""
+
+
 async def _place_intent(s: dict, a: dict, intent: dict, cfg: dict,
                         env: str, balance_usd: Optional[float] = None) -> Optional[dict]:
     sid = str(s["id"])
@@ -368,6 +399,15 @@ async def _place_intent(s: dict, a: dict, intent: dict, cfg: dict,
         contracts = max(contracts, needed)
 
     contracts = _notional_capped(contracts, limit_cents, ask_cents, size_cap)
+
+    if not shadow:
+        contracts, group_reason = _group_capped_contracts(
+            ticker=str(ticker or ""), series=str(a.get("series") or ""),
+            crypto_entry=True, contracts=contracts, limit_cents=limit_cents,
+            floor=floor, cfg=cfg, env=env, balance_usd=balance_usd)
+        if contracts <= 0:
+            _record_refusal(sid, a, side, env, group_reason, shadow=False)
+            return None
 
     cost = contracts * limit_cents / 100.0
     if (not shadow and balance_usd is not None
@@ -646,6 +686,16 @@ async def _place_signal_follow(s: dict, sig: dict, source: str, act: dict,
     contracts = min(max(contracts, floor), size_cap)
     contracts = _notional_capped(contracts, limit_cents, int(ask), size_cap)
 
+    if not bool(s.get("dry_run")):
+        contracts, group_reason = _group_capped_contracts(
+            ticker=ticker, event_ticker=str(sig.get("event_ticker") or ""),
+            contracts=contracts, limit_cents=limit_cents, floor=floor,
+            cfg=cfg, env=env, balance_usd=balance_usd)
+        if contracts <= 0:
+            logger.info(
+                f"[scripts] {sid[:8]} skips {source} signal {ticker}: {group_reason}")
+            return None
+
     cost = contracts * limit_cents / 100.0
     if (not bool(s.get("dry_run")) and balance_usd is not None
             and cost > balance_usd - _CASH_BUFFER_USD):
@@ -868,6 +918,15 @@ async def _place_market_intent(s: dict, m: dict, intent: dict, cfg: dict,
         contracts = max(contracts, needed)
 
     contracts = _notional_capped(contracts, limit_cents, ask_cents, size_cap)
+
+    if not shadow:
+        contracts, group_reason = _group_capped_contracts(
+            ticker=ticker, event_ticker=str(m.get("event_ticker") or ""),
+            contracts=contracts, limit_cents=limit_cents, floor=floor,
+            cfg=cfg, env=env, balance_usd=balance_usd)
+        if contracts <= 0:
+            _cool_off(sid, ticker, group_reason)
+            return None
 
     cost = contracts * limit_cents / 100.0
     if (not shadow and balance_usd is not None

@@ -98,7 +98,7 @@ def cap_bankroll_usd(balance_usd, filled_exposure_usd):
     """The one quantity a group fraction is measured against.
 
     An account-wide cap is only account-wide if every engine divides the same
-    number. All three engines already computed cash-plus-filled-cost
+    number. Every live-entry engine computes cash-plus-filled-cost
     identically and separately; naming it here is what stops them drifting
     apart later and turning one configured fraction into three different
     dollar limits.

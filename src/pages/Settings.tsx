@@ -110,8 +110,8 @@ export function SettingsPage() {
         <Card>
           <div className="grid gap-2 md:grid-cols-2">
             <Switch
-              label="Start with Windows"
-              description="Launch ROM PolyBot at login (silent if Start Minimized is on)."
+              label="Start at login"
+              description="Launch ROM PolyBot when you sign in (silent if Start Minimized is on)."
               checked={!!state?.startWithWindows}
               onChange={(v) => window.rom.state.setStartWithWindows(v).then(refresh.state)}
             />

@@ -1,7 +1,7 @@
 """UPGRADE-5's cap is account-wide only if every engine consults it.
 
 `account_risk.GROUP_SQL` counts main-strategy and crypto15m positions, so all
-three engines' fills *fill* the correlated-exposure group. Only `trader` ever
+four engines' fills *fill* the correlated-exposure group. Only `trader` ever
 *read* the cap. crypto15m and copy_trader could therefore open past a limit
 their own positions were helping to reach -- and crypto15m is the engine most
 exposed to it, because every 15m window on one asset shares a series and moves
@@ -25,6 +25,7 @@ import crypto15m
 import crypto15m_trader as ct
 import db
 import polymarket_api
+import script_engine
 import trader
 from config import merge_with_defaults
 
@@ -349,3 +350,85 @@ def test_copy_is_unchanged_when_the_control_is_off(
     orders = patch_copy(monkeypatch, [their_pos("T-A")])
     run_async(copy_trader.run_tick(copy_cfg(max_group_exposure_fraction=0.0), authed=True))
     assert len(orders) == 1
+
+
+# --- user scripts ----------------------------------------------------------
+
+def script_cfg(**over):
+    c = merge_with_defaults({})
+    c.update({
+        "max_group_exposure_fraction": 0.10,
+        "script_max_contracts": 20,
+        "script_max_entry_cents": 97,
+        "fixed_trade_usd": 10.0,
+    })
+    c.update(over)
+    return c
+
+
+def patch_script_orders(monkeypatch, *, ask=50):
+    orders = []
+
+    async def _quote(_ticker, _side):
+        return {"ask_cents": ask, "bid_cents": ask - 2}
+
+    async def _place(**kw):
+        orders.append(kw)
+        return {"order": {"order_id": f"script-{len(orders)}", "status": "resting"}}
+
+    monkeypatch.setattr(polymarket_api, "get_quote", _quote)
+    monkeypatch.setattr(polymarket_api, "place_limit_order", _place)
+    return orders
+
+
+def seed_script(sid):
+    with db.get_db() as conn:
+        db.upsert_user_script(conn, {"id": sid, "name": sid, "code": ""})
+
+
+def test_script_crypto_hook_refuses_a_full_related_group(
+        fresh_db, env_net, monkeypatch):
+    seed_main_position("KXBTC15M", 120.0)
+    orders = patch_script_orders(monkeypatch)
+    asset = c15_asset("BTC")
+    intent = {"side": "up", "price": "ask", "size": 10,
+              "take_profit_pct": None, "stop_loss_cents": None, "reason": "test"}
+    placed = run_async(script_engine._place_intent(
+        {"id": "script-crypto", "dry_run": False}, asset, intent,
+        script_cfg(), ENV, 1000.0))
+    assert placed is None
+    assert orders == []
+
+
+def test_script_market_hook_shrinks_to_the_remaining_group_budget(
+        fresh_db, env_net, monkeypatch):
+    seed_script("script-market")
+    seed_c15("SERIES-A", 95.0)
+    seed_market("MARKET-A", "SERIES-A")
+    orders = patch_script_orders(monkeypatch)
+    market = {"ticker": "MARKET-A", "event_ticker": "", "title": "A",
+              "category": "other", "close_time": ""}
+    intent = {"side": "yes", "price": "ask", "size": 20, "reason": "test"}
+    run_async(script_engine._place_market_intent(
+        {"id": "script-market", "dry_run": False}, market, intent,
+        script_cfg(), ENV, 1000.0))
+    assert len(orders) == 1
+    # The cap is $100, so the group has $5 left. The route must
+    # shrink the requested $10 order to fit the shared allowance.
+    assert orders[0]["count"] < 20
+    assert orders[0]["count"] * orders[0]["price_cents"] / 100.0 <= 5.00
+
+
+def test_script_signal_hook_refuses_a_full_related_group(
+        fresh_db, env_net, monkeypatch):
+    seed_c15("SERIES-S", 120.0)
+    seed_market("SIGNAL-A", "SERIES-S")
+    orders = patch_script_orders(monkeypatch)
+    signal = {"id": 7, "ticker": "SIGNAL-A", "event_ticker": "",
+              "taker_side": "yes", "title": "Signal", "category": "other"}
+    action = {"sizeUsd": 10.0}
+    placed = run_async(script_engine._place_signal_follow(
+        {"id": "script-signal", "dry_run": False}, signal, "whale", action,
+        script_cfg(), ENV, 1000.0))
+    assert placed is None
+    assert orders == []

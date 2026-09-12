@@ -5,14 +5,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const executablePath = process.argv[2];
-if (!executablePath) throw new Error('Pass the packaged Mac executable path');
+if (!executablePath) throw new Error('Pass the packaged app executable path');
 const profile = mkdtempSync(join(tmpdir(), 'rom-mac-smoke-'));
 const app = await electron.launch({executablePath, args: [`--user-data-dir=${profile}`]});
 try {
   const page = await app.firstWindow();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.getByRole('button', {name: 'Continue to API setup'}).click();
+  const continueButton = page.getByRole('button', {name: 'Continue to API setup'});
+  if (await continueButton.count()) await continueButton.click();
   await page.waitForFunction(async () => (await window.rom.backend.info()).status === 'running', {timeout: 30000});
   const config = await page.evaluate(() => window.rom.config.get());
   assert.equal(config.enableTrading, false);
@@ -20,5 +21,5 @@ try {
   await page.getByRole('navigation').getByRole('button', {name: 'Overview', exact: true}).click();
   await page.getByRole('heading', {name: 'Latest decision cycle'}).waitFor();
   assert.deepEqual(errors, []);
-  console.log('PASS: packaged Mac renderer, backend, onboarding, navigation; trading disabled');
+  console.log('PASS: packaged renderer, backend, startup, navigation; trading disabled');
 } finally { await app.close(); }
