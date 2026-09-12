@@ -19,6 +19,16 @@ const context = { exports: {} };
 vm.runInNewContext(output, context);
 const { validateConfigPatch } = context.exports;
 
+// Load the actual defaults without starting Electron or touching saved settings.
+const settingsOutput = ts.transpileModule(fs.readFileSync('electron/system/settings-store.ts', 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText;
+const settingsContext = {exports: {}, require: () => ({})};
+vm.runInNewContext(settingsOutput, settingsContext);
+const defaultsResult = validateConfigPatch(settingsContext.exports.DEFAULT_CONFIG);
+assert.equal(defaultsResult.ok, true, `shipped defaults must be restorable: ${defaultsResult.errors?.join('; ')}`);
+deepEqual(defaultsResult.value, settingsContext.exports.DEFAULT_CONFIG, 'restoring defaults must not silently drop settings');
+
 // --- happy path: valid patch ---
 {
   const r = validateConfigPatch({ enableTrading: true, minEdgePtsWhale: 3.5, maxOpenPositions: 10 });
@@ -78,6 +88,15 @@ const { validateConfigPatch } = context.exports;
 }
 
 // --- string arrays ---
+{
+  for (const orderStyle of ['limit_cross', 'limit_mid', 'market']) {
+    assert.equal(validateConfigPatch({orderStyle}).ok, true, `${orderStyle} is a supported price strategy`);
+  }
+  for (const orderStyle of ['FAK', 'FOK', 'GTC', 'IOC']) {
+    assert.equal(validateConfigPatch({orderStyle}).ok, false, `${orderStyle} is time-in-force, not a price strategy`);
+  }
+}
+
 {
   const r = validateConfigPatch({ allowedCategories: ['crypto', 'politics'] });
   assert.equal(r.ok, true);

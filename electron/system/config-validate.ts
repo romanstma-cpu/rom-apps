@@ -114,7 +114,7 @@ const STRING_ENUMS: Readonly<Record<string, ReadonlySet<string>>> = {
   crypto15mEntryStyle: new Set(['maker', 'taker']),
   copySizingMode: new Set(['fixed', 'balance_pct']),
   crypto15mInterval: new Set(['5m', '15m', 'hourly']),
-  orderStyle: new Set(['FAK', 'FOK', 'GTC']),
+  orderStyle: new Set(['limit_cross', 'limit_mid', 'market']),
   network: new Set(['mainnet', 'matic']),
 };
 

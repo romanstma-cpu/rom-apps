@@ -1,7 +1,7 @@
 {
   "name": "rom-polybot",
   "productName": "ROM PolyBot",
-  "version": "2.17.0",
+  "version": "2.17.1",
   "description": "ROM Polybot desktop trading application for Polymarket US",
   "main": "dist-electron/main.js",
   "author": "ROM",

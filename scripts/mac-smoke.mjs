@@ -18,6 +18,15 @@ try {
   await page.waitForFunction(async () => (await window.rom.backend.info()).status === 'running', {timeout: 30000});
   const config = await page.evaluate(() => window.rom.config.get());
   assert.equal(config.enableTrading, false);
+  for (const orderStyle of ['limit_cross', 'limit_mid', 'market']) {
+    const updated = await page.evaluate(orderStyle => window.rom.config.update({orderStyle}), orderStyle);
+    assert.equal(updated.orderStyle, orderStyle);
+    assert.equal(updated.enableTrading, false);
+  }
+  const restored = await page.evaluate(config => window.rom.config.replace(config), config);
+  assert.deepEqual(restored, config);
+  await assert.rejects(page.evaluate(() => window.rom.config.update({orderStyle: 'FOK'})), /Invalid config/);
+  assert.deepEqual(await page.evaluate(() => window.rom.config.get()), config);
   assert.equal((await page.evaluate(() => window.rom.backend.info())).authOk, false);
   const practice = await page.evaluate(() => window.rom.trading.practicePerformance());
   assert.ok(['collecting', 'qualified'].includes(practice.status));
