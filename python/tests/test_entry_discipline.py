@@ -99,7 +99,8 @@ def test_practice_trade_uses_live_entry_path_without_exchange_order(
     at = fee_clock(US_FEE_JULY)
     monkeypatch.setattr(db, "db_path", lambda: tmp_path / "paper.db")
     db.init_db()
-    cfg = merge_with_defaults({"enable_trading": False, "main_paper_trading": True})
+    cfg = merge_with_defaults({"enable_trading": False, "main_paper_trading": True,
+                               "evidence_allocation_enabled": True})
     monkeypatch.setattr(trader, "get_env", lambda: "mainnet")
 
     async def quote(*_a):
@@ -114,6 +115,10 @@ def test_practice_trade_uses_live_entry_path_without_exchange_order(
     monkeypatch.setattr(trader, "get_quote", quote)
     monkeypatch.setattr(trader, "get_market_meta", meta)
     monkeypatch.setattr(trader, "place_limit_order", forbidden_order)
+    monkeypatch.setattr(
+        trader.strategy_allocator, "source_multiplier",
+        lambda *_a, **_kw: pytest.fail("practice sizing must not use the live allocator"),
+    )
     signal = {"id": 42, "ticker": "PAPER", "event_ticker": "EV", "title": "Practice",
               "created_at": at.isoformat(),
               "category": "sports", "price": 0.60, "confidence": 80, "taker_side": "yes"}

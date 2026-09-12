@@ -46,6 +46,7 @@ export interface TraderConfig {
   sizingBaseEdge: number;
   sizingMaxEdge: number;
   kellyFraction?: number;
+  evidenceAllocationEnabled?: boolean;
   hardMaxPositionUsd: number;
   minCashReserveFraction: number;
 
@@ -733,6 +734,39 @@ export interface PracticePerformanceReport {
   candidates: PracticePerformanceCandidate[];
 }
 
+export interface StrategyAllocationWindow {
+  days: number;
+  events: number;
+  spanDays: number;
+  pnlUsd: number;
+  riskedUsd: number;
+  returnPct: number | null;
+  lowerReturnPct: number | null;
+  qualified: boolean;
+  reason: string;
+}
+
+export interface StrategyAllocationCandidate {
+  source: 'whale' | 'momentum';
+  name: string;
+  status: 'qualified' | 'collecting';
+  reason: string;
+  multiplier: number;
+  conservativeReturnPct: number | null;
+  shortWindow: StrategyAllocationWindow;
+  longWindow: StrategyAllocationWindow;
+}
+
+export interface StrategyAllocationPlan {
+  status: 'active' | 'collecting';
+  reason: string;
+  asOf: number;
+  enabled: string[];
+  candidates: StrategyAllocationCandidate[];
+  limits: { minimumMultiplier: number; maximumMultiplier: number };
+  method: string;
+}
+
 export interface Crypto15mBacktest {
   mode?: 'portfolio';
   dataStatus?: 'recorded' | 'insufficient_data';
@@ -989,6 +1023,7 @@ export interface ROMApi {
   trading: {
     calibration: () => Promise<SignalCalibrationReport>;
     practicePerformance: () => Promise<PracticePerformanceReport>;
+    allocationPlan: () => Promise<StrategyAllocationPlan>;
     setEnabled: (enabled: boolean) => Promise<ActionResult>;
     setPaperEnabled: (enabled: boolean) => Promise<ActionResult>;
     cancelAllOpen: () => Promise<ActionResult<{ canceled: number }>>;

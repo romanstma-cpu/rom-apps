@@ -75,6 +75,7 @@ const api: ROMApi = {
   trading: {
     calibration: () => ipcRenderer.invoke('trading:calibration'),
     practicePerformance: () => ipcRenderer.invoke('trading:practicePerformance'),
+    allocationPlan: () => ipcRenderer.invoke('trading:allocationPlan'),
     setEnabled: (v: boolean): Promise<ActionResult> =>
       ipcRenderer.invoke('trading:setEnabled', v),
     setPaperEnabled: (v: boolean): Promise<ActionResult> =>

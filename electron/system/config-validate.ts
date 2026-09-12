@@ -32,6 +32,7 @@ const FIELD_TYPES: Readonly<Record<string, FieldType>> = {
   sizingMode: 'string-enum', baseSizeFraction: 'number', minSizeFraction: 'number', maxSizeFraction: 'number',
   minContracts: 'number', maxContracts: 'number', sizingBaseEdge: 'number', sizingMaxEdge: 'number',
   kellyFraction: 'number', hardMaxPositionUsd: 'number', minCashReserveFraction: 'number',
+  evidenceAllocationEnabled: 'boolean',
   // orders
   orderStyle: 'string-enum', crossSpreadFallbackOffset: 'number', orderExpirationSec: 'nullable-number',
   // risk

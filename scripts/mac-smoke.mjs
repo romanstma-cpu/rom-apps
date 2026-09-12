@@ -22,6 +22,9 @@ try {
   const practice = await page.evaluate(() => window.rom.trading.practicePerformance());
   assert.ok(['collecting', 'qualified'].includes(practice.status));
   assert.ok(Array.isArray(practice.candidates));
+  const allocation = await page.evaluate(() => window.rom.trading.allocationPlan());
+  assert.ok(['collecting', 'active'].includes(allocation.status));
+  assert.ok(Array.isArray(allocation.candidates));
   await page.getByRole('navigation').getByRole('button', {name: 'Overview', exact: true}).click();
   await page.getByRole('heading', {name: 'Latest decision cycle'}).waitFor();
   assert.deepEqual(errors, []);

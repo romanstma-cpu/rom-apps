@@ -75,4 +75,8 @@ Overview uses the existing navy, blue, and mint tokens through Tailwind; Segoe U
 
 Dashboard exit feedback checks ActionResult.ok and keeps a persistent result message. A completed request does not imply that all holdings were sold. Global navigation shortcuts ignore forms, composition, and open dialogs.
 
+## 2.16 evidence-based allocation
+
+Strategy owns the opt-in evidence-allocation control and its rolling source report. Whale and Momentum qualify independently using both 30-day and 90-day practice outcomes collapsed by event. Missing evidence leaves live sizing unchanged. A qualified non-positive lower estimate reduces new live size; a positive source may receive more, bounded from 0.25× to 1.50× before the existing position, cash, portfolio, and related-outcome limits. Practice sizing never consumes this adjustment because it is the comparison record. The live-start review must disclose whether evidence allocation is on. Do not describe a multiplier or historical lower estimate as expected profit.
+
 Use isolated Electron profiles for UI checks, with mocked trading status and no real credentials or orders. Check offline, scanning, blocked, failed refresh, saved-limit gating and mode labels. Run `npm run check:e2e-drift` to detect assertion drift (literal strings in e2e tests vs. real rendered text). Run `node scripts/test-config-validate.mjs` to verify IPC config validation. Run `pytest python/tests/` to verify schema parity and all backend logic.

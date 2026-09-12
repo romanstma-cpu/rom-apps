@@ -589,6 +589,10 @@ export function registerIpc(): void {
     if (!pythonBackend.isRunning()) throw new Error('Start the engine to rank practice performance.');
     return await pythonBackend.request('practicePerformance', {}, 30_000);
   });
+  ipcMain.handle('trading:allocationPlan', async () => {
+    if (!pythonBackend.isRunning()) throw new Error('Start the engine to calculate evidence allocation.');
+    return await pythonBackend.request('strategyAllocation', {}, 30_000);
+  });
   ipcMain.handle('backtest:collection', async () => {
     if (!pythonBackend.isRunning()) return null;
     return await pythonBackend.request('collectionStats', {});

@@ -14,6 +14,7 @@ import order_journal
 import account_risk
 import fees_us
 import signal_calibration
+import strategy_allocator
 import rules as rules_engine
 from execution_quality import (
     affordable_at_depth, entry_price, entry_vwap_cents, remaining_signal_margin,
@@ -437,7 +438,7 @@ def _is_blocked_by_trading_hours(cfg: dict, *, now: float | None = None) -> tupl
 
 
 def entry_budget(balance_usd, filled_exposure, exposure, edge_pts, limit_cents, cfg,
-                 *, group_budget_usd=None):
+                 *, group_budget_usd=None, allocation_multiplier=1.0):
     """Shared live/replay dollar budget; reservations never count as equity.
 
     ``group_budget_usd`` bounds what this entry may add to its correlated
@@ -445,7 +446,8 @@ def entry_budget(balance_usd, filled_exposure, exposure, edge_pts, limit_cents, 
     """
     bankroll = max(0,balance_usd)+max(0,filled_exposure)
     pending = max(0,exposure-filled_exposure)
-    limits = [_compute_target_usd(bankroll,edge_pts,limit_cents,cfg),
+    multiplier = max(0.0, min(1.5, float(allocation_multiplier)))
+    limits = [_compute_target_usd(bankroll,edge_pts,limit_cents,cfg)*multiplier,
         float(cfg['hard_max_position_usd']),
         bankroll*float(cfg['max_total_exposure_fraction'])-exposure,
         balance_usd-pending-bankroll*float(cfg['min_cash_reserve_fraction'])]
@@ -478,6 +480,8 @@ async def execute_signal(
             return None
     env = get_env()
 
+    allocation_multiplier = 1.0
+    allocation_reason = ""
     with db.get_db() as conn:
         open_count = (
             db.count_open_paper_positions(conn, env)
@@ -546,6 +550,16 @@ async def execute_signal(
                 f"{account_risk.group_key(conn, signal['ticker'], signal.get('event_ticker') or '')}"
             )
             return None
+        if not paper and cfg.get("evidence_allocation_enabled"):
+            enabled_sources = [
+                item for item, enabled in (
+                    ("whale", cfg.get("trade_whales")),
+                    ("momentum", cfg.get("trade_momentum")),
+                ) if enabled
+            ]
+            allocation_multiplier, allocation_reason = strategy_allocator.source_multiplier(
+                conn, env, source, enabled_sources=enabled_sources,
+            )
 
     quote_started = time.monotonic()
     try:
@@ -581,9 +595,18 @@ async def execute_signal(
         )
         return None
 
-    target_usd = entry_budget(balance_usd,filled_exposure,exposure,edge_pts,limit_cents,cfg,
-                              group_budget_usd=group_budget)
+    target_usd = entry_budget(
+        balance_usd, filled_exposure, exposure, edge_pts, limit_cents, cfg,
+        group_budget_usd=group_budget,
+        allocation_multiplier=allocation_multiplier,
+    )
     risk_ceiling_usd = target_usd
+
+    if allocation_multiplier != 1.0:
+        logger.info(
+            "[%s] %s: evidence allocation %.2fx — %s",
+            source, signal["ticker"], allocation_multiplier, allocation_reason,
+        )
 
     if target_usd < 1.0:
         logger.info(f"[skip] {signal['ticker']}: size ${target_usd:.2f} < $1")

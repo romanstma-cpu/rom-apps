@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AlertTriangle, Banknote, Bitcoin, Check, ChevronRight, Cloud, Film, Globe2,
-  FlaskConical, Pause, Play, Power, RotateCcw, Save, Sparkles, Trophy, Vote,
+  FlaskConical, Pause, Play, Power, RefreshCw, RotateCcw, Save, Sparkles, Trophy, Vote,
 } from 'lucide-react';
-import type { StrategyPreset, TraderConfig } from '@shared/types';
+import type { StrategyAllocationPlan, StrategyPreset, TraderConfig } from '@shared/types';
 import { useApp } from '../state/AppStateProvider';
 import { useToast } from '../state/ToastProvider';
 import { Card, Field, NameDialog, NumberInput, Page, RuleBuilder, Section, Switch } from '../components/common';
@@ -51,6 +51,21 @@ export function MainEnginePage() {
   const [riskDraft, setRiskDraft] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [liveReview,setLiveReview] = useState(false);
+  const [allocation,setAllocation] = useState<StrategyAllocationPlan|null>(null);
+  const [allocationError,setAllocationError] = useState('');
+  const [allocationLoading,setAllocationLoading] = useState(false);
+  const [allocationRevision,setAllocationRevision] = useState(0);
+
+  useEffect(()=>{
+    let active=true;
+    if(backend.status!=='running'){setAllocation(null);setAllocationError('Start the engine to calculate the allocation plan.');return;}
+    setAllocationLoading(true);setAllocationError('');
+    window.rom.trading.allocationPlan()
+      .then(value=>{if(active)setAllocation(value);})
+      .catch(error=>{if(active){setAllocation(null);setAllocationError(error?.message||'Allocation evidence is unavailable.');}})
+      .finally(()=>{if(active)setAllocationLoading(false);});
+    return()=>{active=false;};
+  },[backend.status,config?.tradeWhales,config?.tradeMomentum,allocationRevision]);
 
   if (!config) return <Page title="Main Engine"><div className="text-rom-muted">Loading…</div></Page>;
 
@@ -193,6 +208,14 @@ export function MainEnginePage() {
       </Card>
       <RiskLimits config={config} onDirty={setRiskDraft} />
       {riskDraft && <p className="mb-5 text-xs text-rom-warn">Save or discard your risk-limit draft before starting the main strategy.</p>}
+      <EvidenceAllocation
+        enabled={!!config.evidenceAllocationEnabled}
+        plan={allocation}
+        loading={allocationLoading}
+        error={allocationError}
+        onToggle={(value)=>void update('evidenceAllocationEnabled',value)}
+        onRefresh={()=>setAllocationRevision(value=>value+1)}
+      />
       <details className="mb-5 rounded-xl border border-rom-border p-5">
         <summary className="cursor-pointer text-sm font-medium">How the strategy protects your entry</summary>
         <p className="mt-3 text-sm text-rom-muted">The strategy waits when eligible signals disagree on a market’s direction or a balance refresh fails. Invalid signals and unsuitable quotes are skipped. A market’s minimum order cannot increase your strategy’s selected trade size.</p>
@@ -845,6 +868,30 @@ export function MainEnginePage() {
       />
     </Page>
   );
+}
+
+function EvidenceAllocation({enabled,plan,loading,error,onToggle,onRefresh}:{
+  enabled:boolean;plan:StrategyAllocationPlan|null;loading:boolean;error:string;
+  onToggle:(value:boolean)=>void;onRefresh:()=>void;
+}) {
+  return <Card className="mb-5">
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="max-w-2xl"><div className="flex items-center gap-2"><Trophy className="h-5 w-5 text-rom-purple"/><h3 className="font-semibold">Evidence-based allocation</h3></div><p className="mt-2 text-sm leading-6 text-rom-muted">Use rolling practice results to adjust live Whale and Momentum position sizes. Practice sizing stays unchanged so new evidence remains comparable.</p></div>
+      <Switch label="Use evidence allocation" description="Applies to new live main-strategy entries only." checked={enabled} onChange={onToggle}/>
+    </div>
+    <div className="mt-5 border-t border-rom-border pt-4" aria-live="polite" aria-busy={loading}>
+      <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-rom-dim">{loading?'Calculating rolling evidence…':plan?.reason||error}</p><button className="rom-btn-ghost" onClick={onRefresh} disabled={loading}><RefreshCw className={`h-4 w-4 ${loading?'animate-spin':''}`}/>Refresh</button></div>
+      {error&&<p role="alert" className="mt-3 text-xs text-rom-lossText">{error}</p>}
+      {plan&&<>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">{plan.candidates.map(candidate=><div key={candidate.source} className="rounded-xl border border-rom-border bg-rom-void/35 p-4">
+          <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">{candidate.name}</p><p className={`mt-1 text-xs font-medium ${candidate.status==='qualified'?'text-rom-win':'text-amber-300'}`}>{candidate.status==='qualified'?'Qualified evidence':'Collecting evidence'}</p></div><div className="rounded-lg bg-rom-surface px-3 py-2 text-right"><p className="font-mono text-lg font-semibold">{candidate.multiplier.toFixed(2)}×</p><p className="text-[11px] text-rom-dim">live size</p></div></div>
+          <dl className="mt-4 grid grid-cols-2 gap-3 text-xs"><div><dt className="text-rom-dim">30-day events</dt><dd className="mt-1 font-semibold tabular-nums">{candidate.shortWindow.events}</dd></div><div><dt className="text-rom-dim">90-day events</dt><dd className="mt-1 font-semibold tabular-nums">{candidate.longWindow.events}</dd></div><div><dt className="text-rom-dim">30-day lower return</dt><dd className="mt-1 font-semibold tabular-nums">{fmtPct(candidate.shortWindow.lowerReturnPct)}</dd></div><div><dt className="text-rom-dim">90-day lower return</dt><dd className="mt-1 font-semibold tabular-nums">{fmtPct(candidate.longWindow.lowerReturnPct)}</dd></div></dl>
+          <p className="mt-4 text-xs leading-5 text-rom-dim">{candidate.reason}</p>
+        </div>)}</div>
+        <p className="mt-4 text-xs leading-5 text-rom-dim">{plan.method} The adjustment is bounded from {plan.limits.minimumMultiplier.toFixed(2)}× to {plan.limits.maximumMultiplier.toFixed(2)}× and remains subject to every saved risk limit. Historical practice results do not guarantee live fills or profits.</p>
+      </>}
+    </div>
+  </Card>;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

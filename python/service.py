@@ -1704,6 +1704,22 @@ async def _h_practice_performance(_p: dict) -> dict:
     return await asyncio.to_thread(_report)
 
 
+async def _h_strategy_allocation(_p: dict) -> dict:
+    import strategy_allocator
+    env = polymarket_auth.get_env()
+    enabled = [
+        source for source, on in (
+            ("whale", STATE.cfg.get("trade_whales")),
+            ("momentum", STATE.cfg.get("trade_momentum")),
+        ) if on
+    ]
+
+    def _plan() -> dict:
+        with db.get_db() as conn:
+            return strategy_allocator.build_plan(conn, env, enabled_sources=enabled)
+    return await asyncio.to_thread(_plan)
+
+
 async def _h_collection_stats(_p: dict) -> dict:
     env = polymarket_auth.get_env()
 
@@ -2245,6 +2261,7 @@ _HANDLERS = {
     "mainBacktest": _h_main_backtest,
     "signalCalibration": _h_signal_calibration,
     "practicePerformance": _h_practice_performance,
+    "strategyAllocation": _h_strategy_allocation,
     "collectionStats": _h_collection_stats,
     "exportResearch": _h_export_research,
     "scriptsList": _h_scripts_list,

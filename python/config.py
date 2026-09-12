@@ -58,6 +58,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "sizing_base_edge": 5.0,
     "sizing_max_edge": 20.0,
     "kelly_fraction": 0.25,
+    # Optional live-only capital adjustment from rolling practice evidence.
+    # Practice sizing is intentionally unchanged so it remains a fair record.
+    "evidence_allocation_enabled": False,
     "hard_max_position_usd": 50.0,
     "min_cash_reserve_fraction": 0.05,
 
@@ -567,6 +570,9 @@ def _validate_config(cfg: dict[str, Any]) -> dict[str, Any]:
         cfg["min_size_fraction"] = cfg["max_size_fraction"]
     if cfg.get("sizing_mode") not in ("percent", "contracts", "kelly"):
         cfg["sizing_mode"] = d["sizing_mode"]
+    cfg["evidence_allocation_enabled"] = bool(cfg.get(
+        "evidence_allocation_enabled", d["evidence_allocation_enabled"]
+    ))
     cfg["kelly_fraction"] = _clampf(cfg.get("kelly_fraction"), 0.01, 1.0, d["kelly_fraction"])
     cfg["min_contracts"] = _clampi(cfg.get("min_contracts"), 1, 1_000_000, d["min_contracts"])
     cfg["max_contracts"] = _clampi(cfg.get("max_contracts"), 1, 1_000_000, d["max_contracts"])
