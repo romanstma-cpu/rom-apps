@@ -1,0 +1,2 @@
+1dcbd3d99f2d6c9cfd688adac2d798bee52094a1bf4be06842dfeaa2ff478c8e  ROM.PolyBot-2.15.0-arm64.dmg
+34fdc90ac36466b970c9ceb4bfa8a04f3322187abd516a0ef3995bc7eeaf4fbe  ROM.PolyBot-2.15.0-x64.dmg
