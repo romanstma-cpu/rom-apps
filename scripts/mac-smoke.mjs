@@ -19,6 +19,9 @@ try {
   const config = await page.evaluate(() => window.rom.config.get());
   assert.equal(config.enableTrading, false);
   assert.equal((await page.evaluate(() => window.rom.backend.info())).authOk, false);
+  const practice = await page.evaluate(() => window.rom.trading.practicePerformance());
+  assert.ok(['collecting', 'qualified'].includes(practice.status));
+  assert.ok(Array.isArray(practice.candidates));
   await page.getByRole('navigation').getByRole('button', {name: 'Overview', exact: true}).click();
   await page.getByRole('heading', {name: 'Latest decision cycle'}).waitFor();
   assert.deepEqual(errors, []);

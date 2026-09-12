@@ -585,6 +585,10 @@ export function registerIpc(): void {
     if (!pythonBackend.isRunning()) throw new Error('Start the engine to check calibration evidence.');
     return await pythonBackend.request('signalCalibration', {}, 30_000);
   });
+  ipcMain.handle('trading:practicePerformance', async () => {
+    if (!pythonBackend.isRunning()) throw new Error('Start the engine to rank practice performance.');
+    return await pythonBackend.request('practicePerformance', {}, 30_000);
+  });
   ipcMain.handle('backtest:collection', async () => {
     if (!pythonBackend.isRunning()) return null;
     return await pythonBackend.request('collectionStats', {});

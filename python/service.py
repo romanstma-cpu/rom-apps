@@ -1694,6 +1694,16 @@ async def _h_signal_calibration(_p: dict) -> dict:
     return (await asyncio.to_thread(signal_calibration.load_model))['report']
 
 
+async def _h_practice_performance(_p: dict) -> dict:
+    import practice_performance
+    env = polymarket_auth.get_env()
+
+    def _report() -> dict:
+        with db.get_db() as conn:
+            return practice_performance.build_report(conn, env)
+    return await asyncio.to_thread(_report)
+
+
 async def _h_collection_stats(_p: dict) -> dict:
     env = polymarket_auth.get_env()
 
@@ -2234,6 +2244,7 @@ _HANDLERS = {
     "c15ParlayArm": _h_c15_parlay_arm,
     "mainBacktest": _h_main_backtest,
     "signalCalibration": _h_signal_calibration,
+    "practicePerformance": _h_practice_performance,
     "collectionStats": _h_collection_stats,
     "exportResearch": _h_export_research,
     "scriptsList": _h_scripts_list,

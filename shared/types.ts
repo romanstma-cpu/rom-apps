@@ -698,6 +698,41 @@ export interface SignalCalibrationReport {
   asOf: number;
 }
 
+export interface PracticePerformanceCandidate {
+  key: string;
+  name: string;
+  kind: 'main' | 'script';
+  rank: number | null;
+  status: 'collecting' | 'qualified';
+  reason: string;
+  resolved: number;
+  open: number;
+  wins: number;
+  losses: number;
+  breakEven: number;
+  distinctMarkets: number;
+  spanDays: number;
+  pnlUsd: number;
+  riskedUsd: number;
+  returnOnRiskPct: number | null;
+  averagePnlUsd: number | null;
+  maxDrawdownUsd: number;
+  profitFactor: number | null;
+  score: number | null;
+}
+
+export interface PracticePerformanceReport {
+  status: 'collecting' | 'qualified';
+  reason: string;
+  asOf: number;
+  resolvedSamples: number;
+  qualifiedStrategies: number;
+  leadingKey: string | null;
+  thresholds: { resolved: number; distinctMarkets: number; spanDays: number };
+  method: string;
+  candidates: PracticePerformanceCandidate[];
+}
+
 export interface Crypto15mBacktest {
   mode?: 'portfolio';
   dataStatus?: 'recorded' | 'insufficient_data';
@@ -953,6 +988,7 @@ export interface ROMApi {
   };
   trading: {
     calibration: () => Promise<SignalCalibrationReport>;
+    practicePerformance: () => Promise<PracticePerformanceReport>;
     setEnabled: (enabled: boolean) => Promise<ActionResult>;
     setPaperEnabled: (enabled: boolean) => Promise<ActionResult>;
     cancelAllOpen: () => Promise<ActionResult<{ canceled: number }>>;
