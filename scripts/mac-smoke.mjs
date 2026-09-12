@@ -13,7 +13,8 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   const continueButton = page.getByRole('button', {name: 'Continue to API setup'});
-  if (await continueButton.count()) await continueButton.click();
+  await continueButton.waitFor({state: 'visible', timeout: 5000}).catch(() => {});
+  if (await continueButton.isVisible()) await continueButton.click();
   await page.waitForFunction(async () => (await window.rom.backend.info()).status === 'running', {timeout: 30000});
   const config = await page.evaluate(() => window.rom.config.get());
   assert.equal(config.enableTrading, false);
