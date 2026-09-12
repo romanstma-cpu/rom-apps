@@ -1720,6 +1720,11 @@ async def _h_strategy_allocation(_p: dict) -> dict:
     return await asyncio.to_thread(_plan)
 
 
+async def _h_execution_quality(_p: dict) -> dict:
+    import execution_learning
+    return await asyncio.to_thread(execution_learning.report, polymarket_auth.get_env())
+
+
 async def _h_collection_stats(_p: dict) -> dict:
     env = polymarket_auth.get_env()
 
@@ -2262,6 +2267,7 @@ _HANDLERS = {
     "signalCalibration": _h_signal_calibration,
     "practicePerformance": _h_practice_performance,
     "strategyAllocation": _h_strategy_allocation,
+    "executionQuality": _h_execution_quality,
     "collectionStats": _h_collection_stats,
     "exportResearch": _h_export_research,
     "scriptsList": _h_scripts_list,

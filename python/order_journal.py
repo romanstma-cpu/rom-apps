@@ -34,6 +34,11 @@ CREATE TABLE IF NOT EXISTS us_exit_basis (
 CREATE TABLE IF NOT EXISTS us_exit_orders (
  local_id TEXT PRIMARY KEY, position_id INTEGER NOT NULL, reason TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS us_entry_execution (
+ local_id TEXT PRIMARY KEY, network TEXT NOT NULL, source TEXT NOT NULL,
+ style TEXT NOT NULL, signal_cents REAL NOT NULL, bid_cents REAL NOT NULL,
+ ask_cents REAL NOT NULL, response_ms REAL
+);
 """
 
 
@@ -89,7 +94,7 @@ def blocked_intents():
     return [dict(r) for r in rows]
 
 
-def begin(local_id, ticker, side, action, quantity, price, position_id=None, exit_reason='exit'):
+def begin(local_id, ticker, side, action, quantity, price, position_id=None, exit_reason='exit', execution_context=None):
     init()
     with db.get_db() as c:
         # FULL makes the committed intent durable before network submission.
@@ -104,6 +109,16 @@ def begin(local_id, ticker, side, action, quantity, price, position_id=None, exi
         now = time.time()
         c.execute('INSERT INTO us_order_intents (local_id,ticker,side,action,quantity,limit_price,reserved_usd,state,created_at,updated_at) VALUES (?,?,?,?,?,?,?,\'sending\',?,?)',
                   (local_id,ticker,side,action,quantity,price,fees_us.reserved_cost(quantity,price,now) if action=='buy' else 0,now,now))
+        if execution_context is not None:
+            context = execution_context
+            if action != 'buy' or context['style'] not in ('crossing', 'resting'):
+                raise ValueError('Invalid entry execution context')
+            for key in ('signal_cents', 'bid_cents', 'ask_cents'):
+                if not math.isfinite(context[key]) or not 0 < context[key] < 100:
+                    raise ValueError('Invalid execution benchmark')
+            c.execute('INSERT INTO us_entry_execution VALUES (?,?,?,?,?,?,?,NULL)',
+                      (local_id,context['network'],context['source'],context['style'],
+                       context['signal_cents'],context['bid_cents'],context['ask_cents']))
         if position_id is not None:
             pos = c.execute('SELECT * FROM bot_positions WHERE id=?', (position_id,)).fetchone()
             if (action != 'sell' or not pos or pos['resolved'] or pos['ticker'] != ticker

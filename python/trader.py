@@ -15,6 +15,7 @@ import account_risk
 import fees_us
 import signal_calibration
 import strategy_allocator
+import execution_learning
 import rules as rules_engine
 from execution_quality import (
     affordable_at_depth, entry_price, entry_vwap_cents, remaining_signal_margin,
@@ -577,6 +578,19 @@ async def execute_signal(
             logger.info('[skip] %s: %s',signal.get('ticker'),exc)
             return None
     threshold = float(cfg.get("min_edge_pts_momentum" if source == "momentum" else "min_edge_pts_whale", 0))
+    execution_style = 'crossing' if limit_cents >= entry_quote['ask_cents'] else 'resting'
+    execution_fee_cents = 100*(fees_us.reserved_cost(1, limit_cents/100, time.time())-limit_cents/100)
+    if not paper:
+        feedback = execution_learning.entry_feedback(env, signal['ticker'], source, execution_style, limit_cents)
+        if feedback['blocked']:
+            logger.info('[skip] %s: confirmed execution history shows persistently poor fills; waiting for evidence to expire', signal['ticker'])
+            return None
+        # Calibrated edge already includes the fee reserve. Heuristic margin
+        # does not: subtract fees without mislabeling it as expected profit.
+        execution_fee_cents = feedback['feeCents']
+        edge_pts -= feedback['extraFeeCents'] if calibration is not None else feedback['feeCents']
+    elif calibration is None:
+        edge_pts -= execution_fee_cents
     if not math.isfinite(edge_pts) or edge_pts < max(0.0, threshold):
         logger.info("[skip] %s: remaining signal margin %.1f below execution threshold", signal["ticker"], edge_pts)
         return None
@@ -614,6 +628,7 @@ async def execute_signal(
 
     fee_time = time.time()
     contracts = fees_us.affordable_contracts(target_usd,limit_cents/100,fee_time)
+    contracts = min(contracts, int((target_usd+1e-9)/((limit_cents+execution_fee_cents)/100)))
     if contracts < 1:
         return None
 
@@ -626,6 +641,7 @@ async def execute_signal(
         logger.debug(f"min_size lookup failed for {signal['ticker']}: {e}")
     if min_size > contracts:
         bumped_cost = fees_us.reserved_cost(min_size,limit_cents/100,fee_time)
+        bumped_cost = max(bumped_cost, min_size*(limit_cents+execution_fee_cents)/100)
         if bumped_cost <= risk_ceiling_usd + 1e-9:
             logger.info(
                 f"[{source}] {signal['ticker']}: sizing {contracts}->{min_size} "
@@ -746,6 +762,9 @@ async def execute_signal(
             count=contracts,
             price_cents=limit_cents,
             client_order_id=client_order_id,
+            execution_context={'network': env, 'source': source, 'style': execution_style,
+                               'signal_cents': signal_cost_cents,
+                               'bid_cents': entry_quote['bid_cents'], 'ask_cents': entry_quote['ask_cents']},
         )
     except PolymarketAPIError as e:
         row["status"] = "error" if e.status in (400,401,403,422) else "unknown"

@@ -1024,6 +1024,7 @@ export interface ROMApi {
     calibration: () => Promise<SignalCalibrationReport>;
     practicePerformance: () => Promise<PracticePerformanceReport>;
     allocationPlan: () => Promise<StrategyAllocationPlan>;
+    executionQuality: () => Promise<ExecutionQualityReport>;
     setEnabled: (enabled: boolean) => Promise<ActionResult>;
     setPaperEnabled: (enabled: boolean) => Promise<ActionResult>;
     cancelAllOpen: () => Promise<ActionResult<{ canceled: number }>>;
@@ -1123,4 +1124,13 @@ declare global {
   interface Window {
     rom: ROMApi;
   }
+}
+export interface ExecutionQualityStats {
+  attempts: number; completed: number; pending: number; rejected: number; unfilled: number;
+  fillRatePct: number | null; responseP95Ms: number | null; costSamples: number;
+  signalSlippageCents: number | null; feeCentsPerContract: number | null;
+}
+export interface ExecutionQualityReport extends ExecutionQualityStats {
+  windowDays: number;
+  routes: (ExecutionQualityStats & {style: 'crossing' | 'resting'})[];
 }

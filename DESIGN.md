@@ -70,6 +70,8 @@ Dashboard shows a "Flatten All" banner with 2-step confirmation (arm → confirm
 Trade History page has an export button that writes all resolved positions (not just the visible 200) to a CSV blob via `Blob` + `URL.createObjectURL`.
 
 ## Verification
+Evidence owns the execution-quality report. Show only newly instrumented live main-strategy attempts over 30 days. Unknown metrics use dashes; pending and uncertain orders are not failed fills. Quote-based crossing/resting routes are not exchange maker/taker roles. Refresh clears previous results and preserves errors with a retry. Use the existing Card/Page, data typography, page scroll owner and a collapsed explanation. Execution feedback only tightens entry gates and sizing; it never activates trading or changes exits.
+
 Compact controls use a 28px minimum height through the application stylesheet, preserving existing colors and card spacing. Native checkbox/radio controls retain their platform semantics. macOS distribution provides architecture-specific installers and identifies the absence of Apple notarization.
 Overview uses the existing navy, blue, and mint tokens through Tailwind; Segoe UI owns headings/body and Consolas owns terminal data. The command panel includes a latest-cycle readout, with unknown values rendered as dashes. MainActivity owns the leading-filter count bars; these are relative counts, not conversion rates or profit predictions. The existing page scroller owns overflow; portfolio metrics stack below 640px. No decorative market data is generated.
 

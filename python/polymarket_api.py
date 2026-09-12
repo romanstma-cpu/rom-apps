@@ -4,6 +4,7 @@ import asyncio
 import json
 import math
 import time
+import logging
 import uuid
 import order_journal
 import main_recorder
@@ -305,7 +306,7 @@ async def get_fills_for_order(order_id,limit=200):
              'side':side,'action':action}]
 async def get_fills_since(after_ts_unix,limit=200): return []
 
-async def place_limit_order(*,ticker,side,action,count,price_cents,client_order_id=None,order_type='GTC',position_id=None,exit_reason='exit'):
+async def place_limit_order(*,ticker,side,action,count,price_cents,client_order_id=None,order_type='GTC',position_id=None,exit_reason='exit',execution_context=None):
     if side not in ('yes','no') or action not in ('buy','sell'): raise ValueError('Invalid order side/action')
     if isinstance(count,bool) or not isinstance(count,int) or count<=0: raise ValueError('Order count must be a positive integer')
     if not isinstance(price_cents,int) or not 1<=price_cents<=99: raise ValueError('Price must be 1..99 cents')
@@ -324,7 +325,8 @@ async def place_limit_order(*,ticker,side,action,count,price_cents,client_order_
     local_id=client_order_id or 'rom-'+uuid.uuid4().hex
     # The retail US endpoint does not document a client idempotency field.
     # Persist locally before POST and never retry an uncertain submission.
-    order_journal.begin(local_id,ticker,side,action,count,price_cents/100,position_id,exit_reason)
+    order_journal.begin(local_id,ticker,side,action,count,price_cents/100,position_id,exit_reason,execution_context)
+    submission_started = time.monotonic()
     try:
         response=await _request('POST','/v1/orders',private=True,body=payload)
         oid=response.get('id')
@@ -336,6 +338,16 @@ async def place_limit_order(*,ticker,side,action,count,price_cents,client_order_
         rejected=isinstance(exc,PolymarketAPIError) and exc.status in (400,401,403,422)
         order_journal.state(local_id,'rejected' if rejected else 'unknown',type(exc).__name__)
         raise
+    finally:
+        if execution_context is not None:
+            try:
+                with order_journal.db.get_db() as conn:
+                    conn.execute('UPDATE us_entry_execution SET response_ms=? WHERE local_id=?',
+                                 (max(0, (time.monotonic()-submission_started)*1000), local_id))
+            except Exception:
+                # Telemetry failure must never turn a confirmed submission into
+                # a retry, or hide the authoritative exchange/recovery result.
+                logging.getLogger(__name__).warning('Could not save order response timing')
     return {'order':{'order_id':oid,'status':'pending'},'raw':response}
 
 async def cancel_order(order_id):

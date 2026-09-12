@@ -593,6 +593,10 @@ export function registerIpc(): void {
     if (!pythonBackend.isRunning()) throw new Error('Start the engine to calculate evidence allocation.');
     return await pythonBackend.request('strategyAllocation', {}, 30_000);
   });
+  ipcMain.handle('trading:executionQuality', async () => {
+    if (!pythonBackend.isRunning()) throw new Error('Start the engine to review execution quality.');
+    return await pythonBackend.request('executionQuality', {}, 30_000);
+  });
   ipcMain.handle('backtest:collection', async () => {
     if (!pythonBackend.isRunning()) return null;
     return await pythonBackend.request('collectionStats', {});

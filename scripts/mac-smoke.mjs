@@ -25,6 +25,10 @@ try {
   const allocation = await page.evaluate(() => window.rom.trading.allocationPlan());
   assert.ok(['collecting', 'active'].includes(allocation.status));
   assert.ok(Array.isArray(allocation.candidates));
+  const execution = await page.evaluate(() => window.rom.trading.executionQuality());
+  assert.equal(execution.windowDays, 30);
+  assert.equal(execution.attempts, 0);
+  assert.equal(execution.fillRatePct, null);
   await page.getByRole('navigation').getByRole('button', {name: 'Overview', exact: true}).click();
   await page.getByRole('heading', {name: 'Latest decision cycle'}).waitFor();
   assert.deepEqual(errors, []);

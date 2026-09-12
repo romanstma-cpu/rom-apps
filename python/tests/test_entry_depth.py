@@ -153,6 +153,43 @@ def test_depth_check_can_be_disabled(entry_env, cfg, monkeypatch):
     assert row["target_contracts"] > 2
 
 
+def test_learned_poor_fills_block_before_order_submission(entry_env, cfg, monkeypatch):
+    install_book(monkeypatch, [[60, 10_000]])
+    cfg['enable_trading'] = True
+    monkeypatch.setattr(trader.execution_learning, 'entry_feedback', lambda *a: {
+        'blocked': True, 'feeCents': 2, 'extraFeeCents': 0})
+    assert asyncio.run(trader.execute_signal(whale_signal(), 'whale', cfg, 1000)) is None
+
+
+def test_learned_cost_reduces_size_and_records_submission_benchmark(entry_env, cfg, monkeypatch):
+    install_book(monkeypatch, [[60, 10_000]])
+    cfg.update(enable_trading=True, sizing_mode='fixed', fixed_trade_usd=10)
+    monkeypatch.setattr(trader, 'entry_budget', lambda *a, **k: 10)
+    monkeypatch.setattr(trader.execution_learning, 'entry_feedback', lambda *a: {
+        'blocked': False, 'feeCents': 10, 'extraFeeCents': 8})
+    calls=[]
+    async def order(**kw):
+        calls.append(kw)
+        return {'order': {'order_id': 'test-order', 'status': 'pending'}}
+    monkeypatch.setattr(trader,'place_limit_order',order)
+    row=asyncio.run(trader.execute_signal(whale_signal(confidence=99), 'whale', cfg, 1000))
+    assert row is not None and len(calls)==1
+    assert calls[0]['count']==14  # 14 * (60c + 10c) <= $10
+    assert calls[0]['execution_context']['signal_cents']==60
+    assert calls[0]['execution_context']['style']=='crossing'
+
+
+def test_learned_fees_cannot_bump_minimum_above_budget(entry_env, cfg, monkeypatch):
+    install_book(monkeypatch, [[60, 10_000]])
+    cfg['enable_trading']=True
+    monkeypatch.setattr(trader, 'entry_budget', lambda *a, **k: 10)
+    monkeypatch.setattr(trader.execution_learning, 'entry_feedback', lambda *a: {
+        'blocked': False, 'feeCents': 10, 'extraFeeCents': 8})
+    async def meta(*a): return {'min_size':15}
+    monkeypatch.setattr(trader,'get_market_meta',meta)
+    assert asyncio.run(trader.execute_signal(whale_signal(confidence=99), 'whale', cfg, 1000)) is None
+
+
 def test_deep_book_costs_are_charged_before_the_edge_test(entry_env, cfg, monkeypatch):
     """A ladder that averages well above the touch must not pass on touch edge."""
     cfg["min_edge_pts_whale"] = 8.0
