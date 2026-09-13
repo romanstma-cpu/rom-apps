@@ -11,9 +11,15 @@ import fees_us
 import order_journal
 
 
-def observations(network, *, now=None):
+def observations(network, *, now=None, entry_group=None):
     now = time.time() if now is None else now
     order_journal.init()
+    filters = ''
+    parameters = [network, now-30*86400, now, now]
+    if entry_group is not None:
+        ticker, source, style, price_cents = entry_group
+        filters = ' AND j.ticker=? AND m.source=? AND m.style=? AND ABS(j.limit_price*100-?)<=5'
+        parameters.extend((ticker, source, style, price_cents))
     with db.get_db() as conn:
         return [dict(row) for row in conn.execute("""
             SELECT m.*, j.ticker, j.quantity, j.limit_price, j.state,
@@ -21,8 +27,7 @@ def observations(network, *, now=None):
             FROM us_entry_execution m JOIN us_order_intents j USING(local_id)
             WHERE m.network=? AND j.action='buy'
               AND j.created_at>=? AND j.created_at<=? AND j.updated_at<=?
-            ORDER BY j.created_at
-        """, (network, now-30*86400, now, now)).fetchall()]
+        """ + filters + ' ORDER BY j.created_at, j.local_id', parameters).fetchall()]
 
 
 def summarize(rows):
@@ -50,9 +55,8 @@ def summarize(rows):
 def entry_feedback(network, ticker, source, style, price_cents, *, now=None):
     """Never increase risk or loosen existing gates based on learned evidence."""
     now = time.time() if now is None else now
-    rows = [r for r in observations(network, now=now)
-            if r['ticker'] == ticker and r['source'] == source and r['style'] == style
-            and abs(r['limit_price']*100-price_cents) <= 5]
+    rows = observations(network, now=now,
+                        entry_group=(ticker, source, style, price_cents))
     terminal = [r for r in rows if r['state'] in ('filled', 'canceled')]
     # One observation per UTC day prevents a burst of correlated attempts from
     # qualifying a market. Any fill makes that day successful (conservative).

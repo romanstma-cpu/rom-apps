@@ -102,6 +102,36 @@ def test_missing_fees_and_other_routes_do_not_teach_cost(ledger):
     assert feedback()['samples']==0
 
 
+def test_scoped_query_matches_previous_filter_without_loading_other_groups(ledger):
+    for i in range(24): add(ledger,i,filled=5,fees=.2)
+    with ledger() as c:
+        c.execute("UPDATE us_order_intents SET ticker='other' WHERE local_id='0'")
+        c.execute("UPDATE us_entry_execution SET source='momentum' WHERE local_id='1'")
+        c.execute("UPDATE us_entry_execution SET style='resting' WHERE local_id='2'")
+        c.execute("UPDATE us_order_intents SET limit_price=.66 WHERE local_id='3'")
+        c.execute("UPDATE us_order_intents SET limit_price=.65 WHERE local_id='4'")
+        c.execute("UPDATE us_order_intents SET limit_price=.55 WHERE local_id='5'")
+    all_rows=learning.observations('mainnet',now=NOW)
+    expected=[r for r in all_rows if r['ticker']=='market' and r['source']=='whale'
+              and r['style']=='crossing' and abs(r['limit_price']*100-60)<=5]
+    scoped=learning.observations('mainnet',now=NOW,
+        entry_group=('market','whale','crossing',60))
+    assert scoped==expected
+    assert len(scoped)==20
+    assert feedback()['extraFeeCents']==pytest.approx(2)
+
+
+def test_journal_index_upgrade_preserves_existing_orders(ledger):
+    add(ledger,1,filled=3,fees=.06)
+    before=learning.observations('mainnet',now=NOW)
+    with ledger() as c:
+        c.execute('DROP INDEX us_intents_market_time')
+        c.execute('DROP INDEX us_entry_execution_group')
+    journal.init()
+    journal.init()
+    assert learning.observations('mainnet',now=NOW)==before
+
+
 def test_invalid_context_rolls_back_intent(ledger):
     with pytest.raises(ValueError):
         journal.begin('bad','market','yes','buy',10,.6,execution_context={**CONTEXT,'ask_cents':float('nan')})

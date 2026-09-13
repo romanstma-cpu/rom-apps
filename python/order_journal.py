@@ -39,6 +39,10 @@ CREATE TABLE IF NOT EXISTS us_entry_execution (
  style TEXT NOT NULL, signal_cents REAL NOT NULL, bid_cents REAL NOT NULL,
  ask_cents REAL NOT NULL, response_ms REAL
 );
+CREATE INDEX IF NOT EXISTS us_intents_market_time
+ ON us_order_intents(ticker, created_at);
+CREATE INDEX IF NOT EXISTS us_entry_execution_group
+ ON us_entry_execution(network, source, style, local_id);
 """
 
 
