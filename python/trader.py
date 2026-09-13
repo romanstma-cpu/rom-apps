@@ -1277,7 +1277,7 @@ async def poll_open_orders(cfg: dict) -> list[dict]:
     for pos in pending:
         evidence = order_journal.get(pos['client_order_id'])
         if evidence:
-            if (evidence['state']=='open' and evidence['filled']==0 and evidence['order_id']
+            if (evidence['state']=='open' and evidence['filled'] < evidence['quantity'] and evidence['order_id']
                     and cfg.get('order_expiration_sec') is not None
                     and time.time()-evidence['created_at'] > float(cfg['order_expiration_sec'])):
                 try:

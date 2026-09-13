@@ -161,6 +161,59 @@ async def test_cancel_ack_without_terminal_state_keeps_reservation(monkeypatch):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize('final_state,final_quantity', [
+    ('ORDER_STATE_CANCELED',4), ('ORDER_STATE_FILLED',10),
+    ('ORDER_STATE_PARTIALLY_FILLED',4),
+])
+async def test_expired_partial_order_cancels_remainder_and_keeps_exchange_evidence(monkeypatch,final_state,final_quantity):
+    begin()
+    journal.record_order(raw_order())
+    pid=seed_position(client_order_id='local',order_id='ex-1',status='partial',
+                      ticker='market',filled_contracts=4,limit_price_cents=60,cost_usd=2.23)
+    with db.get_db() as c:
+        c.execute("UPDATE us_order_intents SET created_at=created_at-120 WHERE local_id='local'")
+    async def reconcile(): pass
+    async def positions(**kw): return []
+    monkeypatch.setattr(trader,'reconcile_order_journal',reconcile)
+    monkeypatch.setattr(trader,'get_positions',positions)
+    calls=[]
+    async def request(method,path,**kw):
+        calls.append(method)
+        if method=='POST': return {}
+        return {'order':raw_order(state=final_state,cumQuantity=final_quantity) if len(calls)==3 else raw_order()}
+    monkeypatch.setattr(api,'_request',request)
+    await trader.poll_open_orders(merge_with_defaults({'order_expiration_sec':60}))
+    assert calls==['GET','POST','GET']
+    evidence=journal.get('local')
+    with db.get_db() as c: position=db.fetch_position_by_id(c,pid)
+    assert position['filled_contracts']==final_quantity
+    assert position['cost_usd']==pytest.approx(final_quantity*.55+.03)
+    if final_state=='ORDER_STATE_PARTIALLY_FILLED':
+        assert evidence['state']=='cancel_pending'
+        assert evidence['reserved_usd']>0
+    else:
+        assert evidence['reserved_usd']==0
+        assert evidence['state']==('filled' if final_quantity==10 else 'canceled')
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('expiry',[None,300])
+async def test_partial_order_is_not_expired_before_its_deadline(monkeypatch,expiry):
+    begin()
+    journal.record_order(raw_order())
+    seed_position(client_order_id='local',order_id='ex-1',status='partial',ticker='market',filled_contracts=4)
+    async def reconcile(): pass
+    async def positions(**kw): return []
+    async def forbidden(*a,**kw): pytest.fail('No cancellation is due')
+    monkeypatch.setattr(trader,'reconcile_order_journal',reconcile)
+    monkeypatch.setattr(trader,'get_positions',positions)
+    monkeypatch.setattr(trader,'cancel_order',forbidden)
+    await trader.poll_open_orders(merge_with_defaults({'order_expiration_sec':expiry}))
+    assert journal.get('local')['state']=='open'
+    assert journal.get('local')['reserved_usd']>0
+
+
+@pytest.mark.asyncio
 async def test_cancel_pending_write_is_journalized_like_begin(monkeypatch):
     """The pre-network cancel_pending write must follow order_journal.begin()'s
     durability discipline: synchronous=FULL then BEGIN IMMEDIATE before the
