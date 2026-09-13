@@ -124,3 +124,68 @@ def test_replay_kelly_does_not_train_on_later_settlement():
 def test_minimum_size_never_increases_kelly_risk():
     cfg=merge_with_defaults({'sizing_mode':'kelly','min_size_fraction':.1,'kelly_fraction':1})
     assert trader._compute_target_usd(1000,.1,20,cfg)==pytest.approx(1.25)
+
+
+def economics_rows(wins=6, days=20):
+    return [dict(at=T+day*86400+i,price=.5,outcome=int(i<wins))
+            for day in range(days) for i in range(10)]
+
+
+def test_gross_winner_that_loses_after_execution_costs_cannot_qualify():
+    rows=economics_rows(wins=5)
+    for row in rows: row['price']=.48
+    assert sum(r['outcome']-r['price'] for r in rows)>0
+    result=calibration.economic_check(rows,.8)
+    assert result['netPnlUsd']<0 and not result['qualified']
+
+
+def test_recent_deterioration_blocks_an_overall_profitable_holdout():
+    rows=economics_rows(wins=9,days=10)+[
+        {**r,'at':r['at']+10*86400} for r in economics_rows(wins=5,days=10)]
+    result=calibration.economic_check(rows,.8)
+    assert result['netPnlUsd']>0 and not result['qualified']
+
+
+def test_economic_holdout_needs_independent_days_and_enough_selected_trades():
+    assert not calibration.economic_check(economics_rows(wins=10,days=6),.8)['qualified']
+    assert not calibration.economic_check(economics_rows(wins=10)[:39],.8)['qualified']
+    assert calibration.economic_check(economics_rows(wins=8),.8)['qualified']
+    assert calibration.economic_check(economics_rows(),.5)['trades']==0
+
+
+def test_economic_results_are_deterministic():
+    rows=economics_rows(wins=8)
+    assert calibration.economic_check(rows,.8)==calibration.economic_check(list(reversed(rows)),.8)
+
+
+def test_priority_prefers_net_capital_return_over_raw_confidence():
+    cheap=dict(price=.3,confidence=50,taker_side='yes',category='sports')
+    expensive=dict(price=.7,confidence=99,taker_side='yes',category='sports')
+    model={'asof':T,'bins':{
+        calibration.features(cheap,'whale')[0]:{'lowerProbability':.5},
+        calibration.features(expensive,'whale')[0]:{'lowerProbability':.9},
+    }}
+    assert trader._compute_edge(expensive,'whale') > trader._compute_edge(cheap,'whale')
+    assert calibration.capital_priority(cheap,'whale',T,model)>calibration.capital_priority(expensive,'whale',T,model)
+    assert calibration.capital_priority(cheap,'whale',T+601,model)==float('-inf')
+    assert calibration.capital_priority(cheap,'whale',T-1,model)==float('-inf')
+    assert calibration.capital_priority(cheap,'whale',T,{'asof':T,'bins':{}})==float('-inf')
+
+
+def test_accuracy_improvement_cannot_hide_losses_in_the_selected_trades():
+    events=[]
+    for i in range(1600):
+        at=T+i*1800
+        is_test=i>=1100
+        win=int(i%10!=0) if is_test else int(i%20<13)
+        price=(.59 if win else .41) if is_test else .5
+        signal=dict(id=i,ticker=f'M{i}',event_ticker=f'E{i}',category='sports',
+                    confidence=98,price=price,taker_side='yes',
+                    created_at=datetime.fromtimestamp(at,timezone.utc).isoformat())
+        events += [dict(at=at,kind='signal',ticker=f'M{i}',payload={'source':'whale','signal':signal}),
+                   dict(at=at+600,kind='settlement',ticker=f'M{i}',payload={'yes_payout':win})]
+    model=calibration.fit(events,T+1601*1800)
+    bucket=model['report']['buckets'][0]
+    assert bucket['brier']<bucket['marketBrier'] and bucket['gainLower']>0
+    assert bucket['economics']['netPnlUsd']<0
+    assert not bucket['qualified'] and not model['bins']

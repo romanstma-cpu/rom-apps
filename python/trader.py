@@ -942,7 +942,16 @@ async def scan_for_trades(cfg: dict) -> list[dict]:
             direction, _ = _signal_cost_cents(signal, source)
             eligible_sides.setdefault(signal["ticker"], set()).add(direction)
     conflicts = {ticker for ticker, sides in eligible_sides.items() if len(sides) > 1}
-    candidates.sort(key=lambda c: _compute_edge(c[0], c[1]), reverse=True)
+    if cfg.get('sizing_mode') == 'kelly':
+        try:
+            ranking_model = signal_calibration.load_model()
+        except Exception:
+            _skip_log('Kelly calibration unavailable; waiting for evidence')
+            return []
+        ranking_at = time.time()
+        candidates.sort(key=lambda c: signal_calibration.capital_priority(c[0],c[1],ranking_at,ranking_model),reverse=True)
+    else:
+        candidates.sort(key=lambda c: _compute_edge(c[0], c[1]), reverse=True)
     inserted: list[dict] = []
     filter_counts: dict[str, int] = {}
     cycle_stop_reason = None

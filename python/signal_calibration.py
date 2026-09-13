@@ -5,6 +5,7 @@ Only Kelly sizing consumes qualified estimates; other sizing remains unchanged.
 """
 import math
 import time
+import random
 from collections import Counter, defaultdict
 from statistics import mean, stdev
 
@@ -12,12 +13,55 @@ import db
 import fees_us
 from execution_quality import signal_problem, signal_freshness_problem
 
-VERSION = 'event-bins-v1'
+VERSION = 'event-bins-v2-net-holdout'
 MIN_TRAIN = 60
 MIN_TEST = 40
 EMBARGO = 86400
 MAX_AGE = 30 * 86400
 _cache = None
+
+
+def stressed_cost(price, at):
+    """Two cents of adverse movement, conservative fees, one cent uncertainty.
+
+    This is a settlement simulation assumption, not an order-book fill claim.
+    """
+    cents = math.ceil(price*100-1e-8)+2
+    if not 1 <= cents <= 99:
+        raise ValueError('No executable price within the stress allowance')
+    return fees_us.reserved_cost(1, cents/100, at)+.01
+
+
+def economic_check(evaluation, lower_probability):
+    trades=[]
+    for row in sorted(evaluation, key=lambda r:r['at']):
+        try:
+            cost=stressed_cost(row['price'],row['at'])
+        except ValueError:
+            continue
+        if lower_probability > cost:
+            trades.append((row['at'],row['outcome']-cost,cost))
+    days=defaultdict(lambda:[0.0,0.0])
+    for at,pnl,cost in trades:
+        days[int(at//86400)][0]+=pnl
+        days[int(at//86400)][1]+=cost
+    result=dict(trades=len(trades),days=len(days),qualified=False,
+                netPnlUsd=sum(t[1] for t in trades) if trades else None,
+                returnPct=None,lowerReturnPct=None)
+    if len(trades)<40 or len(days)<7:
+        return result
+    blocks=list(days.values()); rng=random.Random(271828); returns=[]
+    for _ in range(600):
+        picked=rng.choices(blocks,k=len(blocks))
+        returns.append(sum(p[0] for p in picked)/sum(p[1] for p in picked))
+    lower=sorted(returns)[29]
+    middle=len(trades)//2
+    # Both chronological halves must earn positive simulated net P&L. An old
+    # winning run must not conceal deterioration in the later evaluation half.
+    stable=all(sum(t[1] for t in part)>0 for part in (trades[:middle],trades[middle:]))
+    result.update(returnPct=100*sum(t[1] for t in trades)/sum(t[2] for t in trades),
+                  lowerReturnPct=100*lower,qualified=lower>0 and stable)
+    return result
 
 
 def features(signal, source):
@@ -132,22 +176,24 @@ def fit(events, asof):
         market_log_loss = mean(logloss(r['price'], r['outcome']) for r in evaluation)
         recent = asof-max(r['resolved_at'] for r in evaluation) <= MAX_AGE
         span = max(r['at'] for r in evaluation)-min(r['at'] for r in group)
+        economics = economic_check(evaluation, lower)
         qualified = (recent and span >= 14*86400 and market_brier-brier >= .005
-                     and gain_lower > 0 and brier <= score_brier and log_loss < market_log_loss)
+                     and gain_lower > 0 and brier <= score_brier and log_loss < market_log_loss
+                     and economics['qualified'])
         item = dict(source=key[0], side=key[1], category=key[2], priceBand=key[3],
                     scoreBand=key[4], scoreVersion=key[5], trainEvents=n, testEvents=m,
                     probability=probability,
                     lowerProbability=lower, observedTestRate=mean(r['outcome'] for r in evaluation),
                     brier=brier, marketBrier=market_brier, scoreBrier=score_brier,
-                    gainLower=gain_lower, qualified=qualified)
+                    gainLower=gain_lower, economics=economics, qualified=qualified)
         report['buckets'].append(item)
         if qualified:
             model['bins'][key] = item
     report['qualifiedBuckets'] = len(model['bins'])
     if model['bins']:
-        report.update(status='qualified', reason='Some score groups passed historical checks. Estimates remain uncertain; this is not proof of profitable execution.')
+        report.update(status='qualified', reason='Some score groups passed accuracy and net-return holdout checks after fee and price stress. Simulated results do not prove profitable live execution.')
     else:
-        report.update(status='not_qualified', reason='No score group has enough recent holdout evidence to outperform market prices. Kelly entries stay blocked.')
+        report.update(status='not_qualified', reason='No score group passed all accuracy and net-return holdout checks after costs. Kelly entries stay blocked.')
     return model
 
 
@@ -180,3 +226,16 @@ def calibrated_edge(signal, source, limit_cents, at, model):
     # fees and another cent of uncertainty; size uses the conservative bound.
     cost = fees_us.reserved_cost(1, limit_cents/100, at)
     return (bucket['lowerProbability']-cost)*100-1
+
+
+def capital_priority(signal, source, at, model):
+    """Rank qualified Kelly candidates by conservative stressed return on cost."""
+    try:
+        key,price,_=features(signal,source)
+        if model['asof']>at or at-model['asof']>600:
+            return float('-inf')
+        cost=stressed_cost(price,at)
+        lower=model['bins'][key]['lowerProbability']
+        return (lower-cost)/cost if lower>cost else float('-inf')
+    except (ValueError,KeyError,TypeError):
+        return float('-inf')

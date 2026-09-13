@@ -213,7 +213,12 @@ class Portfolio:
         sides={}
         for _,s,source in candidates:
             sides.setdefault(s['ticker'],set()).add(trader._signal_cost_cents(s,source)[0])
-        candidates.sort(key=lambda c:trader._compute_edge(c[1],c[2]),reverse=True)
+        if self.cfg.get('sizing_mode') == 'kelly':
+            if self.calibration is None or self.now-self.calibration['asof'] >= 300:
+                self.calibration=signal_calibration.fit(self.events,self.now)
+            candidates.sort(key=lambda c:signal_calibration.capital_priority(c[1],c[2],self.now,self.calibration),reverse=True)
+        else:
+            candidates.sort(key=lambda c:trader._compute_edge(c[1],c[2]),reverse=True)
         for key,sig,source in candidates:
             ticker=sig['ticker']; side,signal_cents=trader._signal_cost_cents(sig,source)
             if len(sides[ticker])>1:
