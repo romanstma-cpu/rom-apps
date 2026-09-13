@@ -1,0 +1,2 @@
+2d9ff2c77ad54e9da9f1eea5cda7771e11602ce344f28b7f59338c3ed8d45da4  ROM.PolyBot-2.17.4-arm64.dmg
+fdb8d3f509b382b1e2fc0a84b4f3dc413c297097cfa3ab2476b944296cf885c1  ROM.PolyBot-2.17.4-x64.dmg
