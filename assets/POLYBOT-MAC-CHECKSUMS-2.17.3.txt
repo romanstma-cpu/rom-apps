@@ -1,0 +1,2 @@
+7a94421178161a440198f723089d5c6d09824caacff76faed01bc683e36b0052  ROM.PolyBot-2.17.3-arm64.dmg
+c06d5ffaf1cea72bf73b2c0b6d25e60ef6fbd4ca9b93f843b8c2b6218108cda9  ROM.PolyBot-2.17.3-x64.dmg
