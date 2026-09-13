@@ -1132,6 +1132,17 @@ def sync_journal_position(pos, evidence):
     fields = {'order_id': evidence['order_id']}
     if state in ('sending','unknown','accounting_pending','cancel_pending'):
         fields.update(status='unknown', error='Order recovery/accounting pending; risk remains reserved')
+        # Cancellation status and fill accounting are independent. A confirmed
+        # partial fill must appear now without implying the remainder canceled.
+        if state == 'cancel_pending':
+            filled, price, fee = evidence['filled'], evidence['avg_price'], evidence['fees_usd']
+            if (isinstance(filled, (int, float)) and math.isfinite(filled)
+                    and filled == int(filled) and 0 < filled <= evidence['quantity']
+                    and filled >= (pos.get('filled_contracts') or 0)
+                    and isinstance(price, (int, float)) and math.isfinite(price) and 0 <= price <= 1
+                    and isinstance(fee, (int, float)) and math.isfinite(fee)):
+                fields.update(filled_contracts=int(filled), avg_fill_price_cents=price*100,
+                              cost_usd=filled*price+fee, fees_usd=fee)
     elif state == 'rejected':
         fields.update(status='error', error='Exchange rejected submission')
     else:

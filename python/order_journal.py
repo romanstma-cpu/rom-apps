@@ -186,7 +186,7 @@ def record_order(raw):
         status = ('filled' if raw.get('state') == 'ORDER_STATE_FILLED' else 'canceled') if terminal else 'open'
         if not accounting_ok or filled > row['quantity'] or (raw.get('state')=='ORDER_STATE_FILLED' and filled==0):
             status = 'accounting_pending'
-        if row['state'] == 'cancel_pending' and not terminal:
+        if row['state'] == 'cancel_pending' and not terminal and status != 'accounting_pending':
             status = 'cancel_pending'
         remaining = max(0, row['quantity']-filled)
         reserved = 0 if (terminal and accounting_ok) or row['action'] != 'buy' else fees_us.reserved_cost(remaining,row['limit_price'],time.time())

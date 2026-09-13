@@ -164,6 +164,7 @@ async def test_cancel_ack_without_terminal_state_keeps_reservation(monkeypatch):
 @pytest.mark.parametrize('final_state,final_quantity', [
     ('ORDER_STATE_CANCELED',4), ('ORDER_STATE_FILLED',10),
     ('ORDER_STATE_PARTIALLY_FILLED',4),
+    ('ORDER_STATE_PARTIALLY_FILLED',6),
 ])
 async def test_expired_partial_order_cancels_remainder_and_keeps_exchange_evidence(monkeypatch,final_state,final_quantity):
     begin()
@@ -191,9 +192,51 @@ async def test_expired_partial_order_cancels_remainder_and_keeps_exchange_eviden
     if final_state=='ORDER_STATE_PARTIALLY_FILLED':
         assert evidence['state']=='cancel_pending'
         assert evidence['reserved_usd']>0
+        assert position['status']=='unknown'
+        assert journal.blocker()
     else:
         assert evidence['reserved_usd']==0
         assert evidence['state']==('filled' if final_quantity==10 else 'canceled')
+
+
+@pytest.mark.parametrize('changes',[
+    {'avgPx':None}, {'commissionNotionalTotalCollected':None},
+    {'cumQuantity':6.5}, {'cumQuantity':11},
+])
+def test_incomplete_cancel_fill_keeps_accounting_block_and_reservation(changes):
+    begin()
+    journal.record_order(raw_order())
+    pid=seed_position(client_order_id='local',order_id='ex-1',status='partial',
+                      ticker='market',filled_contracts=4,cost_usd=2.23)
+    before=journal.get('local')['reserved_usd']
+    journal.state('local','cancel_pending')
+    journal.record_order(raw_order(**{'cumQuantity':6,**changes}))
+    evidence=journal.get('local')
+    assert evidence['state']=='accounting_pending'
+    assert evidence['reserved_usd']>=before
+    with db.get_db() as c: pos=db.fetch_position_by_id(c,pid)
+    updated=trader.sync_journal_position(pos,evidence)
+    assert updated['filled_contracts']==4
+    assert updated['cost_usd']==pytest.approx(2.23)
+    assert updated['status']=='unknown' and journal.blocker()
+
+
+def test_cancel_pending_fill_updates_are_idempotent_and_do_not_reopen_order():
+    begin()
+    journal.record_order(raw_order())
+    pid=seed_position(client_order_id='local',order_id='ex-1',status='partial',
+                      ticker='market',filled_contracts=4,cost_usd=2.23)
+    journal.state('local','cancel_pending')
+    journal.record_order(raw_order(cumQuantity=6))
+    with db.get_db() as c: pos=db.fetch_position_by_id(c,pid)
+    updated=trader.sync_journal_position(pos,journal.get('local'))
+    assert updated['filled_contracts']==6
+    assert updated['cost_usd']==pytest.approx(3.33)
+    assert updated['status']=='unknown'
+    assert trader.sync_journal_position(updated,journal.get('local')) is None
+    journal.record_order(raw_order(cumQuantity=4))
+    assert journal.get('local')['filled']==6
+    assert journal.get('local')['state']=='cancel_pending'
 
 
 @pytest.mark.asyncio
