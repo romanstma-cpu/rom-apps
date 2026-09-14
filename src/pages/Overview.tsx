@@ -8,6 +8,7 @@ import type { PageId } from '../App';
 import { MainActivity } from '../components/MainActivity';
 import { useStrategyActivity } from '../state/StrategyActivity';
 import { OrderRecovery } from '../components/OrderRecovery';
+import { TradingCheck } from '../components/TradingCheck';
 
 export function OverviewPage({ onNav }: { onNav: (page: PageId) => void }) {
   const { backend, account, config, positions } = useApp();
@@ -75,6 +76,7 @@ export function OverviewPage({ onNav }: { onNav: (page: PageId) => void }) {
         <div><dt>{practicing?'Practice recorded P&L':'Session return'}</dt><dd>{practicing ? (activity.status ? fmtUsd(activity.status.mainPaper.pnlUsd,{sign:true}) : '—') : connected ? fmtUsd(account?.sessionPnlUsd,{sign:true}) : '—'}</dd><small>{practicing?'Includes the simulated cost allowance':connected?'Performance during this session':'Available once your account is connected'}</small></div>
         <div><dt>{practicing?'Open practice trades':'Open positions'}</dt><dd>{practicing ? activity.status?.mainPaper.open ?? '—' : connected ? open.length : '—'}</dd><small>{practicing?'No exchange orders':connected?'Including pending orders':'Available once your account is connected'}</small></div>
       </dl>
+      <TradingCheck onOpenStrategy={() => onNav('main')} />
       <MainActivity onOpenStrategy={() => onNav('main')} />
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <Card><div className="mb-5 flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-rom-win" /><h3 className="font-semibold">Your limits</h3></div>

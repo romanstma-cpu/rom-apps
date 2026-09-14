@@ -9,6 +9,8 @@ try{
  await p.getByRole('button',{name:'Continue to API setup'}).click();
  await p.getByRole('navigation').getByRole('button',{name:'Overview',exact:true}).click();
  await p.waitForTimeout(5500);
+ await p.getByRole('heading',{name:'Trade readiness',exact:true}).waitFor();
+ assert.ok(await p.getByText('Execution guard',{exact:true}).count());
  await p.screenshot({path:'.work/overview-2.7.png'});
  await p.getByRole('navigation').getByRole('button',{name:'Strategy',exact:true}).click();
  await app.evaluate(({BrowserWindow})=>{BrowserWindow.getAllWindows()[0].webContents.send('backend:info',{status:'running',authOk:true,pid:1,pythonOk:true,startedAt:null,lastError:null});});
