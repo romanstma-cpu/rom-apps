@@ -1,16 +1,11 @@
 name: Build Installers
 
-# Builds native installers on each OS and publishes them as assets on a
-# per-run GitHub *prerelease* (tag build-<run_number>), for you to distribute
-# yourself. Release assets do NOT count against the Actions artifact storage
-# quota and never expire — unlike upload-artifact, which fills the 500 MB quota
-# after a couple of runs. It does NOT wire up auto-update. Runs automatically on
-# a push to main/build, or on demand from the Actions tab.
+# Builds the Apple Silicon installer and publishes it as an asset on a per-run
+# GitHub *prerelease*. Release assets do not count against Actions artifact
+# storage and do not expire. This workflow does not wire up auto-update.
 #
-# The Python backend is frozen with PyInstaller, which cannot cross-compile — so
-# each installer is built on its own native runner (win backend on Windows, mac
-# on macOS, linux on Ubuntu). `npm run dist` = vite build + PyInstaller (from
-# python/rom-polybot-backend.spec, incl. the --selftest gate) + electron-builder.
+# The Python backend is frozen with PyInstaller on a native Apple Silicon
+# runner. The packaged backend and app are tested before release.
 on:
   push:
     branches: [main, build, codex/polybot-macos]
@@ -22,15 +17,8 @@ permissions:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-15-intel
-            name: mac-intel        # x64 .zip; avoids flaky hdiutil on Intel runners
-          - os: macos-15
-            name: mac-apple-silicon # arm64 .dmg
-    runs-on: ${{ matrix.os }}
+    name: mac-apple-silicon
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
@@ -55,11 +43,7 @@ jobs:
         run: |
           npm run build
           npm run py:dist
-          if [ "${{ matrix.name }}" = "mac-intel" ]; then
-            npx electron-builder --mac zip
-          else
-            npx electron-builder --mac dmg
-          fi
+          npx electron-builder --mac dmg --arm64
         env:
           # Build the macOS app unsigned — no Apple Developer cert/secrets needed.
           # electron-builder ad-hoc signs arm64 so it still launches (right-click
@@ -76,14 +60,12 @@ jobs:
           if compgen -G "release/*.dmg" > /dev/null; then
             hdiutil verify release/*.dmg
           fi
-          FILE=$(find release -maxdepth 1 \( -name '*.dmg' -o -name '*.zip' \) -type f | head -1)
+          FILE=$(find release -maxdepth 1 -name '*-arm64.dmg' -type f | head -1)
           test -n "$FILE"
-          shasum -a 256 "$FILE" > release/SHA256SUMS-${{ matrix.name }}.txt
+          shasum -a 256 "$FILE" > release/SHA256SUMS-mac-apple-silicon.txt
 
-      # Publish installers as assets on a per-run prerelease. Each matrix job
-      # uploads only its own platform's files to the shared tag; concurrent jobs
-      # are safe because softprops creates-or-updates the release idempotently
-      # and each platform's asset names are distinct. Release assets are exempt
+      # Publish the Apple Silicon disk image as an asset on a per-run prerelease.
+      # Release assets are exempt
       # from the Actions artifact storage quota that was failing uploads before.
       - name: Publish installers to a GitHub Release
         uses: softprops/action-gh-release@v2
@@ -93,13 +75,9 @@ jobs:
           prerelease: true
           make_latest: false
           body: >
-            Unsigned CI installers built from ${{ github.sha }}.
-            Windows: SmartScreen "More info → Run anyway". macOS: unsigned —
-            right-click → Open the first time (arm64 is ad-hoc signed).
+            Unsigned Apple Silicon installer built from ${{ github.sha }}.
+            macOS may require right-click → Open the first time; the arm64 app
+            is ad-hoc signed but is not Apple-notarized.
           files: |
-            release/*.AppImage
-            release/*.deb
-            release/*.exe
-            release/*.dmg
-            release/*.zip
-            release/SHA256SUMS-*.txt
+            release/*-arm64.dmg
+            release/SHA256SUMS-mac-apple-silicon.txt

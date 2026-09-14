@@ -5,8 +5,8 @@ ROM Polybot for macOS
 2. Open it from Applications, then connect your Polymarket US API account.
 3. Review your strategy and limits. Trading starts paused.
 
-Choose Apple Silicon for an M-series chip, or Intel for an Intel processor.
-Check Apple menu > About This Mac if you are unsure.
+This download supports Apple Silicon Macs with an M-series chip.
+Check Apple menu > About This Mac if you are unsure which chip you have.
 
 This community build is not Apple-notarized. If macOS reports an unidentified
 developer, verify the download checksum and source before deciding to open it.
