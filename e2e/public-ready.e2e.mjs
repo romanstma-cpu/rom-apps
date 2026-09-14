@@ -16,7 +16,8 @@ try{
  await p.getByRole('dialog',{name:'Review before going live'}).waitFor();
  assert.equal(await p.getByRole('button',{name:'Close live review'}).evaluate(e=>e===document.activeElement),true);
  assert.equal(await p.getByRole('button',{name:'Enable live trading'}).isDisabled(),true);
- await p.getByRole('checkbox').check();
+ await p.getByText(/I am choosing to continue without a completed practice trade/).click();
+ await p.getByText(/I understand this can place real orders and lose money/).click();
  assert.equal(await p.getByRole('button',{name:'Enable live trading'}).isDisabled(),false);
  await p.screenshot({path:'.work/live-review-2.7.png'});
  await app.evaluate(({BrowserWindow})=>{BrowserWindow.getAllWindows()[0].webContents.send('backend:info',{status:'stopped',authOk:false,pid:null,pythonOk:false,startedAt:null,lastError:null});});

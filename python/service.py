@@ -1901,6 +1901,25 @@ async def _h_trading_status(_p: dict) -> dict:
         paper_stats = db.paper_account_stats(
             conn, env, float(cfg.get("main_paper_bankroll_usd", 1000.0)),
         )
+    daily_stop = float(cfg.get("stop_loss_on_day") or 0.0)
+    lifetime_usd = float(cfg.get("lifetime_loss_limit_usd") or 0.0)
+    lifetime_pct = float(cfg.get("lifetime_loss_limit_pct") or 0.0)
+    drawdown = float(cfg.get("max_drawdown_fraction") or 0.0)
+    loss_limits = []
+    if daily_stop < 0:
+        loss_limits.append(f"daily ${abs(daily_stop):.0f}")
+    if lifetime_usd > 0:
+        loss_limits.append(f"lifetime ${lifetime_usd:.0f}")
+    if lifetime_pct > 0:
+        loss_limits.append(f"lifetime {lifetime_pct * 100:.0f}%")
+    if drawdown > 0:
+        loss_limits.append(f"drawdown {drawdown * 100:.0f}%")
+    practice_readiness = {
+        "completedPracticeTrades": paper_stats["resolved"],
+        "hasCompletedPractice": bool(paper_stats["resolved"]),
+        "hasLossLimit": bool(loss_limits),
+        "lossLimitSummary": ", ".join(loss_limits) or "No loss limit saved",
+    }
 
     c15 = await crypto15m_trader.status(cfg, authed=STATE.auth_ok)
     # Surfaced so the UI can offer recovery. A blocking intent halts EVERY
@@ -1946,6 +1965,7 @@ async def _h_trading_status(_p: dict) -> dict:
             "losses": paper_stats["losses"],
             "pnlUsd": paper_stats["pnl_usd"],
         },
+        "practiceReadiness": practice_readiness,
         "c15": {
             "enabled": c15.get("enabled"),
             "live": c15.get("trading"),

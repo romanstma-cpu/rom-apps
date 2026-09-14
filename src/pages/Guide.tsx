@@ -65,9 +65,10 @@ export function GuidePage() {
                 you start a mode there.
               </Step>
               <Step n={5} title="Enable live only after practice">
-                Live trading requires a final acknowledgement of the limits you
-                selected. The Emergency stop in the top bar pauses the main
-                strategy and requests cancellation of its pending orders.
+                The live review shows your completed practice trades and saved
+                loss limits. You can continue without practice, but it requires
+                a separate acknowledgement. The Emergency stop in the top bar
+                pauses the main strategy and requests cancellation of pending orders.
               </Step>
             </ol>
           </Card>

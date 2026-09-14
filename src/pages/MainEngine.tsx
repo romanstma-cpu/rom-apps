@@ -870,7 +870,7 @@ export function MainEnginePage() {
       </Section>
 
       </div></details>
-      <LiveReview config={config} open={liveReview} busy={switching} canStart={!!canStart} onClose={()=>setLiveReview(false)} onConfirm={()=>void changeMode(toggleTrading)} />
+      <LiveReview config={config} readiness={activity.status?.practiceReadiness} open={liveReview} busy={switching} canStart={!!canStart} onClose={()=>setLiveReview(false)} onConfirm={()=>void changeMode(toggleTrading)} />
       <NameDialog
         open={saveProfileOpen}
         title="Save these settings as a profile"

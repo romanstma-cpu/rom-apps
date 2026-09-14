@@ -698,6 +698,12 @@ export interface TradingStatus {
     losses: number;
     pnlUsd: number;
   };
+  practiceReadiness: {
+    completedPracticeTrades: number;
+    hasCompletedPractice: boolean;
+    hasLossLimit: boolean;
+    lossLimitSummary: string;
+  };
   c15: {
     enabled: boolean;
     live: boolean;
