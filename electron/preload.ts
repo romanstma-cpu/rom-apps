@@ -81,6 +81,7 @@ const api: ROMApi = {
       ipcRenderer.invoke('trading:setEnabled', v),
     setPaperEnabled: (v: boolean): Promise<ActionResult> =>
       ipcRenderer.invoke('trading:setPaperEnabled', v),
+    emergencyStop: () => ipcRenderer.invoke('trading:emergencyStop'),
     cancelAllOpen: () => ipcRenderer.invoke('trading:cancelAllOpen'),
     flatten: () => ipcRenderer.invoke('trading:flatten'),
     status: () => ipcRenderer.invoke('trading:status'),
@@ -141,6 +142,7 @@ const api: ROMApi = {
     onAppend: (cb) => sub<LogEntry>('logs:append', cb),
     clear: () => ipcRenderer.invoke('logs:clear'),
     openFolder: () => ipcRenderer.invoke('logs:openFolder'),
+    exportSupportReport: () => ipcRenderer.invoke('logs:exportSupportReport'),
   },
   window: {
     minimize: () => ipcRenderer.send('window:minimize'),

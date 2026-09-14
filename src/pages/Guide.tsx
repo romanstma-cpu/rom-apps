@@ -64,6 +64,11 @@ export function GuidePage() {
                 daily loss stop on the Strategy page. Nothing is submitted until
                 you start a mode there.
               </Step>
+              <Step n={5} title="Enable live only after practice">
+                Live trading requires a final acknowledgement of the limits you
+                selected. The Emergency stop in the top bar pauses the main
+                strategy and requests cancellation of its pending orders.
+              </Step>
             </ol>
           </Card>
         </Section>
@@ -139,6 +144,13 @@ export function GuidePage() {
                 order list on Polymarket US. Submissions resume once it is
                 resolved. This is deliberate: it will not time out or forget on
                 its own.
+              </p>
+              <p>
+                If you need to stop the main strategy immediately, select
+                <strong> Emergency stop</strong> in the top bar. It pauses new
+                main-strategy entries first, then requests cancellation of pending
+                orders. It does not sell existing holdings; use the reviewed
+                position-exit control only if closing those holdings is intended.
               </p>
             </Prose>
           </Card>

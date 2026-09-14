@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Minus, Square, Copy as Restore, X } from 'lucide-react';
+import { AlertTriangle, Minus, Square, Copy as Restore, X } from 'lucide-react';
 import { useApp } from '../state/AppStateProvider';
+import { useToast } from '../state/ToastProvider';
 import { cls } from '../utils/format';
 
 export function TitleBar() {
-  const { backend } = useApp();
+  const { backend, config, refresh } = useApp();
+  const toast = useToast();
   const [maxed, setMaxed] = useState(false);
+  const [stopping, setStopping] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -24,6 +27,21 @@ export function TitleBar() {
     backend.status === 'starting' ? 'bg-rom-warn' :
     backend.status === 'crashed' || backend.status === 'restarting' ? 'bg-rom-loss' :
     'bg-rom-dim';
+
+  const emergencyStop = async (): Promise<void> => {
+    if (stopping) return;
+    setStopping(true);
+    try {
+      const result = await window.rom.trading.emergencyStop();
+      if (result.ok) toast.info(result.message || 'Main strategy paused.');
+      else toast.error(result.message || 'Emergency stop could not be completed.');
+      await refresh.state();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Emergency stop could not be completed.');
+    } finally {
+      setStopping(false);
+    }
+  };
 
   return (
     <div className="titlebar-drag relative z-30 flex h-9 select-none items-center justify-between border-b border-rom-border bg-rom-void/95 px-3 backdrop-blur">
@@ -49,6 +67,17 @@ export function TitleBar() {
       </div>
 
       <div className="titlebar-no-drag flex items-center">
+        {config?.enableTrading && (
+          <button
+            onClick={() => void emergencyStop()}
+            disabled={stopping}
+            title="Pause the main strategy and cancel its pending orders"
+            className="mr-2 inline-flex h-7 items-center gap-1.5 rounded-md border border-rom-loss/60 bg-rom-loss/15 px-2 text-[10px] font-semibold text-rom-lossText hover:bg-rom-loss/25 disabled:opacity-60"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" />
+            {stopping ? 'Stopping…' : 'Emergency stop'}
+          </button>
+        )}
         <button
           onClick={() => window.rom.window.minimize()}
           aria-label="Minimize"

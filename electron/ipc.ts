@@ -39,6 +39,15 @@ function genId(): string {
   return `p_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
 }
 
+/** Keep support exports useful without inviting users to leak credentials. */
+function redactSupportText(value: unknown): string {
+  return String(value ?? '')
+    .replace(/https:\/\/(?:discord(?:app)?\.com)\/api\/webhooks\/[^\s"'<>]+/gi, '[REDACTED_WEBHOOK_URL]')
+    .replace(/(authorization\s*[:=]\s*)([^\s,;]+)/gi, '$1[REDACTED]')
+    .replace(/(bearer\s+)([a-z0-9._-]+)/gi, '$1[REDACTED]')
+    .replace(/(["']?(?:api[_ -]?key|key[_ -]?id|secret(?:[_ -]?key)?|passphrase|token)["']?\s*[:=]\s*["']?)([^\s,"'}]+)/gi, '$1[REDACTED]');
+}
+
 function scopeOfKey(key: string): ProfileScope {
   if (key.startsWith('crypto15m')) return 'crypto';
   if (key.startsWith('copy')) return 'copy';
@@ -430,6 +439,35 @@ export function registerIpc(): void {
     await pushConfigToBackend();
     return ok();
   });
+  ipcMain.handle('trading:emergencyStop', async () => {
+    // Stop new main-strategy entries before attempting network work. If the
+    // exchange is unavailable, the safety switch must still leave the local
+    // trader paused rather than keeping it armed while a cancellation retries.
+    const next = store.patchConfig({ enableTrading: false, mainPaperTrading: false });
+    broadcastState(next);
+    await pushConfigToBackend();
+
+    if (!pythonBackend.isRunning()) {
+      return ok(
+        { canceled: 0, ordersCancelAttempted: false },
+        'Main strategy paused. The backend is offline, so open orders were not canceled.',
+      );
+    }
+
+    try {
+      const data = await pythonBackend.request('cancelAllOpen', {}) as { canceled?: number };
+      const canceled = Number.isFinite(data?.canceled) ? Number(data.canceled) : 0;
+      return ok(
+        { canceled, ordersCancelAttempted: true },
+        `Main strategy paused. Cancellation requested for ${canceled} open order${canceled === 1 ? '' : 's'}.`,
+      );
+    } catch (e: any) {
+      return ok(
+        { canceled: 0, ordersCancelAttempted: true },
+        `Main strategy paused, but open-order cancellation could not be confirmed: ${e?.message || e}`,
+      );
+    }
+  });
   ipcMain.handle('trading:cancelAllOpen', async () => {
     if (!pythonBackend.isRunning()) return err('Backend not running');
     try {
@@ -721,6 +759,52 @@ export function registerIpc(): void {
   ipcMain.handle('logs:openFolder', async () => {
     const p = join(app.getPath('userData'), 'logs');
     if (existsSync(p)) shell.openPath(p);
+  });
+  ipcMain.handle('logs:exportSupportReport', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender) ?? undefined;
+    const choice = await dialog.showSaveDialog(win!, {
+      title: 'Save sanitized support report',
+      defaultPath: join(app.getPath('documents'), `rom-polybot-support-${Date.now()}.json`),
+      filters: [{ name: 'JSON support report', extensions: ['json'] }],
+    });
+    if (choice.canceled || !choice.filePath) return err('canceled');
+
+    const cfg = store.get().config;
+    const report = {
+      format: 'rom-polybot-support-report-v1',
+      exportedAt: new Date().toISOString(),
+      appVersion: app.getVersion(),
+      platform: process.platform,
+      backend: {
+        ...pythonBackend.info(),
+        lastError: redactSupportText(pythonBackend.info().lastError),
+      },
+      configuration: {
+        mainMode: cfg.enableTrading ? 'live' : cfg.mainPaperTrading ? 'practice' : 'paused',
+        orderStyle: cfg.orderStyle,
+        makerOrderExpirationSec: cfg.makerOrderExpirationSec,
+        hardMaxPositionUsd: cfg.hardMaxPositionUsd,
+        maxTotalExposureFraction: cfg.maxTotalExposureFraction,
+        minCashReserveFraction: cfg.minCashReserveFraction,
+        stopLossOnDay: cfg.stopLossOnDay,
+        lifetimeLossLimitPct: cfg.lifetimeLossLimitPct,
+        requireEntryDepth: cfg.requireEntryDepth,
+      },
+      logs: logsBuffer.slice(-500).map((entry) => ({
+        ts: entry?.ts,
+        level: entry?.level,
+        source: entry?.source,
+        msg: redactSupportText(entry?.msg),
+      })),
+      redaction: 'API keys, secret keys, passphrases, bearer tokens, authorization values, and Discord webhook URLs are replaced before export. Review the file before sharing.',
+    };
+    try {
+      writeFileSync(choice.filePath, JSON.stringify(report, null, 2), 'utf-8');
+      shell.showItemInFolder(choice.filePath);
+      return ok({ path: choice.filePath }, 'Sanitized support report saved. Review it before sharing.');
+    } catch (e: any) {
+      return err(`Could not save support report: ${e?.message || e}`);
+    }
   });
 
   ipcMain.on('window:minimize', (e) => {

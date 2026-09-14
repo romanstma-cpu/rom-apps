@@ -104,6 +104,25 @@ export function OnboardingModal({onDone}:{onDone:()=>void}) {
           </div>
         </div>
 
+        <div className="mt-5 rounded-xl border border-rom-border bg-rom-void/50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-rom-purple">Start safely</p>
+          <ol className="mt-3 grid gap-3 text-xs text-rom-muted sm:grid-cols-3">
+            {[
+              ['1', 'Connect your API', 'Save and test your Polymarket US Key ID and Secret Key.'],
+              ['2', 'Set your limits', 'Choose what one position and one day can risk.'],
+              ['3', 'Run practice first', 'Watch simulated trades before you enable live orders.'],
+            ].map(([number, title, detail]) => (
+              <li key={number} className="flex gap-2 sm:block">
+                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-rom-border text-[10px] font-semibold text-rom-purple">{number}</span>
+                <div className="sm:mt-2">
+                  <p className="font-medium text-rom-text">{title}</p>
+                  <p className="mt-1 leading-relaxed text-rom-dim">{detail}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+
         <div className="mt-5 rounded-xl border border-blue-400/20 bg-gradient-to-br from-blue-500/10 to-rom-purple/5 p-4">
           <div className="flex items-start gap-3">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-400/10 text-blue-300">

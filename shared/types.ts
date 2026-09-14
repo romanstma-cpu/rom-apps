@@ -1028,6 +1028,11 @@ export interface ROMApi {
     executionQuality: () => Promise<ExecutionQualityReport>;
     setEnabled: (enabled: boolean) => Promise<ActionResult>;
     setPaperEnabled: (enabled: boolean) => Promise<ActionResult>;
+    /** Immediately pause the main strategy and request cancellation of its open orders. */
+    emergencyStop: () => Promise<ActionResult<{
+      canceled: number;
+      ordersCancelAttempted: boolean;
+    }>>;
     cancelAllOpen: () => Promise<ActionResult<{ canceled: number }>>;
     flatten: () => Promise<ActionResult<{ closed: number }>>;
     status: () => Promise<TradingStatus>;
@@ -1096,6 +1101,7 @@ export interface ROMApi {
     onAppend: (cb: (entry: LogEntry) => void) => () => void;
     clear: () => Promise<ActionResult>;
     openFolder: () => Promise<void>;
+    exportSupportReport: () => Promise<ActionResult<{ path: string }>>;
   };
   window: {
     minimize: () => void;

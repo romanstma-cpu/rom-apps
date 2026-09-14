@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Eraser, FolderOpen } from 'lucide-react';
+import { Eraser, FileDown, FolderOpen } from 'lucide-react';
 import { useApp } from '../state/AppStateProvider';
 import { useToast } from '../state/ToastProvider';
 import { Page } from '../components/common';
@@ -43,6 +43,12 @@ export function LogsPage() {
     toast.info('Cleared in-memory logs');
   };
 
+  const exportSupportReport = async (): Promise<void> => {
+    const result = await window.rom.logs.exportSupportReport();
+    if (result.ok) toast.success(result.message || 'Sanitized support report saved.');
+    else if (result.message !== 'canceled') toast.error(result.message || 'Could not save support report.');
+  };
+
   return (
     <Page
       title="Logs"
@@ -51,6 +57,9 @@ export function LogsPage() {
         <>
           <button onClick={() => window.rom.logs.openFolder()} className="rom-btn-default">
             <FolderOpen className="h-4 w-4" /> Open log folder
+          </button>
+          <button onClick={() => void exportSupportReport()} className="rom-btn-default">
+            <FileDown className="h-4 w-4" /> Export support report
           </button>
           <button onClick={clear} className="rom-btn-default">
             <Eraser className="h-4 w-4" /> Clear
@@ -99,6 +108,7 @@ export function LogsPage() {
           Auto-scroll
         </label>
       </div>
+      <p className="mb-3 text-[11px] leading-5 text-rom-dim">Support reports include the recent diagnostic log and safe trading settings. API credentials, tokens, and webhook URLs are redacted before export; review the file before sharing it.</p>
 
       <div
         ref={ref}
