@@ -27,7 +27,7 @@ jobs:
       matrix:
         include:
           - os: macos-15-intel
-            name: mac-intel        # x64 .dmg
+            name: mac-intel        # x64 .zip; avoids flaky hdiutil on Intel runners
           - os: macos-15
             name: mac-apple-silicon # arm64 .dmg
     runs-on: ${{ matrix.os }}
@@ -51,7 +51,15 @@ jobs:
         run: npm run typecheck
 
       - name: Build app, bundle backend, package installer
-        run: npm run dist
+        shell: bash
+        run: |
+          npm run build
+          npm run py:dist
+          if [ "${{ matrix.name }}" = "mac-intel" ]; then
+            npx electron-builder --mac zip
+          else
+            npx electron-builder --mac dmg
+          fi
         env:
           # Build the macOS app unsigned — no Apple Developer cert/secrets needed.
           # electron-builder ad-hoc signs arm64 so it still launches (right-click
@@ -65,8 +73,12 @@ jobs:
           test -n "$APP"
           "$APP/Contents/Resources/python/rom-polybot-backend" --selftest
           node scripts/mac-smoke.mjs "$APP/Contents/MacOS/ROM PolyBot"
-          hdiutil verify release/*.dmg
-          shasum -a 256 release/*.dmg > release/SHA256SUMS-${{ matrix.name }}.txt
+          if compgen -G "release/*.dmg" > /dev/null; then
+            hdiutil verify release/*.dmg
+          fi
+          FILE=$(find release -maxdepth 1 \( -name '*.dmg' -o -name '*.zip' \) -type f | head -1)
+          test -n "$FILE"
+          shasum -a 256 "$FILE" > release/SHA256SUMS-${{ matrix.name }}.txt
 
       # Publish installers as assets on a per-run prerelease. Each matrix job
       # uploads only its own platform's files to the shared tag; concurrent jobs
@@ -89,4 +101,5 @@ jobs:
             release/*.deb
             release/*.exe
             release/*.dmg
+            release/*.zip
             release/SHA256SUMS-*.txt
