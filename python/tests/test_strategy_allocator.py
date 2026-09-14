@@ -37,6 +37,22 @@ def test_small_samples_leave_live_sizing_unchanged():
     assert whale["multiplier"] == 1.0
 
 
+def test_unproven_source_uses_starter_size_until_it_qualifies():
+    multiplier, reason = allocator.starter_multiplier(
+        Conn(sample("whale", 10, roi=.2)), "mainnet", "whale", now=NOW.timestamp(),
+    )
+    assert multiplier == .25
+    assert "starter" in reason
+
+
+def test_positive_qualified_source_unlocks_normal_size():
+    multiplier, reason = allocator.starter_multiplier(
+        Conn(sample("whale", 50, roi=.2)), "mainnet", "whale", now=NOW.timestamp(),
+    )
+    assert multiplier == 1.0
+    assert "unlocks normal" in reason
+
+
 def test_repeated_rows_collapse_to_independent_events():
     rows = sample("whale", 20, roi=.2, span_days=28)
     rows += [{**row, "id": row["id"] + 1000} for row in rows]

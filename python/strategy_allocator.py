@@ -204,3 +204,28 @@ def source_multiplier(conn, env, source, *, enabled_sources=None, now=None):
     if not item:
         return 1.0, "Source is not enabled."
     return float(item["multiplier"]), item["reason"]
+
+
+def starter_multiplier(conn, env, source, *, enabled_sources=None, now=None):
+    """Return a live-only starter-size gate for a source's practice record.
+
+    A source has to qualify in both evidence windows before it may use the
+    account's normal base size.  This deliberately does not promote a source
+    above base size; the optional evidence allocator remains responsible for
+    that separate decision.  Practice trades are never affected.
+    """
+    if source not in SUPPORTED_SOURCES:
+        return 1.0, "Source is outside evidence-gated sizing."
+    plan = build_plan(conn, env, enabled_sources=enabled_sources, now=now)
+    item = next((row for row in plan["candidates"] if row["source"] == source), None)
+    if not item:
+        return 1.0, "Source is not enabled."
+    if item["status"] != "qualified":
+        return MIN_MULTIPLIER, (
+            "No qualified settled practice record yet; live entries use 25% starter size."
+        )
+    if (item["conservativeReturnPct"] or 0) <= 0:
+        return MIN_MULTIPLIER, (
+            "Conservative settled-practice return is not positive; live entries stay at 25% size."
+        )
+    return 1.0, "Qualified positive settled practice evidence unlocks normal live size."

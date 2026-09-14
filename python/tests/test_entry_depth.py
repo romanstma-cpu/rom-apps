@@ -164,7 +164,8 @@ def test_learned_poor_fills_block_before_order_submission(entry_env, cfg, monkey
 
 def test_learned_cost_reduces_size_and_records_submission_benchmark(entry_env, cfg, monkeypatch):
     install_book(monkeypatch, [[60, 10_000]])
-    cfg.update(enable_trading=True, sizing_mode='fixed', fixed_trade_usd=10)
+    cfg.update(enable_trading=True, sizing_mode='fixed', fixed_trade_usd=10,
+               evidence_gated_sizing_enabled=False, market_quality_sizing_enabled=False)
     monkeypatch.setattr(trader, 'entry_budget', lambda *a, **k: 10)
     monkeypatch.setattr(trader.execution_learning, 'entry_feedback', lambda *a: {
         'blocked': False, 'feeCents': 10, 'extraFeeCents': 8})

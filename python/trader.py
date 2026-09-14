@@ -20,7 +20,7 @@ import execution_health
 import rules as rules_engine
 from execution_quality import (
     affordable_at_depth, entry_price, entry_vwap_cents, remaining_signal_margin,
-    signal_problem, signal_freshness_problem,
+    signal_problem, signal_freshness_problem, market_quality_multiplier,
 )
 from polymarket_api import (
     PolymarketAPIError, cancel_order, fetch_market, fetch_markets_map,
@@ -552,13 +552,19 @@ async def execute_signal(
                 f"{account_risk.group_key(conn, signal['ticker'], signal.get('event_ticker') or '')}"
             )
             return None
-        if not paper and cfg.get("evidence_allocation_enabled"):
-            enabled_sources = [
-                item for item, enabled in (
-                    ("whale", cfg.get("trade_whales")),
-                    ("momentum", cfg.get("trade_momentum")),
-                ) if enabled
-            ]
+        enabled_sources = [
+            item for item, enabled in (
+                ("whale", cfg.get("trade_whales")),
+                ("momentum", cfg.get("trade_momentum")),
+            ) if enabled
+        ]
+        if not paper and cfg.get("evidence_gated_sizing_enabled", True):
+            allocation_multiplier, allocation_reason = strategy_allocator.starter_multiplier(
+                conn, env, source, enabled_sources=enabled_sources,
+            )
+        # Promotion above normal size remains an explicit advanced option.
+        if (not paper and allocation_multiplier >= 1.0 and
+                cfg.get("evidence_allocation_enabled")):
             allocation_multiplier, allocation_reason = strategy_allocator.source_multiplier(
                 conn, env, source, enabled_sources=enabled_sources,
             )
@@ -645,6 +651,23 @@ async def execute_signal(
     contracts = min(contracts, int((target_usd+1e-9)/((limit_cents+execution_fee_cents)/100)))
     if contracts < 1:
         return None
+
+    if not paper and cfg.get("market_quality_sizing_enabled", True):
+        quality_multiplier, quality_reason = market_quality_multiplier(
+            entry_quote, signal_cents=signal_cost_cents, limit_cents=limit_cents,
+            contracts=contracts, fee_cents=execution_fee_cents, maker_only=maker_only,
+        )
+        if quality_multiplier < 1.0:
+            target_usd *= quality_multiplier
+            risk_ceiling_usd = target_usd
+            contracts = fees_us.affordable_contracts(target_usd, limit_cents / 100.0, fee_time)
+            contracts = min(contracts, int((target_usd + 1e-9) / ((limit_cents + execution_fee_cents) / 100)))
+            logger.info(
+                "[%s] %s: market-quality sizing %.2fx — %s",
+                source, signal["ticker"], quality_multiplier, quality_reason,
+            )
+            if contracts < 1:
+                return None
 
     min_size = 0
     try:

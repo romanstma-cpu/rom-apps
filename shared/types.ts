@@ -47,6 +47,8 @@ export interface TraderConfig {
   sizingMaxEdge: number;
   kellyFraction?: number;
   evidenceAllocationEnabled?: boolean;
+  evidenceGatedSizingEnabled?: boolean;
+  marketQualitySizingEnabled?: boolean;
   hardMaxPositionUsd: number;
   minCashReserveFraction: number;
 

@@ -398,6 +398,9 @@ def test_execute_real_order_records_order_id(
     at = fee_clock(US_FEE_JULY)
     cfg["enable_trading"] = True
     cfg['order_style'] = 'limit_cross'
+    # This test isolates the legacy reservation calculation.
+    cfg['evidence_gated_sizing_enabled'] = False
+    cfg['market_quality_sizing_enabled'] = False
     monkeypatch.setattr(trader, "get_quote", _stub_no_quote)
 
     calls: list[dict] = []

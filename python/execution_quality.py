@@ -124,3 +124,43 @@ def affordable_at_depth(levels, limit_cents: int) -> int:
             break
         total += math.floor(size)
     return total
+
+
+def market_quality_multiplier(
+    quote: dict, *, signal_cents: int, limit_cents: int, contracts: int,
+    fee_cents: float, maker_only: bool,
+) -> tuple[float, str]:
+    """Return a conservative sizing adjustment from observable execution quality.
+
+    This is an execution-fit score, never a probability or profitability
+    estimate. It only reduces a qualifying live entry; quote validation,
+    depth checks, fees and all account-risk ceilings stay authoritative.
+    """
+    if contracts <= 0:
+        return 1.0, "no contracts requested"
+    try:
+        bid = float(quote.get("bid_cents"))
+        ask = float(quote.get("ask_cents"))
+        fee = max(0.0, float(fee_cents))
+    except (TypeError, ValueError, OverflowError):
+        return 1.0, "quote quality unavailable"
+    if not all(math.isfinite(value) for value in (bid, ask, fee)) or ask < bid:
+        return 1.0, "quote quality unavailable"
+
+    spread = max(0.0, ask - bid)
+    movement = max(0, int(limit_cents) - int(signal_cents))
+    # Every input is bounded by the existing execution checks. A clean book
+    # stays at full size; marginal but still permitted books lose capital.
+    spread_factor = 1.0 if spread <= 1 else 0.90 if spread <= 2 else 0.78
+    movement_factor = 1.0 if movement == 0 else 0.92 if movement == 1 else 0.84
+    fee_factor = max(0.85, 1.0 - min(fee, 3.0) / 20.0)
+    depth_factor = 1.0
+    if not maker_only:
+        available = affordable_at_depth(quote.get("ask_levels") or [], limit_cents)
+        ratio = min(1.0, max(0.0, available / contracts))
+        depth_factor = 0.65 + 0.35 * ratio
+    multiplier = max(0.50, min(1.0, spread_factor * movement_factor * fee_factor * depth_factor))
+    return round(multiplier, 2), (
+        f"spread {spread:.0f}c, move {movement}c, displayed depth "
+        f"{'maker route' if maker_only else f'{available}/{contracts}'}, fee {fee:.2f}c"
+    )
