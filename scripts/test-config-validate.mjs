@@ -89,7 +89,7 @@ deepEqual(defaultsResult.value, settingsContext.exports.DEFAULT_CONFIG, 'restori
 
 // --- string arrays ---
 {
-  for (const orderStyle of ['limit_cross', 'limit_mid', 'market']) {
+  for (const orderStyle of ['maker_join', 'limit_cross', 'limit_mid', 'market']) {
     assert.equal(validateConfigPatch({orderStyle}).ok, true, `${orderStyle} is a supported price strategy`);
   }
   for (const orderStyle of ['FAK', 'FOK', 'GTC', 'IOC']) {

@@ -35,6 +35,7 @@ const FIELD_TYPES: Readonly<Record<string, FieldType>> = {
   evidenceAllocationEnabled: 'boolean',
   // orders
   orderStyle: 'string-enum', crossSpreadFallbackOffset: 'number', orderExpirationSec: 'nullable-number',
+  makerOrderExpirationSec: 'number',
   // risk
   maxOpenPositions: 'number', maxPositionsPerEvent: 'number', maxDailyNewPositions: 'number',
   unlimitedDailyNewPositions: 'boolean', maxTotalExposureFraction: 'number',
@@ -114,7 +115,7 @@ const STRING_ENUMS: Readonly<Record<string, ReadonlySet<string>>> = {
   crypto15mEntryStyle: new Set(['maker', 'taker']),
   copySizingMode: new Set(['fixed', 'balance_pct']),
   crypto15mInterval: new Set(['5m', '15m', 'hourly']),
-  orderStyle: new Set(['limit_cross', 'limit_mid', 'market']),
+  orderStyle: new Set(['maker_join', 'limit_cross', 'limit_mid', 'market']),
   network: new Set(['mainnet', 'matic']),
 };
 

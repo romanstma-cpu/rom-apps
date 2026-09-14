@@ -626,7 +626,7 @@ export function MainEnginePage() {
             <div>
               <label className="rom-label">Order style</label>
               <div className="flex gap-1.5">
-                {(['limit_cross', 'limit_mid', 'market'] as const).map((o) => (
+                {(['maker_join', 'limit_cross', 'limit_mid', 'market'] as const).map((o) => (
                   <button
                     key={o}
                     onClick={() => void update('orderStyle', o)}
@@ -642,7 +642,7 @@ export function MainEnginePage() {
                 ))}
               </div>
               <p className="rom-help">
-                limit-cross hits the opposite side&apos;s best bid (highest fill rate).
+                Maker-join improves or joins the bid, enforces post-only at the exchange, and avoids taker fees. Practice mode remains conservative and models a taker fill.
               </p>
             </div>
             <Field label="Cross fallback offset">
@@ -652,6 +652,10 @@ export function MainEnginePage() {
             <Field label="Order expiration" hint="Auto-cancel if unfilled this long. 0 = never">
               <NumberInput value={config.orderExpirationSec ?? 0} step={10} suffix="s"
                 onChange={(v) => void update('orderExpirationSec', v <= 0 ? null : v)} />
+            </Field>
+            <Field label="Maker wait" hint="Cancel an unfilled maker entry after this many seconds">
+              <NumberInput value={config.makerOrderExpirationSec ?? 12} step={1} min={3} max={300} suffix="s"
+                onChange={(v) => void update('makerOrderExpirationSec', v)} />
             </Field>
           </div>
         </Card>

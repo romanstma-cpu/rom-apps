@@ -64,9 +64,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "hard_max_position_usd": 50.0,
     "min_cash_reserve_fraction": 0.05,
 
-    "order_style": "limit_cross",
+    "order_style": "maker_join",
     "cross_spread_fallback_offset": 2,
     "order_expiration_sec": 300,
+    "maker_order_expiration_sec": 12,
 
     "max_open_positions": 25,
     "max_positions_per_event": 1,
@@ -84,7 +85,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     # without a live quote.
     "exit_price_loss_budget_cents": 2,
 
-    "trade_scan_interval": 20,
+    "trade_scan_interval": 5,
     "position_poll_interval": 30,
     "balance_poll_interval": 60,
     "resolution_check_interval": 300,
@@ -606,6 +607,7 @@ def _validate_config(cfg: dict[str, Any]) -> dict[str, Any]:
         ("balance_poll_interval", 5, 86_400),
         ("max_signal_age_sec", 10, 86_400),
         ("order_expiration_sec", 10, 86_400),
+        ("maker_order_expiration_sec", 3, 300),
         ("resolution_check_interval", 10, 86_400),
         ("whale_scan_interval", 10, 86_400),
         ("momentum_scan_interval", 10, 86_400),

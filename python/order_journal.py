@@ -62,6 +62,16 @@ def get(local_id):
         return dict(r) if r else None
 
 
+def entry_style(local_id):
+    """Execution route recorded for an entry, if this is an entry order."""
+    init()
+    with db.get_db() as c:
+        row = c.execute(
+            'SELECT style FROM us_entry_execution WHERE local_id=?', (local_id,)
+        ).fetchone()
+    return str(row[0]) if row else ''
+
+
 def unresolved():
     init()
     with db.get_db() as c:
@@ -115,7 +125,7 @@ def begin(local_id, ticker, side, action, quantity, price, position_id=None, exi
                   (local_id,ticker,side,action,quantity,price,fees_us.reserved_cost(quantity,price,now) if action=='buy' else 0,now,now))
         if execution_context is not None:
             context = execution_context
-            if action != 'buy' or context['style'] not in ('crossing', 'resting'):
+            if action != 'buy' or context['style'] not in ('maker', 'crossing', 'resting'):
                 raise ValueError('Invalid entry execution context')
             for key in ('signal_cents', 'bid_cents', 'ask_cents'):
                 if not math.isfinite(context[key]) or not 0 < context[key] < 100:

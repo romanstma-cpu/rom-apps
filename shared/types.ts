@@ -1,6 +1,6 @@
 export type Network = 'mainnet';
 
-export type OrderStyle = 'limit_cross' | 'limit_mid' | 'market';
+export type OrderStyle = 'maker_join' | 'limit_cross' | 'limit_mid' | 'market';
 
 export type SignalSource = 'whale' | 'momentum' | 'convergence' | 'external' | 'copy';
 
@@ -53,6 +53,7 @@ export interface TraderConfig {
   orderStyle: OrderStyle;
   crossSpreadFallbackOffset: number;
   orderExpirationSec: number | null;
+  makerOrderExpirationSec: number;
 
   maxOpenPositions: number;
   maxPositionsPerEvent: number;

@@ -170,7 +170,18 @@ async def _book(ticker):
 async def get_quote(ticker,side):
     if side not in ('yes','no'): raise ValueError('Side must be yes or no')
     book=await _book(ticker)
-    return quote_from_book(book,side)
+    return {**quote_from_book(book,side),'quote_source':'rest','quote_age_ms':0.0}
+
+async def get_fast_quote(ticker,side,max_stream_age=2.0):
+    """Prefer a fresh authenticated WebSocket book, with safe REST fallback."""
+    if side not in ('yes','no'): raise ValueError('Side must be yes or no')
+    import us_market_stream
+    us_market_stream.observe(ticker)
+    us_market_stream.start()
+    book=us_market_stream.get_book(ticker,max_stream_age)
+    if book is not None:
+        return {**quote_from_book(book,side),'quote_source':'websocket'}
+    return await get_quote(ticker,side)
 
 def quote_from_book(book,side):
     """Best prices plus the resting size behind them.
@@ -306,7 +317,7 @@ async def get_fills_for_order(order_id,limit=200):
              'side':side,'action':action}]
 async def get_fills_since(after_ts_unix,limit=200): return []
 
-async def place_limit_order(*,ticker,side,action,count,price_cents,client_order_id=None,order_type='GTC',position_id=None,exit_reason='exit',execution_context=None):
+async def place_limit_order(*,ticker,side,action,count,price_cents,client_order_id=None,order_type='GTC',position_id=None,exit_reason='exit',execution_context=None,post_only=False):
     if side not in ('yes','no') or action not in ('buy','sell'): raise ValueError('Invalid order side/action')
     if isinstance(count,bool) or not isinstance(count,int) or count<=0: raise ValueError('Order count must be a positive integer')
     if not isinstance(price_cents,int) or not 1<=price_cents<=99: raise ValueError('Price must be 1..99 cents')
@@ -322,6 +333,8 @@ async def place_limit_order(*,ticker,side,action,count,price_cents,client_order_
              'quantity':count,'tif':'TIME_IN_FORCE_'+tif[order_type],
              'intent':'ORDER_INTENT_'+action.upper()+('_LONG' if side=='yes' else '_SHORT'),
              'manualOrderIndicator':'MANUAL_ORDER_INDICATOR_AUTOMATIC'}
+    if post_only:
+        payload['participateDontInitiate']=True
     local_id=client_order_id or 'rom-'+uuid.uuid4().hex
     # The retail US endpoint does not document a client idempotency field.
     # Persist locally before POST and never retry an uncertain submission.

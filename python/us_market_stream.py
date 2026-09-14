@@ -61,11 +61,23 @@ def ingest(message):
     _trades.append(normalized)
 
 def recent(limit): return list(_trades)[-limit:]
+
+def get_book(slug, max_age=2.0):
+    """Return a fresh full-depth book or ``None``.
+
+    Callers choose their own freshness budget. Trading decisions use a much
+    tighter budget than display/scanner consumers and fall back to REST when
+    the stream is warming up or reconnecting.
+    """
+    cached = _books.get((slug or '').split('::')[0])
+    if not cached or time.monotonic()-cached[0] > max(0.0, float(max_age)):
+        return None
+    return cached[1]
+
 def get_quote_cents(token):
     slug,_,side=token.rpartition('::')
-    cached=_books.get(slug)
-    if not cached or time.monotonic()-cached[0]>15: return None
-    book=cached[1]
+    book=get_book(slug,15)
+    if not book: return None
     bids=[float(x['px']['value']) for x in book.get('bids',[]) if float(x['qty'])>0]
     asks=[float(x['px']['value']) for x in book.get('offers',[]) if float(x['qty'])>0]
     bid=max(bids) if bids else None; ask=min(asks) if asks else None

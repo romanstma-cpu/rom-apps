@@ -23,6 +23,7 @@ from execution_quality import affordable_at_depth, entry_vwap_cents
 def cfg():
     c = merge_with_defaults({})
     c["network"] = "mainnet"
+    c["order_style"] = "limit_cross"
     return c
 
 

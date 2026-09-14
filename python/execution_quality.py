@@ -55,7 +55,14 @@ def entry_price(quote: dict, signal_cents: int, cfg: dict) -> int:
         raise ValueError("Spread exceeds the 3-cent execution limit")
     if ask - signal_cents > 2:
         raise ValueError("Market moved more than 2 cents above the signal")
-    if cfg.get("order_style") == "limit_mid":
+    style = cfg.get("order_style")
+    if style == "maker_join":
+        if bid >= ask:
+            raise ValueError("Maker route requires a positive spread")
+        # Improve the bid by one tick when the spread permits it, while always
+        # remaining at least one cent below the current offer.
+        return min(math.ceil(bid + 1), math.floor(ask - 1))
+    if style == "limit_mid":
         return math.floor((bid + ask) / 2)
     # Even the legacy market style now uses a bounded price, never a 99c sweep.
     return math.ceil(ask)

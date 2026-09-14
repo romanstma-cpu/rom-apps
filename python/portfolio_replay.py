@@ -146,7 +146,9 @@ class Portfolio:
         self.orders.append(order); self.submitted+=1
         self.push(self.now+self.latency,'arrival',order)
         # Cancel acknowledgement can race fills. Keep reservations until it arrives.
-        ttl=float(self.cfg.get('order_expiration_sec',300))
+        ttl=float(self.cfg.get('maker_order_expiration_sec',12) if
+                  action=='buy' and self.cfg.get('order_style')=='maker_join'
+                  else self.cfg.get('order_expiration_sec',300))
         self.push(self.now+ttl+self.cancel_latency,'cancel',order)
 
     def fill(self,order):

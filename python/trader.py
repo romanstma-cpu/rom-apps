@@ -24,7 +24,7 @@ from execution_quality import (
 from polymarket_api import (
     PolymarketAPIError, cancel_order, fetch_market, fetch_markets_map,
     get_activity, get_balance,
-    get_fills_for_order, get_market_meta, get_order, get_quote, get_positions,
+    get_fast_quote as get_quote, get_fills_for_order, get_market_meta, get_order, get_positions,
     place_limit_order,
 )
 from polymarket_auth import get_env, trading_address
@@ -562,10 +562,14 @@ async def execute_signal(
                 conn, env, source, enabled_sources=enabled_sources,
             )
 
+    maker_only = bool(cfg.get('order_style') == 'maker_join' and not paper)
+    # Practice mode cannot model queue position in this one-shot path. Price it
+    # as a taker fill instead of inventing an immediate maker fill and rebate.
+    pricing_cfg = cfg if not paper else {**cfg, 'order_style': 'limit_cross'}
     quote_started = time.monotonic()
     try:
         limit_cents, entry_quote = await asyncio.wait_for(_compute_limit_price_cents(
-            signal["ticker"], direction, signal_cost_cents, cfg
+            signal["ticker"], direction, signal_cost_cents, pricing_cfg
         ), timeout=5.0)
     except Exception as exc:
         logger.info("[skip] %s: live price unavailable or unsuitable: %s", signal["ticker"], exc)
@@ -578,10 +582,15 @@ async def execute_signal(
             logger.info('[skip] %s: %s',signal.get('ticker'),exc)
             return None
     threshold = float(cfg.get("min_edge_pts_momentum" if source == "momentum" else "min_edge_pts_whale", 0))
-    execution_style = 'crossing' if limit_cents >= entry_quote['ask_cents'] else 'resting'
-    execution_fee_cents = 100*(fees_us.reserved_cost(1, limit_cents/100, time.time())-limit_cents/100)
+    execution_style = ('maker' if maker_only else
+                       ('crossing' if limit_cents >= entry_quote['ask_cents'] else 'resting'))
+    execution_fee_cents = (0.0 if maker_only else
+        100*(fees_us.reserved_cost(1, limit_cents/100, time.time())-limit_cents/100))
     if not paper:
-        feedback = execution_learning.entry_feedback(env, signal['ticker'], source, execution_style, limit_cents)
+        feedback = execution_learning.entry_feedback(
+            env, signal['ticker'], source, execution_style, limit_cents,
+            **({'maker_only': True} if maker_only else {}),
+        )
         if feedback['blocked']:
             logger.info('[skip] %s: confirmed execution history shows persistently poor fills; waiting for evidence to expire', signal['ticker'])
             return None
@@ -659,7 +668,7 @@ async def execute_signal(
     # Displayed depth must support the final size at an acceptable price.
     # Without this the touch price is assumed to absorb the whole order, which
     # overstates a thin market's edge. Shrink to what is shown, never invent it.
-    if cfg.get("require_entry_depth", True):
+    if cfg.get("require_entry_depth", True) and not maker_only:
         levels = entry_quote.get("ask_levels") or []
         available = affordable_at_depth(levels, limit_cents)
         if available < max(1, min_size):
@@ -744,6 +753,24 @@ async def execute_signal(
     if not cfg.get("enable_trading"):
         return None
 
+    # A final routed quote closes the several-second gap between selection and
+    # submission. Maker orders are submitted only if the exact passive price
+    # is still valid; the exchange's post-only flag handles the final race.
+    if maker_only:
+        try:
+            final_quote = await asyncio.wait_for(get_quote(signal['ticker'], direction), timeout=2.0)
+            final_limit = entry_price(final_quote, signal_cost_cents, cfg)
+        except Exception as exc:
+            logger.info('[skip] %s: maker recheck failed: %s', signal['ticker'], exc)
+            return None
+        if final_limit != limit_cents:
+            logger.info(
+                '[skip] %s: maker price changed %dc->%dc before submission',
+                signal['ticker'], limit_cents, final_limit,
+            )
+            return None
+        entry_quote = final_quote
+
     # Persist before awaiting the exchange: a crash/timeout cannot erase intent.
     with db.get_db() as conn:
         conn.execute('PRAGMA synchronous=FULL')
@@ -762,6 +789,7 @@ async def execute_signal(
             count=contracts,
             price_cents=limit_cents,
             client_order_id=client_order_id,
+            post_only=maker_only,
             execution_context={'network': env, 'source': source, 'style': execution_style,
                                'signal_cents': signal_cost_cents,
                                'bid_cents': entry_quote['bid_cents'], 'ask_cents': entry_quote['ask_cents']},
@@ -1297,9 +1325,11 @@ async def poll_open_orders(cfg: dict) -> list[dict]:
     for pos in pending:
         evidence = order_journal.get(pos['client_order_id'])
         if evidence:
+            expiry = (float(cfg.get('maker_order_expiration_sec',12))
+                      if order_journal.entry_style(evidence['local_id']) == 'maker'
+                      else float(cfg.get('order_expiration_sec') or 86_400))
             if (evidence['state']=='open' and evidence['filled'] < evidence['quantity'] and evidence['order_id']
-                    and cfg.get('order_expiration_sec') is not None
-                    and time.time()-evidence['created_at'] > float(cfg['order_expiration_sec'])):
+                    and time.time()-evidence['created_at'] > expiry):
                 try:
                     await cancel_order(evidence['order_id'])
                 except Exception:

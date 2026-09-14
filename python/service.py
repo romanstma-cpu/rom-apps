@@ -622,9 +622,12 @@ async def _scanner_and_trader_loop() -> None:
         try:
             us_account_stream.start()
             account_changed = us_account_stream.consume_dirty()
+            poll_every = float(cfg.get("position_poll_interval", 30))
+            if cfg.get('enable_trading'):
+                poll_every = min(poll_every, float(cfg.get('maker_order_expiration_sec',12)))
             if (
                 STATE.auth_ok
-                and (account_changed or now - last_poll >= float(cfg.get("position_poll_interval", 30)))
+                and (account_changed or now - last_poll >= poll_every)
             ):
                 updated = await trader.poll_open_orders(cfg)
                 last_poll = now

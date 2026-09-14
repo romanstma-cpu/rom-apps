@@ -36,9 +36,12 @@ def staged(ticker, event_id, at):
 
 
 def config(**patch):
-    return merge_with_defaults(dict(main_paper_bankroll_usd=100, min_size_fraction=.1,
+    base=dict(main_paper_bankroll_usd=100, min_size_fraction=.1,
         max_size_fraction=.1, hard_max_position_usd=6.2, min_cash_reserve_fraction=0,
-        trade_scan_interval=5, position_poll_interval=5, order_expiration_sec=1, **patch))
+        trade_scan_interval=5, position_poll_interval=5, order_expiration_sec=1,
+        order_style='limit_cross')
+    base.update(patch)
+    return merge_with_defaults(base)
 
 
 def test_hand_calculated_settlement_and_no_duplicate_payout():
@@ -50,6 +53,22 @@ def test_hand_calculated_settlement_and_no_duplicate_payout():
     assert result['totalPnlUsd']==3.86
     assert result['cashUsd']==103.86
     assert result['openPositions']==result['pendingOrders']==0
+
+
+def test_maker_replay_requires_a_later_trade_through():
+    passive=config(order_style='maker_join',maker_order_expiration_sec=12)
+    no_trade_through=replay(passive,evidence()+[
+        event('settlement',{'yes_payout':1},3),
+    ])
+    assert no_trade_through['filledOrders']==0 and no_trade_through['n']==0
+
+    later_book=book(ask=.59,qty=20,at=1)
+    filled=replay(passive,evidence()+[
+        later_book,event('settlement',{'yes_payout':1},3),
+    ])
+    assert filled['filledOrders']==1 and filled['n']==1
+    # Replay charges the normal dated fee instead of inventing a maker rebate.
+    assert filled['trades'][0]['costCents'] == pytest.approx(60.5)
 
 
 def test_partial_fill_cancels_remainder_and_keeps_actual_basis():

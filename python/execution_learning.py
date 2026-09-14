@@ -52,7 +52,7 @@ def summarize(rows):
     }
 
 
-def entry_feedback(network, ticker, source, style, price_cents, *, now=None):
+def entry_feedback(network, ticker, source, style, price_cents, *, now=None, maker_only=False):
     """Never increase risk or loosen existing gates based on learned evidence."""
     now = time.time() if now is None else now
     rows = observations(network, now=now,
@@ -71,12 +71,15 @@ def entry_feedback(network, ticker, source, style, price_cents, *, now=None):
         blocked = upper < .5
     costs = [100*r['fees_usd']/r['filled'] for r in terminal
              if r['filled'] > 0 and r['fees_usd'] is not None]
-    scheduled = 100*(fees_us.reserved_cost(1, price_cents/100, now)-price_cents/100)
+    # Post-only guarantees a resting order or a rejection. Do not assume the
+    # rebate as edge, but also do not charge a taker fee that cannot apply.
+    scheduled = (0.0 if maker_only else
+        100*(fees_us.reserved_cost(1, price_cents/100, now)-price_cents/100))
     # Use the upper observed fee tail only after multiple days and fills.
     cost_days = {int(r['created_at']//86400) for r in terminal
                  if r['filled'] > 0 and r['fees_usd'] is not None}
     learned = sorted(costs)[math.ceil(.9*len(costs))-1] if len(costs)>=20 and len(cost_days)>=10 else 0
-    return {'blocked': blocked, 'feeCents': max(scheduled, learned),
+    return {'blocked': blocked, 'feeCents': max(scheduled, learned, 0.0),
             'extraFeeCents': max(0, learned-scheduled), 'samples': len(terminal)}
 
 
@@ -84,4 +87,4 @@ def report(network):
     rows = observations(network)
     return {'windowDays': 30, **summarize(rows),
             'routes': [{'style': style, **summarize([r for r in rows if r['style']==style])}
-                       for style in ('crossing', 'resting')]}
+                       for style in ('maker', 'crossing', 'resting')]}

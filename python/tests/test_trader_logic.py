@@ -216,6 +216,7 @@ def test_use_rules_still_honors_structural_gates(cfg):
 
 
 def test_limit_cross_does_not_pay_above_current_ask(cfg, monkeypatch):
+    cfg["order_style"] = "limit_cross"
     async def _q(_t, _side):
         return {"bid_cents": 59, "ask_cents": 62}
     monkeypatch.setattr(trader, "get_quote", _q)
@@ -224,6 +225,7 @@ def test_limit_cross_does_not_pay_above_current_ask(cfg, monkeypatch):
 
 
 def test_limit_cross_caps_at_max_entry(cfg, monkeypatch):
+    cfg["order_style"] = "limit_cross"
     cfg["max_entry_price_cents"] = 65
     async def _q(_t, _side):
         return {"bid_cents": 61, "ask_cents": 64}
@@ -233,6 +235,7 @@ def test_limit_cross_caps_at_max_entry(cfg, monkeypatch):
 
 
 def test_limit_cross_returns_ask_above_cap_so_caller_skips(cfg, monkeypatch):
+    cfg["order_style"] = "limit_cross"
     cfg["max_entry_price_cents"] = 60
     async def _q(_t, _side):
         return {"bid_cents": 70, "ask_cents": 72}
@@ -248,6 +251,25 @@ def test_limit_mid_uses_midpoint(cfg, monkeypatch):
     monkeypatch.setattr(trader, "get_quote", _q)
     px, _quote = asyncio.run(trader._compute_limit_price_cents("X", "yes", 60, cfg))
     assert px == 60
+
+
+@pytest.mark.parametrize(('bid','ask','expected'), [(59,60,59),(59,61,60),(59,62,60)])
+def test_maker_join_improves_without_crossing(cfg, monkeypatch, bid, ask, expected):
+    cfg['order_style'] = 'maker_join'
+    async def _q(_t, _side):
+        return {'bid_cents':bid,'ask_cents':ask}
+    monkeypatch.setattr(trader,'get_quote',_q)
+    price, _ = asyncio.run(trader._compute_limit_price_cents('X','yes',60,cfg))
+    assert price == expected and price < ask
+
+
+def test_maker_join_refuses_locked_book(cfg, monkeypatch):
+    cfg['order_style'] = 'maker_join'
+    async def _q(_t, _side):
+        return {'bid_cents':60,'ask_cents':60}
+    monkeypatch.setattr(trader,'get_quote',_q)
+    with pytest.raises(ValueError,match='positive spread'):
+        asyncio.run(trader._compute_limit_price_cents('X','yes',60,cfg))
 
 
 def test_pricing_refuses_missing_quote(cfg, monkeypatch):

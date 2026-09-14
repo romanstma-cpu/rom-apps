@@ -169,6 +169,12 @@ class TestIngestBooks:
     def test_get_quote_cents_unknown_slug(self):
         assert stream.get_quote_cents("missing::yes") is None
 
+    def test_trading_book_freshness_budget_is_enforced(self, monkeypatch):
+        stream.ingest({"marketData": _book(slug="timed")})
+        received = stream._books['timed'][0]
+        monkeypatch.setattr(stream.time,'monotonic',lambda:received+2.01)
+        assert stream.get_book('timed',2.0) is None
+
     def test_asks_with_zero_qty_excluded(self):
         stream.ingest({"marketData": _book(bids=(("0.41", "10"),),
                                             asks=(("0.43", "0"), ("0.45", "5")))})

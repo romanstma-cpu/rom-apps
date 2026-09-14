@@ -74,9 +74,10 @@ export const DEFAULT_CONFIG: TraderConfig = {
   lifetimeLossLimitPct: 0.5,
   lifetimeLossLimitUsd: 0.0,
 
-  orderStyle: 'limit_cross',
+  orderStyle: 'maker_join',
   crossSpreadFallbackOffset: 2,
   orderExpirationSec: 300,
+  makerOrderExpirationSec: 12,
 
   maxOpenPositions: 25,
   maxPositionsPerEvent: 1,
@@ -88,7 +89,7 @@ export const DEFAULT_CONFIG: TraderConfig = {
   requireEntryDepth: true,
   exitPriceLossBudgetCents: 2,
 
-  tradeScanInterval: 20,
+  tradeScanInterval: 5,
   positionPollInterval: 30,
   balancePollInterval: 60,
   resolutionCheckInterval: 300,

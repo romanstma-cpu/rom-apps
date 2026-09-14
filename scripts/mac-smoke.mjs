@@ -18,7 +18,7 @@ try {
   await page.waitForFunction(async () => (await window.rom.backend.info()).status === 'running', {timeout: 30000});
   const config = await page.evaluate(() => window.rom.config.get());
   assert.equal(config.enableTrading, false);
-  for (const orderStyle of ['limit_cross', 'limit_mid', 'market']) {
+  for (const orderStyle of ['maker_join', 'limit_cross', 'limit_mid', 'market']) {
     const updated = await page.evaluate(orderStyle => window.rom.config.update({orderStyle}), orderStyle);
     assert.equal(updated.orderStyle, orderStyle);
     assert.equal(updated.enableTrading, false);

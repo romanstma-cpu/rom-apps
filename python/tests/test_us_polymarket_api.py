@@ -73,6 +73,40 @@ async def test_order_intent_and_yes_price(creds,monkeypatch,side,action,expected
     assert r['order']['order_id']=='order-123'
     assert len(calls)==1
 
+
+@pytest.mark.asyncio
+async def test_post_only_order_uses_exchange_maker_protection(creds,monkeypatch):
+    monkeypatch.setitem(api._meta,'maker',{'min_size':1,'tick_size':.01})
+    def handle(request):
+        body=json.loads(request.content)
+        assert body['participateDontInitiate'] is True
+        assert body['manualOrderIndicator']=='MANUAL_ORDER_INDICATOR_AUTOMATIC'
+        return httpx.Response(200,json={'id':'maker-1'})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+        monkeypatch.setattr(api,'_client',client)
+        result=await api.place_limit_order(
+            ticker='maker',side='yes',action='buy',count=5,price_cents=59,
+            post_only=True, execution_context={
+                'network':'mainnet','source':'whale','style':'maker',
+                'signal_cents':60,'bid_cents':59,'ask_cents':61,
+            },
+        )
+    assert result['order']['order_id']=='maker-1'
+
+
+@pytest.mark.asyncio
+async def test_fast_quote_prefers_fresh_websocket_book(monkeypatch):
+    stream.ingest({'marketData':{
+        'marketSlug':'fast','bids':[{'px':{'value':'.58'},'qty':'7'}],
+        'offers':[{'px':{'value':'.61'},'qty':'9'}],
+    }})
+    async def forbidden(_ticker):
+        pytest.fail('fresh WebSocket data must avoid a REST book request')
+    monkeypatch.setattr(api,'_book',forbidden)
+    quote=await api.get_fast_quote('fast','yes')
+    assert quote['quote_source']=='websocket'
+    assert quote['bid_cents']==58 and quote['ask_cents']==61
+
 def test_order_reconciliation_uses_filled_average():
     p=api._normalize_order({'id':'o','quantity':10,'cumQuantity':3,'price':{'value':'.2'},
         'avgPx':{'value':'.18'},'intent':'ORDER_INTENT_BUY_SHORT','state':'ORDER_STATE_PARTIALLY_FILLED'})

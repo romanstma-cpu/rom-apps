@@ -135,6 +135,7 @@ def test_execution_quality_rejects_without_order_or_position(fresh_db, env_net, 
 
 
 def test_deteriorated_margin_rejects_before_sizing(fresh_db, env_net, cfg, monkeypatch):
+    cfg['order_style'] = 'limit_cross'
     async def quote(*args):
         return quote_with_depth({'bid_cents': 60, 'ask_cents': 62})
     async def forbidden(**kwargs):
@@ -396,6 +397,7 @@ def test_execute_real_order_records_order_id(
 ):
     at = fee_clock(US_FEE_JULY)
     cfg["enable_trading"] = True
+    cfg['order_style'] = 'limit_cross'
     monkeypatch.setattr(trader, "get_quote", _stub_no_quote)
 
     calls: list[dict] = []
@@ -420,6 +422,52 @@ def test_execute_real_order_records_order_id(
     assert calls[0]["price_cents"] == 60
     assert calls[0]["side"] == "yes"
     assert calls[0]["action"] == "buy"
+
+
+def test_maker_entry_is_post_only_and_rechecked(
+    fresh_db, env_net, cfg, monkeypatch, fee_clock
+):
+    at=fee_clock(US_FEE_JULY)
+    cfg.update(enable_trading=True,order_style='maker_join')
+    quotes=[]
+    async def _quote(*_args):
+        quotes.append(1)
+        return quote_with_depth({'bid_cents':59,'ask_cents':61})
+    placed=[]
+    async def _place(**kwargs):
+        placed.append(kwargs)
+        return {'order':{'order_id':'MAKER-1','status':'resting'}}
+    monkeypatch.setattr(trader,'get_quote',_quote)
+    monkeypatch.setattr(trader,'place_limit_order',_place)
+    row=run_async(trader.execute_signal(
+        whale_signal(id=901,ticker='MAKER',created_at=at.isoformat()),
+        'whale',cfg,1000.0,
+    ))
+    assert row and row['order_id']=='MAKER-1'
+    assert len(quotes)==2
+    assert placed[0]['price_cents']==60
+    assert placed[0]['post_only'] is True
+    assert placed[0]['execution_context']['style']=='maker'
+
+
+def test_maker_entry_aborts_when_price_changes_before_submit(
+    fresh_db, env_net, cfg, monkeypatch, fee_clock
+):
+    at=fee_clock(US_FEE_JULY)
+    cfg.update(enable_trading=True,order_style='maker_join')
+    books=iter([
+        quote_with_depth({'bid_cents':59,'ask_cents':61}),
+        quote_with_depth({'bid_cents':58,'ask_cents':60}),
+    ])
+    async def _quote(*_args): return next(books)
+    async def forbidden(**_kwargs): pytest.fail('stale maker order submitted')
+    monkeypatch.setattr(trader,'get_quote',_quote)
+    monkeypatch.setattr(trader,'place_limit_order',forbidden)
+    assert run_async(trader.execute_signal(
+        whale_signal(id=902,ticker='MOVED',created_at=at.isoformat()),
+        'whale',cfg,1000.0,
+    )) is None
+    assert count_rows()==0
 
 
 def test_execute_api_error_is_persisted_as_error_row(fresh_db, env_net, cfg, monkeypatch):
