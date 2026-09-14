@@ -1,2 +1,1 @@
 dc2dc55678b313d65c1b2f1790ff2adffd384a4258141c5b12bdc33be84bb27b  ROM.PolyBot-2.19.0-arm64.dmg
-c5f9d5056d916d87868150eedff442aa08bbf9cb8e74fbfbac634f35fa429b14  ROM.PolyBot-2.19.0-x64.zip

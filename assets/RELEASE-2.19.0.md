@@ -34,9 +34,8 @@ a disconnect and maker-expiry fallback.
 - TypeScript checks, configuration-boundary tests, production frontend build,
   UI audit, packaged backend self-test, packaged Windows startup/settings smoke,
   calibration UI, and portfolio-replay UI passed.
-- Native Apple Silicon and Intel builds run the backend self-test and packaged
-  app smoke test in GitHub Actions. The Apple Silicon disk image is verified;
-  Intel ships as a ZIP to avoid a macOS runner disk-image defect.
+- The native Apple Silicon build runs the backend self-test and packaged app
+  smoke test in GitHub Actions, and its disk image is verified before release.
 - The Windows installer SHA-256 is published separately. Mac hashes are copied
   from the native release artifacts.
 
@@ -60,5 +59,5 @@ the desktop source at `docs/QUANT-ROADMAP-2.19.0.md`.
 ## Platform notes
 
 ROM Polybot requires Polymarket US API credentials. Windows is 64-bit. Mac
-builds require macOS 15 or later and are not Apple-notarized; follow Apple's
+Apple Silicon builds require macOS 15 or later and are not Apple-notarized; follow Apple's
 documented opening guidance and verify the published hashes.
