@@ -665,6 +665,23 @@ export interface TradingStatus {
    */
   recovery: { blocked: boolean; intents: BlockedIntent[] };
   main: TradingGate[];
+  executionHealth: {
+    state: 'closed' | 'open' | 'half_open';
+    blocked: boolean;
+    reason: string;
+    retryAfterSeconds: number;
+    failureCount: number;
+    quoteFailures: number;
+    orderFailures: number;
+    marketStream: {
+      state: 'connected' | 'reconnecting' | 'starting' | 'stopped' | 'unknown';
+      connected: boolean;
+      lastMessageAgeSeconds?: number | null;
+      lastDisconnectAt?: number | null;
+      reconnects?: number;
+      watchedMarkets?: number;
+    };
+  };
   mainMode: 'paused' | 'paper' | 'live';
   mainState: 'paused' | 'scanning' | 'waiting' | 'blocked';
   mainSummary: string;

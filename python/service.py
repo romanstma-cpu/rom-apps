@@ -1838,6 +1838,11 @@ async def _h_trading_status(_p: dict) -> dict:
     mode = "live" if enabled else ("paper" if paper else "paused")
     gate("master", "Main strategy running", enabled or paper,
          "strategy is paused", off=not (enabled or paper))
+    execution_health = trader.execution_health.status()
+    if enabled:
+        gate("executionHealth", "Execution connection", not execution_health["blocked"], execution_health["reason"])
+    else:
+        gate("executionHealth", "Live execution connection", True, off=True)
     if enabled:
         try:
             blocked, why = trader._is_blocked_by_daily_risk(cfg, env)
@@ -1924,6 +1929,7 @@ async def _h_trading_status(_p: dict) -> dict:
             } for r in blocked],
         },
         "main": main,
+        "executionHealth": execution_health,
         "mainMode": mode,
         "mainState": main_state,
         "mainSummary": main_summary,

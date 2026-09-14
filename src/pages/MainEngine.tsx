@@ -71,7 +71,8 @@ export function MainEnginePage() {
 
   const tradingOn = !!config.enableTrading;
   const paperOn = !!config.mainPaperTrading && !tradingOn;
-  const canStart = backend.status === 'running' && backend.authOk && activity.healthy && !riskDraft && !busy && !busyId;
+  const executionBlocked = !!activity.status?.executionHealth?.blocked;
+  const canStart = backend.status === 'running' && backend.authOk && activity.healthy && !executionBlocked && !riskDraft && !busy && !busyId;
   const changeMode = async (action: () => Promise<void>) => {
     if (switching) return;
     setSwitching(true);
@@ -204,6 +205,15 @@ export function MainEnginePage() {
           {[[backend.status === 'running', 'Engine online'], [backend.authOk, 'Account connected'], [!riskDraft, 'Risk limits saved']].map(([ready,label]) => <li key={String(label)} className={ready ? 'text-rom-win' : 'text-rom-warn'}>{ready ? 'Ready:' : 'Needed:'} {label}</li>)}
         </ul>
         <p className="mt-3 text-xs text-rom-muted">{activity.summary}</p>
+        {activity.status?.executionHealth && (
+          <p className={cls('mt-2 text-xs', executionBlocked ? 'text-rom-warn' : 'text-rom-dim')}>
+            Execution guard: {executionBlocked
+              ? activity.status.executionHealth.reason
+              : activity.status.executionHealth.marketStream.connected
+                ? 'live price stream connected; REST fallback stays ready.'
+                : 'REST quote fallback ready while the live price stream reconnects.'}
+          </p>
+        )}
         <p className="mt-3 text-xs text-rom-muted">Practice starting balance: {fmtUsd(config.mainPaperBankrollUsd)}. Actual entries may be smaller than your per-position limit.</p>
       </Card>
       <RiskLimits config={config} onDirty={setRiskDraft} />

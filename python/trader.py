@@ -16,6 +16,7 @@ import fees_us
 import signal_calibration
 import strategy_allocator
 import execution_learning
+import execution_health
 import rules as rules_engine
 from execution_quality import (
     affordable_at_depth, entry_price, entry_vwap_cents, remaining_signal_margin,
@@ -572,8 +573,12 @@ async def execute_signal(
             signal["ticker"], direction, signal_cost_cents, pricing_cfg
         ), timeout=5.0)
     except Exception as exc:
+        if not paper:
+            execution_health.circuit.record_failure("quote", exc)
         logger.info("[skip] %s: live price unavailable or unsuitable: %s", signal["ticker"], exc)
         return None
+    if not paper:
+        execution_health.circuit.record_quote_success()
     edge_pts = remaining_signal_margin(edge_pts, signal_cost_cents, limit_cents)
     if calibration is not None:
         try:
@@ -761,8 +766,10 @@ async def execute_signal(
             final_quote = await asyncio.wait_for(get_quote(signal['ticker'], direction), timeout=2.0)
             final_limit = entry_price(final_quote, signal_cost_cents, cfg)
         except Exception as exc:
+            execution_health.circuit.record_failure("quote", exc)
             logger.info('[skip] %s: maker recheck failed: %s', signal['ticker'], exc)
             return None
+        execution_health.circuit.record_quote_success()
         if final_limit != limit_cents:
             logger.info(
                 '[skip] %s: maker price changed %dc->%dc before submission',
@@ -770,6 +777,10 @@ async def execute_signal(
             )
             return None
         entry_quote = final_quote
+
+    if not execution_health.circuit.begin_attempt():
+        logger.info("[skip] %s: %s", signal["ticker"], execution_health.circuit.blocked_reason() or "execution safety probe in progress")
+        return None
 
     # Persist before awaiting the exchange: a crash/timeout cannot erase intent.
     with db.get_db() as conn:
@@ -795,6 +806,7 @@ async def execute_signal(
                                'bid_cents': entry_quote['bid_cents'], 'ask_cents': entry_quote['ask_cents']},
         )
     except PolymarketAPIError as e:
+        execution_health.circuit.record_failure("order", e)
         row["status"] = "error" if e.status in (400,401,403,422) else "unknown"
         row["error"] = f"HTTP {e.status}: {str(e.body)[:200]}"
         logger.error(f"[ORDER-FAIL] {signal['ticker']}: {row['error']}")
@@ -803,6 +815,7 @@ async def execute_signal(
             db.log_event(conn, pid, "error", note=row["error"])
             return db.fetch_position_by_id(conn, pid)
     except Exception as e:
+        execution_health.circuit.record_failure("order", e)
         row["status"] = "error" if isinstance(e, (ValueError, order_journal.RecoveryRequired)) else "unknown"
         evidence = order_journal.get(client_order_id)
         if evidence and evidence['state'] != 'rejected':
@@ -816,6 +829,8 @@ async def execute_signal(
 
     order = (resp.get("order") if isinstance(resp, dict) else None) or resp or {}
     order_id = order.get("order_id") if isinstance(order, dict) else None
+    if order_id:
+        execution_health.circuit.record_order_success()
     row["order_id"] = order_id
 
     with db.get_db() as conn:
@@ -865,6 +880,10 @@ async def scan_for_trades(cfg: dict) -> list[dict]:
 
     env = get_env()
     if live:
+        health_reason = execution_health.circuit.blocked_reason()
+        if health_reason:
+            _skip_log(health_reason)
+            return []
         recovery = order_journal.blocker()
         with db.get_db() as conn:
             unknown = conn.execute("SELECT 1 FROM bot_positions WHERE status='unknown' AND resolved=0 AND network=? LIMIT 1", (env,)).fetchone()

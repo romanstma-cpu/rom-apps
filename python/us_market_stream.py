@@ -16,6 +16,10 @@ _task=None
 _wanted=set()
 _books={}
 _trades=deque(maxlen=5000)
+_connected=False
+_last_message_at=0.0
+_last_disconnect_at=0.0
+_reconnects=0
 
 def observe(*tokens):
     _wanted.update(t.split('::')[0] for t in tokens if t)
@@ -26,16 +30,18 @@ def start():
         _task=asyncio.create_task(_run())
 
 async def stop():
-    global _task
+    global _task, _connected
     if _task:
         _task.cancel()
         try: await _task
         except asyncio.CancelledError: pass
-    _task=None
+    _task=None; _connected=False
     _books.clear(); _trades.clear(); _wanted.clear()
     momentum_window.tape.reset()
 
 def ingest(message):
+    global _last_message_at
+    _last_message_at=time.monotonic()
     book=message.get('marketData')
     if book and book.get('marketSlug'): _books[book['marketSlug']]=(time.monotonic(),book)
     if book and book.get('marketSlug'):
@@ -62,6 +68,24 @@ def ingest(message):
 
 def recent(limit): return list(_trades)[-limit:]
 
+def health():
+    """Connection context for operators; REST remains the quote fallback."""
+    now=time.monotonic()
+    if _connected:
+        state='connected'
+    elif _task is not None and not _task.done():
+        state='reconnecting'
+    elif auth.credentials_present():
+        state='starting'
+    else:
+        state='stopped'
+    return {
+        'state':state, 'connected':bool(_connected),
+        'lastMessageAgeSeconds':round(max(0.0,now-_last_message_at),1) if _last_message_at else None,
+        'lastDisconnectAt':_last_disconnect_at or None,
+        'reconnects':_reconnects, 'watchedMarkets':len(_wanted),
+    }
+
 def get_book(slug, max_age=2.0):
     """Return a fresh full-depth book or ``None``.
 
@@ -85,10 +109,12 @@ def get_quote_cents(token):
     return {'bid_cents':math.floor(bid*100+1e-8) if bid is not None else None,'ask_cents':math.ceil(ask*100-1e-8) if ask is not None else None}
 
 async def _run():
+    global _connected, _last_disconnect_at, _reconnects
     while auth.credentials_present():
         try:
             async with websockets.connect('wss://api.polymarket.us/v1/ws/markets',
                     extra_headers=auth.l2_headers('GET','/v1/ws/markets'),ping_interval=20,ping_timeout=20) as ws:
+                _connected=True
                 subscribed=set()
                 while True:
                     missing=sorted(_wanted-subscribed)
@@ -105,7 +131,12 @@ async def _run():
                     except asyncio.TimeoutError: pass
         except asyncio.CancelledError: raise
         except Exception as exc:
+            _connected=False
+            _last_disconnect_at=time.monotonic()
+            _reconnects+=1
             momentum_window.tape.reset()
             main_recorder.record('gap','',{'reason':'market stream disconnected'})
             logger.warning('US market stream disconnected: %s',type(exc).__name__)
             await asyncio.sleep(5)
+        finally:
+            _connected=False

@@ -16,6 +16,15 @@ import pytest  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
+def _reset_execution_health():
+    """Execution safety is intentionally process-scoped outside tests."""
+    import execution_health
+    execution_health.circuit.reset()
+    yield
+    execution_health.circuit.reset()
+
+
+@pytest.fixture(autouse=True)
 def _hermetic_market_meta(monkeypatch):
     try:
         import trader

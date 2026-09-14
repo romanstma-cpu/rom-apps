@@ -492,6 +492,7 @@ export function registerIpc(): void {
         main: [{ id: 'backend', label: 'Backend running', state: 'blocked', reason: 'backend not running' }],
         mainMode: 'paused', mainState: 'blocked', mainSummary: 'Engine offline.', mainLastCycleAt: null,
         mainFilterCounts: {}, mainCandidates: 0, mainPlaced: 0,
+        executionHealth: { state: 'open', blocked: true, reason: 'Backend not running', retryAfterSeconds: 0, failureCount: 0, quoteFailures: 0, orderFailures: 0, marketStream: { state: 'unknown', connected: false } },
         mainPaper: { bankrollUsd: 1000, availableUsd: 1000, open: 0, resolved: 0, wins: 0, losses: 0, pnlUsd: 0 },
         c15: { enabled: false, live: false, authed: false, env: 'mainnet', blockReasons: {} },
       };
