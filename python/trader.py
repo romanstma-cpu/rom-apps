@@ -449,7 +449,14 @@ def entry_budget(balance_usd, filled_exposure, exposure, edge_pts, limit_cents, 
     bankroll = max(0,balance_usd)+max(0,filled_exposure)
     pending = max(0,exposure-filled_exposure)
     multiplier = max(0.0, min(1.5, float(allocation_multiplier)))
-    limits = [_compute_target_usd(bankroll,edge_pts,limit_cents,cfg)*multiplier,
+    target = _compute_target_usd(bankroll,edge_pts,limit_cents,cfg)*multiplier
+    # Whole contracts make percentage sizing unusable for tiny accounts.
+    # Allow up to 50c for percent-mode accounts below $5, while all explicit
+    # cash, position, portfolio and group ceilings remain authoritative.
+    # Never turn a zero allocation or a zero Kelly edge into an order.
+    if 0 < bankroll < 5 and target > 0 and cfg.get('sizing_mode', 'percent') == 'percent':
+        target = max(target, 0.50)
+    limits = [target,
         float(cfg['hard_max_position_usd']),
         bankroll*float(cfg['max_total_exposure_fraction'])-exposure,
         balance_usd-pending-bankroll*float(cfg['min_cash_reserve_fraction'])]
@@ -642,8 +649,8 @@ async def execute_signal(
             source, signal["ticker"], allocation_multiplier, allocation_reason,
         )
 
-    if target_usd < 1.0:
-        logger.info(f"[skip] {signal['ticker']}: size ${target_usd:.2f} < $1")
+    if target_usd <= 0:
+        logger.info(f"[skip] {signal['ticker']}: no available risk budget")
         return None
 
     fee_time = time.time()
@@ -942,12 +949,12 @@ async def scan_for_trades(cfg: dict) -> list[dict]:
             )
         balance_usd = float(paper_stats["available_usd"])
     else:
-        cents, _ = await refresh_balance(cfg)
+        cents, _ = await refresh_balance(cfg, force=True)
         if not last_balance_read_ok(env):
             _skip_log("Balance unavailable; waiting for a successful refresh before new entries")
             return []
         balance_usd = cents / 100.0
-    if balance_usd < 5.0:
+    if balance_usd < 0.01:
         _skip_log(f"balance ${balance_usd:.2f} too low")
         return []
 
@@ -1056,8 +1063,8 @@ async def scan_for_trades(cfg: dict) -> list[dict]:
                 _skip_log(cycle_stop_reason)
                 break
             balance_usd = cents / 100.0
-        if balance_usd < 5.0:
-            logger.info("[halt-cycle] balance now below $5")
+        if balance_usd < 0.01:
+            logger.info("[halt-cycle] available balance below one cent")
             break
 
     failed = sum(1 for r in inserted if (r.get("status") or "") == "error")

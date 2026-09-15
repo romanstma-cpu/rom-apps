@@ -5,16 +5,25 @@
 :root {
   color-scheme: dark;
   scrollbar-color: #526078 #0b1019;
+  --rom-grid: rgba(110, 168, 254, 0.035);
 }
+.app-shell{position:relative;isolation:isolate;background:radial-gradient(900px circle at 22% -12%,rgba(50,105,190,.14),transparent 58%),#080d15}
+.app-shell::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(var(--rom-grid) 1px,transparent 1px),linear-gradient(90deg,var(--rom-grid) 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(to bottom,black,transparent 72%)}
+.sidebar-shell{box-shadow:18px 0 45px rgba(0,0,0,.16)}
+.rom-page-header{position:relative}
+.rom-page-header::after{content:"";position:absolute;left:2rem;right:2rem;bottom:0;height:1px;background:linear-gradient(90deg,rgba(110,168,254,.32),rgba(255,255,255,.06) 40%,transparent)}
+.rom-page-scroll{scrollbar-gutter:stable}
+@media(max-width:1023px){.rom-page-header::after{left:1.5rem;right:1.5rem}}
+@media(max-width:639px){.rom-page-header::after{left:1rem;right:1rem}.app-shell::before{background-size:24px 24px}}
 
 .rom-review{width:min(520px,calc(100vw - 40px));max-height:calc(100vh - 48px);overflow:auto;border:1px solid #34445b;border-radius:16px;background:#121a26;color:#f1f5fc;padding:28px;box-shadow:0 24px 80px #0008}
 .rom-review::backdrop{background:#030810c9;backdrop-filter:blur(5px)}
 button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid #6ea8fe;outline-offset:3px}
 button:not(:disabled),summary{cursor:pointer}
-.terminal-command{background:linear-gradient(115deg,#152638,#111c29 70%);border:1px solid #2b4258;border-radius:16px;padding:28px}
+.terminal-command{background:linear-gradient(115deg,rgba(21,38,56,.96),rgba(13,22,34,.96) 70%);border:1px solid #314961;border-radius:16px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.035)}
 .terminal-mode{display:inline-flex;align-items:center;gap:8px;border:1px solid #40536a;border-radius:6px;padding:6px 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#b9cfeb}
 .terminal-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#283647;border:1px solid #283647;border-radius:12px;overflow:hidden}
-.terminal-metrics>div{background:#111d2a;padding:20px 24px}.terminal-metrics dt{font-size:11px;color:#a4b1c4}.terminal-metrics dd{margin:8px 0 0;font-size:30px;line-height:1.2;letter-spacing:-.03em;font-weight:600;font-variant-numeric:tabular-nums}.terminal-metrics small{display:block;margin-top:8px;color:#9cacbf;font-size:11px}
+.terminal-metrics>div{position:relative;background:linear-gradient(145deg,#111d2a,#0e1824);padding:20px 24px}.terminal-metrics>div::before{content:"";position:absolute;left:0;top:20px;bottom:20px;width:2px;background:linear-gradient(#6ea8fe,transparent);opacity:.55}.terminal-metrics dt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#a4b1c4}.terminal-metrics dd{margin:8px 0 0;font-size:30px;line-height:1.2;letter-spacing:-.03em;font-weight:600;font-variant-numeric:tabular-nums}.terminal-metrics small{display:block;margin-top:8px;color:#9cacbf;font-size:11px}
 @media(max-width:1050px){.terminal-metrics>div{padding:16px}.terminal-metrics dd{font-size:23px}.terminal-command{padding:22px}}
 .terminal-command-detailed{position:relative;border-top:2px solid theme('colors.rom.purple');background:linear-gradient(125deg,theme('colors.rom.surface2'),theme('colors.rom.surface'))}
 .terminal-command-detailed h3{line-height:1.2}
@@ -103,13 +112,13 @@ button {
 
 @layer components {
   .rom-card {
-    @apply rounded-xl border border-rom-border bg-rom-surface p-5;
+    @apply rounded-xl border border-rom-border bg-rom-surface/95 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.13)];
   }
   .rom-card-hover {
     @apply transition-colors hover:border-rom-borderHi;
   }
   .rom-input {
-    @apply w-full rounded-lg border border-rom-border bg-rom-void/60 px-3 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-rom-dim focus:border-rom-indigo;
+    @apply w-full rounded-lg border border-rom-border bg-rom-void/70 px-3 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-rom-dim hover:border-rom-borderHi focus:border-rom-purple focus:shadow-[0_0_0_3px_rgba(110,168,254,0.08)];
   }
   .rom-label {
     @apply mb-1.5 block text-xs font-medium text-rom-muted;
@@ -121,10 +130,10 @@ button {
     @apply inline-flex select-none items-center justify-center gap-2 rounded-lg border border-rom-border px-3 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50;
   }
   .rom-btn-default {
-    @apply rom-btn bg-rom-surface2 hover:border-rom-borderHi hover:bg-white/5;
+    @apply rom-btn bg-rom-surface2 shadow-[inset_0_1px_rgba(255,255,255,0.025)] hover:border-rom-borderHi hover:bg-white/[0.07] active:translate-y-px;
   }
   .rom-btn-primary {
-    @apply rom-btn border-blue-400/30 bg-blue-600 shadow-sm hover:bg-blue-500;
+    @apply rom-btn border-blue-300/30 bg-blue-600 shadow-[0_8px_24px_rgba(29,78,216,0.22),inset_0_1px_rgba(255,255,255,0.12)] hover:bg-blue-500 active:translate-y-px;
   }
   .rom-btn-danger {
     @apply rom-btn border-rom-loss/40 bg-rom-loss/10 text-rom-loss hover:border-rom-loss hover:bg-rom-loss/15;

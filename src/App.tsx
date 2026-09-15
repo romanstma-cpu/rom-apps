@@ -80,7 +80,7 @@ function Shell() {
   const showOnboarding = state ? !state.acceptedDisclaimer : false;
 
   return (
-    <div className="flex h-full w-full flex-col bg-rom-radial bg-rom-void">
+    <div className="app-shell flex h-full w-full flex-col bg-rom-void">
       <TitleBar />
       <div className="flex min-h-0 flex-1 w-full">
         <Sidebar page={page} setPage={setPage} />

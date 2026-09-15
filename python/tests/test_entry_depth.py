@@ -114,6 +114,25 @@ def run_entry(cfg, **over):
         whale_signal(**over), "whale", cfg, 1000.0, paper=True))
 
 
+def test_fifty_cent_live_balance_places_one_affordable_contract(entry_env, cfg, monkeypatch):
+    cfg['enable_trading'] = True
+    async def quote(*_a):
+        return quote_with_depth({'bid_cents': 24, 'ask_cents': 25,
+                                 'ask_levels': [[25, 100]]})
+    monkeypatch.setattr(trader, 'get_quote', quote)
+    calls = []
+    async def order(**kw):
+        calls.append(kw)
+        return {'order': {'order_id': 'micro-order', 'status': 'pending'}}
+    monkeypatch.setattr(trader, 'place_limit_order', order)
+    row = asyncio.run(trader.execute_signal(
+        whale_signal(price=.25, confidence=99), 'whale', cfg, .50))
+    assert row is not None
+    assert len(calls) == 1
+    assert calls[0]['count'] == 1
+    assert calls[0]['price_cents'] == 25
+
+
 def test_ample_depth_fills_the_intended_size(entry_env, cfg, monkeypatch):
     install_book(monkeypatch, [[60, 10_000]])
     row = run_entry(cfg)

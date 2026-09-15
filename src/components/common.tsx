@@ -136,16 +136,17 @@ export function Page({
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 px-8 py-7">
+      <div className="rom-page-header flex shrink-0 flex-wrap items-end justify-between gap-4 px-4 pb-5 pt-6 sm:px-6 lg:px-8 lg:pb-6 lg:pt-7">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-white">{title}</h2>
+          <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.22em] text-rom-purple/80">ROM / Trading workspace</div>
+          <h2 className="text-3xl font-semibold tracking-[-0.035em] text-white">{title}</h2>
           {subtitle && (
             <p className="mt-1 text-sm text-rom-muted">{subtitle}</p>
           )}
         </div>
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-8 pb-8">{children}</div>
+      <div className="rom-page-scroll min-h-0 flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">{children}</div>
     </div>
   );
 }

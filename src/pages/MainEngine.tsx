@@ -214,7 +214,10 @@ export function MainEnginePage() {
                 : 'REST quote fallback ready while the live price stream reconnects.'}
           </p>
         )}
-        <p className="mt-3 text-xs text-rom-muted">Practice starting balance: {fmtUsd(config.mainPaperBankrollUsd)}. Actual entries may be smaller than your per-position limit.</p>
+        <div className="mt-4 grid gap-2 border-t border-rom-border pt-4 text-xs sm:grid-cols-2">
+          <p className="rounded-lg bg-rom-void/35 px-3 py-2.5 text-rom-muted"><span className="font-medium text-white">Balance-aware sizing</span><br />Refreshes available funds before every scan and supports balances down to $0.50 when one contract fits.</p>
+          <p className="rounded-lg bg-rom-void/35 px-3 py-2.5 text-rom-muted"><span className="font-medium text-white">Practice balance</span><br />Starts at {fmtUsd(config.mainPaperBankrollUsd)} and stays separate from your real account.</p>
+        </div>
       </Card>
       <RiskLimits config={config} onDirty={setRiskDraft} />
       {riskDraft && <p className="mb-5 text-xs text-rom-warn">Save or discard your risk-limit draft before starting the main strategy.</p>}

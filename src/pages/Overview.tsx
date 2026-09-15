@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Check, ShieldCheck, SlidersHorizontal, Radio, ScanLine } from 'lucide-react';
+import { ArrowRight, ShieldCheck, SlidersHorizontal, Radio, ScanLine } from 'lucide-react';
 import type { BlockedIntent } from '@shared/types';
 import { Card, Page } from '../components/common';
 import { useApp } from '../state/AppStateProvider';
@@ -69,6 +69,18 @@ export function OverviewPage({ onNav }: { onNav: (page: PageId) => void }) {
             <button className="rom-btn-primary mt-5 w-full" onClick={() => onNav(connected ? 'main' : 'api')}>{connected ? 'Review strategy' : 'Connect account'}<ArrowRight className="h-4 w-4" /></button>
           </div>
         </div>
+        <div className="strategy-pipeline mt-7 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-rom-border bg-rom-border md:grid-cols-4" aria-label="Strategy decision pipeline">
+          {[
+            ['01', 'Signals', 'Whale + momentum'],
+            ['02', 'Live quote', 'Spread + movement'],
+            ['03', 'Risk', 'Balance + limits'],
+            ['04', 'Route', 'Maker-first order'],
+          ].map(([step, label, detail]) => <div key={step} className="bg-rom-void/70 px-4 py-4">
+            <div className="font-mono text-[11px] tracking-[0.18em] text-rom-purple">{step}</div>
+            <div className="mt-1 text-xs font-semibold text-white">{label}</div>
+            <div className="mt-0.5 text-[11px] text-rom-dim">{detail}</div>
+          </div>)}
+        </div>
         {!connected && <div className="mt-7 grid gap-3 border-t border-rom-border pt-5 sm:grid-cols-3">{['Connect your account', 'Review strategy & limits', 'Choose when to start'].map((label, i) => <div key={label} className="flex items-center gap-3 text-xs text-rom-muted"><span className="grid h-6 w-6 place-items-center rounded-full border border-rom-border text-rom-purple">{i + 1}</span>{label}</div>)}</div>}
       </div>
       <dl className="terminal-metrics" aria-label="Portfolio summary">
@@ -83,7 +95,7 @@ export function OverviewPage({ onNav }: { onNav: (page: PageId) => void }) {
           <dl className="space-y-4 text-sm">{[['Maximum per position', fmtUsd(config?.hardMaxPositionUsd)], ['Portfolio exposure limit', config ? `${Math.round(config.maxTotalExposureFraction * 100)}%` : '—'], ['Cash reserve', config ? `${Math.round(config.minCashReserveFraction * 100)}%` : '—']].map(([k,v])=><div key={k} className="flex justify-between gap-4"><dt className="text-rom-muted">{k}</dt><dd className="font-medium tabular-nums">{v}</dd></div>)}</dl>
           <button className="rom-btn-default mt-6 w-full" onClick={()=>onNav('main')}><SlidersHorizontal className="h-4 w-4" />Review strategy & limits</button>
         </Card>
-        <Card><h3 className="mb-5 font-semibold">How entries are checked</h3><div className="space-y-4">{['A current, two-sided quote is required.', 'Wide spreads and price chasing are rejected.', 'Trade size reflects the margin left at entry.'].map(label=><p key={label} className="flex gap-3 text-sm text-rom-muted"><Check className="mt-0.5 h-4 w-4 shrink-0 text-rom-win" />{label}</p>)}</div><p className="mt-5 border-t border-rom-border pt-4 text-xs leading-5 text-rom-dim">These checks apply to the main strategy. Signal scores are heuristics, not verified win probabilities.</p><button className="mt-4 text-xs text-rom-purple hover:text-white" onClick={()=>onNav('analytics')}>Open detailed analytics →</button></Card>
+        <Card><h3 className="mb-1 font-semibold">How entries are checked</h3><p className="mb-5 text-xs text-rom-dim">Four checks run before an order reaches Polymarket US.</p><div className="space-y-4">{['A current, two-sided quote is required.', 'Wide spreads and price chasing are rejected.', 'Trade size follows available balance and saved limits.', 'Small accounts can use an affordable whole contract.'].map((label,index)=><p key={label} className="flex gap-3 text-sm text-rom-muted"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-md border border-rom-win/25 bg-rom-win/[0.06] font-mono text-[11px] text-rom-win">{index+1}</span>{label}</p>)}</div><p className="mt-5 border-t border-rom-border pt-4 text-xs leading-5 text-rom-dim">These checks apply to the main strategy. Signal scores are heuristics, not verified win probabilities.</p><button className="mt-4 text-xs font-medium text-rom-purple hover:text-white" onClick={()=>onNav('analytics')}>Open detailed analytics →</button></Card>
       </div>
     </div>
   </Page>;
