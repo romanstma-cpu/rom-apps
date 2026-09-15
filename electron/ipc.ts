@@ -180,8 +180,8 @@ export function registerIpc(): void {
     const PRESERVE_PREFIXES = ['crypto15m', 'copy', 'script'];
     const PRESERVE_KEYS = new Set([
       'eventWebhookUrl', 'statsWebhookUrl', 'whaleWebhookUrl',
-      'momentumWebhookUrl', 'enableDiscord', 'statsPushInterval',
-      'statsChartWindowHours',
+      'momentumWebhookUrl', 'alertWebhookUrl', 'enableDiscord',
+      'statsPushInterval', 'statsChartWindowHours',
     ]);
     const preserved = Object.fromEntries(
       Object.entries(cur.config).filter(

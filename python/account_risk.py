@@ -16,6 +16,11 @@ import time
 import db
 
 HWM_KEY = 'risk:hwm:'
+# Marks the stored peak as living on the transfer-adjusted basis below. A peak
+# written by an older build was in raw equity; the marker lets a single upgrade
+# re-anchor it exactly once, and reset_hwm sets it so a deliberate reset is not
+# re-migrated.
+HWM_BASIS_KEY = 'risk:hwm_basis:'
 # Related-outcome grouping is deliberately coarse. It groups by the market's
 # series (all markets of one tournament or recurring release) and falls back to
 # the event. It cannot detect correlation between different series.
@@ -157,6 +162,42 @@ def equity_usd(conn, env):
     return None if math.isnan(value) else value
 
 
+def adjusted_equity(conn, env):
+    """Account equity with external deposits and withdrawals netted out.
+
+    A drawdown control must measure trading losses, not the operator moving
+    cash. ``db.transfer_adjustment_total`` is the running net of every detected
+    transfer (deposits positive, withdrawals negative) — the same ledger the
+    daily stop and session/all-time P&L already exclude. Subtracting it puts the
+    peak and the current reading on one transfer-neutral basis: a deposit lifts
+    equity and the adjustment together and cancels, so it cannot inflate the
+    peak; a withdrawal lowers both, so it can no longer masquerade as a
+    drawdown. ``None`` when equity cannot be read, so the caller still blocks.
+    """
+    equity = equity_usd(conn, env)
+    if equity is None:
+        return None
+    return equity - _f(db.transfer_adjustment_total(conn, env), 0.0)
+
+
+def _migrate_hwm_basis(conn, env, equity):
+    """Re-anchor a peak stored under the old raw-equity basis, exactly once.
+
+    Before transfer adjustment the peak counted deposits into itself and read a
+    withdrawal as a drawdown. A peak carried over from that basis is off by the
+    net transfers to date, and there is no record of the transfer total at the
+    moment it was set, so it cannot be converted — it is re-anchored to current
+    adjusted equity, the same fresh start ``reset_hwm`` gives a deliberate
+    bankroll change. Users with no detected transfers had raw and adjusted
+    equity equal already, so for them this only stamps the marker.
+    """
+    if db.kv_get(conn, HWM_BASIS_KEY+env):
+        return
+    if equity is not None and math.isfinite(equity):
+        db.kv_set(conn, HWM_KEY+env, repr(equity))
+    db.kv_set(conn, HWM_BASIS_KEY+env, 'adjusted')
+
+
 def read_hwm(conn, env):
     return _f(db.kv_get(conn, HWM_KEY+env), 0.0)
 
@@ -173,6 +214,7 @@ def update_hwm(conn, env, equity):
 def reset_hwm(conn, env, equity=None):
     """Re-anchor the peak, for a deliberate bankroll change."""
     db.kv_set(conn, HWM_KEY+env, repr(_f(equity, 0.0)))
+    db.kv_set(conn, HWM_BASIS_KEY+env, 'adjusted')
 
 
 def drawdown_block(cfg, env, *, now=None):
@@ -185,10 +227,11 @@ def drawdown_block(cfg, env, *, now=None):
     if fraction <= 0:
         return False, ''
     with db.get_db() as conn:
-        equity = equity_usd(conn, env)
+        equity = adjusted_equity(conn, env)
         if equity is None:
             return True, ('Account equity has not been recorded yet; '
                           'new entries stay paused until a balance snapshot exists.')
+        _migrate_hwm_basis(conn, env, equity)
         peak = update_hwm(conn, env, equity)
     if peak <= 0:
         return False, ''

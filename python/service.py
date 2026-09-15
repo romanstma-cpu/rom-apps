@@ -12,6 +12,7 @@ import traceback
 import us_account_stream
 import main_recorder
 import order_journal
+import account_risk
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -428,14 +429,130 @@ def _fire_and_forget(coro) -> None:
     async def _quiet():
         try:
             await coro
-        except Exception:
-            pass
+        except Exception as e:
+            # A background failure must never bubble into the loop, but it also
+            # should not vanish without trace — a dropped webhook or refresh is
+            # a real signal when diagnosing why something did not fire.
+            logger.debug(f"background task failed: {type(e).__name__}: {e}")
     try:
         t = asyncio.get_event_loop().create_task(_quiet())
     except RuntimeError:
         return
     _bg_tasks.add(t)
     t.add_done_callback(_bg_tasks.discard)
+
+
+# --- operator safety alerts ------------------------------------------------
+#
+# Trade-lifecycle webhooks say what the bot did; these say when it stopped or
+# needs a human. Each condition is edge-triggered: the alert fires once when it
+# turns on and a green "resolved" fires once when it clears, so a healthy bot
+# stays quiet. State lives here rather than in the DB — a restart re-alerts on
+# anything still wrong, which is the safe direction.
+_alert_state: dict[str, bool] = {}
+
+
+def _alert_url(cfg: dict) -> str:
+    """Where safety notices go: their own channel, else the trade-event one."""
+    return str(cfg.get("alert_webhook_url") or cfg.get("event_webhook_url") or "")
+
+
+def _fire_safety_alert(cfg: dict, env: str, key: str, active: bool,
+                       title: str, message: str) -> None:
+    """Send at most one notice per state change for ``key``.
+
+    ``active`` True means the condition holds now. The first True fires the
+    alert; the first False after that fires the paired "resolved". Repeats while
+    the state is unchanged are suppressed.
+    """
+    was = _alert_state.get(key, False)
+    if active == was:
+        return
+    _alert_state[key] = active
+    if not cfg.get("enable_discord"):
+        return
+    url = _alert_url(cfg)
+    if not url:
+        return
+    _fire_and_forget(webhook.send_alert(
+        url, key, title, message, env, cleared=not active))
+
+
+def _emit_safety_alert(cfg: dict, env: str, key: str, title: str,
+                       message: str) -> None:
+    """A one-shot notice for a discrete event with no paired 'resolved'."""
+    if not cfg.get("enable_discord"):
+        return
+    url = _alert_url(cfg)
+    if not url:
+        return
+    _fire_and_forget(webhook.send_alert(url, key, title, message, env))
+
+
+def _check_safety_alerts(cfg: dict, env: str) -> None:
+    """Evaluate the health conditions an unattended operator must hear about.
+
+    Runs on the periodic loop. Every probe is guarded so one failing check
+    never suppresses the others, and a check that cannot read its evidence
+    leaves that alert's state untouched rather than false-clearing it.
+    """
+    # Auth dropped — nothing can trade, and every downstream check is moot.
+    try:
+        _fire_safety_alert(
+            cfg, env, "auth", not STATE.auth_ok,
+            "Polymarket US API disconnected",
+            "Authentication to Polymarket US failed — no orders can be placed "
+            "or reconciled until it recovers. Check your API credentials and "
+            "network.")
+    except Exception as e:
+        logger.debug(f"auth alert check failed: {e}")
+
+    # An order stuck awaiting recovery halts every engine with no timeout.
+    try:
+        blocked = order_journal.blocked_intents()
+        n = len(blocked)
+        first = (blocked[0].get("ticker") if blocked else "") or "?"
+        _fire_safety_alert(
+            cfg, env, "recovery", bool(blocked),
+            "Order recovery required — trading halted",
+            f"{n} order intent(s) are unreconciled (first: {first}). Every "
+            "engine is paused until they are recovered on the Overview page.")
+    except Exception as e:
+        logger.debug(f"recovery alert check failed: {e}")
+
+    # Execution circuit open — the live entry path is in a safety cool-down.
+    try:
+        health = trader.execution_health.status()
+        _fire_safety_alert(
+            cfg, env, "executionHealth", bool(health.get("blocked")),
+            "Execution connection paused",
+            str(health.get("reason")
+                or "The execution health guard opened after repeated "
+                   "quote/order failures; live entries are paused."))
+    except Exception as e:
+        logger.debug(f"execution-health alert check failed: {e}")
+
+    # Peak-equity drawdown stop — new entries paused after a fall from peak.
+    try:
+        if float(cfg.get("max_drawdown_fraction") or 0.0) > 0:
+            tripped, why = account_risk.drawdown_block(cfg, env)
+            _fire_safety_alert(
+                cfg, env, "drawdown", bool(tripped),
+                "Drawdown stop — new entries paused",
+                why or "Account equity fell past the configured drawdown limit.")
+    except Exception as e:
+        logger.debug(f"drawdown alert check failed: {e}")
+
+    # Daily loss stop / take-profit — the day's trading is done.
+    try:
+        blocked, why = trader._is_blocked_by_daily_risk(cfg, env)
+        _fire_safety_alert(
+            cfg, env, "dailyRisk", bool(blocked),
+            "Daily stop reached — entries paused",
+            why or "The daily loss stop or take-profit paused new entries "
+                   "until the next trading day.")
+    except Exception as e:
+        logger.debug(f"daily-risk alert check failed: {e}")
 
 _event_webhook_last: dict[int, str] = {}
 _EVENT_WEBHOOK_MAX = 2000
@@ -859,6 +976,12 @@ async def _scanner_and_trader_loop() -> None:
                                         "excluded from today/session/all-time P&L "
                                         "and the daily stop"
                                     )
+                                    _emit_safety_alert(
+                                        cfg, polymarket_auth.get_env(), "transfer",
+                                        f"Account {kind} detected",
+                                        f"A {kind} of ${abs(moved):.2f} was detected and "
+                                        "excluded from P&L, the daily stop, and the "
+                                        "drawdown peak.")
                             except Exception as e:
                                 logger.debug(f"transfer detection failed: {e}")
                             db.insert_pnl_snapshot(
@@ -881,6 +1004,7 @@ async def _scanner_and_trader_loop() -> None:
                                 lifetime_losses=snap["losses"],
                             )
                 await emit_event("account:update", snap)
+                _check_safety_alerts(cfg, polymarket_auth.get_env())
                 last_account_emit = now
         except Exception as e:
             logger.debug(f"account snapshot error: {e}")
@@ -1341,6 +1465,14 @@ async def _h_flatten(_p: dict) -> dict:
         await emit_event("backend:reconciled", {"flattened": r["sold"]})
     except Exception:
         pass
+    try:
+        _emit_safety_alert(
+            STATE.cfg, polymarket_auth.get_env(), "flatten",
+            "Kill switch — positions flattened",
+            f"Flattened on request: {int(r.get('sold') or 0)} position(s) sold, "
+            f"{int(r.get('canceled') or 0)} order(s) canceled.")
+    except Exception as e:
+        logger.debug(f"flatten alert failed: {e}")
     return {"closed": r["canceled"] + r["sold"], **r}
 
 

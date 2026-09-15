@@ -139,7 +139,15 @@ export function SettingsPage() {
               onChange={(v) => void update('whaleWebhookUrl', v)} />
             <UrlField label="Momentum alerts" value={config.momentumWebhookUrl}
               onChange={(v) => void update('momentumWebhookUrl', v)} />
+            <UrlField label="Safety alerts" value={config.alertWebhookUrl}
+              onChange={(v) => void update('alertWebhookUrl', v)} />
           </div>
+          <p className="mt-2 text-xs text-rom-muted">
+            Safety alerts fire when trading pauses or needs you — drawdown or
+            daily stop, execution circuit open, an order awaiting recovery, auth
+            lost, the kill switch, or a deposit/withdrawal. Blank falls back to
+            the Trade events channel.
+          </p>
           <Switch
             label="Enable Discord webhooks"
             description="Master switch — turn off to mute all webhook posting without losing the URLs."

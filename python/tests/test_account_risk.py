@@ -347,6 +347,56 @@ def test_reset_reanchors_the_peak_for_a_deliberate_change(fresh_db, cfg):
     assert account_risk.drawdown_block(cfg, ENV)[0] is False
 
 
+def _record_transfer(usd):
+    """Write a detected transfer the way the live poller's ledger does."""
+    with db.get_db() as conn:
+        db.kv_set(conn, f"transfers:{ENV}:" + db.day_key(0), repr(float(usd)))
+
+
+def test_withdrawal_is_not_read_as_a_drawdown(fresh_db, cfg):
+    """Moving cash out must not trip the peak-equity stop.
+
+    The daily stop and P&L already exclude detected transfers; the drawdown
+    control now measures the same transfer-adjusted equity. A $200 withdrawal
+    from a $1000 account drops raw equity 20% but is not a trading loss.
+    """
+    cfg["max_drawdown_fraction"] = 0.05
+    snapshot(1000.0)
+    assert account_risk.drawdown_block(cfg, ENV)[0] is False  # peak 1000
+    _record_transfer(-200.0)
+    snapshot(800.0)  # raw -20%, but adjusted equity is still 1000
+    assert account_risk.drawdown_block(cfg, ENV)[0] is False
+
+
+def test_deposit_does_not_inflate_the_peak(fresh_db, cfg):
+    """A deposit must not raise the high-water mark and hide a later loss.
+
+    Without netting, a $500 deposit would lift the peak to $1500, so a real 6%
+    trading loss measured against the true $1000 basis would read as only 4%
+    and slip under the stop.
+    """
+    cfg["max_drawdown_fraction"] = 0.05
+    snapshot(1000.0)
+    account_risk.drawdown_block(cfg, ENV)  # peak adjusted 1000
+    _record_transfer(500.0)
+    snapshot(1500.0)  # deposit; adjusted equity still 1000
+    assert account_risk.drawdown_block(cfg, ENV)[0] is False
+    snapshot(1440.0)  # adjusted 940 — 6% below the true peak, 4% below raw 1500
+    assert account_risk.drawdown_block(cfg, ENV)[0] is True
+
+
+def test_real_loss_still_blocks_with_transfers_present(fresh_db, cfg):
+    """Netting transfers must not mask a genuine drawdown."""
+    cfg["max_drawdown_fraction"] = 0.05
+    _record_transfer(100.0)  # an earlier deposit is on the books
+    snapshot(1100.0)  # adjusted 1000
+    account_risk.drawdown_block(cfg, ENV)
+    snapshot(1030.0)  # adjusted 930 — a real 7% loss
+    blocked, reason = account_risk.drawdown_block(cfg, ENV)
+    assert blocked is True
+    assert "drawdown limit reached" in reason
+
+
 def test_config_clamps_the_new_fractions_into_range():
     c = merge_with_defaults({
         "maxGroupExposureFraction": 5.0, "maxDrawdownFraction": -2.0})

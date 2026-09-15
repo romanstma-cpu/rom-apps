@@ -38,6 +38,8 @@ COLOR = {
     "startup":  0xA855F7,
     "shutdown": 0x52525B,
     "stats":    0x6366F1,
+    "alert":    0xEF4444,
+    "cleared":  0x22C55E,
 }
 
 EMOJI = {
@@ -53,6 +55,8 @@ EMOJI = {
     "startup":  "🚀",
     "shutdown": "⏹️",
     "stats":    "📊",
+    "alert":    "🛑",
+    "cleared":  "✅",
 }
 
 
@@ -271,6 +275,39 @@ async def send_shutdown(url: str, note: str = "clean exit") -> None:
         "description": str(note)[:1000],
     }
     await _post(url, {"username": "ROM PolyBot", "embeds": [embed]})
+
+
+def alert_embed(event: str, title: str, message: str, env: str,
+                *, cleared: bool = False) -> dict:
+    """A safety/health notice: the bot paused, needs you, or has recovered.
+
+    These are the events an unattended operator most needs pushed — a drawdown
+    or daily stop pausing entries, the execution circuit opening, an order
+    stuck awaiting recovery, auth dropping, or cash moving. ``cleared`` marks
+    the recovery side of a paired condition so a resolved pause reads green.
+    """
+    kind = "cleared" if cleared else "alert"
+    label = "Resolved" if cleared else "Action needed"
+    return {
+        "title": f"{EMOJI[kind]} {title}",
+        "color": COLOR[kind],
+        "timestamp": _now_iso(),
+        "description": str(message)[:1500] or label,
+        "fields": [{"name": "Event", "value": str(event)[:200], "inline": True},
+                   {"name": "Status", "value": label, "inline": True}],
+        "footer": {"text": f"ROM PolyBot · {env.upper()} · Safety"},
+    }
+
+
+async def send_alert(url: str, event: str, title: str, message: str, env: str,
+                     *, cleared: bool = False) -> None:
+    if not url:
+        return
+    payload = {
+        "username": "ROM PolyBot · Alerts",
+        "embeds": [alert_embed(event, title, message, env, cleared=cleared)],
+    }
+    await _post(url, payload)
 
 
 def _fmt_pnl(v: float) -> str:

@@ -56,7 +56,8 @@ const FIELD_TYPES: Readonly<Record<string, FieldType>> = {
   minMomentumConfidence: 'number', minMomentumEdge: 'number', minEntryPriceFrac: 'number',
   // webhooks
   eventWebhookUrl: 'string', statsWebhookUrl: 'string', whaleWebhookUrl: 'string',
-  momentumWebhookUrl: 'string', statsPushInterval: 'number', statsChartWindowHours: 'number',
+  momentumWebhookUrl: 'string', alertWebhookUrl: 'string',
+  statsPushInterval: 'number', statsChartWindowHours: 'number',
   enableDiscord: 'boolean',
   // crypto15m
   crypto15mEnabled: 'boolean', crypto15mInterval: 'string-enum', crypto15mAssets: 'string-array-null',

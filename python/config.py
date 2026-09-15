@@ -223,6 +223,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "stats_webhook_url": "",
     "whale_webhook_url": "",
     "momentum_webhook_url": "",
+    # Safety/health notices (paused, needs recovery, auth lost, cash moved).
+    # Falls back to the trade-event webhook when left blank.
+    "alert_webhook_url": "",
     "stats_push_interval": 3600,
     "stats_chart_window_hours": 168,
     "enable_discord": True,

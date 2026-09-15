@@ -103,6 +103,7 @@ export interface TraderConfig {
   statsWebhookUrl: string;
   whaleWebhookUrl: string;
   momentumWebhookUrl: string;
+  alertWebhookUrl: string;
   statsPushInterval: number;
   statsChartWindowHours: number;
   enableDiscord: boolean;

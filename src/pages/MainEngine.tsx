@@ -26,8 +26,8 @@ const PRESET_IGNORED_PREFIXES = ['crypto15m', 'copy', 'script'];
 const PRESET_IGNORED_KEYS = new Set([
   'enableTrading', 'mainPaperTrading', 'mainPaperBankrollUsd', 'network',
   'eventWebhookUrl', 'statsWebhookUrl', 'whaleWebhookUrl',
-  'momentumWebhookUrl', 'enableDiscord', 'statsPushInterval',
-  'statsChartWindowHours',
+  'momentumWebhookUrl', 'alertWebhookUrl', 'enableDiscord',
+  'statsPushInterval', 'statsChartWindowHours',
 ]);
 
 function matchesPreset(cfg: TraderConfig, preset: TraderConfig): boolean {

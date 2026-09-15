@@ -123,6 +123,7 @@ export const DEFAULT_CONFIG: TraderConfig = {
   statsWebhookUrl: '',
   whaleWebhookUrl: '',
   momentumWebhookUrl: '',
+  alertWebhookUrl: '',
   statsPushInterval: 1800,
   statsChartWindowHours: 168,
   enableDiscord: true,
