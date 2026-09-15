@@ -88,3 +88,7 @@ Use isolated Electron profiles for UI checks, with mocked trading status and no 
 The application shell uses one faint grid and top-left blue glow as its restrained terminal signature. It must stay behind content, disappear gradually down the viewport, and reduce its grid scale on narrow screens. Shared Page owns the workspace label, title rhythm, responsive gutters, divider and scroll container. Cards may use a shallow navy shadow for separation, while confirmed status still uses mint and primary actions use blue.
 
 Overview may explain the strategy as a four-stage decision pipeline: signals, live quote, risk and route. These labels describe the real evaluation sequence and never invent live values, projected returns or execution state. Small-account guidance must say that sizing can reach $0.50 only when exchange minimums, depth, fees and saved risk limits allow it.
+
+## 2.23 evidence-prioritized selection
+
+When multiple live Whale or Momentum signals compete for limited account capacity, the main strategy considers sources with qualified positive settled-practice evidence first. Collecting or conservatively non-positive sources remain at starter priority and 25% live size. Practice mode stays ordered by the unchanged signal heuristic so challenger evidence remains comparable. Kelly mode continues to use its calibrated capital-return ranking. The Strategy explanation and allocation method must describe priority as historical evidence, never as a prediction or profit guarantee.

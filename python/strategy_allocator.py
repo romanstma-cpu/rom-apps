@@ -174,14 +174,14 @@ def build_plan(conn, env, *, enabled_sources=None, now=None):
         "limits": {"minimumMultiplier": MIN_MULTIPLIER,
                    "maximumMultiplier": MAX_MULTIPLIER},
         "method": ("Uses the lower 10th-percentile bootstrapped return from both 30-day and "
-                   "90-day independent practice events. Missing evidence leaves sizing unchanged."),
+                   "90-day independent practice events. Qualified positive sources receive "
+                   "first live consideration when capital is scarce; missing evidence keeps "
+                   "challengers at starter priority and size."),
     }
 
 
-def source_multiplier(conn, env, source, *, enabled_sources=None, now=None):
-    if source not in SUPPORTED_SOURCES:
-        return 1.0, "Source is outside evidence allocation."
-    plan = None
+def _plan_for(conn, env, *, enabled_sources=None, now=None):
+    """Build once per evidence window instead of bootstrapping on every scan."""
     if now is None:
         try:
             db_row = conn.execute("PRAGMA database_list").fetchone()
@@ -198,8 +198,14 @@ def source_multiplier(conn, env, source, *, enabled_sources=None, now=None):
             plan = build_plan(conn, env, enabled_sources=enabled_sources)
             _plan_cache.clear()
             _plan_cache[key] = (current, plan)
-    if plan is None:
-        plan = build_plan(conn, env, enabled_sources=enabled_sources, now=now)
+        return plan
+    return build_plan(conn, env, enabled_sources=enabled_sources, now=now)
+
+
+def source_multiplier(conn, env, source, *, enabled_sources=None, now=None):
+    if source not in SUPPORTED_SOURCES:
+        return 1.0, "Source is outside evidence allocation."
+    plan = _plan_for(conn, env, enabled_sources=enabled_sources, now=now)
     item = next((row for row in plan["candidates"] if row["source"] == source), None)
     if not item:
         return 1.0, "Source is not enabled."
@@ -216,7 +222,7 @@ def starter_multiplier(conn, env, source, *, enabled_sources=None, now=None):
     """
     if source not in SUPPORTED_SOURCES:
         return 1.0, "Source is outside evidence-gated sizing."
-    plan = build_plan(conn, env, enabled_sources=enabled_sources, now=now)
+    plan = _plan_for(conn, env, enabled_sources=enabled_sources, now=now)
     item = next((row for row in plan["candidates"] if row["source"] == source), None)
     if not item:
         return 1.0, "Source is not enabled."
@@ -229,3 +235,26 @@ def starter_multiplier(conn, env, source, *, enabled_sources=None, now=None):
             "Conservative settled-practice return is not positive; live entries stay at 25% size."
         )
     return 1.0, "Qualified positive settled practice evidence unlocks normal live size."
+
+
+def live_selection_weights(
+    conn, env, *, enabled_sources=None, starter_gate=True, promote=False,
+    now=None,
+):
+    """Weights for ordering live candidates when account capacity is scarce.
+
+    The same settled-practice contract used by live sizing owns these weights.
+    Unqualified or non-positive sources stay at starter priority. Optional
+    promotion follows the already bounded evidence-allocation multiplier.
+    """
+    plan = _plan_for(conn, env, enabled_sources=enabled_sources, now=now)
+    weights = {}
+    for item in plan["candidates"]:
+        if starter_gate and (item["status"] != "qualified"
+                or (item["conservativeReturnPct"] or 0) <= 0):
+            weights[item["source"]] = MIN_MULTIPLIER
+        else:
+            weights[item["source"]] = (
+                float(item["multiplier"]) if promote else 1.0
+            )
+    return weights

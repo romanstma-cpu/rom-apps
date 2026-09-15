@@ -173,6 +173,38 @@ def _compute_edge(signal: dict, source: str) -> float:
     return conf - implied
 
 
+def _rank_candidates(
+    candidates: list[tuple[dict, str]], cfg: dict, *, at: float,
+    calibration: dict | None = None,
+    evidence_weights: dict[str, float] | None = None,
+) -> None:
+    """Rank scarce capital without treating heuristic scores as probabilities.
+
+    Kelly mode keeps its calibrated net-return ranking. Other sizing modes use
+    source-level settled practice evidence as the first key, then the existing
+    heuristic margin. Practice passes no weights, so challenger observations
+    remain unbiased and can still qualify for future live priority.
+    """
+    if cfg.get("sizing_mode") == "kelly":
+        if calibration is None:
+            raise ValueError("Kelly calibration unavailable; waiting for evidence")
+        candidates.sort(
+            key=lambda item: signal_calibration.capital_priority(
+                item[0], item[1], at, calibration,
+            ),
+            reverse=True,
+        )
+        return
+    weights = evidence_weights or {}
+    candidates.sort(
+        key=lambda item: (
+            float(weights.get(item[1], 1.0)),
+            _compute_edge(item[0], item[1]),
+        ),
+        reverse=True,
+    )
+
+
 def _signal_rule_values(signal: dict, source: str) -> dict:
     _, cost_cents = _signal_cost_cents(signal, source)
     return {
@@ -1019,16 +1051,33 @@ async def scan_for_trades(cfg: dict) -> list[dict]:
             direction, _ = _signal_cost_cents(signal, source)
             eligible_sides.setdefault(signal["ticker"], set()).add(direction)
     conflicts = {ticker for ticker, sides in eligible_sides.items() if len(sides) > 1}
+    ranking_at = time.time()
+    ranking_model = None
     if cfg.get('sizing_mode') == 'kelly':
         try:
             ranking_model = signal_calibration.load_model()
         except Exception:
             _skip_log('Kelly calibration unavailable; waiting for evidence')
             return []
-        ranking_at = time.time()
-        candidates.sort(key=lambda c: signal_calibration.capital_priority(c[0],c[1],ranking_at,ranking_model),reverse=True)
-    else:
-        candidates.sort(key=lambda c: _compute_edge(c[0], c[1]), reverse=True)
+    evidence_weights: dict[str, float] = {}
+    if live and (cfg.get("evidence_gated_sizing_enabled", True)
+                 or cfg.get("evidence_allocation_enabled")):
+        enabled_sources = [
+            source for source, enabled in (
+                ("whale", cfg.get("trade_whales")),
+                ("momentum", cfg.get("trade_momentum")),
+            ) if enabled
+        ]
+        with db.get_db() as conn:
+            evidence_weights = strategy_allocator.live_selection_weights(
+                conn, env, enabled_sources=enabled_sources,
+                starter_gate=bool(cfg.get("evidence_gated_sizing_enabled", True)),
+                promote=bool(cfg.get("evidence_allocation_enabled")),
+            )
+    _rank_candidates(
+        candidates, cfg, at=ranking_at, calibration=ranking_model,
+        evidence_weights=evidence_weights,
+    )
     inserted: list[dict] = []
     filter_counts: dict[str, int] = {}
     cycle_stop_reason = None

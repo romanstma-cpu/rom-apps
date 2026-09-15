@@ -94,3 +94,51 @@ def test_allocation_multiplies_strategy_target_but_never_risk_caps():
     reduced = trader.entry_budget(1000, 0, 0, 10, 50, cfg, allocation_multiplier=.25)
     assert reduced == base * .25
     assert base < raised <= cfg["hard_max_position_usd"]
+
+
+def test_live_candidate_ranking_prefers_a_source_with_positive_evidence():
+    import trader
+    from config import merge_with_defaults
+
+    candidates = [
+        ({"price": .50, "confidence": 80, "taker_side": "yes"}, "whale"),
+        ({"price": .50, "confidence": 60, "direction": "yes"}, "momentum"),
+    ]
+    trader._rank_candidates(
+        candidates, merge_with_defaults({"sizingMode": "percent"}), at=NOW.timestamp(),
+        evidence_weights={"whale": .25, "momentum": 1.0},
+    )
+    assert candidates[0][1] == "momentum"
+
+
+def test_practice_candidate_ranking_remains_edge_first_without_live_weights():
+    import trader
+    from config import merge_with_defaults
+
+    candidates = [
+        ({"price": .50, "confidence": 80, "taker_side": "yes"}, "whale"),
+        ({"price": .50, "confidence": 60, "direction": "yes"}, "momentum"),
+    ]
+    trader._rank_candidates(
+        candidates, merge_with_defaults({"sizingMode": "percent"}), at=NOW.timestamp(),
+    )
+    assert candidates[0][1] == "whale"
+
+
+def test_live_selection_weights_use_the_same_qualified_practice_contract():
+    rows = sample("whale", 50, roi=.20) + sample(
+        "momentum", 10, roi=.20, start_id=100,
+    )
+    weights = allocator.live_selection_weights(
+        Conn(rows), "mainnet", enabled_sources=["whale", "momentum"],
+        now=NOW.timestamp(),
+    )
+    assert weights == {"whale": 1.0, "momentum": .25}
+
+
+def test_disabled_starter_gate_does_not_reduce_candidate_priority():
+    weights = allocator.live_selection_weights(
+        Conn(sample("whale", 10, roi=.20)), "mainnet",
+        enabled_sources=["whale"], starter_gate=False, now=NOW.timestamp(),
+    )
+    assert weights == {"whale": 1.0}
