@@ -13,6 +13,8 @@ import httpx
 import polymarket_auth as auth
 from categorize import categorize_by_keywords
 
+logger = logging.getLogger(__name__)
+
 PUBLIC_BASE = 'https://gateway.polymarket.us'
 PRIVATE_BASE = 'https://api.polymarket.us'
 _client = None
@@ -21,6 +23,92 @@ _crypto_market_cache = (0.0, [])
 _crypto_market_task = None
 
 ERROR_DETAIL_CHARS = 500
+
+# --- client-side pacing ----------------------------------------------------
+#
+# The US gateway publishes no rate limit and returns 429 with the same shape as
+# any other 4xx, so the adapter paces itself rather than discovering the ceiling
+# with real orders in flight. MIN_REQUEST_INTERVAL spaces every request, order
+# submissions included: delaying a request can never duplicate it. A 429
+# additionally parks every caller until Retry-After elapses, so a burst backs
+# off together instead of each coroutine retrying into the same wall.
+#
+# Retry is opt-in per request and stays OFF by default. A retried POST can
+# duplicate an order the first attempt actually placed, which is the one failure
+# this adapter exists to prevent -- only idempotent reads pass `retry=True`.
+MIN_REQUEST_INTERVAL = 0.12
+RETRY_ATTEMPTS = 3
+RETRY_BASE_DELAY = 0.4
+RETRY_MAX_DELAY = 5.0
+# A server may name any Retry-After it likes; a trading loop cannot park for an
+# hour on one read, so an over-long value is clamped and the request fails.
+RETRY_AFTER_CAP = 30.0
+
+_throttle_lock = None
+_next_request_at = 0.0
+_cooldown_until = 0.0
+
+
+def _pacing_reset():
+    """Clear pacing state. For tests; never called in normal operation."""
+    global _next_request_at, _cooldown_until, _throttle_lock
+    _next_request_at = 0.0
+    _cooldown_until = 0.0
+    _throttle_lock = None
+
+
+async def _pace():
+    """Space this request from the last one and honour any active cooldown."""
+    global _throttle_lock, _next_request_at
+    if _throttle_lock is None:
+        _throttle_lock = asyncio.Lock()
+    async with _throttle_lock:
+        loop = asyncio.get_event_loop()
+        wait = max(_next_request_at, _cooldown_until) - loop.time()
+        if wait > 0:
+            await asyncio.sleep(wait)
+        _next_request_at = loop.time() + MIN_REQUEST_INTERVAL
+
+
+def _park(seconds):
+    """Hold every caller off until `seconds` from now, after a 429."""
+    global _cooldown_until
+    try:
+        until = asyncio.get_event_loop().time() + max(0.0, float(seconds))
+    except RuntimeError:
+        return
+    _cooldown_until = max(_cooldown_until, until)
+
+
+def _retry_after_seconds(response, default):
+    """Seconds the server asked us to wait, clamped; `default` when unstated.
+
+    Retry-After is either a delta in seconds or an HTTP date. A date in the past
+    means "now", and an unparseable value falls back rather than raising inside
+    the error path.
+    """
+    raw = (response.headers.get('Retry-After') or '').strip()
+    if not raw:
+        return default
+    try:
+        return max(0.0, min(float(raw), RETRY_AFTER_CAP))
+    except ValueError:
+        pass
+    try:
+        from email.utils import parsedate_to_datetime
+        from datetime import datetime, timezone
+        when = parsedate_to_datetime(raw)
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=timezone.utc)
+        delta = (when - datetime.now(timezone.utc)).total_seconds()
+        return max(0.0, min(delta, RETRY_AFTER_CAP))
+    except (TypeError, ValueError):
+        return default
+
+
+def _backoff(attempt):
+    """Exponential delay for retry number `attempt`, starting at 1."""
+    return min(RETRY_BASE_DELAY * (2 ** (attempt - 1)), RETRY_MAX_DELAY)
 
 class PolymarketAPIError(Exception):
     def __init__(self, status_code, message, *, detail=''):
@@ -65,17 +153,56 @@ async def close_clients():
     if _client is not None: await _client.aclose()
     _client = None
 
-async def _request(method, path, *, private=False, params=None, body=None):
+async def _request(method, path, *, private=False, params=None, body=None, retry=False):
+    """One request, paced, with retry strictly opt-in.
+
+    `retry` repeats only on a transport failure, a 429, or a 5xx -- never on a
+    4xx, which is a decision the server already made. Pass it ONLY for reads
+    that are safe to repeat: a retried state-changing call can duplicate an
+    order the first attempt actually placed. A 429 parks every caller whether or
+    not this request retries, so an order submission that hits the limit still
+    backs the rest of the process off.
+    """
     global _client
     if not path.startswith('/v1/'): raise ValueError('Expected a US API v1 path')
-    if _client is None: _client=httpx.AsyncClient(timeout=20, follow_redirects=False)
-    headers=auth.l2_headers(method,path) if private else {}
-    response=await _client.request(method, (PRIVATE_BASE if private else PUBLIC_BASE)+path,
-                                   headers=headers, params=params, json=body)
-    if response.status_code >= 300:
-        raise PolymarketAPIError(response.status_code, response.reason_phrase,
-                                 detail=_error_detail(response))
-    return response.json() if response.content else {}
+    if _client is None:
+        _client=httpx.AsyncClient(
+            # A stalled TLS connect must not hold the order path for the whole
+            # read budget, so connect is bounded far shorter than the response.
+            timeout=httpx.Timeout(20.0, connect=5.0),
+            limits=httpx.Limits(max_connections=16, max_keepalive_connections=8),
+            follow_redirects=False)
+    url=(PRIVATE_BASE if private else PUBLIC_BASE)+path
+    attempts=RETRY_ATTEMPTS if retry else 1
+    for attempt in range(1, attempts+1):
+        await _pace()
+        # Signed headers carry a timestamp, so they are rebuilt per attempt.
+        headers=auth.l2_headers(method,path) if private else {}
+        try:
+            response=await _client.request(method, url, headers=headers,
+                                           params=params, json=body)
+        except httpx.TransportError as exc:
+            if attempt >= attempts: raise
+            logger.debug(f'{method} {path} transport failure ({exc!r}); retry {attempt}')
+            await asyncio.sleep(_backoff(attempt))
+            continue
+        if response.status_code == 429:
+            delay=_retry_after_seconds(response, _backoff(attempt))
+            _park(delay)
+            if attempt >= attempts:
+                raise PolymarketAPIError(429, 'Too Many Requests',
+                                         detail=_error_detail(response))
+            logger.debug(f'{method} {path} rate limited; waiting {delay:.1f}s')
+            await asyncio.sleep(delay)
+            continue
+        if response.status_code >= 500 and attempt < attempts:
+            logger.debug(f'{method} {path} HTTP {response.status_code}; retry {attempt}')
+            await asyncio.sleep(_backoff(attempt))
+            continue
+        if response.status_code >= 300:
+            raise PolymarketAPIError(response.status_code, response.reason_phrase,
+                                     detail=_error_detail(response))
+        return response.json() if response.content else {}
 
 def _money(value, default=0.0):
     if isinstance(value,dict): value=value.get('value')
@@ -115,7 +242,7 @@ def _normalize_market(raw):
             'no_price_dollars':1-last,'result':'','settlement_value_dollars':None}
 
 async def fetch_markets(limit=100, offset=0, **kwargs):
-    data=await _request('GET','/v1/markets',params={'limit':min(100,limit),'offset':offset,'active':'true','closed':'false'})
+    data=await _request('GET','/v1/markets',params={'limit':min(100,limit),'offset':offset,'active':'true','closed':'false'},retry=True)
     return [m for r in data.get('markets',[]) if (m:=_normalize_market(r))]
 
 async def fetch_all_open_markets(max_pages=10):
@@ -129,12 +256,12 @@ async def fetch_all_open_markets(max_pages=10):
     return rows
 
 async def fetch_market(ticker):
-    data=await _request('GET','/v1/markets',params={'slug':ticker,'limit':1})
+    data=await _request('GET','/v1/markets',params={'slug':ticker,'limit':1},retry=True)
     rows=data.get('markets',[])
     market=_normalize_market(rows[0]) if rows else None
     if market and market['status']=='closed':
         try:
-            result=await _request('GET','/v1/markets/'+quote(ticker,safe='')+'/settlement')
+            result=await _request('GET','/v1/markets/'+quote(ticker,safe='')+'/settlement',retry=True)
             if result.get('settlement') is not None:
                 payout=_money(result['settlement'])
                 if 0<=payout<=1:
@@ -156,14 +283,14 @@ async def get_market_meta(ticker):
     return _meta.get(ticker)
 
 async def fetch_events(limit=100, offset=0, **kwargs):
-    data=await _request('GET','/v1/events',params={'limit':limit,'offset':offset,'active':'true','closed':'false'})
+    data=await _request('GET','/v1/events',params={'limit':limit,'offset':offset,'active':'true','closed':'false'},retry=True)
     return [{**e,'event_ticker':e.get('slug',''),'series_ticker':e.get('seriesSlug','')} for e in data.get('events',[])], None
 
-async def fetch_series(series_ticker): return await _request('GET','/v1/series/'+quote(series_ticker,safe=''))
+async def fetch_series(series_ticker): return await _request('GET','/v1/series/'+quote(series_ticker,safe=''),retry=True)
 async def web_market_url(ticker, **kwargs): return 'https://polymarket.us/event/'+quote(ticker,safe='')
 
 async def _book(ticker):
-    data=await _request('GET','/v1/markets/'+quote(ticker,safe='')+'/book')
+    data=await _request('GET','/v1/markets/'+quote(ticker,safe='')+'/book',retry=True)
     main_recorder.book(ticker,data.get('marketData',{}))
     return data.get('marketData',{})
 
@@ -245,7 +372,7 @@ async def fetch_recent_trades(limit=1000):
     return us_market_stream.recent(limit)
 
 async def get_balance():
-    data=await _request('GET','/v1/account/balances',private=True)
+    data=await _request('GET','/v1/account/balances',private=True,retry=True)
     usd=next((b for b in data.get('balances',[]) if b.get('currency')=='USD'),None)
     if usd is None or 'buyingPower' not in usd: raise PolymarketAPIError(502,'USD buying power missing')
     return {'balance':round(_money(usd['buyingPower'])*100),'portfolio_value':round(_money(usd.get('assetNotional'))*100)}
@@ -262,7 +389,7 @@ async def get_positions(limit=1000, *, settlement_status=None,paginate=True,user
     while True:
         params={'limit':min(limit,100)}
         if cursor: params['cursor']=cursor
-        data=await _request('GET','/v1/portfolio/positions',private=True,params=params)
+        data=await _request('GET','/v1/portfolio/positions',private=True,params=params,retry=True)
         if not isinstance(data.get('positions'),dict):
             raise PolymarketAPIError(502,'Positions missing from response')
         for slug,p in data.get('positions',{}).items():
@@ -298,7 +425,7 @@ def _normalize_order(raw):
             'fees_usd':order_journal.number(raw.get('commissionNotionalTotalCollected'))}
 
 async def get_order(order_id):
-    data=await _request('GET','/v1/order/'+quote(order_id,safe=''),private=True)
+    data=await _request('GET','/v1/order/'+quote(order_id,safe=''),private=True,retry=True)
     raw=data.get('order')
     if not isinstance(raw,dict): raise PolymarketAPIError(502,'Order missing from response')
     order_journal.record_order(raw)
@@ -377,7 +504,7 @@ async def cancel_order(order_id):
 
 
 async def recover_order(local_id, exchange_order_id):
-    data=await _request('GET','/v1/order/'+quote(exchange_order_id,safe=''),private=True)
+    data=await _request('GET','/v1/order/'+quote(exchange_order_id,safe=''),private=True,retry=True)
     raw=data.get('order') or {}
     order_journal.attach_verified_order(local_id,raw)
     return order_journal.get(local_id)
