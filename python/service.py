@@ -543,6 +543,17 @@ def _check_safety_alerts(cfg: dict, env: str) -> None:
     except Exception as e:
         logger.debug(f"drawdown alert check failed: {e}")
 
+    # A drifted host clock expires signed requests; the venue's 401 never says
+    # so, so it is named here before it can be mistaken for bad credentials.
+    try:
+        bad, why = polymarket_api.clock_skew_problem()
+        _fire_safety_alert(
+            cfg, env, "clockSkew", bad,
+            "System clock is out of sync", why or
+            "The system clock is back in step with Polymarket US.")
+    except Exception as e:
+        logger.debug(f"clock-skew alert check failed: {e}")
+
     # Daily loss stop / take-profit — the day's trading is done.
     try:
         blocked, why = trader._is_blocked_by_daily_risk(cfg, env)
@@ -1965,6 +1976,14 @@ async def _h_trading_status(_p: dict) -> dict:
 
     gate("paused", "Engine not paused", not STATE.paused, "paused by user")
     gate("auth", "Polymarket US API", bool(STATE.auth_ok), "auth failed — check API credentials")
+    # Sits next to auth deliberately: a drifted clock presents as an auth
+    # failure, and an operator who sees only "auth failed" re-checks keys that
+    # are fine. Unknown skew reads ok — this reports a measurement, not a guess.
+    try:
+        skew_bad, skew_why = polymarket_api.clock_skew_problem()
+    except Exception:
+        skew_bad, skew_why = False, ""
+    gate("clock", "System clock in sync", not skew_bad, skew_why)
     enabled = bool(cfg.get("enable_trading"))
     paper = bool(cfg.get("main_paper_trading")) and not enabled
     mode = "live" if enabled else ("paper" if paper else "paused")

@@ -110,6 +110,68 @@ def _backoff(attempt):
     """Exponential delay for retry number `attempt`, starting at 1."""
     return min(RETRY_BASE_DELAY * (2 ** (attempt - 1)), RETRY_MAX_DELAY)
 
+
+# --- host clock vs exchange clock -----------------------------------------
+#
+# `auth.l2_headers` signs the local wall clock into every private request, so a
+# drifted host has its requests rejected as expired -- arriving as a bare 401
+# that says nothing about the real cause. Desktop machines that sleep or have
+# NTP disabled drift routinely, so this is a first-order failure, not an
+# exotic one. Every response already carries the server's own time, so the
+# offset costs no extra request. The skew is reported, never silently
+# compensated for: signing a timestamp the host does not believe would hide a
+# broken clock that also corrupts every other time-based gate.
+#
+# HTTP Date has one-second resolution and includes flight time, so the limit
+# sits well clear of that noise.
+CLOCK_SKEW_LIMIT = 5.0
+_clock_skew = None
+_clock_skew_at = 0.0
+
+
+def _note_server_clock(response):
+    """Record local-minus-exchange seconds from a response's Date header."""
+    global _clock_skew, _clock_skew_at
+    raw = (response.headers.get('Date') or '').strip()
+    if not raw:
+        return
+    try:
+        from email.utils import parsedate_to_datetime
+        from datetime import timezone
+        when = parsedate_to_datetime(raw)
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return
+    _clock_skew = time.time() - when.timestamp()
+    _clock_skew_at = time.monotonic()
+
+
+def clock_skew_seconds(max_age=300.0):
+    """Host clock minus exchange clock; positive means the host is ahead.
+
+    `None` when nothing has been measured inside `max_age` seconds, so a caller
+    reports "unknown" rather than treating a stale reading as current.
+    """
+    if _clock_skew is None:
+        return None
+    if time.monotonic() - _clock_skew_at > max_age:
+        return None
+    return _clock_skew
+
+
+def clock_skew_problem(max_age=300.0):
+    """(bad, message) for the measured skew. `bad` is False when unknown."""
+    skew = clock_skew_seconds(max_age)
+    if skew is None or abs(skew) <= CLOCK_SKEW_LIMIT:
+        return False, ''
+    way = 'ahead of' if skew > 0 else 'behind'
+    return True, (f"This machine's clock is {abs(skew):.0f}s {way} Polymarket US. "
+                  'Signed requests are stamped with the local clock and the '
+                  'exchange rejects them once they drift, so trading can fail '
+                  'with an unexplained authentication error. Enable automatic '
+                  'time sync on this machine.')
+
 class PolymarketAPIError(Exception):
     def __init__(self, status_code, message, *, detail=''):
         self.status_code = status_code
@@ -186,6 +248,7 @@ async def _request(method, path, *, private=False, params=None, body=None, retry
             logger.debug(f'{method} {path} transport failure ({exc!r}); retry {attempt}')
             await asyncio.sleep(_backoff(attempt))
             continue
+        _note_server_clock(response)
         if response.status_code == 429:
             delay=_retry_after_seconds(response, _backoff(attempt))
             _park(delay)
@@ -200,8 +263,16 @@ async def _request(method, path, *, private=False, params=None, body=None, retry
             await asyncio.sleep(_backoff(attempt))
             continue
         if response.status_code >= 300:
+            detail=_error_detail(response)
+            if response.status_code in (401, 403):
+                # The most common cause of a 401 on a correctly configured
+                # desktop is a drifted clock, and the server's reason phrase
+                # never says so. Name it here or the operator re-checks their
+                # keys, which are fine.
+                bad, why = clock_skew_problem()
+                if bad: detail=(detail+' | '+why).strip(' |')
             raise PolymarketAPIError(response.status_code, response.reason_phrase,
-                                     detail=_error_detail(response))
+                                     detail=detail)
         return response.json() if response.content else {}
 
 def _money(value, default=0.0):
