@@ -24,7 +24,7 @@ from ..model import Check, Stage
 POSITION_FIELDS = ('netPositionDecimal', 'netPosition', 'marketMetadata', 'cost', 'expired')
 METADATA_FIELDS = ('eventSlug', 'title')
 
-THROTTLE_S = 0.4  # there is no client-side rate limiting and no 429 handling
+THROTTLE_S = 0.4  # wider than the adapter's own pacing; a probe should not sit at the limit
 
 
 def _api_failure(name, exc):

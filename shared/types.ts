@@ -26,6 +26,8 @@ export interface TraderConfig {
   minConfidenceMomentum: number;
   minEntryPriceCents: number;
   maxEntryPriceCents: number;
+  maxEntrySpreadCents: number;
+  maxEntryChaseCents: number;
   maxResolutionDays?: number;
   allowedMomentumSignalTypes: string[];
   allowedCategories: string[] | null;

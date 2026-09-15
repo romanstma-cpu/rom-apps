@@ -17,9 +17,10 @@ else. So the stage fetches the raw payload once per market and runs
 than the book moving between two fetches. One end-to-end `get_quote` call
 proves the live path still returns the documented shape.
 
-Public GETs only -- no credentials are needed for any of this. There is no
-client-side rate limiting in the adapter and a 429 arrives here looking like
-any other 4xx, so every request goes through `_throttle`.
+Public GETs only -- no credentials are needed for any of this. The adapter
+now paces itself and honours Retry-After, so `_throttle` is a second, wider
+spacing on top of it: a survey stage should sit well under the live trading
+rate, not at it.
 """
 from __future__ import annotations
 
@@ -30,26 +31,30 @@ import time
 from collections import Counter
 
 import polymarket_api as api
+import execution_quality
 from execution_quality import affordable_at_depth, entry_price, entry_vwap_cents
 
 from ..model import Check, Stage
 
 # Sample size is deliberately small. The point is to see a real book, not to
-# survey the venue, and the adapter will happily flood the gateway.
+# survey the venue.
 LISTING_PAGES = 2
 SAMPLE_SIZE = 30
 REQUEST_INTERVAL_SEC = 0.35
 
-# execution_quality.entry_price:54 hardcodes this; there is no config key for
-# it. Mirrored rather than imported because it is a literal over there, and a
-# drift between the two is itself worth noticing.
-SPREAD_LIMIT_CENTS = 3
+# The default the entry gate enforces. It used to be a literal in
+# `entry_price` with nothing to import, so this was a hand-copy with a comment
+# about the drift risk; it is now a named constant and imported, so the two
+# cannot disagree. A profile that overrides `max_entry_spread_cents` moves the
+# live gate without moving this reading, which is the intent: the stage reports
+# what the shipped default admits.
+SPREAD_LIMIT_CENTS = execution_quality.MAX_SPREAD_CENTS
 
 _last_request = 0.0
 
 
 async def _throttle():
-    """Space requests out. A 429 is indistinguishable from a 400 here."""
+    """Space this stage's requests out, on top of the adapter's own pacing."""
     global _last_request
     wait = REQUEST_INTERVAL_SEC - (time.monotonic() - _last_request)
     if wait > 0:

@@ -469,6 +469,16 @@ export function MainEnginePage() {
               <NumberInput value={config.maxEntryPriceCents} step={1} min={1} max={99} suffix="¢"
                 onChange={(v) => void update('maxEntryPriceCents', v)} />
             </Field>
+            <Field label="Max entry spread"
+              hint="Widest bid/ask gap an entry will cross. A wide book means you pay the spread twice. 0 = only take a locked book.">
+              <NumberInput value={config.maxEntrySpreadCents} step={1} min={0} max={99} suffix="¢"
+                onChange={(v) => void update('maxEntrySpreadCents', v)} />
+            </Field>
+            <Field label="Max entry chase"
+              hint="How far above the signal price the market may have moved and still be entered. 0 = never chase.">
+              <NumberInput value={config.maxEntryChaseCents} step={1} min={0} max={99} suffix="¢"
+                onChange={(v) => void update('maxEntryChaseCents', v)} />
+            </Field>
             <Field label="Max signal age" hint="Older signals are skipped">
               <NumberInput value={config.maxSignalAgeSec} step={10} suffix="s"
                 onChange={(v) => void update('maxSignalAgeSec', v)} />

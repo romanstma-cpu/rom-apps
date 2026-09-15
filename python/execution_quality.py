@@ -43,6 +43,33 @@ def signal_problem(signal: dict, source: str) -> str | None:
     return None
 
 
+# Widest book an entry will cross and the furthest it will chase a signal that
+# has already moved. These were bare literals inside `entry_price` with no
+# config key, no doc and no settings surface -- and `livecheck` mirrored the
+# spread number by hand because there was nothing to import. They are named
+# here so both read one definition, and `max_entry_spread_cents` /
+# `max_entry_chase_cents` override them per profile.
+MAX_SPREAD_CENTS = 3
+MAX_CHASE_CENTS = 2
+
+
+def _limit(cfg: dict, key: str, default: int) -> int:
+    """A validated cent limit, falling back to the module default.
+
+    `entry_price` is called with hand-built config in tests and from engines
+    that do not carry the key, so a missing or unusable value must land on the
+    documented default rather than disabling the guard.
+    """
+    try:
+        value = cfg.get(key)
+        if value is None or isinstance(value, bool):
+            return default
+        value = int(value)
+    except (TypeError, ValueError):
+        return default
+    return value if value >= 0 else default
+
+
 def entry_price(quote: dict, signal_cents: int, cfg: dict) -> int:
     """Never invent executable liquidity when a quote is absent or crossed."""
     bid, ask = quote.get("bid_cents"), quote.get("ask_cents")
@@ -51,10 +78,12 @@ def entry_price(quote: dict, signal_cents: int, cfg: dict) -> int:
         raise ValueError("A valid two-sided market is required")
     if bid > ask:
         raise ValueError("Market quote is crossed")
-    if ask - bid > 3:
-        raise ValueError("Spread exceeds the 3-cent execution limit")
-    if ask - signal_cents > 2:
-        raise ValueError("Market moved more than 2 cents above the signal")
+    max_spread = _limit(cfg, "max_entry_spread_cents", MAX_SPREAD_CENTS)
+    max_chase = _limit(cfg, "max_entry_chase_cents", MAX_CHASE_CENTS)
+    if ask - bid > max_spread:
+        raise ValueError(f"Spread exceeds the {max_spread}-cent execution limit")
+    if ask - signal_cents > max_chase:
+        raise ValueError(f"Market moved more than {max_chase} cents above the signal")
     style = cfg.get("order_style")
     if style == "maker_join":
         if bid >= ask:

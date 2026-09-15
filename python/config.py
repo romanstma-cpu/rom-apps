@@ -86,6 +86,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "max_drawdown_fraction": 0.0,
     # Require displayed depth to support the order size before entering.
     "require_entry_depth": True,
+    # Widest book an entry will cross, and the furthest it will chase a signal
+    # the market has already moved past. Defaults match the limits
+    # execution_quality enforced as literals before they were configurable.
+    "max_entry_spread_cents": 3,
+    "max_entry_chase_cents": 2,
     # Cents below the touch an exit may concede. Exits are never priced
     # without a live quote.
     "exit_price_loss_budget_cents": 2,
@@ -613,6 +618,13 @@ def _validate_config(cfg: dict[str, Any]) -> dict[str, Any]:
     cfg["take_profit_on_day"] = _clampf(cfg.get("take_profit_on_day"), 0.0, 1e9, d["take_profit_on_day"])
     cfg["flatten_on_daily_stop"] = bool(cfg.get("flatten_on_daily_stop", d["flatten_on_daily_stop"]))
     cfg["require_entry_depth"] = bool(cfg.get("require_entry_depth", d["require_entry_depth"]))
+    # 0 is meaningful for both: a zero spread limit takes only a locked book,
+    # and a zero chase limit refuses any market that has moved past the signal.
+    # 99 is the widest a 1..99c book can be, so neither can silently disable.
+    cfg["max_entry_spread_cents"] = _clampi(
+        cfg.get("max_entry_spread_cents"), 0, 99, d["max_entry_spread_cents"])
+    cfg["max_entry_chase_cents"] = _clampi(
+        cfg.get("max_entry_chase_cents"), 0, 99, d["max_entry_chase_cents"])
 
     for _k, _lo, _hi in [
         ("crypto15m_poll_sec", 2, 3600),
