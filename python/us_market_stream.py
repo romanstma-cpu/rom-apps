@@ -20,6 +20,10 @@ _connected=False
 _last_message_at=0.0
 _last_disconnect_at=0.0
 _reconnects=0
+# A connection can remain open while a subscription is no longer delivering
+# market data. This is a health signal rather than a hard trading block: the
+# quote path has a separately bounded REST fallback.
+STREAM_STALE_AFTER_SECONDS=10.0
 
 def observe(*tokens):
     _wanted.update(t.split('::')[0] for t in tokens if t)
@@ -71,7 +75,11 @@ def recent(limit): return list(_trades)[-limit:]
 def health():
     """Connection context for operators; REST remains the quote fallback."""
     now=time.monotonic()
-    if _connected:
+    age=max(0.0,now-_last_message_at) if _last_message_at else None
+    stale=bool(_connected and _wanted and (age is None or age>STREAM_STALE_AFTER_SECONDS))
+    if stale:
+        state='degraded'
+    elif _connected:
         state='connected'
     elif _task is not None and not _task.done():
         state='reconnecting'
@@ -80,8 +88,9 @@ def health():
     else:
         state='stopped'
     return {
-        'state':state, 'connected':bool(_connected),
-        'lastMessageAgeSeconds':round(max(0.0,now-_last_message_at),1) if _last_message_at else None,
+        'state':state, 'connected':bool(_connected), 'stale':stale,
+        'lastMessageAgeSeconds':round(age,1) if age is not None else None,
+        'staleAfterSeconds':STREAM_STALE_AFTER_SECONDS,
         'lastDisconnectAt':_last_disconnect_at or None,
         'reconnects':_reconnects, 'watchedMarkets':len(_wanted),
     }

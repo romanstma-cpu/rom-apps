@@ -209,9 +209,11 @@ export function MainEnginePage() {
           <p className={cls('mt-2 text-xs', executionBlocked ? 'text-rom-warn' : 'text-rom-dim')}>
             Execution guard: {executionBlocked
               ? activity.status.executionHealth.reason
-              : activity.status.executionHealth.marketStream.connected
-                ? 'live price stream connected; REST fallback stays ready.'
-                : 'REST quote fallback ready while the live price stream reconnects.'}
+              : activity.status.executionHealth.marketStream.stale
+                ? 'live price stream is quiet; fresh REST quotes are being used.'
+                : activity.status.executionHealth.marketStream.connected
+                  ? 'live price stream connected; REST fallback stays ready.'
+                  : 'REST quote fallback ready while the live price stream reconnects.'}
           </p>
         )}
         <div className="mt-4 grid gap-2 border-t border-rom-border pt-4 text-xs sm:grid-cols-2">

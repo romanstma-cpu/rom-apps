@@ -15,11 +15,13 @@ export function TradingCheck({ onOpenStrategy }: { onOpenStrategy: () => void })
   const practice = !!config?.mainPaperTrading && !live;
   const dailyStopped = dailyRemaining === 0 && dailyStop > 0 && dailyLossUsed >= dailyStop;
   const attention = !backend.authOk || !activity.healthy || !!execution?.blocked || dailyStopped;
-  const streamDetail = execution?.marketStream.connected
-    ? 'Live price stream connected'
-    : execution?.blocked
-      ? execution.reason
-      : 'REST fallback ready while stream reconnects';
+  const streamDetail = execution?.blocked
+    ? execution.reason
+    : execution?.marketStream.stale
+      ? 'Live price stream is quiet; fresh REST quotes are being used.'
+      : execution?.marketStream.connected
+        ? 'Live price stream connected'
+        : 'REST fallback ready while stream reconnects';
   const mode = live ? 'Live orders enabled' : practice ? 'Practice enabled' : 'Trading paused';
   const exposureCap = account && config
     ? account.totalUsd * config.maxTotalExposureFraction

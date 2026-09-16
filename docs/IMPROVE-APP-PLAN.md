@@ -33,6 +33,6 @@ Statuses: pending · in-progress · awaiting-evidence · done · deferred: <reas
 ## Next Actions
 
 - [ ] Run five first-use sessions and validate the job statement with real user language. (ROM, before broad public promotion)
-- [ ] Add execution-health circuit breakers for WebSocket gaps, order rejections, and stale quotes. (ROM, next trading-safety release)
+- [x] Add execution-health circuit breakers for WebSocket gaps, order rejections, and stale quotes. (ROM, completed 2026-09-16: stale or disconnected WebSocket books cannot be quoted; the UI reports a silent connected stream as degraded while bounded REST quote fallback remains available; repeated quote/order failures pause live entries.)
 - [ ] Measure first Practice start, completed practice cycle, and live-enable reversal rate without collecting sensitive credentials. (ROM, public-launch telemetry decision)
 - [ ] Complete the cold public-user walkthrough and support/error-state review. (ROM, before paid launch)

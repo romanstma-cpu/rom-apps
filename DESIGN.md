@@ -92,3 +92,7 @@ Overview may explain the strategy as a four-stage decision pipeline: signals, li
 ## 2.23 evidence-prioritized selection
 
 When multiple live Whale or Momentum signals compete for limited account capacity, the main strategy considers sources with qualified positive settled-practice evidence first. Collecting or conservatively non-positive sources remain at starter priority and 25% live size. Practice mode stays ordered by the unchanged signal heuristic so challenger evidence remains comparable. Kelly mode continues to use its calibrated capital-return ranking. The Strategy explanation and allocation method must describe priority as historical evidence, never as a prediction or profit guarantee.
+
+## 2.24 execution-stream health
+
+Live quote selection uses a WebSocket book only when it is within its two-second freshness budget; otherwise it makes a bounded REST quote request. A connected stream with watched markets but no message for ten seconds is reported as **degraded**, rather than falsely presented as healthy. This status never silently permits an old book and never by itself blocks a trade that has a fresh REST quote. Repeated quote or order failures still open the existing execution circuit and pause new live entries until its controlled recovery probe succeeds.

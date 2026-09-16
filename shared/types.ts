@@ -679,9 +679,11 @@ export interface TradingStatus {
     quoteFailures: number;
     orderFailures: number;
     marketStream: {
-      state: 'connected' | 'reconnecting' | 'starting' | 'stopped' | 'unknown';
+      state: 'connected' | 'degraded' | 'reconnecting' | 'starting' | 'stopped' | 'unknown';
       connected: boolean;
+      stale?: boolean;
       lastMessageAgeSeconds?: number | null;
+      staleAfterSeconds?: number;
       lastDisconnectAt?: number | null;
       reconnects?: number;
       watchedMarkets?: number;

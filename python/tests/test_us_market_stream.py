@@ -46,11 +46,15 @@ def clean_stream():
     stream._books.clear()
     stream._trades.clear()
     stream._wanted.clear()
+    stream._connected = False
+    stream._last_message_at = 0.0
     momentum_window.tape.reset()
     yield
     stream._books.clear()
     stream._trades.clear()
     stream._wanted.clear()
+    stream._connected = False
+    stream._last_message_at = 0.0
     momentum_window.tape.reset()
 
 
@@ -174,6 +178,23 @@ class TestIngestBooks:
         received = stream._books['timed'][0]
         monkeypatch.setattr(stream.time,'monotonic',lambda:received+2.01)
         assert stream.get_book('timed',2.0) is None
+
+    def test_health_marks_a_connected_silent_stream_degraded(self, monkeypatch):
+        stream._wanted.add('timed')
+        stream._connected = True
+        stream._last_message_at = 100.0
+        monkeypatch.setattr(stream.time, 'monotonic', lambda: 110.1)
+        health = stream.health()
+        assert health['state'] == 'degraded'
+        assert health['connected'] is True
+        assert health['stale'] is True
+
+    def test_health_does_not_call_an_idle_stream_stale(self, monkeypatch):
+        stream._connected = True
+        stream._last_message_at = 0.0
+        monkeypatch.setattr(stream.time, 'monotonic', lambda: 999.0)
+        assert stream.health()['state'] == 'connected'
+        assert stream.health()['stale'] is False
 
     def test_asks_with_zero_qty_excluded(self):
         stream.ingest({"marketData": _book(bids=(("0.41", "10"),),
