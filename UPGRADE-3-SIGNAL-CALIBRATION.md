@@ -1,6 +1,6 @@
 # Upgrade 3: evidence-backed signal calibration
 
-The main scanner's confidence value is a heuristic score, not a measured probability. Previously Kelly sizing subtracted market price from that score and treated the result as an expected edge. Main execution now requires a qualified calibration bucket before using Kelly, in both practice and live mode. Missing data, unsupported groups, failures, stale models and future-dated models block the entry. Existing percent and contract modes retain their heuristic gates and sizing; they are not represented as calibrated.
+The main scanner's confidence value is a heuristic score, not a measured probability. Live main execution now requires a qualified calibration bucket for Whale and Momentum entries in percent, fixed-contract, and Kelly sizing. Missing data, unsupported groups, failures, stale models, and future-dated models block live entry. Practice remains available for otherwise eligible candidates so the evidence record can continue growing.
 
 ## Model and validation
 
@@ -16,9 +16,9 @@ These thresholds are conservative engineering gates, not a formal guarantee: eve
 
 The split is selected from all observed event candidates older than one day, including unresolved candidates. A bucket cannot qualify while any event in its holdout cohort remains unresolved. This prevents dropping slower-settling losses from the evaluation sample.
 
-Kelly uses the conservative probability minus the fee-reserved entry cost and a further one-cent uncertainty haircut. Existing entry-score filters still apply, so calibration cannot bypass an earlier rejection. Reservations, size ceilings, hard caps and all existing risk gates remain in force. The minimum-size floor no longer increases a small Kelly recommendation. Models are cached for five minutes per database; entries reject models older than ten minutes. No new strategy is enabled and no credentials or orders are used by fitting.
+Every live sizing mode uses the conservative probability minus the fee-reserved entry cost and a further one-cent uncertainty haircut as its admission edge. Existing entry-score filters still apply, so calibration cannot bypass an earlier rejection. Percent, fixed-contract, and Kelly retain their distinct sizing formulas after admission. Reservations, size ceilings, hard caps and all existing risk gates remain in force. The minimum-size floor does not increase a small Kelly recommendation. Models are cached for five minutes per database; entries reject models older than ten minutes. No new strategy is enabled and no credentials or orders are used by fitting.
 
-The Evidence screen shows sample counts and whether any groups qualify. It supports loading, empty/collecting, failed requests with retry and qualified states. A qualified group does not imply all signals qualify. MainEngine's Kelly explanation and controls match the new behavior. Legacy CLI signal-only studies remain research tools and do not implement this execution gate; use the main recorded-book replay for Kelly evaluation.
+The Evidence screen shows sample counts and whether any groups qualify. It supports loading, empty/collecting, failed requests with retry and qualified states. A qualified group does not imply all signals qualify. MainEngine explains that the gate applies before all live Whale and Momentum entries. Legacy CLI signal-only studies remain research tools and do not implement this execution gate; use the main recorded-book replay for evaluation.
 
 ## Forward evaluation
 

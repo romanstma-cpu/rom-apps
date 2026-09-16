@@ -32,6 +32,9 @@ def env_net(monkeypatch):
 def cfg():
     c = merge_with_defaults({})
     c["network"] = "mainnet"
+    # Most integration tests isolate order, accounting, and risk behavior.
+    # Tests for the public qualified-edge admission gate enable it explicitly.
+    c["require_qualified_edge"] = False
     return c
 
 
@@ -425,6 +428,69 @@ def test_execute_real_order_records_order_id(
     assert calls[0]["price_cents"] == 60
     assert calls[0]["side"] == "yes"
     assert calls[0]["action"] == "buy"
+
+
+def test_practice_keeps_collecting_without_qualified_edge(
+    fresh_db, env_net, cfg, monkeypatch, fee_clock
+):
+    at = fee_clock(US_FEE_JULY)
+    cfg.update(
+        main_paper_trading=True,
+        order_style='limit_cross',
+        require_qualified_edge=True,
+    )
+    monkeypatch.setattr(
+        trader.signal_calibration,
+        'load_model',
+        lambda: pytest.fail('Practice must not require a qualified live model'),
+    )
+    monkeypatch.setattr(trader, 'get_quote', _stub_no_quote)
+
+    row = run_async(trader.execute_signal(
+        whale_signal(id=2201, ticker='PRACTICE-EDGE', created_at=at.isoformat()),
+        'whale', cfg, 1000.0, paper=True,
+    ))
+
+    assert row and row['status'] == 'dry_run'
+    assert row['filled_contracts'] > 0
+
+
+@pytest.mark.parametrize('sizing_mode', ['percent', 'contracts', 'kelly'])
+def test_qualified_edge_reaches_live_order_in_every_sizing_mode(
+    fresh_db, env_net, cfg, monkeypatch, fee_clock, sizing_mode
+):
+    at = fee_clock(US_FEE_JULY)
+    signal = whale_signal(
+        id=2202,
+        ticker=f'QUALIFIED-{sizing_mode}',
+        created_at=at.isoformat(),
+    )
+    key = trader.signal_calibration.features(signal, 'whale')[0]
+    model = {
+        'asof': at.timestamp(),
+        'bins': {key: {'lowerProbability': 0.80}},
+    }
+    cfg.update(
+        enable_trading=True,
+        sizing_mode=sizing_mode,
+        order_style='limit_cross',
+        require_qualified_edge=True,
+        evidence_gated_sizing_enabled=False,
+        market_quality_sizing_enabled=False,
+    )
+    monkeypatch.setattr(trader.signal_calibration, 'load_model', lambda: model)
+    monkeypatch.setattr(trader, 'get_quote', _stub_no_quote)
+    placed = []
+
+    async def _place(**kwargs):
+        placed.append(kwargs)
+        return {'order': {'order_id': f'QUALIFIED-{sizing_mode}', 'status': 'resting'}}
+
+    monkeypatch.setattr(trader, 'place_limit_order', _place)
+    row = run_async(trader.execute_signal(signal, 'whale', cfg, 1000.0))
+
+    assert row and row['status'] == 'submitted'
+    assert len(placed) == 1
 
 
 def test_maker_entry_is_post_only_and_rechecked(

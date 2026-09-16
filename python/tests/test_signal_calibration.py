@@ -115,6 +115,21 @@ def test_live_kelly_cannot_use_raw_score_when_model_missing(monkeypatch):
     assert asyncio.run(trader.execute_signal(signal,'whale',merge_with_defaults({'sizing_mode':'kelly'}),1000)) is None
 
 
+@pytest.mark.parametrize('sizing_mode', ['percent', 'contracts'])
+def test_every_live_sizing_mode_requires_qualified_edge(monkeypatch, sizing_mode):
+    model=calibration.fit([],trader.time.time())
+    monkeypatch.setattr(calibration,'load_model',lambda:model)
+    signal=dataset(1)[0]['payload']['signal']
+    signal['created_at']=datetime.now(timezone.utc).isoformat()
+    monkeypatch.setattr(trader.db,'get_db',lambda:pytest.fail(
+        f'Unqualified {sizing_mode} entry touched positions'))
+    cfg=merge_with_defaults({
+        'sizing_mode':sizing_mode,
+        'require_qualified_edge':True,
+    })
+    assert asyncio.run(trader.execute_signal(signal,'whale',cfg,1000)) is None
+
+
 def test_replay_kelly_does_not_train_on_later_settlement():
     result=replay(config(sizing_mode='kelly'),evidence()+[event('settlement',{'yes_payout':1},3)])
     assert result['submittedOrders']==0

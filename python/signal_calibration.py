@@ -1,7 +1,8 @@
 """Event-deduplicated, chronological calibration of heuristic main scores.
 
 No external feeds, orders, model downloads or automatic strategy promotion.
-Only Kelly sizing consumes qualified estimates; other sizing remains unchanged.
+Live main-strategy entries consume qualified estimates; Practice remains an
+unfiltered evidence collector.
 """
 import math
 import time
@@ -193,7 +194,7 @@ def fit(events, asof):
     if model['bins']:
         report.update(status='qualified', reason='Some score groups passed accuracy and net-return holdout checks after fee and price stress. Simulated results do not prove profitable live execution.')
     else:
-        report.update(status='not_qualified', reason='No score group passed all accuracy and net-return holdout checks after costs. Kelly entries stay blocked.')
+        report.update(status='not_qualified', reason='No score group passed all accuracy and net-return holdout checks after costs. Live main-strategy entries stay blocked.')
     return model
 
 
@@ -221,7 +222,7 @@ def calibrated_edge(signal, source, limit_cents, at, model):
         raise ValueError('Calibration model is stale or contains future evidence')
     bucket = model['bins'].get(key)
     if not bucket:
-        raise ValueError('Kelly requires a qualified calibration group; collect settled event evidence')
+        raise ValueError('Live trading requires a qualified calibration group; collect settled event evidence in Practice')
     # Per-contract reserve includes adverse cent rounding. Margin is net of
     # fees and another cent of uncertainty; size uses the conservative bound.
     cost = fees_us.reserved_cost(1, limit_cents/100, at)

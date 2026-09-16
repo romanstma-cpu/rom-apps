@@ -309,7 +309,7 @@ async def test_operator_recovery_requires_authenticated_matching_order(monkeypat
 
 @pytest.mark.asyncio
 async def test_main_intent_exists_during_post_and_survives_cancellation(monkeypatch):
-    cfg=merge_with_defaults({'enable_trading':True})
+    cfg=merge_with_defaults({'enable_trading':True,'require_qualified_edge':False})
     async def quote(*a):return quote_with_depth({'bid_cents':59,'ask_cents':60})
     async def meta(*a):return {'min_size':1}
     async def post(**kw):

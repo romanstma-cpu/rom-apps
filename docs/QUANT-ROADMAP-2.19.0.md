@@ -6,6 +6,13 @@ out-of-sample and forward gates.
 
 ## Audit findings and priority
 
+0. **Qualified live edge gate — implemented after 2.24.0.**
+   Every live Whale and Momentum entry now requires a recent calibration bucket
+   that passed chronological holdout accuracy and after-cost return checks.
+   The rule applies to percent, fixed-contract, and Kelly sizing. Practice keeps
+   observing all otherwise eligible candidates so evidence collection does not
+   stop when live entries are blocked.
+
 1. **Maker-first execution and WebSocket routing — implemented in 2.19.0.**
    The main engine crossed the spread by default and fetched its decision book
    over REST even while the US market WebSocket already held a fresh full-depth

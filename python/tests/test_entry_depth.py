@@ -24,6 +24,7 @@ def cfg():
     c = merge_with_defaults({})
     c["network"] = "mainnet"
     c["order_style"] = "limit_cross"
+    c["require_qualified_edge"] = False
     return c
 
 

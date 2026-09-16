@@ -180,14 +180,11 @@ def _rank_candidates(
 ) -> None:
     """Rank scarce capital without treating heuristic scores as probabilities.
 
-    Kelly mode keeps its calibrated net-return ranking. Other sizing modes use
-    source-level settled practice evidence as the first key, then the existing
-    heuristic margin. Practice passes no weights, so challenger observations
-    remain unbiased and can still qualify for future live priority.
+    Live trading uses calibrated net-return ranking when a qualified-edge model
+    is supplied. Practice and compatibility mode use source-level settled
+    practice evidence first, then the existing heuristic margin.
     """
-    if cfg.get("sizing_mode") == "kelly":
-        if calibration is None:
-            raise ValueError("Kelly calibration unavailable; waiting for evidence")
+    if calibration is not None:
         candidates.sort(
             key=lambda item: signal_calibration.capital_priority(
                 item[0], item[1], at, calibration,
@@ -512,12 +509,17 @@ async def execute_signal(
         return None
     edge_pts = _compute_edge(signal, source)
     calibration = None
-    if cfg.get('sizing_mode') == 'kelly':
+    requires_qualified_edge = (
+        not paper
+        and source in ('whale', 'momentum')
+        and bool(cfg.get('require_qualified_edge', True))
+    )
+    if not paper and (requires_qualified_edge or cfg.get('sizing_mode') == 'kelly'):
         try:
             calibration = signal_calibration.load_model()
             signal_calibration.calibrated_edge(signal,source,signal_cost_cents,time.time(),calibration)
         except Exception as exc:
-            logger.info('[skip] %s: calibration unavailable: %s',signal.get('ticker'),exc)
+            logger.info('[skip] %s: qualified edge unavailable: %s',signal.get('ticker'),exc)
             return None
     env = get_env()
 
@@ -1053,11 +1055,15 @@ async def scan_for_trades(cfg: dict) -> list[dict]:
     conflicts = {ticker for ticker, sides in eligible_sides.items() if len(sides) > 1}
     ranking_at = time.time()
     ranking_model = None
-    if cfg.get('sizing_mode') == 'kelly':
+    requires_qualified_edge = live and bool(cfg.get('require_qualified_edge', True))
+    if live and (requires_qualified_edge or cfg.get('sizing_mode') == 'kelly'):
         try:
             ranking_model = signal_calibration.load_model()
-        except Exception:
-            _skip_log('Kelly calibration unavailable; waiting for evidence')
+        except Exception as exc:
+            _skip_log(f'Qualified edge unavailable; waiting for evidence ({exc})')
+            return []
+        if requires_qualified_edge and not ranking_model.get('bins'):
+            _skip_log('No qualified signal group yet; keep Practice running to collect settled evidence')
             return []
     evidence_weights: dict[str, float] = {}
     if live and (cfg.get("evidence_gated_sizing_enabled", True)

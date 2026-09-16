@@ -66,6 +66,7 @@ export const DEFAULT_CONFIG: TraderConfig = {
   sizingBaseEdge: 5.0,
   sizingMaxEdge: 20.0,
   kellyFraction: 0.25,
+  requireQualifiedEdge: true,
   evidenceAllocationEnabled: false,
   evidenceGatedSizingEnabled: true,
   marketQualitySizingEnabled: true,

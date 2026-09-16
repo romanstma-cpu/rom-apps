@@ -63,7 +63,8 @@ def test_cycle_defers_only_eligible_direction_conflicts(tmp_path, monkeypatch, s
     db.init_db()
     cfg = merge_with_defaults({"enable_trading": True, "trade_whales": True,
         "trade_momentum": False, "min_confidence_whale": 60,
-        "min_entry_price_cents": 1, "max_entry_price_cents": 99})
+        "min_entry_price_cents": 1, "max_entry_price_cents": 99,
+        "require_qualified_edge": False})
     monkeypatch.setattr(trader, "get_env", lambda: "mainnet")
     monkeypatch.setattr(trader, "_is_blocked_by_daily_risk", lambda *a: (False, ""))
     monkeypatch.setattr(trader, "_lifetime_loss_tripped_main", lambda *a: (False, ""))

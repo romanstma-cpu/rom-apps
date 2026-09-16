@@ -58,6 +58,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "sizing_base_edge": 5.0,
     "sizing_max_edge": 20.0,
     "kelly_fraction": 0.25,
+    # Public live entries require a qualified, fee-adjusted calibration bucket.
+    # Practice remains available so the evidence can continue to accumulate.
+    "require_qualified_edge": True,
     # Optional live-only capital adjustment from rolling practice evidence.
     # Practice sizing is intentionally unchanged so it remains a fair record.
     "evidence_allocation_enabled": False,
@@ -586,6 +589,9 @@ def _validate_config(cfg: dict[str, Any]) -> dict[str, Any]:
         cfg["sizing_mode"] = d["sizing_mode"]
     cfg["evidence_allocation_enabled"] = bool(cfg.get(
         "evidence_allocation_enabled", d["evidence_allocation_enabled"]
+    ))
+    cfg["require_qualified_edge"] = bool(cfg.get(
+        "require_qualified_edge", d["require_qualified_edge"]
     ))
     cfg["evidence_gated_sizing_enabled"] = bool(cfg.get(
         "evidence_gated_sizing_enabled", d["evidence_gated_sizing_enabled"]
