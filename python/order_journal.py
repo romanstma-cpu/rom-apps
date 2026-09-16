@@ -39,10 +39,19 @@ CREATE TABLE IF NOT EXISTS us_entry_execution (
  style TEXT NOT NULL, signal_cents REAL NOT NULL, bid_cents REAL NOT NULL,
  ask_cents REAL NOT NULL, response_ms REAL
 );
+CREATE TABLE IF NOT EXISTS us_fill_markouts (
+ local_id TEXT NOT NULL, horizon_sec INTEGER NOT NULL,
+ observed_at REAL NOT NULL, age_sec REAL NOT NULL,
+ bid_cents REAL NOT NULL, ask_cents REAL NOT NULL,
+ mid_cents REAL NOT NULL, markout_cents REAL NOT NULL,
+ PRIMARY KEY(local_id, horizon_sec)
+);
 CREATE INDEX IF NOT EXISTS us_intents_market_time
  ON us_order_intents(ticker, created_at);
 CREATE INDEX IF NOT EXISTS us_entry_execution_group
  ON us_entry_execution(network, source, style, local_id);
+CREATE INDEX IF NOT EXISTS us_fill_markouts_horizon
+ ON us_fill_markouts(horizon_sec, observed_at);
 """
 
 

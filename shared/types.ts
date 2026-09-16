@@ -1170,5 +1170,6 @@ export interface ExecutionQualityStats {
 }
 export interface ExecutionQualityReport extends ExecutionQualityStats {
   windowDays: number;
+  markouts: {horizonSec: number; samples: number; contracts: number; avgMarkoutCents: number | null; adversePct: number | null}[];
   routes: (ExecutionQualityStats & {style: 'crossing' | 'resting'})[];
 }

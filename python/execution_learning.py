@@ -9,6 +9,7 @@ import time
 import db
 import fees_us
 import order_journal
+import fill_markouts
 
 
 def observations(network, *, now=None, entry_group=None):
@@ -86,5 +87,6 @@ def entry_feedback(network, ticker, source, style, price_cents, *, now=None, mak
 def report(network):
     rows = observations(network)
     return {'windowDays': 30, **summarize(rows),
+            'markouts': fill_markouts.summary(network),
             'routes': [{'style': style, **summarize([r for r in rows if r['style']==style])}
                        for style in ('maker', 'crossing', 'resting')]}

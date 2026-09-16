@@ -13,6 +13,7 @@ import us_account_stream
 import main_recorder
 import order_journal
 import account_risk
+import fill_markouts
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -626,6 +627,7 @@ async def _scanner_and_trader_loop() -> None:
     last_script = 0.0
     last_redeem_check = 0.0
     last_cleanup = 0.0
+    last_fill_markouts = 0.0
     last_stats_push = asyncio.get_event_loop().time()
 
     try:
@@ -783,6 +785,15 @@ async def _scanner_and_trader_loop() -> None:
                             ))
         except Exception as e:
             logger.error(f"poll error: {e}", exc_info=True)
+
+        try:
+            if STATE.auth_ok and now - last_fill_markouts >= 10.0:
+                last_fill_markouts = now
+                saved = await fill_markouts.collect(polymarket_auth.get_env())
+                if saved:
+                    logger.info("recorded %s post-fill markout observation(s)", saved)
+        except Exception as e:
+            logger.debug("post-fill markout collection failed: %s", e)
 
         try:
             if STATE.auth_ok and now - last_redeem_check >= 180.0:
