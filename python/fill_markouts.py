@@ -158,3 +158,31 @@ def adverse_selection_feedback(
     return {'blocked': upper < GUARD_BAD_CENTS, 'samples': len(grouped),
             'days': len(days), 'markets': len(markets),
             'meanCents': mean, 'upper95Cents': upper}
+
+
+def guard_report(network: str, *, now: float | None = None) -> list[dict]:
+    """Describe every recent guard cohort without exposing a trading control."""
+    now = time.time() if now is None else now
+    order_journal.init()
+    with db.get_db() as conn:
+        rows = conn.execute(
+            """SELECT DISTINCT e.source, e.style,
+                      CAST(ROUND(j.limit_price*100/5.0)*5 AS INTEGER) AS price_cents
+                 FROM us_fill_markouts m
+                 JOIN us_order_intents j USING(local_id)
+                 JOIN us_entry_execution e USING(local_id)
+                WHERE e.network=? AND m.horizon_sec=? AND m.observed_at>=?
+                ORDER BY e.source, e.style, price_cents""",
+            (network, GUARD_HORIZON_SEC, now-30*86400),
+        ).fetchall()
+    report = []
+    for row in rows:
+        source, style, price = str(row['source']), str(row['style']), int(row['price_cents'])
+        feedback = adverse_selection_feedback(network, source, style, price, now=now)
+        report.append({
+            'source': source, 'style': style, 'priceCents': price,
+            **feedback,
+            'minimums': {'samples': GUARD_MIN_SAMPLES, 'days': GUARD_MIN_DAYS,
+                         'markets': GUARD_MIN_MARKETS},
+        })
+    return report

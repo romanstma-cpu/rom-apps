@@ -95,3 +95,23 @@ def test_adverse_guard_does_not_learn_from_one_market_or_other_group(tmp_path, m
     other=fill_markouts.adverse_selection_feedback('mainnet','whale','crossing',60,now=NOW)
     assert not sparse['blocked'] and sparse['markets']==1
     assert not other['blocked'] and other['samples']==0
+
+
+def test_guard_report_exposes_collection_progress(tmp_path, monkeypatch):
+    @contextmanager
+    def connect():
+        conn=sqlite3.connect(tmp_path/'guard-report.db');conn.row_factory=sqlite3.Row
+        try:
+            with conn: yield conn
+        finally: conn.close()
+    monkeypatch.setattr(db,'get_db',connect);order_journal.init()
+    with connect() as conn:
+        conn.execute("INSERT INTO us_order_intents VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                     ('r','or','market','yes','buy',1,.60,0,'filled',NOW-130,NOW-120,1,.60,.01,None))
+        conn.execute("INSERT INTO us_entry_execution VALUES (?,?,?,?,?,?,?,?)",
+                     ('r','mainnet','whale','crossing',59,59,60,50))
+        conn.execute("INSERT INTO us_fill_markouts VALUES (?,?,?,?,?,?,?,?)",
+                     ('r',120,NOW,120,59,61,60,0))
+    report=fill_markouts.guard_report('mainnet',now=NOW)
+    assert report[0]['source']=='whale' and report[0]['priceCents']==60
+    assert report[0]['samples']==1 and not report[0]['blocked']

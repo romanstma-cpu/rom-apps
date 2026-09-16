@@ -91,5 +91,6 @@ def report(network):
     rows = observations(network)
     return {'windowDays': 30, **summarize(rows),
             'markouts': fill_markouts.summary(network),
+            'adverseGuards': fill_markouts.guard_report(network),
             'routes': [{'style': style, **summarize([r for r in rows if r['style']==style])}
                        for style in ('maker', 'crossing', 'resting')]}
