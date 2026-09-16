@@ -12,10 +12,16 @@ import httpx
 logger = logging.getLogger(__name__)
 
 APP_VERSION = _os.environ.get("ROM_APP_VERSION", "")
+WEBHOOK_TIMEOUT_SECONDS = 8.0
 
-_ALLOWED_WEBHOOK_HOSTS = frozenset({
-    "discord.com", "discordapp.com", "canary.discord.com", "ptb.discord.com",
-})
+_ALLOWED_WEBHOOK_HOSTS = frozenset(
+    {
+        "discord.com",
+        "discordapp.com",
+        "canary.discord.com",
+        "ptb.discord.com",
+    }
+)
 
 
 def _is_allowed_webhook(url: str) -> bool:
@@ -23,7 +29,10 @@ def _is_allowed_webhook(url: str) -> bool:
         u = urlparse(url)
     except (ValueError, TypeError):
         return False
-    return u.scheme == "https" and (u.hostname or "").lower() in _ALLOWED_WEBHOOK_HOSTS
+    return (
+        u.scheme == "https"
+        and (u.hostname or "").lower() in _ALLOWED_WEBHOOK_HOSTS
+    )
 
 COLOR = {
     "placed":   0x6366F1,
@@ -80,7 +89,7 @@ async def _post(url: str, payload: dict) -> None:
         )
         return
     try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
+        async with httpx.AsyncClient(timeout=WEBHOOK_TIMEOUT_SECONDS) as client:
             r = await client.post(
                 url, json=payload, headers={"Content-Type": "application/json"}
             )
