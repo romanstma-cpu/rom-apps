@@ -80,7 +80,10 @@ def entry_feedback(network, ticker, source, style, price_cents, *, now=None, mak
     cost_days = {int(r['created_at']//86400) for r in terminal
                  if r['filled'] > 0 and r['fees_usd'] is not None}
     learned = sorted(costs)[math.ceil(.9*len(costs))-1] if len(costs)>=20 and len(cost_days)>=10 else 0
-    return {'blocked': blocked, 'feeCents': max(scheduled, learned, 0.0),
+    adverse = fill_markouts.adverse_selection_feedback(
+        network, source, style, price_cents, now=now,
+    )
+    return {'blocked': blocked or adverse['blocked'], 'feeCents': max(scheduled, learned, 0.0),
             'extraFeeCents': max(0, learned-scheduled), 'samples': len(terminal)}
 
 

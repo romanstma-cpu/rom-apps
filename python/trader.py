@@ -644,7 +644,7 @@ async def execute_signal(
             **({'maker_only': True} if maker_only else {}),
         )
         if feedback['blocked']:
-            logger.info('[skip] %s: confirmed execution history shows persistently poor fills; waiting for evidence to expire', signal['ticker'])
+            logger.info('[skip] %s: confirmed execution evidence shows persistently poor fills or adverse post-fill movement; waiting for evidence to expire', signal['ticker'])
             return None
         # Calibrated edge already includes the fee reserve. Heuristic margin
         # does not: subtract fees without mislabeling it as expected profit.

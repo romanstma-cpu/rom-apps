@@ -13,6 +13,12 @@ import db
 import order_journal
 
 HORIZONS = (30, 120, 300)
+GUARD_HORIZON_SEC = 120
+GUARD_MIN_SAMPLES = 30
+GUARD_MIN_DAYS = 10
+GUARD_MIN_MARKETS = 8
+GUARD_BAD_CENTS = -0.5
+GUARD_CLIP_CENTS = 10.0
 
 
 async def fetch_quote(ticker: str, side: str) -> dict:
@@ -107,3 +113,48 @@ def summary(network: str, *, now: float | None = None) -> list[dict]:
         'adversePct': (float(by_horizon[horizon]['adverse_pct'])
                        if horizon in by_horizon else None),
     } for horizon in HORIZONS]
+
+
+def adverse_selection_feedback(
+    network: str, source: str, style: str, price_cents: float, *, now: float | None = None
+) -> dict:
+    """Block only when varied recent evidence is confidently unfavorable.
+
+    The guard pools comparable entries across markets because a single event
+    rarely supplies an independent sample. Each order receives equal weight,
+    extreme news moves are clipped, and the upper 95% mean bound must still be
+    worse than ``GUARD_BAD_CENTS``. This can only reduce new entry activity.
+    """
+    now = time.time() if now is None else now
+    order_journal.init()
+    with db.get_db() as conn:
+        rows = [dict(row) for row in conn.execute(
+            """SELECT m.markout_cents, m.observed_at, j.ticker
+                 FROM us_fill_markouts m
+                 JOIN us_order_intents j USING(local_id)
+                 JOIN us_entry_execution e USING(local_id)
+                WHERE e.network=? AND e.source=? AND e.style=?
+                  AND m.horizon_sec=? AND m.observed_at>=?
+                  AND ABS(j.limit_price*100-?)<=5
+                ORDER BY m.observed_at, m.local_id""",
+            (network, source, style, GUARD_HORIZON_SEC, now-30*86400, price_cents),
+        ).fetchall()]
+    grouped: dict[tuple[str, int], list[float]] = {}
+    for row in rows:
+        key = (row['ticker'], int(row['observed_at']//86400))
+        grouped.setdefault(key, []).append(float(row['markout_cents']))
+    days = {day for _, day in grouped}
+    markets = {row['ticker'] for row in rows}
+    ready = (len(grouped) >= GUARD_MIN_SAMPLES and len(days) >= GUARD_MIN_DAYS
+             and len(markets) >= GUARD_MIN_MARKETS)
+    if not ready:
+        return {'blocked': False, 'samples': len(grouped), 'days': len(days),
+                'markets': len(markets), 'meanCents': None, 'upper95Cents': None}
+    values = [max(-GUARD_CLIP_CENTS, min(GUARD_CLIP_CENTS, sum(group)/len(group)))
+              for group in grouped.values()]
+    mean = sum(values)/len(values)
+    variance = sum((value-mean)**2 for value in values)/(len(values)-1)
+    upper = mean + 1.96*math.sqrt(variance/len(values))
+    return {'blocked': upper < GUARD_BAD_CENTS, 'samples': len(grouped),
+            'days': len(days), 'markets': len(markets),
+            'meanCents': mean, 'upper95Cents': upper}
