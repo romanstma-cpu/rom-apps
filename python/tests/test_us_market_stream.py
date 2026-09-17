@@ -48,6 +48,9 @@ def clean_stream():
     stream._wanted.clear()
     stream._connected = False
     stream._last_message_at = 0.0
+    stream._last_book_at = 0.0
+    stream._last_trade_at = 0.0
+    stream._connected_at = 0.0
     momentum_window.tape.reset()
     yield
     stream._books.clear()
@@ -55,6 +58,9 @@ def clean_stream():
     stream._wanted.clear()
     stream._connected = False
     stream._last_message_at = 0.0
+    stream._last_book_at = 0.0
+    stream._last_trade_at = 0.0
+    stream._connected_at = 0.0
     momentum_window.tape.reset()
 
 
@@ -195,6 +201,27 @@ class TestIngestBooks:
         monkeypatch.setattr(stream.time, 'monotonic', lambda: 999.0)
         assert stream.health()['state'] == 'connected'
         assert stream.health()['stale'] is False
+
+    def test_active_books_with_silent_trade_channel_trigger_reconnect(self, monkeypatch):
+        stream._wanted.add('timed')
+        stream._connected = True
+        stream._connected_at = 100.0
+        stream._last_book_at = 1_100.0
+        stream._last_trade_at = 100.0
+        monkeypatch.setattr(stream.time, 'monotonic', lambda: 1_105.0)
+        assert stream.trade_flow_stalled() is True
+        health = stream.health()
+        assert health['tradeFlowStalled'] is True
+        assert health['lastTradeAgeSeconds'] == 1005.0
+
+    def test_quiet_trade_channel_does_not_restart_without_fresh_books(self, monkeypatch):
+        stream._wanted.add('timed')
+        stream._connected = True
+        stream._connected_at = 100.0
+        stream._last_book_at = 500.0
+        stream._last_trade_at = 100.0
+        monkeypatch.setattr(stream.time, 'monotonic', lambda: 1_105.0)
+        assert stream.trade_flow_stalled() is False
 
     def test_asks_with_zero_qty_excluded(self):
         stream.ingest({"marketData": _book(bids=(("0.41", "10"),),

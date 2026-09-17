@@ -18,12 +18,18 @@ _books={}
 _trades=deque(maxlen=5000)
 _connected=False
 _last_message_at=0.0
+_last_book_at=0.0
+_last_trade_at=0.0
+_connected_at=0.0
 _last_disconnect_at=0.0
 _reconnects=0
+_trade_stall_reconnects=0
 # A connection can remain open while a subscription is no longer delivering
 # market data. This is a health signal rather than a hard trading block: the
 # quote path has a separately bounded REST fallback.
 STREAM_STALE_AFTER_SECONDS=10.0
+TRADE_STALE_AFTER_SECONDS=15*60.0
+BOOK_ACTIVE_WITHIN_SECONDS=30.0
 
 def observe(*tokens):
     _wanted.update(t.split('::')[0] for t in tokens if t)
@@ -34,20 +40,22 @@ def start():
         _task=asyncio.create_task(_run())
 
 async def stop():
-    global _task, _connected
+    global _task, _connected, _connected_at
     if _task:
         _task.cancel()
         try: await _task
         except asyncio.CancelledError: pass
-    _task=None; _connected=False
+    _task=None; _connected=False; _connected_at=0.0
     _books.clear(); _trades.clear(); _wanted.clear()
     momentum_window.tape.reset()
 
 def ingest(message):
-    global _last_message_at
+    global _last_message_at, _last_book_at, _last_trade_at
     _last_message_at=time.monotonic()
     book=message.get('marketData')
-    if book and book.get('marketSlug'): _books[book['marketSlug']]=(time.monotonic(),book)
+    if book and book.get('marketSlug'):
+        _last_book_at=time.monotonic()
+        _books[book['marketSlug']]=(_last_book_at,book)
     if book and book.get('marketSlug'):
         main_recorder.book(book['marketSlug'],book)
     trade=message.get('trade')
@@ -59,6 +67,7 @@ def ingest(message):
     side=(trade.get('taker') or {}).get('side')
     if side not in ('ORDER_SIDE_BUY','ORDER_SIDE_SELL'): return
     if not (0<px<1) or not math.isfinite(qty) or qty<=0: return
+    _last_trade_at=time.monotonic()
     # Stable exchange payload fingerprint avoids duplicates after reconnect.
     tid=hashlib.sha256(json.dumps(trade,sort_keys=True).encode()).hexdigest()
     normalized={'trade_id':tid,'ticker':trade['marketSlug'],'slug':trade['marketSlug'],
@@ -72,10 +81,23 @@ def ingest(message):
 
 def recent(limit): return list(_trades)[-limit:]
 
+def trade_flow_stalled(now=None):
+    """True when book traffic proves the socket is alive but trades went silent."""
+    now=time.monotonic() if now is None else now
+    baseline=max(_last_trade_at,_connected_at)
+    return bool(
+        _connected and _wanted and baseline
+        and _last_book_at and now-_last_book_at<=BOOK_ACTIVE_WITHIN_SECONDS
+        and now-baseline>TRADE_STALE_AFTER_SECONDS
+    )
+
 def health():
     """Connection context for operators; REST remains the quote fallback."""
     now=time.monotonic()
     age=max(0.0,now-_last_message_at) if _last_message_at else None
+    trade_age=max(0.0,now-_last_trade_at) if _last_trade_at else None
+    book_age=max(0.0,now-_last_book_at) if _last_book_at else None
+    trade_stalled=trade_flow_stalled(now)
     stale=bool(_connected and _wanted and (age is None or age>STREAM_STALE_AFTER_SECONDS))
     if stale:
         state='degraded'
@@ -93,6 +115,11 @@ def health():
         'staleAfterSeconds':STREAM_STALE_AFTER_SECONDS,
         'lastDisconnectAt':_last_disconnect_at or None,
         'reconnects':_reconnects, 'watchedMarkets':len(_wanted),
+        'lastTradeAgeSeconds':round(trade_age,1) if trade_age is not None else None,
+        'lastBookAgeSeconds':round(book_age,1) if book_age is not None else None,
+        'tradeFlowStalled':trade_stalled,
+        'tradeStallReconnects':_trade_stall_reconnects,
+        'bufferedTrades':len(_trades),
     }
 
 def get_book(slug, max_age=2.0):
@@ -129,12 +156,13 @@ def get_quote_cents(token):
     return {'bid_cents':math.floor(bid*100+1e-8) if bid is not None else None,'ask_cents':math.ceil(ask*100-1e-8) if ask is not None else None}
 
 async def _run():
-    global _connected, _last_disconnect_at, _reconnects
+    global _connected, _connected_at, _last_disconnect_at, _reconnects, _trade_stall_reconnects
     while auth.credentials_present():
         try:
             async with websockets.connect('wss://api.polymarket.us/v1/ws/markets',
                     extra_headers=auth.l2_headers('GET','/v1/ws/markets'),ping_interval=20,ping_timeout=20) as ws:
                 _connected=True
+                _connected_at=time.monotonic()
                 subscribed=set()
                 while True:
                     missing=sorted(_wanted-subscribed)
@@ -147,7 +175,12 @@ async def _run():
                     try:
                         message=json.loads(await asyncio.wait_for(ws.recv(),timeout=2))
                         if 'error' in message: logger.warning('US market subscription rejected')
-                        else: ingest(message)
+                        else:
+                            ingest(message)
+                            if trade_flow_stalled():
+                                _trade_stall_reconnects+=1
+                                main_recorder.record('gap','',{'reason':'trade subscription stalled'})
+                                raise RuntimeError('trade subscription stalled while books remained active')
                     except asyncio.TimeoutError: pass
         except asyncio.CancelledError: raise
         except Exception as exc:
@@ -159,4 +192,4 @@ async def _run():
             logger.warning('US market stream disconnected: %s',type(exc).__name__)
             await asyncio.sleep(5)
         finally:
-            _connected=False
+            _connected=False; _connected_at=0.0

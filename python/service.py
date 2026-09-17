@@ -8,6 +8,7 @@ import logging.handlers
 import os
 import random
 import sys
+import time
 import traceback
 import shutil
 import us_account_stream
@@ -2121,6 +2122,39 @@ async def _h_trading_status(_p: dict) -> dict:
         "lossLimitSummary": ", ".join(loss_limits) or "No loss limit saved",
     }
 
+    # Input counts use a rolling day; decision counts describe the latest
+    # cycle. Keeping both timeframes explicit makes a dead feed distinguishable
+    # from a healthy scanner whose current candidates failed an entry gate.
+    opportunity = {"windowHours": 24, "tradeEvents": 0, "signalEvents": 0}
+    try:
+        cutoff = time.time() - 24 * 3600
+        with db.get_db() as conn:
+            counts = dict(conn.execute(
+                "SELECT kind,COUNT(*) FROM main_replay_events "
+                "WHERE at>=? AND kind IN ('trade','signal') GROUP BY kind",
+                (cutoff,),
+            ).fetchall())
+        opportunity.update(
+            tradeEvents=int(counts.get("trade", 0)),
+            signalEvents=int(counts.get("signal", 0)),
+        )
+    except Exception:
+        pass
+    stream_health = execution_health.get("marketStream") or {}
+    filtered = sum(int(value or 0) for value in (lc.get("filterCounts") or {}).values())
+    category_limits = {
+        "whale": list(cfg.get("allowed_whale_categories") or cfg.get("allowed_categories") or []),
+        "momentum": list(cfg.get("allowed_momentum_categories") or cfg.get("allowed_categories") or []),
+    }
+    opportunity.update(
+        watchedMarkets=int(stream_health.get("watchedMarkets") or 0),
+        candidates=int(lc.get("candidates") or 0),
+        filtered=filtered,
+        placed=int(lc.get("placed") or 0),
+        primaryBlock=str(lc.get("skipReason") or ""),
+        categoryLimits=category_limits,
+    )
+
     c15 = await crypto15m_trader.status(cfg, authed=STATE.auth_ok)
     # Surfaced so the UI can offer recovery. A blocking intent halts EVERY
     # engine with no timeout and no automatic forget path, so leaving this
@@ -2167,6 +2201,7 @@ async def _h_trading_status(_p: dict) -> dict:
             "pnlUsd": paper_stats["pnl_usd"],
         },
         "practiceReadiness": practice_readiness,
+        "opportunityFunnel": opportunity,
         "c15": {
             "enabled": c15.get("enabled"),
             "live": c15.get("trading"),

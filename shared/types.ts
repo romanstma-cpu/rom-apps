@@ -648,6 +648,11 @@ export interface TradingStatus {
       lastDisconnectAt?: number | null;
       reconnects?: number;
       watchedMarkets?: number;
+      lastTradeAgeSeconds?: number | null;
+      lastBookAgeSeconds?: number | null;
+      tradeFlowStalled?: boolean;
+      tradeStallReconnects?: number;
+      bufferedTrades?: number;
     };
   };
   mainMode: 'paused' | 'paper' | 'live';
@@ -672,6 +677,17 @@ export interface TradingStatus {
     hasCompletedPractice: boolean;
     hasLossLimit: boolean;
     lossLimitSummary: string;
+  };
+  opportunityFunnel: {
+    windowHours: number;
+    watchedMarkets: number;
+    tradeEvents: number;
+    signalEvents: number;
+    candidates: number;
+    filtered: number;
+    placed: number;
+    primaryBlock: string;
+    categoryLimits: { whale: string[]; momentum: string[] };
   };
     c15: {
     enabled: boolean;

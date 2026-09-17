@@ -19,6 +19,10 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
   const topFilters = Object.entries(status.mainFilterCounts || {})
     .sort((a, b) => b[1] - a[1]).slice(0, 3);
   const paper = status.mainPaper;
+  const funnel = status.opportunityFunnel;
+  const stream = status.executionHealth.marketStream;
+  const whaleCategories = funnel?.categoryLimits.whale ?? [];
+  const momentumCategories = funnel?.categoryLimits.momentum ?? [];
 
   return <Card>
     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -54,6 +58,25 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
       <PaperStat label="Resolved" value={`${paper.resolved}`} />
     </div>}
 
+    {funnel && <section className="mt-5 border-t border-rom-border pt-4" aria-label="Opportunity funnel">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div><h4 className="text-sm font-semibold text-white">Opportunity funnel</h4><p className="mt-1 text-[11px] text-rom-dim">Feed activity covers the last {funnel.windowHours} hours; decisions are from the latest scan.</p></div>
+        {stream.tradeFlowStalled && <span className="rounded-full border border-rom-loss/30 bg-rom-loss/10 px-2 py-1 text-[11px] font-semibold text-rom-lossText">Trade feed restarting</span>}
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <FunnelStat label="Markets watched" value={funnel.watchedMarkets} />
+        <FunnelStat label="Trades received" value={funnel.tradeEvents} warn={funnel.watchedMarkets > 0 && funnel.tradeEvents === 0} />
+        <FunnelStat label="Signals created" value={funnel.signalEvents} warn={funnel.tradeEvents > 0 && funnel.signalEvents === 0} />
+        <FunnelStat label="Candidates" value={funnel.candidates} warn={funnel.signalEvents > 0 && funnel.candidates === 0} />
+        <FunnelStat label="Trades created" value={funnel.placed} />
+      </div>
+      {(funnel.primaryBlock || whaleCategories.length || momentumCategories.length) && <div className="mt-3 space-y-1 rounded-lg bg-rom-void/35 px-3 py-2.5 text-[11px] text-rom-muted">
+        {funnel.primaryBlock && <p><span className="font-medium text-white">Latest block:</span> {funnel.primaryBlock}</p>}
+        {whaleCategories.length > 0 && <p><span className="font-medium text-white">Whale categories:</span> {whaleCategories.join(', ')}</p>}
+        {momentumCategories.length > 0 && <p><span className="font-medium text-white">Momentum categories:</span> {momentumCategories.join(', ')}</p>}
+      </div>}
+    </section>}
+
     {(topFilters.length > 0 || status.mainCandidates > 0) && <details className="mt-4 border-t border-rom-border pt-3">
       <summary className="cursor-pointer text-xs text-rom-muted">Latest decisions</summary>
       <p className="mt-2 text-xs text-rom-dim">
@@ -77,4 +100,11 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
 
 function PaperStat({ label, value }: { label: string; value: string }) {
   return <div><div className="text-[11px] uppercase tracking-wide text-rom-dim">{label}</div><div className="mt-1 text-sm font-semibold tabular-nums">{value}</div></div>;
+}
+
+function FunnelStat({ label, value, warn = false }: { label: string; value: number; warn?: boolean }) {
+  return <div className={cls('rounded-lg border px-3 py-2.5', warn ? 'border-rom-warn/30 bg-rom-warn/5' : 'border-rom-border bg-rom-void/25')}>
+    <div className="text-[10px] uppercase tracking-wide text-rom-dim">{label}</div>
+    <div className={cls('mt-1 font-mono text-lg font-semibold tabular-nums', warn ? 'text-rom-warn' : 'text-white')}>{value.toLocaleString()}</div>
+  </div>;
 }
