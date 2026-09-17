@@ -96,10 +96,6 @@ export function OnboardingModal({onDone}:{onDone:()=>void}) {
                 Review your strategy and risk limits first, and start in practice mode.
                 Risk limits reduce losses; they do not guarantee a maximum loss.
               </p>
-              <p className="mt-2 text-xs leading-relaxed text-rom-muted">
-                Some international market feeds and wallet-copy features are unavailable
-                on the US exchange.
-              </p>
             </div>
           </div>
         </div>

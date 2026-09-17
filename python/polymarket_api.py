@@ -483,7 +483,7 @@ async def check_trading_ready():
             'issues':[] if balance['balance']>0 else ['No available USD buying power']}
 
 async def get_positions(limit=1000, *, settlement_status=None,paginate=True,user=None):
-    if user and user!=auth.trading_address(): raise PolymarketAPIError(400,'Wallet copy trading is unavailable on Polymarket US')
+    if user and user!=auth.trading_address(): raise PolymarketAPIError(400,'Only the connected Polymarket US account can be queried')
     out=[]; cursor=None; seen=set()
     while True:
         params={'limit':min(limit,100)}

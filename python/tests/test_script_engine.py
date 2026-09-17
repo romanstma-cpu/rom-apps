@@ -1181,7 +1181,6 @@ def _all_engines_off() -> dict:
     return {
         "enable_trading": False,
         "crypto15m_enabled": False,
-        "copy_enabled": False,
         "trade_whales": False,
         "trade_momentum": False,
         "main_record_signals": False,

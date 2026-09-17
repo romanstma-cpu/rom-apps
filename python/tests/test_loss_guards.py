@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 
 import pytest
 
-import copy_trader
 import crypto15m_trader as ct
 import db
 from config import merge_with_defaults
@@ -46,22 +45,6 @@ def seed_c15(pnl=None, *, cost=0.0, status="settled", open_today=False,
             conn.execute(
                 "UPDATE crypto15m_positions SET resolved_at=datetime('now') WHERE id=?",
                 (pid,),
-            )
-    return pid
-
-
-def seed_copy(pnl=None, *, cost=0.0, status="filled"):
-    uid = uuid.uuid4().hex[:12]
-    with db.get_db() as conn:
-        pid = db.insert_bot_position(conn, {
-            "signal_source": "copy", "signal_id": abs(hash(uid)) % 1_000_000,
-            "ticker": f"CT-{uid}", "direction": "yes", "target_contracts": 5,
-            "limit_price_cents": 50, "filled_contracts": 5, "cost_usd": cost,
-            "client_order_id": f"cp-{uid}", "status": status, "network": ENV,
-        })
-        if pnl is not None:
-            db.update_bot_position(
-                conn, pid, resolved=1, pnl_usd=pnl, resolved_at=_now_str(),
             )
     return pid
 
@@ -137,13 +120,6 @@ def test_crypto15m_lifetime_guard_needs_bankroll_for_pct(fresh_db):
     assert ct._lifetime_loss_tripped(cfg, ENV) == (False, "")
 
 
-def test_copy_lifetime_guard_trips(fresh_db):
-    seed_copy(-60.0)
-    cfg = base_cfg(copy_lifetime_loss_limit_pct=0.5)
-    tripped, why = copy_trader._lifetime_loss_tripped(cfg, ENV)
-    assert tripped and "lifetime loss limit" in why
-
-
 def test_lifetime_counter_survives_clear_trade_history(fresh_db):
     seed_c15(-60.0)
     cfg = base_cfg(crypto15m_lifetime_loss_limit_pct=0.5)
@@ -158,19 +134,6 @@ def test_lifetime_counter_survives_clear_trade_history(fresh_db):
     assert ct._lifetime_loss_tripped(cfg, ENV)[0]
 
 
-def test_lifetime_counter_survives_factory_reset(fresh_db):
-    seed_copy(-80.0)
-    with db.get_db() as conn:
-        assert db.lifetime_realized_pnl(conn, "copy", ENV) == pytest.approx(-80.0)
-
-    db.factory_reset()
-
-    with db.get_db() as conn:
-        assert conn.execute(
-            "SELECT COUNT(*) FROM bot_positions").fetchone()[0] == 0
-        assert db.lifetime_realized_pnl(conn, "copy", ENV) == pytest.approx(-80.0)
-
-
 def test_banking_is_cumulative_across_repeated_wipes(fresh_db):
     seed_c15(-30.0)
     db.clear_trade_history()
@@ -178,17 +141,6 @@ def test_banking_is_cumulative_across_repeated_wipes(fresh_db):
     db.clear_trade_history()
     with db.get_db() as conn:
         assert db.lifetime_realized_pnl(conn, "crypto15m", ENV) == pytest.approx(-55.0)
-
-
-def test_daily_pnl_survives_wipe(fresh_db):
-    seed_copy(-40.0)
-    with db.get_db() as conn:
-        assert db.engine_today_pnl(conn, "copy", ENV) == pytest.approx(-40.0)
-
-    db.clear_trade_history()
-
-    with db.get_db() as conn:
-        assert db.engine_today_pnl(conn, "copy", ENV) == pytest.approx(-40.0)
 
 
 def test_crypto15m_today_pnl_survives_wipe(fresh_db):
@@ -268,10 +220,9 @@ def test_main_lifetime_guard_trips_at_pct(fresh_db):
     assert tripped and "lifetime loss limit" in why
 
 
-def test_main_lifetime_guard_ignores_external_and_copy_rows(fresh_db):
+def test_main_lifetime_guard_ignores_external_rows(fresh_db):
     import trader
     seed_main(-500.0, source="external")
-    seed_copy(-500.0)
     cfg = base_cfg(lifetime_loss_limit_pct=0.5)
     assert trader._lifetime_loss_tripped_main(cfg, ENV) == (False, "")
 

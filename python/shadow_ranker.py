@@ -13,6 +13,7 @@ from collections import Counter
 from statistics import mean
 
 import db
+import evidence_loader
 
 
 VERSION = "logistic-shadow-v1"
@@ -312,15 +313,8 @@ def load_model():
         return _cache[2]
     import main_recorder
     main_recorder.init()
-    with db.get_db() as conn:
-        records = conn.execute(
-            "SELECT id,at,kind,ticker,payload FROM main_replay_events "
-            "WHERE at>=? AND kind IN ('signal','market','settlement') "
-            "ORDER BY at,id LIMIT 100001", (now - 60 * 86400,)
-        ).fetchall()
-    if len(records) > 100000:
-        raise ValueError("Shadow-model evidence exceeds the processing limit")
-    events = [{**dict(row), "payload": json.loads(row["payload"])} for row in records]
+    events, window = evidence_loader.load_recent_events(now)
     result = fit(events, now)
+    result["report"]["evidenceWindow"] = window
     _cache = (key, now, result)
     return result

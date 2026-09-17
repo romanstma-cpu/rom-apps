@@ -89,14 +89,6 @@ const FIELD_TYPES: Readonly<Record<string, FieldType>> = {
   crypto15mMakerEscalate: 'boolean', crypto15mMakerFillSec: 'number',
   crypto15mHoursStartUtc: 'number', crypto15mHoursEndUtc: 'number',
   crypto15mRecordSignals: 'boolean', mainRecordSignals: 'boolean',
-  // copy trading
-  copyEnabled: 'boolean', copyWallets: 'string-array', copySizingMode: 'string-enum',
-  copyFixedUsd: 'number', copyBalancePct: 'number', copyMinTradeUsd: 'number',
-  copyMaxConcurrent: 'number', copyEntryMaxCents: 'number',
-  copyDailyLossLimit: 'number', copyLifetimeLossLimitPct: 'number', copyLifetimeLossLimitUsd: 'number',
-  copyPollSec: 'number', copyFastPollSec: 'number', copyActivityWs: 'boolean',
-  copyMirrorReductions: 'boolean', copyReduceThreshold: 'number',
-  copyOnlyNewEntries: 'boolean', copyAllowReentries: 'boolean',
   // scripts
   scriptsLiveEnabled: 'boolean', scriptPollSec: 'number', scriptMaxEntryCents: 'number',
   scriptMaxContracts: 'number', scriptMaxOpen: 'number', scriptDailyLossUsd: 'number',
@@ -116,7 +108,6 @@ const STRING_ENUMS: Readonly<Record<string, ReadonlySet<string>>> = {
   crypto15mSizingMode: new Set(['fixed', 'balance_pct']),
   crypto15mDirectionMode: new Set(['favorite', 'contrarian', 'model']),
   crypto15mEntryStyle: new Set(['maker', 'taker']),
-  copySizingMode: new Set(['fixed', 'balance_pct']),
   crypto15mInterval: new Set(['5m', '15m', 'hourly']),
   orderStyle: new Set(['maker_join', 'limit_cross', 'limit_mid', 'market']),
   network: new Set(['mainnet', 'matic']),

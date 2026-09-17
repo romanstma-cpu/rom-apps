@@ -21,7 +21,6 @@ import { AboutPage } from './pages/About';
 import { GuidePage } from './pages/Guide';
 import { VisualizerPage } from './pages/Visualizer';
 import { Crypto15mPage } from './pages/Crypto15m';
-import { CopyTradingPage } from './pages/CopyTrading';
 import { AccountsPage } from './pages/Accounts';
 import { BacktestPage } from './pages/Backtest';
 import { TerminalPage } from './pages/Terminal';
@@ -30,7 +29,7 @@ import { ScriptsPage } from './pages/Scripts';
 export type PageId =
   | 'dashboard' | 'main' | 'positions' | 'signals' | 'history'
   | 'profiles' | 'settings' | 'api' | 'logs' | 'guide' | 'about'
-  | 'visualizer' | 'crypto15m' | 'copy' | 'accounts' | 'backtest'
+  | 'visualizer' | 'crypto15m' | 'accounts' | 'backtest'
   | 'terminal' | 'scripts' | 'analytics' | 'evidence';
 
 const PAGE_SHORTCUTS: Record<string, PageId> = {
@@ -114,7 +113,6 @@ function PageRouter({ page, setPage }: { page: PageId; setPage: (p: PageId) => v
     case 'visualizer': return <VisualizerPage />;
     case 'terminal': return <TerminalPage />;
     case 'crypto15m': return <Crypto15mPage />;
-    case 'copy': return <CopyTradingPage />;
     case 'accounts': return <AccountsPage />;
     case 'backtest': return <BacktestPage />;
     case 'scripts': return <ScriptsPage />;

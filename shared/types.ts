@@ -2,7 +2,7 @@ export type Network = 'mainnet';
 
 export type OrderStyle = 'maker_join' | 'limit_cross' | 'limit_mid' | 'market';
 
-export type SignalSource = 'whale' | 'momentum' | 'convergence' | 'external' | 'copy';
+export type SignalSource = 'whale' | 'momentum' | 'convergence' | 'external';
 
 export interface RuleCondition {
   field: string;
@@ -175,25 +175,6 @@ export interface TraderConfig {
   crypto15mRecordSignals?: boolean;
   mainRecordSignals?: boolean;
 
-  copyEnabled?: boolean;
-  copyWallets?: string[];
-  copySizingMode?: 'fixed' | 'balance_pct';
-  copyFixedUsd?: number;
-  copyBalancePct?: number;
-  copyMinTradeUsd?: number;
-  copyMaxConcurrent?: number;
-  copyEntryMaxCents?: number;
-  copyDailyLossLimit?: number;
-  copyLifetimeLossLimitPct?: number;
-  copyLifetimeLossLimitUsd?: number;
-  copyPollSec?: number;
-  copyFastPollSec?: number;
-  copyActivityWs?: boolean;
-  copyMirrorReductions?: boolean;
-  copyReduceThreshold?: number;
-  copyOnlyNewEntries?: boolean;
-  copyAllowReentries?: boolean;
-
   scriptsLiveEnabled?: boolean;
   scriptPollSec?: number;
   scriptMaxEntryCents?: number;
@@ -204,26 +185,6 @@ export interface TraderConfig {
   scriptMarketLimit?: number;
   scriptMarketMinVolume?: number;
   scriptMarketMaxSpreadCents?: number;
-}
-
-export interface CopyWalletInfo {
-  address: string;
-  short: string;
-  positions: number;
-  valueUsd: number;
-}
-
-export interface CopyStatus {
-  enabled: boolean;
-  authed: boolean;
-  trading: boolean;
-  wallets: CopyWalletInfo[];
-  openCopies: number;
-  todayPnlUsd: number;
-  lossLimitHit: boolean;
-  sizing: { mode: 'fixed' | 'balance_pct'; fixedUsd: number; balancePct: number };
-  maxConcurrent: number;
-  entryMaxCents: number;
 }
 
 export interface CredentialsState {
@@ -266,7 +227,7 @@ export interface CredentialsInput {
   signatureType?: number;
 }
 
-export type ProfileScope = 'main' | 'crypto' | 'copy';
+export type ProfileScope = 'main' | 'crypto';
 
 export interface Profile {
   id: string;
@@ -285,7 +246,6 @@ export interface AppState {
 
   activeProfileId: string | null;
   activeCryptoProfileId?: string | null;
-  activeCopyProfileId?: string | null;
   customProfiles: Profile[];
   startMinimized: boolean;
   startWithWindows: boolean;
@@ -1232,9 +1192,6 @@ export interface ROMApi {
     onStatus: (cb: (d: { id: string; enabled: boolean; lastError?: string }) => void) => () => void;
 
     onLog: (cb: (d: { id: string; lines: string[] }) => void) => () => void;
-  };
-  copy: {
-    status: () => Promise<CopyStatus>;
   };
   polymarket: {
     marketUrl: (args: { eventTicker?: string; ticker?: string; env?: string }) =>

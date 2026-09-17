@@ -93,7 +93,6 @@ def test_the_service_loop_no_longer_gates_the_tick_on_the_master_switch():
     import service
     src = inspect.getsource(service)
     tick = src[src.index("# ── User-script executor"):]
-    tick = tick[:tick.index("# ── Copy-trading executor")]
     guard = tick[tick.index("if ("):tick.index("await script_engine.run_tick")]
     assert "scripts_live_enabled" not in guard, guard
 

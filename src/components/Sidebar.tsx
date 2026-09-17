@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  Activity, BarChart3, Bitcoin, BookOpen, Briefcase, Code2, Copy, FlaskConical, Folder,
+  Activity, BarChart3, Bitcoin, BookOpen, Briefcase, Code2, FlaskConical, Folder,
   Info, LayoutDashboard, ListChecks, Orbit, Settings, Share2, Sparkles, SquareTerminal, Users, Wallet,
 } from 'lucide-react';
 import { useApp } from '../state/AppStateProvider';
@@ -20,7 +20,6 @@ const NAV: { id: PageId; label: string; icon: React.ComponentType<{ className?: 
   { id: 'signals', label: 'Signals', icon: Activity },
   { id: 'crypto15m', label: 'Crypto', icon: Bitcoin },
   { id: 'terminal', label: 'Terminal', icon: SquareTerminal },
-  { id: 'copy', label: 'Copy Trading', icon: Copy },
   { id: 'scripts', label: 'Scripts', icon: Code2 },
   { id: 'backtest', label: 'Backtest', icon: FlaskConical },
   { id: 'history', label: 'History', icon: BarChart3 },
@@ -59,7 +58,7 @@ export function Sidebar({ page, setPage }: SidebarProps) {
 
   const groups = [
     { label: 'Workspace', ids: ['dashboard', 'main', 'positions', 'history', 'api'] },
-    ...(advanced ? [{ label: 'Advanced tools', ids: ['evidence', 'analytics', 'signals', 'crypto15m', 'scripts', 'backtest', 'copy', 'terminal', 'profiles', 'accounts', 'settings', 'logs', 'guide', 'about'] }] : []),
+    ...(advanced ? [{ label: 'Advanced tools', ids: ['evidence', 'analytics', 'signals', 'crypto15m', 'scripts', 'backtest', 'terminal', 'profiles', 'accounts', 'settings', 'logs', 'guide', 'about'] }] : []),
   ];
   return rail ? (
     <aside aria-label="Main navigation" className="flex h-full w-14 shrink-0 flex-col items-center gap-1 border-r border-rom-border bg-rom-sidebar py-4">

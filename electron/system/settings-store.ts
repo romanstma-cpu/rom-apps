@@ -193,25 +193,6 @@ export const DEFAULT_CONFIG: TraderConfig = {
   crypto15mUseRules: false,
   crypto15mRules: [],
 
-  copyEnabled: false,
-  copyWallets: [],
-  copySizingMode: 'fixed',
-  copyAllowReentries: false,
-  copyOnlyNewEntries: true,
-  copyLifetimeLossLimitPct: 0.5,
-  copyLifetimeLossLimitUsd: 0.0,
-  copyFixedUsd: 10,
-  copyBalancePct: 0.02,
-  copyMinTradeUsd: 25,
-  copyMaxConcurrent: 10,
-  copyEntryMaxCents: 95,
-  copyDailyLossLimit: -50,
-  copyPollSec: 10,
-  copyFastPollSec: 5,
-  copyActivityWs: true,
-  copyMirrorReductions: true,
-  copyReduceThreshold: 0.25,
-
   scriptsLiveEnabled: false,
   scriptPollSec: 5,
   scriptMaxEntryCents: 97,
@@ -230,7 +211,6 @@ export const DEFAULT_STATE: AppState = {
   config: { ...DEFAULT_CONFIG },
   activeProfileId: null,
   activeCryptoProfileId: null,
-  activeCopyProfileId: null,
   customProfiles: [],
   startMinimized: false,
   startWithWindows: false,
@@ -250,13 +230,17 @@ function ensureDir(): void {
 }
 
 function mergeConfig(loaded: Partial<TraderConfig> | undefined): TraderConfig {
-  return { ...DEFAULT_CONFIG, ...(loaded || {}) };
+  const retained = Object.fromEntries(
+    Object.entries(loaded || {}).filter(([key]) => !key.startsWith('copy')),
+  );
+  return { ...DEFAULT_CONFIG, ...retained };
 }
 
 export function mergeProfile(loaded: any): Profile | null {
   if (!loaded || typeof loaded !== 'object') return null;
   if (!loaded.id || !loaded.name || !loaded.config) return null;
-  const scope = loaded.scope === 'crypto' || loaded.scope === 'copy' ? loaded.scope : 'main';
+  if (loaded.scope === 'copy') return null;
+  const scope = loaded.scope === 'crypto' ? 'crypto' : 'main';
   return {
     id: String(loaded.id),
     name: String(loaded.name),
@@ -298,7 +282,6 @@ function mergeState(loaded: any): AppState {
     config: migrateTradingDay(loaded, mergeConfig(loaded.config)),
     activeProfileId: loaded.activeProfileId || null,
     activeCryptoProfileId: loaded.activeCryptoProfileId || null,
-    activeCopyProfileId: loaded.activeCopyProfileId || null,
     customProfiles: profiles,
     startMinimized: !!loaded.startMinimized,
     startWithWindows: !!loaded.startWithWindows,
@@ -418,7 +401,7 @@ export function resetConfig(): AppState {
   vaultMirrorAllowed = true;
   const next: AppState = {
     ...cur, config: { ...DEFAULT_CONFIG },
-    activeProfileId: null, activeCryptoProfileId: null, activeCopyProfileId: null,
+    activeProfileId: null, activeCryptoProfileId: null,
   };
   return save(next);
 }

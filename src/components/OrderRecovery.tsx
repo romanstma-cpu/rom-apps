@@ -22,7 +22,7 @@ function fmtAge(createdAt: number): string {
  * The operator's way out of a halted journal.
  *
  * A blocking intent stops submissions from every engine — main, crypto15m,
- * copy trader — with no timeout and no automatic forget path, because the
+ * trading engines — with no timeout and no automatic forget path, because the
  * alternative is double-submitting real money into the same market. Until
  * this panel existed the documented escape hatch was reachable only by
  * writing JSON-RPC to the backend's stdin with the app shut down.

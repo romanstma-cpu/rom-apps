@@ -133,7 +133,6 @@ _APP_MODULES: dict[str, tuple[str, str]] = {
                                    "(can place orders outside the rails)"),
     "trader": ("critical", "the order-placing engine (bypasses the script rails)"),
     "crypto15m_trader": ("critical", "the crypto order engine (bypasses the rails)"),
-    "copy_trader": ("critical", "the copy-trading engine"),
     "service": ("critical", "the backend service (full app control)"),
     "script_engine": ("critical", "the script engine itself"),
     "db": ("warning", "the app database directly"),

@@ -3,7 +3,7 @@ import { useStrategyActivity } from '../state/StrategyActivity';
 export function WorkspaceStatus() {
   const { config, backend } = useApp();
   const {label} = useStrategyActivity();
-  const count = [config?.enableTrading, config?.crypto15mEnabled, config?.copyEnabled, config?.scriptsLiveEnabled].filter(Boolean).length;
+  const count = [config?.enableTrading, config?.crypto15mEnabled, config?.scriptsLiveEnabled].filter(Boolean).length;
   const practicing = !!config?.mainPaperTrading && !config?.enableTrading;
   const connection = backend.status === 'running'
     ? (backend.authOk ? 'Connected' : 'Account not connected')

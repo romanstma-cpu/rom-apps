@@ -11,6 +11,7 @@ from collections import Counter, defaultdict
 from statistics import mean, stdev
 
 import db
+import evidence_loader
 import fees_us
 from execution_quality import signal_problem, signal_freshness_problem
 
@@ -205,13 +206,9 @@ def load_model():
         return _cache[2]
     import main_recorder
     main_recorder.init()
-    import json
-    with db.get_db() as conn:
-        rows = conn.execute("SELECT id,at,kind,ticker,payload FROM main_replay_events WHERE at>=? AND kind IN ('signal','market','settlement') ORDER BY at,id LIMIT 100001", (now-60*86400,)).fetchall()
-    if len(rows) > 100000:
-        raise ValueError('Calibration evidence exceeds the processing limit')
-    events = [{**dict(r), 'payload':json.loads(r['payload'])} for r in rows]
+    events, window = evidence_loader.load_recent_events(now)
     model = fit(events, now)
+    model['report']['evidenceWindow'] = window
     _cache = (key, now, model)
     return model
 

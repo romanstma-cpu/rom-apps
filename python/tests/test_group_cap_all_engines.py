@@ -1,9 +1,7 @@
 """UPGRADE-5's cap is account-wide only if every engine consults it.
 
 `account_risk.GROUP_SQL` counts main-strategy and crypto15m positions, so all
-four engines' fills *fill* the correlated-exposure group. Only `trader` ever
-*read* the cap. crypto15m and copy_trader could therefore open past a limit
-their own positions were helping to reach -- and crypto15m is the engine most
+active engines' fills *fill* the correlated-exposure group. Crypto15m is the engine most
 exposed to it, because every 15m window on one asset shares a series and moves
 with the same spot price.
 
@@ -20,7 +18,6 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 import account_risk
-import copy_trader
 import crypto15m
 import crypto15m_trader as ct
 import db
@@ -39,8 +36,6 @@ def fresh_db(tmp_path, monkeypatch):
     monkeypatch.setattr(db, "db_path", lambda: dbfile)
     db.init_db()
     ct._stop_retry_at.clear()
-    copy_trader._copy_cooldown.clear()
-    copy_trader._exit_retry_at.clear()
     return dbfile
 
 
@@ -294,61 +289,6 @@ def test_crypto15m_is_unchanged_when_the_control_is_off(
     seed_main_position("KXBTC15M", 120.0)
     orders = patch_c15(monkeypatch, [c15_asset("BTC")])
     run_async(ct.run_tick(c15_cfg(max_group_exposure_fraction=0.0), authed=True))
-    assert len(orders) == 1
-
-
-# --- copy_trader -----------------------------------------------------------
-
-def copy_cfg(**over):
-    c = merge_with_defaults({})
-    c.update({
-        "network": ENV, "copy_enabled": True, "copy_wallets": ["0x" + "a" * 40],
-        "copy_sizing_mode": "fixed", "copy_fixed_usd": 10.0,
-        "copy_min_trade_usd": 25.0, "copy_only_new_entries": False,
-        "max_group_exposure_fraction": 0.10,
-    })
-    c.update(over)
-    return c
-
-
-def patch_copy(monkeypatch, holdings, *, ask=50):
-    async def _gp(limit=500, user=None, **kw):
-        return holdings
-    orders = []
-
-    async def _place(**kw):
-        orders.append(kw)
-        return {"order": {"order_id": f"ord-{len(orders)}", "status": "resting"}}
-
-    async def _quote(_t, _s):
-        return {"ask_cents": ask, "bid_cents": ask - 2}
-
-    monkeypatch.setattr(polymarket_api, "get_positions", _gp)
-    monkeypatch.setattr(polymarket_api, "place_limit_order", _place)
-    monkeypatch.setattr(polymarket_api, "get_quote", _quote)
-    return orders
-
-
-def their_pos(ticker, *, qty=10.0, price=0.5, cost=50.0, event=""):
-    return {"ticker": ticker, "position_fp": qty, "market_exposure_dollars": cost,
-            "cur_price": price, "title": ticker, "event_ticker": event}
-
-
-def test_copy_refuses_a_copy_into_a_full_group(
-        fresh_db, env_net, balance, monkeypatch):
-    seed_market("T-A", "KXBTC15M")
-    seed_c15("KXBTC15M", 100.0)          # group full at 10% of $1,000
-    orders = patch_copy(monkeypatch, [their_pos("T-A")])
-    run_async(copy_trader.run_tick(copy_cfg(), authed=True))
-    assert orders == []
-
-
-def test_copy_is_unchanged_when_the_control_is_off(
-        fresh_db, env_net, balance, monkeypatch):
-    seed_market("T-A", "KXBTC15M")
-    seed_c15("KXBTC15M", 100.0)
-    orders = patch_copy(monkeypatch, [their_pos("T-A")])
-    run_async(copy_trader.run_tick(copy_cfg(max_group_exposure_fraction=0.0), authed=True))
     assert len(orders) == 1
 
 

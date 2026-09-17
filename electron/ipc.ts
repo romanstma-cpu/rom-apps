@@ -50,20 +50,15 @@ function redactSupportText(value: unknown): string {
 
 function scopeOfKey(key: string): ProfileScope {
   if (key.startsWith('crypto15m')) return 'crypto';
-  if (key.startsWith('copy')) return 'copy';
   return 'main';
 }
 
 function normScope(s: unknown): ProfileScope {
-  return s === 'crypto' || s === 'copy' ? s : 'main';
+  return s === 'crypto' ? s : 'main';
 }
 
 function activeKeyFor(scope: ProfileScope): keyof AppState {
-  return scope === 'crypto'
-    ? 'activeCryptoProfileId'
-    : scope === 'copy'
-      ? 'activeCopyProfileId'
-      : 'activeProfileId';
+  return scope === 'crypto' ? 'activeCryptoProfileId' : 'activeProfileId';
 }
 
 function scopedApplyPatch(cfg: TraderConfig, scope: ProfileScope): Partial<TraderConfig> {
@@ -78,8 +73,6 @@ function scopedApplyPatch(cfg: TraderConfig, scope: ProfileScope): Partial<Trade
     delete patch.network;
   } else if (scope === 'crypto') {
     delete patch.crypto15mEnabled;
-  } else {
-    delete patch.copyEnabled;
   }
   return patch as Partial<TraderConfig>;
 }
@@ -177,7 +170,7 @@ export function registerIpc(): void {
 
     const cur = store.get();
 
-    const PRESERVE_PREFIXES = ['crypto15m', 'copy', 'script'];
+    const PRESERVE_PREFIXES = ['crypto15m', 'script'];
     const PRESERVE_KEYS = new Set([
       'eventWebhookUrl', 'statsWebhookUrl', 'whaleWebhookUrl',
       'momentumWebhookUrl', 'alertWebhookUrl', 'enableDiscord',
@@ -225,7 +218,7 @@ export function registerIpc(): void {
       [activeKeyFor(sc)]: profile.id,
     });
     broadcastState(next);
-    const label = sc === 'crypto' ? 'crypto' : sc === 'copy' ? 'copy-trading' : 'main-engine';
+    const label = sc === 'crypto' ? 'crypto' : 'main-engine';
     return ok(profile, `Saved ${label} profile "${profile.name}"`);
   });
   ipcMain.handle('profiles:apply', async (_e, id: string) => {
@@ -249,7 +242,7 @@ export function registerIpc(): void {
     const stateNext = store.save({ ...store.get(), [activeKeyFor(sc)]: id });
     broadcastState(stateNext);
     await pushConfigToBackend();
-    const label = sc === 'crypto' ? 'crypto' : sc === 'copy' ? 'copy-trading' : 'main-engine';
+    const label = sc === 'crypto' ? 'crypto' : 'main-engine';
     return ok(next.config, `Applied ${label} profile "${p.name}"`);
   });
   ipcMain.handle('profiles:rename', (_e, id: string, name: string) => {
@@ -270,7 +263,6 @@ export function registerIpc(): void {
       customProfiles: cur.customProfiles.filter((p) => p.id !== id),
       activeProfileId: cur.activeProfileId === id ? null : cur.activeProfileId,
       activeCryptoProfileId: cur.activeCryptoProfileId === id ? null : cur.activeCryptoProfileId,
-      activeCopyProfileId: cur.activeCopyProfileId === id ? null : cur.activeCopyProfileId,
     });
     broadcastState(next);
     return ok();
@@ -745,18 +737,6 @@ export function registerIpc(): void {
     writeFileSync(res.filePath, r.text, 'utf-8');
     shell.showItemInFolder(res.filePath);
     return ok(res.filePath);
-  });
-
-  ipcMain.handle('copy:status', async () => {
-    if (!pythonBackend.isRunning()) {
-      return {
-        enabled: false, authed: false, trading: false,
-        wallets: [], openCopies: 0, todayPnlUsd: 0, lossLimitHit: false,
-        sizing: { mode: 'fixed', fixedUsd: 10, balancePct: 0.02 },
-        maxConcurrent: 10, entryMaxCents: 95,
-      };
-    }
-    return await pythonBackend.request('copyStatus', {});
   });
 
   ipcMain.handle(

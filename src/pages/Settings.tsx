@@ -82,7 +82,7 @@ export function SettingsPage() {
   return (
     <Page
       title="Settings"
-      subtitle="App-level preferences: startup behavior, notifications, and data. Each trading engine has its own page and its own on/off switch — Main Engine (whales + momentum), Crypto, Copy Trading, and Scripts."
+      subtitle="App-level preferences for startup behavior, notifications, and data. Main Strategy, Crypto, and Scripts each have their own controls."
     >
       <Section
         title="Backend"

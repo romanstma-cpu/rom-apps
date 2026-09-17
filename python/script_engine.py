@@ -30,7 +30,6 @@ _SUPERVISE_KEYS: dict[str, str] = {
     "trade_whales": "bool",
     "trade_momentum": "bool",
     "crypto15m_enabled": "bool",
-    "copy_enabled": "bool",
     "crypto15m_direction_mode": "mode",
     "crypto15m_entry_threshold": "float",
     "crypto15m_entry_max": "float",
@@ -1444,7 +1443,6 @@ async def run_tick(cfg: dict, *, authed: bool) -> None:
                         "whales": bool(cfg.get("trade_whales")),
                         "momentum": bool(cfg.get("trade_momentum")),
                         "crypto15m": bool(cfg.get("crypto15m_enabled")),
-                        "copy": bool(cfg.get("copy_enabled")),
                     },
                     "config": {k: cfg.get(k) for k in _SUPERVISE_KEYS},
                     "assets": [{

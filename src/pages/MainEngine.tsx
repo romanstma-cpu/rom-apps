@@ -23,7 +23,7 @@ const ROM_CATEGORIES: { id: string; label: string; Icon: typeof Trophy }[] = [
   { id: 'world', label: 'World', Icon: Globe2 },
 ];
 
-const PRESET_IGNORED_PREFIXES = ['crypto15m', 'copy', 'script'];
+const PRESET_IGNORED_PREFIXES = ['crypto15m', 'script'];
 const PRESET_IGNORED_KEYS = new Set([
   'enableTrading', 'mainPaperTrading', 'mainPaperBankrollUsd', 'network',
   'eventWebhookUrl', 'statsWebhookUrl', 'whaleWebhookUrl',

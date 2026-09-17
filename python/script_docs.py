@@ -156,7 +156,7 @@ decide / decide_market / manage / decide_signal / supervise):
         # engines/strategy posture dynamically ("volatility high -> model
         # mode", "past 2am UTC -> disable momentum"). Whitelisted keys:
         # enable_trading, trade_whales, trade_momentum, crypto15m_enabled,
-        # copy_enabled (booleans); crypto15m_direction_mode
+        # crypto15m_direction_mode
         # ("favorite"|"contrarian"|"model"); crypto15m_entry_threshold,
         # crypto15m_entry_max, crypto15m_min_delta_pct,
         # crypto15m_time_delay_min (numbers). Anything else is ignored.

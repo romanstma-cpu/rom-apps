@@ -101,8 +101,6 @@ import crypto15m  # noqa: E402
 import trader  # noqa: E402
 import crypto15m_trader  # noqa: E402
 import crypto15m_record  # noqa: E402
-import activity_ws  # noqa: E402
-import copy_trader  # noqa: E402
 import script_engine  # noqa: E402
 import script_sandbox  # noqa: E402
 import rtds_ws  # noqa: E402
@@ -635,8 +633,6 @@ async def _scanner_and_trader_loop() -> None:
     last_auth_retry = 0.0
     last_crypto15m = 0.0
     last_crypto15m_record = 0.0
-    last_copy = 0.0
-    copy_hot_until = 0.0
     last_script = 0.0
     last_redeem_check = 0.0
     last_cleanup = 0.0
@@ -960,43 +956,6 @@ async def _scanner_and_trader_loop() -> None:
         except Exception as e:
             logger.error(f"script engine tick error: {e}", exc_info=True)
 
-        # ── Copy-trading executor (Phase 3) ───────────────────────
-        try:
-            copy_on = bool(cfg.get("copy_enabled")) and bool(cfg.get("copy_wallets") or [])
-            try:
-                if copy_on and bool(cfg.get("copy_activity_ws", True)):
-                    if not activity_ws.is_running():
-                        activity_ws.start()
-                    activity_ws.set_watch(cfg.get("copy_wallets") or [])
-                elif activity_ws.is_running():
-                    await activity_ws.stop()
-            except Exception as e:
-                logger.debug(f"activity_ws lifecycle: {e}")
-
-            base_iv = float(cfg.get("copy_poll_sec", 30))
-            fast_iv = float(cfg.get("copy_fast_poll_sec", 5))
-            if activity_ws.has_hits():
-                hits = activity_ws.drain_hits()
-                copy_hot_until = now + 45.0
-                sells = sum(1 for h in hits if h.get("side") == "SELL")
-                logger.info(
-                    f"[copy] activity push: {len(hits)} trade(s) by followed "
-                    f"wallets ({sells} sell) — ticking now"
-                )
-                due = now - last_copy >= 1.0
-            else:
-                iv = base_iv
-                if copy_trader.last_open_count > 0 or now < copy_hot_until:
-                    iv = min(base_iv, fast_iv)
-                due = now - last_copy >= iv
-            if copy_on and due:
-                copy_changed = await copy_trader.run_tick(cfg, authed=STATE.auth_ok)
-                for row in copy_changed:
-                    await emit_event("position:update", _position_row_to_js(row))
-                last_copy = now
-        except Exception as e:
-            logger.error(f"copy tick error: {e}", exc_info=True)
-
         try:
             if (
                 cfg.get("crypto15m_record_signals", True)
@@ -1203,14 +1162,11 @@ async def _h_ping(_p: dict) -> dict:
 
 
 async def _h_setConfig(p: dict) -> dict:
-    incoming = p.get("config", p)
-    if incoming.get("copyEnabled") or incoming.get("copy_enabled"):
-        raise ValueError("Wallet copy trading is not available on Polymarket US")
     cfg = merge_with_defaults(p.get("config") or {})
     STATE.cfg = cfg
     logger.info(
         f"setConfig applied: enable_trading={cfg.get('enable_trading')} "
-        f"crypto15m={cfg.get('crypto15m_enabled')} copy={cfg.get('copy_enabled')} "
+        f"crypto15m={cfg.get('crypto15m_enabled')} "
         f"trade_whales={cfg.get('trade_whales')} "
         f"trade_momentum={cfg.get('trade_momentum')} "
         f"max_open={cfg.get('max_open_positions')} "
@@ -2281,10 +2237,6 @@ async def _deep_readiness() -> dict:
     }
 
 
-async def _h_copyStatus(_p: dict) -> dict:
-    return await copy_trader.status(STATE.cfg, authed=STATE.auth_ok)
-
-
 def _sanitize_script_code(raw: Any) -> str:
     return str(raw or "").encode("utf-8", "replace").decode("utf-8", "replace")
 
@@ -2619,7 +2571,6 @@ _HANDLERS = {
     "scriptBacktest": _h_script_backtest,
     "scriptContextPack": _h_script_context_pack,
     "scriptApiDocs": _h_script_api_docs,
-    "copyStatus": _h_copyStatus,
     "polymarketUrl": _h_polymarketUrl,
     "setConfig": _h_setConfig,
     "setCredentials": _h_setCredentials,
@@ -2859,7 +2810,6 @@ def _selftest() -> int:
     _try("import indicators + compute", lambda: __import__("indicators").compute([1.0, 2.0]))
     _try("import spot_ws (Coinbase spot feed)", lambda: __import__("spot_ws"))
     _try("import rtds_ws (RTDS Chainlink feed)", lambda: __import__("rtds_ws"))
-    _try("import activity_ws (RTDS trade tape)", lambda: __import__("activity_ws"))
     _try("import replay (backtest engine)", lambda: __import__("replay"))
     _try("import ML shadow ranker", lambda: __import__("shadow_ranker"))
     _try("import execution shadow models", lambda: __import__("execution_shadow"))

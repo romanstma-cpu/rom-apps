@@ -168,9 +168,7 @@ export function GuidePage() {
               </p>
               <p>
                 Market availability, fees and settlement all come from Polymarket
-                US. Wallet copy trading is unavailable on the US venue; its
-                controls remain visible for reference. Crypto strategies require
-                matching markets to be listed.
+                US. Crypto strategies require matching markets to be listed.
               </p>
             </Prose>
           </Card>

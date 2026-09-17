@@ -11,7 +11,6 @@ import type { Profile, ProfileScope } from '@shared/types';
 const SCOPES: { scope: ProfileScope; title: string; subtitle: string }[] = [
   { scope: 'main', title: 'Main engine', subtitle: 'Whale / momentum / convergence scanner' },
   { scope: 'crypto', title: 'Crypto market', subtitle: '15-minute crypto up/down engine' },
-  { scope: 'copy', title: 'Copy trading', subtitle: 'Follow-wallet copy engine' },
 ];
 
 const scopeOf = (p: Profile): ProfileScope => p.scope ?? 'main';
@@ -27,9 +26,7 @@ export function ProfilesPage() {
   const activeFor = (scope: ProfileScope): string | null =>
     scope === 'crypto'
       ? state?.activeCryptoProfileId ?? null
-      : scope === 'copy'
-        ? state?.activeCopyProfileId ?? null
-        : state?.activeProfileId ?? null;
+      : state?.activeProfileId ?? null;
 
   const create = async (name: string): Promise<void> => {
     const scope = createScope ?? 'main';
@@ -211,12 +208,6 @@ function miniStats(p: Profile): { label: string; value: string }[] {
         { label: 'dir', value: c.crypto15mDirectionMode === 'contrarian' ? 'fade' : 'fav' },
         { label: 'fav≥', value: `${Math.round((c.crypto15mEntryThreshold ?? 0) * 100)}¢` },
         { label: 'size', value: `${c.crypto15mOrderSize ?? 0}` },
-      ];
-    case 'copy':
-      return [
-        { label: 'wallets', value: `${c.copyWallets?.length ?? 0}` },
-        { label: 'sizing', value: c.copySizingMode ?? 'fixed' },
-        { label: 'max', value: `${c.copyMaxConcurrent ?? 0}` },
       ];
     default:
       return [

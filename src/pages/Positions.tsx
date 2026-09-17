@@ -265,14 +265,12 @@ function PositionRow({ p }: { p: BotPosition }) {
             'inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] uppercase',
             p.signalSource === 'whale'
               ? 'bg-rom-purple/15 text-rom-purple'
-              : p.signalSource === 'copy'
-                ? 'bg-rom-indigo/15 text-rom-indigoText'
-                : p.signalSource === 'external'
+              : p.signalSource === 'external'
                   ? 'bg-rom-dim/15 text-rom-muted'
                   : 'bg-rom-pink/15 text-rom-pink',
           )}
         >
-          {p.signalSource}
+          {String(p.signalSource) === 'copy' ? 'legacy' : p.signalSource}
         </span>
       </td>
       <td><TickerLink ticker={p.ticker} eventTicker={p.eventTicker} env={p.network} /></td>

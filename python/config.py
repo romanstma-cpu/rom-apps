@@ -196,25 +196,6 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "crypto15m_record_signals": True,
     "main_record_signals": True,
 
-    "copy_enabled": False,
-    "copy_wallets": [],
-    "copy_sizing_mode": "fixed",
-    "copy_fixed_usd": 10.0,
-    "copy_balance_pct": 0.02,
-    "copy_min_trade_usd": 25.0,
-    "copy_max_concurrent": 10,
-    "copy_entry_max_cents": 95,
-    "copy_daily_loss_limit": -50.0,
-    "copy_lifetime_loss_limit_pct": 0.5,
-    "copy_lifetime_loss_limit_usd": 0.0,
-    "copy_poll_sec": 10,
-    "copy_fast_poll_sec": 5,
-    "copy_activity_ws": True,
-    "copy_mirror_reductions": True,
-    "copy_reduce_threshold": 0.25,
-    "copy_only_new_entries": True,
-    "copy_allow_reentries": False,
-
     "scripts_live_enabled": False,
     "script_poll_sec": 5,
     "script_hook_timeout_sec": 1.0,
@@ -574,10 +555,9 @@ def _validate_config(cfg: dict[str, Any]) -> dict[str, Any]:
         if cfg.get("crypto15m_enabled") and not cfg.get("crypto15m_live"):
             cfg["crypto15m_enabled"] = False
         cfg.pop("crypto15m_live", None)
-    if "copy_live" in cfg:
-        if cfg.get("copy_enabled") and not cfg.get("copy_live"):
-            cfg["copy_enabled"] = False
-        cfg.pop("copy_live", None)
+    for key in tuple(cfg):
+        if key.startswith("copy_"):
+            cfg.pop(key, None)
 
     for k in _FRACTION_KEYS:
         cfg[k] = _clampf(cfg.get(k), 0.0, 1.0, d[k])
@@ -788,45 +768,6 @@ def _validate_config(cfg: dict[str, Any]) -> dict[str, Any]:
     cfg["crypto15m_hours_start_utc"] = _clampi(cfg.get("crypto15m_hours_start_utc"), 0, 24, d["crypto15m_hours_start_utc"])
     cfg["crypto15m_hours_end_utc"] = _clampi(cfg.get("crypto15m_hours_end_utc"), 0, 24, d["crypto15m_hours_end_utc"])
 
-    cfg["copy_enabled"] = bool(cfg.get("copy_enabled", False))
-    seen: set[str] = set()
-    clean_wallets: list[str] = []
-    for w in (cfg.get("copy_wallets") or []):
-        if not isinstance(w, str):
-            continue
-        a = w.strip().lower()
-        if _re.fullmatch(r"0x[0-9a-f]{40}", a) and a not in seen:
-            seen.add(a)
-            clean_wallets.append(a)
-    cfg["copy_wallets"] = clean_wallets
-    if cfg.get("copy_sizing_mode") not in ("fixed", "balance_pct"):
-        cfg["copy_sizing_mode"] = d["copy_sizing_mode"]
-    cfg["copy_fixed_usd"] = _clampf(cfg.get("copy_fixed_usd"), 0.0, 100_000.0, d["copy_fixed_usd"])
-    cfg["copy_balance_pct"] = _clampf(cfg.get("copy_balance_pct"), 0.0, 1.0, d["copy_balance_pct"])
-    cfg["copy_min_trade_usd"] = _clampf(cfg.get("copy_min_trade_usd"), 0.0, 1e9, d["copy_min_trade_usd"])
-    cfg["copy_max_concurrent"] = _clampi(cfg.get("copy_max_concurrent"), 1, 200, d["copy_max_concurrent"])
-    cfg["copy_entry_max_cents"] = _clampi(cfg.get("copy_entry_max_cents"), 1, 99, d["copy_entry_max_cents"])
-    cfg["copy_daily_loss_limit"] = _clampf(
-        -abs(_as_float(cfg.get("copy_daily_loss_limit"), d["copy_daily_loss_limit"])),
-        -1e9, 0.0, d["copy_daily_loss_limit"],
-    )
-    cfg["copy_lifetime_loss_limit_pct"] = _clampf(
-        cfg.get("copy_lifetime_loss_limit_pct"), 0.0, 1.0,
-        d["copy_lifetime_loss_limit_pct"],
-    )
-    cfg["copy_lifetime_loss_limit_usd"] = _clampf(
-        cfg.get("copy_lifetime_loss_limit_usd"), 0.0, 1e9,
-        d["copy_lifetime_loss_limit_usd"],
-    )
-    cfg["copy_poll_sec"] = _clampi(cfg.get("copy_poll_sec"), 5, 3600, d["copy_poll_sec"])
-    cfg["copy_fast_poll_sec"] = _clampi(
-        cfg.get("copy_fast_poll_sec"), 2, 3600, d["copy_fast_poll_sec"])
-    cfg["copy_activity_ws"] = bool(cfg.get("copy_activity_ws", True))
-    cfg["copy_mirror_reductions"] = bool(cfg.get("copy_mirror_reductions", True))
-    cfg["copy_reduce_threshold"] = _clampf(
-        cfg.get("copy_reduce_threshold"), 0.05, 0.95, d["copy_reduce_threshold"])
-    cfg["copy_only_new_entries"] = bool(cfg.get("copy_only_new_entries", True))
-    cfg["copy_allow_reentries"] = bool(cfg.get("copy_allow_reentries", False))
     cfg["scripts_live_enabled"] = bool(cfg.get("scripts_live_enabled", False))
     cfg["script_poll_sec"] = _clampi(cfg.get("script_poll_sec"), 2, 3600, d["script_poll_sec"])
     cfg["script_hook_timeout_sec"] = _clampf(
@@ -849,8 +790,6 @@ def _validate_config(cfg: dict[str, Any]) -> dict[str, Any]:
     cfg["script_market_max_spread_cents"] = _clampf(
         cfg.get("script_market_max_spread_cents"), 0.0, 99.0,
         d["script_market_max_spread_cents"])
-    cfg["copy_enabled"] = False
-    cfg["copy_activity_ws"] = False
     cfg["crypto15m_rtds_ws"] = False
     return cfg
 

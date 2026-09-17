@@ -19,7 +19,6 @@ import pytest
 import db
 import order_journal as journal
 import polymarket_api as api
-import copy_trader
 import crypto15m_trader
 import trader
 import us_account_stream as stream
@@ -394,7 +393,6 @@ async def test_recovery_refused_for_an_unknown_local_id():
 ENGINE_SUBMITTERS = {
     'main_strategy': lambda: trader.place_limit_order,
     'crypto15m': lambda: crypto15m_trader.polymarket_api.place_limit_order,
-    'copy_trader': lambda: copy_trader.polymarket_api.place_limit_order,
 }
 
 
@@ -405,8 +403,8 @@ def test_every_engine_submits_through_the_single_journalled_adapter():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('stuck_engine,probing_engine',
-                         [('copy_trader', 'crypto15m'), ('crypto15m', 'main_strategy'),
-                          ('main_strategy', 'copy_trader')])
+                         [('crypto15m', 'main_strategy'),
+                          ('main_strategy', 'crypto15m')])
 async def test_one_engine_stuck_row_blocks_the_others(monkeypatch, stuck_engine, probing_engine):
     await seed_unknown(monkeypatch, local_id=f'{stuck_engine}-order',
                        ticker=f'{stuck_engine}-market')

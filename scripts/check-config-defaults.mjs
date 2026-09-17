@@ -21,8 +21,7 @@ try {
 
   // The keys this session added defaults for.
   const ADDED=['sizingMode','minContracts','maxContracts','takeProfitPct',
-    'lifetimeLossLimitPct','lifetimeLossLimitUsd','copyAllowReentries',
-    'copyOnlyNewEntries','copyLifetimeLossLimitPct','copyLifetimeLossLimitUsd',
+    'lifetimeLossLimitPct','lifetimeLossLimitUsd',
     'crypto15mAssets','crypto15mInterval','crypto15mDailyLossLimit',
     'crypto15mLifetimeLossLimitPct','crypto15mLifetimeLossLimitUsd',
     'crypto15mMakerFillSec','crypto15mTakeProfitPct',

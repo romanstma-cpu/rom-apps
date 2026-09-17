@@ -143,7 +143,7 @@ const PROBE = () => {
 };
 
 const NAV = ['Overview', 'Detailed analytics', 'Evidence', 'Strategy', 'Positions', 'Signals',
-  'Crypto', 'Terminal', 'Copy Trading', 'Scripts', 'Backtest', 'History', 'Profiles',
+  'Crypto', 'Terminal', 'Scripts', 'Backtest', 'History', 'Profiles',
   'Accounts', 'Settings', 'API', 'Logs', 'Guide', 'About'];
 
 const report = [];

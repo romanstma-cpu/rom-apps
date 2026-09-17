@@ -135,9 +135,6 @@ const api: ROMApi = {
     onStatus: (cb) => sub<{ id: string; enabled: boolean; lastError?: string }>('scripts:status', cb),
     onLog: (cb) => sub<{ id: string; lines: string[] }>('scripts:log', cb),
   },
-  copy: {
-    status: () => ipcRenderer.invoke('copy:status'),
-  },
   polymarket: {
     marketUrl: (args) => ipcRenderer.invoke('polymarket:marketUrl', args),
   },

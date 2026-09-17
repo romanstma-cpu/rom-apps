@@ -154,7 +154,7 @@ def test_camel_key_from_the_ui_maps_back_to_its_backend_key(key):
     # _validate_config forces these off as a safety measure regardless of
     # what the UI sends, so a round trip cannot preserve them.
     if key in BACKEND_ONLY or key in {
-            "copy_enabled", "copy_activity_ws", "crypto15m_rtds_ws"}:
+            "crypto15m_rtds_ws"}:
         pytest.skip("backend-only or deliberately forced off")
     default = DEFAULT_CONFIG[key]
     # Choose a value that differs from the default so a dropped write shows.
