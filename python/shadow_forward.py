@@ -162,9 +162,23 @@ def _clustered_confidence(resolved):
     so a whole day is sampled as one unit instead of treating every market as
     independent. A fixed seed makes the promotion decision reproducible.
     """
-    groups=defaultdict(list)
+    groups=defaultdict(lambda:{
+        'count':0,'model_brier':0.0,'market_brier':0.0,
+        'model_log':0.0,'market_log':0.0,'trade_cost':0.0,'trade_pnl':0.0,
+    })
     for row in resolved:
-        groups[int(float(row['resolved_at'])//86400)].append(row)
+        group=groups[int(float(row['resolved_at'])//86400)]
+        outcome=row['outcome']; model=float(row['model_probability'])
+        market=float(row['market_probability'])
+        group['count']+=1
+        group['model_brier']+=(model-outcome)**2
+        group['market_brier']+=(market-outcome)**2
+        group['model_log']+=_log_loss(model,outcome)
+        group['market_log']+=_log_loss(market,outcome)
+        trade=_trade_result(row)
+        if trade is not None:
+            group['trade_cost']+=trade[0]
+            group['trade_pnl']+=trade[1]
     days=sorted(groups)
     output={
         'independentDays':len(days),
@@ -180,25 +194,19 @@ def _clustered_confidence(resolved):
     rng=random.Random(BOOTSTRAP_SEED)
     brier_changes=[]; log_changes=[]; returns=[]
     for _ in range(BOOTSTRAP_REPLICATES):
-        sample=[]
-        for _day in days:
-            sample.extend(groups[rng.choice(days)])
-        model_brier=mean((float(row['model_probability'])-row['outcome'])**2
-                         for row in sample)
-        market_brier=mean((float(row['market_probability'])-row['outcome'])**2
-                          for row in sample)
+        sample=[groups[rng.choice(days)] for _day in days]
+        count=sum(group['count'] for group in sample)
+        model_brier=sum(group['model_brier'] for group in sample)/count
+        market_brier=sum(group['market_brier'] for group in sample)/count
         if market_brier>0:
             brier_changes.append(100*(market_brier-model_brier)/market_brier)
-        model_log=mean(_log_loss(float(row['model_probability']),row['outcome'])
-                       for row in sample)
-        market_log=mean(_log_loss(float(row['market_probability']),row['outcome'])
-                        for row in sample)
+        model_log=sum(group['model_log'] for group in sample)/count
+        market_log=sum(group['market_log'] for group in sample)/count
         if market_log>0:
             log_changes.append(100*(market_log-model_log)/market_log)
-        trade_results=[result for row in sample if (result:=_trade_result(row)) is not None]
-        total_cost=sum(result[0] for result in trade_results)
+        total_cost=sum(group['trade_cost'] for group in sample)
         if total_cost:
-            returns.append(100*sum(result[1] for result in trade_results)/total_cost)
+            returns.append(100*sum(group['trade_pnl'] for group in sample)/total_cost)
     tail=(100-CONFIDENCE_LEVEL_PCT)/100
     model_log=mean(_log_loss(float(row['model_probability']),row['outcome'])
                    for row in resolved)
