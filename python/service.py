@@ -1102,12 +1102,16 @@ async def _stop_loop() -> None:
 
 async def _loop_watchdog() -> None:
     global _loop_task
-    while not (_loop_stop and _loop_stop.is_set()):
+    # Bind this watchdog to the loop generation that created it. A previous
+    # generation must never observe a newly assigned global stop event and
+    # cancel or replace the new generation's task.
+    owned_stop = _loop_stop
+    while not (owned_stop and owned_stop.is_set()):
         try:
             await asyncio.sleep(_WATCHDOG_CHECK_SEC)
         except asyncio.CancelledError:
             break
-        if _loop_stop and _loop_stop.is_set():
+        if _loop_stop is not owned_stop or (owned_stop and owned_stop.is_set()):
             break
         task = _loop_task
         if not task:
@@ -1138,7 +1142,8 @@ async def _loop_watchdog() -> None:
                 await asyncio.wait_for(task, timeout=10)
             except BaseException:
                 pass
-        if _loop_stop and _loop_stop.is_set():
+        if (_loop_stop is not owned_stop or (owned_stop and owned_stop.is_set())
+                or _loop_task is not task):
             break
         async def _recycle_client(_name: str, _mod: Any) -> None:
             try:
