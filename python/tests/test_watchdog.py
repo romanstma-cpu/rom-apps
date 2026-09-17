@@ -34,7 +34,10 @@ def test_loop_watchdog_restarts_stalled_loop(monkeypatch):
 
         stuck = loop.create_task(_stuck())
         service._loop_task = stuck
-        service._loop_heartbeat = loop.time() - 999.0
+        # Keep the synthetic heartbeat positive because the watchdog reserves
+        # non-positive values for "not initialized". Fresh CI runners can have
+        # less than 999 seconds of monotonic uptime.
+        service._loop_heartbeat = loop.time() - 1.0
 
         wd = loop.create_task(service._loop_watchdog())
         for _ in range(400):
