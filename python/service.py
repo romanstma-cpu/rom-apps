@@ -9,6 +9,7 @@ import os
 import random
 import sys
 import traceback
+import shutil
 import us_account_stream
 import main_recorder
 import order_journal
@@ -17,6 +18,7 @@ import fill_markouts
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+import runtime_resilience
 
 
 _log_q: asyncio.Queue | None = None
@@ -43,6 +45,8 @@ class _StdoutHandler(logging.Handler):
                 "source": source,
                 "msg": msg,
                 "ts": datetime.now(timezone.utc).isoformat(),
+                "traceId": getattr(record, "trace_id", "-"),
+                "spanId": getattr(record, "span_id", "-"),
             }
             sys.stdout.write(json.dumps(evt) + "\n")
             sys.stdout.flush()
@@ -57,8 +61,14 @@ def _setup_logging() -> None:
     else:
         log_dir = Path(__file__).resolve().parent / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
+    class _TraceFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            record.trace_id, record.span_id = runtime_resilience.trace_fields()
+            return True
+
     fmt = logging.Formatter(
-        "[%(asctime)s] %(levelname)-7s %(name)s: %(message)s",
+        "[%(asctime)s] %(levelname)-7s %(name)s "
+        "trace=%(trace_id)s span=%(span_id)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     root = logging.getLogger()
@@ -68,9 +78,11 @@ def _setup_logging() -> None:
         backupCount=5, encoding="utf-8",
     )
     fh.setFormatter(fmt)
+    fh.addFilter(_TraceFilter())
     root.addHandler(fh)
     sh = _StdoutHandler()
     sh.setFormatter(fmt)
+    sh.addFilter(_TraceFilter())
     root.addHandler(sh)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
@@ -2115,6 +2127,7 @@ async def _h_trading_status(_p: dict) -> dict:
         "mainState": main_state,
         "mainSummary": main_summary,
         "mainLastCycleAt": lc.get("at"),
+        "mainLastCycleTraceId": lc.get("traceId"),
         "mainFilterCounts": lc.get("filterCounts") or {},
         "mainCandidates": lc.get("candidates") or 0,
         "mainPlaced": lc.get("placed") or 0,
@@ -2135,6 +2148,66 @@ async def _h_trading_status(_p: dict) -> dict:
             "env": env,
             "blockReasons": c15.get("blockReasons") or {},
         },
+        "readiness": await _deep_readiness(),
+    }
+
+
+async def _deep_readiness() -> dict:
+    """Bounded dependency-aware readiness; it never places an order."""
+    started = asyncio.get_running_loop().time()
+    checks: dict[str, dict[str, Any]] = {}
+
+    def database_check() -> None:
+        with db.get_db() as conn:
+            assert conn.execute("SELECT 1").fetchone()[0] == 1
+
+    try:
+        await asyncio.wait_for(asyncio.to_thread(database_check), timeout=2.0)
+        checks["database"] = {"status": "up"}
+    except Exception as exc:
+        checks["database"] = {"status": "down", "error": str(exc)[:160]}
+
+    try:
+        disk = shutil.disk_usage(db.db_path().parent)
+        free_mb = round(disk.free / (1024 * 1024), 1)
+        checks["disk"] = {
+            "status": "up" if free_mb >= 100 else "degraded",
+            "freeMb": free_mb,
+        }
+    except Exception as exc:
+        checks["disk"] = {"status": "down", "error": str(exc)[:160]}
+
+    execution = trader.execution_health.status()
+    checks["executionCircuit"] = {
+        "status": "down" if execution.get("blocked") else "up",
+        "state": execution.get("state"),
+        "reason": execution.get("reason") or "",
+    }
+    stream = execution.get("marketStream") or {}
+    checks["marketStream"] = {
+        "status": "up" if stream.get("connected") and not stream.get("stale") else "degraded",
+        "state": stream.get("state", "unknown"),
+    }
+    resilience = runtime_resilience.resilience_snapshot()
+    for name, snapshot in resilience["dependencies"].items():
+        failed_after_success = (
+            snapshot.get("lastFailureAt")
+            and (not snapshot.get("lastSuccessAt")
+                 or snapshot["lastFailureAt"] > snapshot["lastSuccessAt"])
+        )
+        checks[name] = {
+            "status": "degraded" if failed_after_success else "up",
+            **snapshot,
+        }
+    blocking = [name for name, check in checks.items() if check["status"] == "down"]
+    degraded = [name for name, check in checks.items() if check["status"] == "degraded"]
+    return {
+        "status": "not_ready" if blocking else ("degraded" if degraded else "ready"),
+        "version": os.environ.get("ROM_APP_VERSION", "dev"),
+        "checkedAt": datetime.now(timezone.utc).isoformat(),
+        "durationMs": round((asyncio.get_running_loop().time() - started) * 1000, 2),
+        "checks": checks,
+        "bulkheads": resilience["bulkheads"],
     }
 
 
@@ -2503,14 +2576,15 @@ async def _dispatch_request(req: dict) -> None:
     if not h:
         await respond_err(rid, f"unknown method: {method}")
         return
-    try:
-        result = await h(params)
-        await respond_ok(rid, result)
-    except Exception as e:
-        logger.debug(
-            f"RPC {method} failed: {e}\n{traceback.format_exc(limit=3)}"
-        )
-        await respond_err(rid, f"{type(e).__name__}: {e}")
+    with runtime_resilience.trace_scope(str(req.get("traceId") or "") or None, f"rpc:{method}"):
+        try:
+            result = await h(params)
+            await respond_ok(rid, result)
+        except Exception as e:
+            logger.debug(
+                f"RPC {method} failed: {e}\n{traceback.format_exc(limit=3)}"
+            )
+            await respond_err(rid, f"{type(e).__name__}: {e}")
 
 
 async def _stdin_reader() -> None:

@@ -24,12 +24,8 @@ jobs:
       - name: Install Node dependencies
         run: npm install
 
-      - name: TypeScript typecheck
-        run: npm run typecheck
-
       - name: Install Python test dependencies
         run: pip install -r python/requirements-dev.txt
 
-      - name: Run Python tests
-        working-directory: python
-        run: python -m pytest -q
+      - name: Production release gate
+        run: npm run release:gate

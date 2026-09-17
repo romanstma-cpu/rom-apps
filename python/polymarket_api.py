@@ -11,6 +11,7 @@ import main_recorder
 from urllib.parse import quote
 import httpx
 import polymarket_auth as auth
+import runtime_resilience
 from categorize import categorize_by_keywords
 
 logger = logging.getLogger(__name__)
@@ -215,7 +216,7 @@ async def close_clients():
     if _client is not None: await _client.aclose()
     _client = None
 
-async def _request(method, path, *, private=False, params=None, body=None, retry=False):
+async def _request_unbounded(method, path, *, private=False, params=None, body=None, retry=False):
     """One request, paced, with retry strictly opt-in.
 
     `retry` repeats only on a transport failure, a 429, or a 5xx -- never on a
@@ -274,6 +275,32 @@ async def _request(method, path, *, private=False, params=None, body=None, retry
             raise PolymarketAPIError(response.status_code, response.reason_phrase,
                                      detail=detail)
         return response.json() if response.content else {}
+
+
+async def _request(method, path, *, private=False, params=None, body=None, retry=False):
+    """Run a US API call inside its isolated capacity lane.
+
+    Private account/order traffic has dedicated permits, so a slow public
+    market scan cannot starve the path that reconciles or submits orders.
+    """
+    lane = (runtime_resilience.execution_bulkhead if private
+            else runtime_resilience.market_data_bulkhead)
+    observation = runtime_resilience.dependency_health[
+        "polymarketExecution" if private else "polymarketMarketData"
+    ]
+
+    async def operation():
+        return await _request_unbounded(
+            method, path, private=private, params=params, body=body, retry=retry,
+        )
+
+    try:
+        result = await lane.run(operation)
+    except Exception as exc:
+        observation.failure(exc)
+        raise
+    observation.success()
+    return result
 
 def _money(value, default=0.0):
     if isinstance(value,dict): value=value.get('value')

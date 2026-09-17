@@ -35,13 +35,12 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Check types
-        run: npm run typecheck
+      - name: Production release gate
+        run: npm run release:gate
 
       - name: Build app, bundle backend, package installer
         shell: bash
         run: |
-          npm run build
           npm run py:dist
           npx electron-builder --mac dmg --arm64
         env:

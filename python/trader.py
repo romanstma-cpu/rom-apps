@@ -17,6 +17,7 @@ import signal_calibration
 import strategy_allocator
 import execution_learning
 import execution_health
+import runtime_resilience
 import rules as rules_engine
 from execution_quality import (
     affordable_at_depth, entry_price, entry_vwap_cents, remaining_signal_margin,
@@ -942,12 +943,18 @@ def can_open_new_entries(env: str) -> tuple[bool, str]:
 
 
 async def scan_for_trades(cfg: dict) -> list[dict]:
+    with runtime_resilience.trace_scope(prefix_trace := runtime_resilience.new_trace_id("cycle"), "main-scan"):
+        return await _scan_for_trades_traced(cfg, prefix_trace)
+
+
+async def _scan_for_trades_traced(cfg: dict, trace_id: str) -> list[dict]:
     global _last_scan_skip_log
     now_ts = time.time()
 
     def _skip_log(reason: str) -> None:
         last_cycle["skipReason"] = reason
         last_cycle["at"] = time.time()
+        last_cycle["traceId"] = trace_id
         key = reason.split(" (", 1)[0]
         last = _last_scan_skip_log.get(key, 0)
         if now_ts - last < 60:
@@ -1146,6 +1153,7 @@ async def scan_for_trades(cfg: dict) -> list[dict]:
     last_cycle.update({
         "skipReason": cycle_stop_reason, "filterCounts": dict(filter_counts),
         "candidates": len(candidates), "placed": placed, "at": time.time(),
+        "traceId": trace_id,
     })
 
     if candidates:
@@ -1167,7 +1175,7 @@ def cap_dict_size(d: dict, cap: int = 2000) -> None:
         for _k in list(d.keys())[: len(d) - cap]:
             d.pop(_k, None)
 
-last_cycle: dict = {"skipReason": None, "filterCounts": {}, "candidates": 0, "placed": 0, "at": None}
+last_cycle: dict = {"skipReason": None, "filterCounts": {}, "candidates": 0, "placed": 0, "at": None, "traceId": None}
 
 _last_filter_log: dict[tuple[int, str], float] = {}
 

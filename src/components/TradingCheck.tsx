@@ -7,6 +7,7 @@ export function TradingCheck({ onOpenStrategy }: { onOpenStrategy: () => void })
   const { account, backend, config } = useApp();
   const activity = useStrategyActivity();
   const execution = activity.status?.executionHealth;
+  const readiness = activity.status?.readiness;
   const dailyStop = Math.abs(config?.stopLossOnDay || 0);
   const todayPnl = account?.todayPnlUsd;
   const dailyLossUsed = Math.max(0, -(todayPnl || 0));
@@ -14,7 +15,7 @@ export function TradingCheck({ onOpenStrategy }: { onOpenStrategy: () => void })
   const live = !!config?.enableTrading;
   const practice = !!config?.mainPaperTrading && !live;
   const dailyStopped = dailyRemaining === 0 && dailyStop > 0 && dailyLossUsed >= dailyStop;
-  const attention = !backend.authOk || !activity.healthy || !!execution?.blocked || dailyStopped;
+  const attention = !backend.authOk || !activity.healthy || !!execution?.blocked || readiness?.status === 'not_ready' || dailyStopped;
   const streamDetail = execution?.blocked
     ? execution.reason
     : execution?.marketStream.stale
@@ -30,6 +31,7 @@ export function TradingCheck({ onOpenStrategy }: { onOpenStrategy: () => void })
   const facts = [
     { label: 'Mode', value: mode, detail: backend.authOk ? 'Polymarket US API connected' : 'Connect API before live trading' },
     { label: 'Execution guard', value: execution?.blocked ? 'Paused for safety' : 'Controls clear', detail: streamDetail },
+    { label: 'System readiness', value: readiness?.status === 'not_ready' ? 'Not ready' : readiness?.status === 'degraded' ? 'Degraded' : readiness ? 'Ready' : 'Checking', detail: readiness ? `Deep check completed in ${Math.round(readiness.durationMs)} ms` : 'Checking database, disk, streams, and API lanes' },
     { label: 'Exposure', value: account ? fmtUsd(account.openCostUsd) : '—', detail: exposureCap === null ? 'Account value unavailable' : `${fmtUsd(exposureCap)} maximum at current balance` },
     { label: 'Today’s P&L', value: fmtUsd(todayPnl, { sign: true }), detail: dailyRemaining === null ? 'Daily loss stop is off' : `${fmtUsd(dailyRemaining)} until daily loss stop` },
     { label: 'Open orders', value: `${account?.pendingCount ?? 0}`, detail: `${account?.openCount ?? 0} filled position${(account?.openCount ?? 0) === 1 ? '' : 's'} open` },

@@ -72,7 +72,8 @@ export function MainEnginePage() {
   const tradingOn = !!config.enableTrading;
   const paperOn = !!config.mainPaperTrading && !tradingOn;
   const executionBlocked = !!activity.status?.executionHealth?.blocked;
-  const canStart = backend.status === 'running' && backend.authOk && activity.healthy && !executionBlocked && !riskDraft && !busy && !busyId;
+  const readinessBlocked = activity.status?.readiness?.status === 'not_ready';
+  const canStart = backend.status === 'running' && backend.authOk && activity.healthy && !executionBlocked && !readinessBlocked && !riskDraft && !busy && !busyId;
   const changeMode = async (action: () => Promise<void>) => {
     if (switching) return;
     setSwitching(true);

@@ -693,7 +693,8 @@ export interface TradingStatus {
   mainMode: 'paused' | 'paper' | 'live';
   mainState: 'paused' | 'scanning' | 'waiting' | 'blocked';
   mainSummary: string;
-  mainLastCycleAt: number | null;
+    mainLastCycleAt: number | null;
+    mainLastCycleTraceId?: string | null;
   mainFilterCounts: Record<string, number>;
   mainCandidates: number;
   mainPlaced: number;
@@ -712,14 +713,22 @@ export interface TradingStatus {
     hasLossLimit: boolean;
     lossLimitSummary: string;
   };
-  c15: {
+    c15: {
     enabled: boolean;
     live: boolean;
     authed: boolean;
     env: string;
-    blockReasons: Record<string, string>;
-  };
-}
+      blockReasons: Record<string, string>;
+    };
+    readiness?: {
+      status: 'ready' | 'degraded' | 'not_ready';
+      version: string;
+      checkedAt: string;
+      durationMs: number;
+      checks: Record<string, { status: 'up' | 'degraded' | 'down'; [key: string]: unknown }>;
+      bulkheads: Record<string, { capacity: number; active: number; available: number; rejected: number; completed: number; timedOut: number }>;
+    };
+  }
 
 export interface SignalCalibrationReport {
   status: 'collecting' | 'qualified' | 'not_qualified';
