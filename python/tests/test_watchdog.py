@@ -11,6 +11,11 @@ def test_loop_watchdog_restarts_stalled_loop(monkeypatch):
         return None
     monkeypatch.setattr(service, "emit_event", _noop_emit)
 
+    async def _noop_close_clients():
+        return None
+    monkeypatch.setattr(service.polymarket_api, "close_clients", _noop_close_clients)
+    monkeypatch.setattr(service.crypto15m, "close_clients", _noop_close_clients)
+
     restarts = {"n": 0}
 
     async def _dummy_loop():
