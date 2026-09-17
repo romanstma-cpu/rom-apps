@@ -101,7 +101,7 @@ function PageRouter({ page, setPage }: { page: PageId; setPage: (p: PageId) => v
     case 'dashboard': return <OverviewPage onNav={setPage} />;
     case 'analytics': return <DashboardPage onNav={setPage} />;
     case 'evidence': return <EvidencePage onNav={setPage} />;
-    case 'main': return <MainEnginePage />;
+    case 'main': return <MainEnginePage onNav={setPage} />;
     case 'positions': return <PositionsPage />;
     case 'signals': return <SignalsPage />;
     case 'history': return <HistoryPage />;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   AlertTriangle, Banknote, Bitcoin, Check, ChevronRight, Cloud, Film, Globe2,
-  FlaskConical, Pause, Play, Power, RefreshCw, RotateCcw, Save, Sparkles, Trophy, Vote,
+  FlaskConical, KeyRound, Pause, Play, Power, RefreshCw, RotateCcw, Save, Sparkles, Trophy, Vote,
 } from 'lucide-react';
 import type { StrategyAllocationPlan, StrategyPreset, TraderConfig } from '@shared/types';
 import { useApp } from '../state/AppStateProvider';
@@ -11,6 +11,7 @@ import { cls, fmtPct, fmtUsd } from '../utils/format';
 import { RiskLimits } from '../components/RiskLimits';
 import { useStrategyActivity } from '../state/StrategyActivity';
 import { LiveReview } from '../components/LiveReview';
+import type { PageId } from '../App';
 
 const ROM_CATEGORIES: { id: string; label: string; Icon: typeof Trophy }[] = [
   { id: 'sports', label: 'Sports', Icon: Trophy },
@@ -41,7 +42,7 @@ function matchesPreset(cfg: TraderConfig, preset: TraderConfig): boolean {
   });
 }
 
-export function MainEnginePage() {
+export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
   const { config, refresh, strategies, backend } = useApp();
   const toast = useToast();
   const activity = useStrategyActivity();
@@ -186,6 +187,9 @@ export function MainEnginePage() {
             {tradingOn ? 'Pause live' : 'Start live'}
             {!backend.authOk && <Power className="ml-1 h-3 w-3 opacity-60" />}
           </button>
+          {!backend.authOk && <button className="rom-btn-primary min-w-[150px]" onClick={() => onNav('api')}>
+            <KeyRound className="h-4 w-4" /> Connect your API
+          </button>}
           <div className="min-w-[240px] flex-1">
             <div className={cls('text-sm font-semibold',
               tradingOn ? 'text-rom-lossText' : paperOn ? 'text-rom-purple' : 'text-rom-dim')}>
