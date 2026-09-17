@@ -539,6 +539,46 @@ def test_maker_entry_aborts_when_price_changes_before_submit(
     assert count_rows()==0
 
 
+def test_crossing_entry_aborts_when_price_worsens_before_submit(
+    fresh_db, env_net, cfg, monkeypatch, fee_clock
+):
+    at=fee_clock(US_FEE_JULY)
+    cfg.update(enable_trading=True,order_style='limit_cross')
+    books=iter([
+        quote_with_depth({'bid_cents':59,'ask_cents':60}),
+        quote_with_depth({'bid_cents':60,'ask_cents':61}),
+    ])
+    async def _quote(*_args): return next(books)
+    async def forbidden(**_kwargs): pytest.fail('worsened crossing order submitted')
+    monkeypatch.setattr(trader,'get_quote',_quote)
+    monkeypatch.setattr(trader,'place_limit_order',forbidden)
+    assert run_async(trader.execute_signal(
+        whale_signal(id=903,ticker='CHASED',created_at=at.isoformat()),
+        'whale',cfg,1000.0,
+    )) is None
+    assert count_rows()==0
+
+
+def test_crossing_entry_aborts_when_depth_disappears_before_submit(
+    fresh_db, env_net, cfg, monkeypatch, fee_clock
+):
+    at=fee_clock(US_FEE_JULY)
+    cfg.update(enable_trading=True,order_style='limit_cross')
+    books=iter([
+        quote_with_depth({'bid_cents':59,'ask_cents':60},size=100),
+        quote_with_depth({'bid_cents':59,'ask_cents':60},size=1),
+    ])
+    async def _quote(*_args): return next(books)
+    async def forbidden(**_kwargs): pytest.fail('depthless crossing order submitted')
+    monkeypatch.setattr(trader,'get_quote',_quote)
+    monkeypatch.setattr(trader,'place_limit_order',forbidden)
+    assert run_async(trader.execute_signal(
+        whale_signal(id=904,ticker='THINNED',created_at=at.isoformat()),
+        'whale',cfg,1000.0,
+    )) is None
+    assert count_rows()==0
+
+
 def test_execute_api_error_is_persisted_as_error_row(fresh_db, env_net, cfg, monkeypatch):
     cfg["dry_run"] = False
     cfg["enable_trading"] = True

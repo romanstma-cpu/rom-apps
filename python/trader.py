@@ -823,24 +823,43 @@ async def execute_signal(
         return None
 
     # A final routed quote closes the several-second gap between selection and
-    # submission. Maker orders are submitted only if the exact passive price
-    # is still valid; the exchange's post-only flag handles the final race.
-    if maker_only:
-        try:
-            final_quote = await asyncio.wait_for(get_quote(signal['ticker'], direction), timeout=2.0)
-            final_limit = entry_price(final_quote, signal_cost_cents, cfg)
-        except Exception as exc:
-            execution_health.circuit.record_failure("quote", exc)
-            logger.info('[skip] %s: maker recheck failed: %s', signal['ticker'], exc)
-            return None
-        execution_health.circuit.record_quote_success()
-        if final_limit != limit_cents:
+    # submission. Maker orders require the exact passive price. Crossing orders
+    # may receive price improvement, but never chase a worse ask or assume that
+    # depth visible during sizing still exists at submission.
+    try:
+        final_quote = await asyncio.wait_for(
+            get_quote(signal['ticker'], direction), timeout=2.0,
+        )
+        final_limit = entry_price(final_quote, signal_cost_cents, cfg)
+    except Exception as exc:
+        execution_health.circuit.record_failure("quote", exc)
+        logger.info('[skip] %s: final entry recheck failed: %s', signal['ticker'], exc)
+        return None
+    execution_health.circuit.record_quote_success()
+    if maker_only and final_limit != limit_cents:
+        logger.info(
+            '[skip] %s: maker price changed %dc->%dc before submission',
+            signal['ticker'], limit_cents, final_limit,
+        )
+        return None
+    if not maker_only and final_limit > limit_cents:
+        logger.info(
+            '[skip] %s: entry worsened %dc->%dc before submission',
+            signal['ticker'], limit_cents, final_limit,
+        )
+        return None
+    if (not maker_only and execution_style == 'crossing'
+            and cfg.get('require_entry_depth', True)):
+        final_available = affordable_at_depth(
+            final_quote.get('ask_levels') or [], limit_cents,
+        )
+        if final_available < contracts:
             logger.info(
-                '[skip] %s: maker price changed %dc->%dc before submission',
-                signal['ticker'], limit_cents, final_limit,
+                '[skip] %s: displayed entry depth fell %d->%d contract(s) before submission',
+                signal['ticker'], contracts, final_available,
             )
             return None
-        entry_quote = final_quote
+    entry_quote = final_quote
 
     if not execution_health.circuit.begin_attempt():
         logger.info("[skip] %s: %s", signal["ticker"], execution_health.circuit.blocked_reason() or "execution safety probe in progress")
