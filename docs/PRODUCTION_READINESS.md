@@ -1,8 +1,10 @@
 # ROM PolyBot production readiness
 
 Every public build must pass `npm run release:gate` before an installer is
-published. The gate checks types, UI rules, IPC drift, the complete Python test
-suite, the offline 3x capacity probe, and the production renderer build.
+published. The gate checks types, IPC drift, the complete Python test suite,
+the offline 3x capacity probe, and the production renderer build. Windows also
+runs the interactive UI audit; the headless Mac builder launches and inspects
+the packaged app instead.
 
 ## Release sequence
 
