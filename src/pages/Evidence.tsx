@@ -1,6 +1,6 @@
-import { ArrowRight, ClipboardCheck, FlaskConical, Trophy } from 'lucide-react';
+import { Activity, ArrowRight, BrainCircuit, ClipboardCheck, FlaskConical, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ExecutionQualityReport, PracticePerformanceReport, SignalCalibrationReport } from '@shared/types';
+import type { ExecutionQualityReport, ExecutionShadowReport, ForwardValidationReport, PracticePerformanceReport, ShadowRankerReport, SignalCalibrationReport } from '@shared/types';
 import { Card, Page, StatCard } from '../components/common';
 import { useApp } from '../state/AppStateProvider';
 import { summarizeEvidence } from '../utils/evidence';
@@ -10,25 +10,40 @@ import type { PageId } from '../App';
 export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
   const {positions}=useApp();const e=summarizeEvidence(positions);
   const [calibration,setCalibration]=useState<SignalCalibrationReport|null>(null);
+  const [shadow,setShadow]=useState<ShadowRankerReport|null>(null);
+  const [executionShadow,setExecutionShadow]=useState<ExecutionShadowReport|null>(null);
+  const [forward,setForward]=useState<ForwardValidationReport|null>(null);
   const [practice,setPractice]=useState<PracticePerformanceReport|null>(null);
   const [execution,setExecution]=useState<ExecutionQualityReport|null>(null);
   const [executionError,setExecutionError]=useState('');
   const [error,setError]=useState('');
+  const [shadowError,setShadowError]=useState('');
+  const [executionShadowError,setExecutionShadowError]=useState('');
+  const [forwardError,setForwardError]=useState('');
   const [practiceError,setPracticeError]=useState('');
   const [revision,setRevision]=useState(0);
   const [loading,setLoading]=useState(true);
   useEffect(()=>{
     let active=true;
-    setLoading(true);setError('');setPracticeError('');setCalibration(null);setPractice(null);
+    setLoading(true);setError('');setShadowError('');setExecutionShadowError('');setForwardError('');setPracticeError('');setCalibration(null);setShadow(null);setExecutionShadow(null);setForward(null);setPractice(null);
     setExecution(null);setExecutionError('');
     Promise.allSettled([
       window.rom.trading.calibration(),
+      window.rom.trading.shadowRanker(),
+      window.rom.trading.executionShadow(),
+      window.rom.trading.forwardValidation(),
       window.rom.trading.practicePerformance(),
       window.rom.trading.executionQuality(),
-    ]).then(([calibrationResult,practiceResult,executionResult])=>{
+    ]).then(([calibrationResult,shadowResult,executionShadowResult,forwardResult,practiceResult,executionResult])=>{
       if(!active)return;
       if(calibrationResult.status==='fulfilled')setCalibration(calibrationResult.value);
       else setError(calibrationResult.reason?.message || 'Calibration evidence is unavailable. Try again after reconnecting.');
+      if(shadowResult.status==='fulfilled')setShadow(shadowResult.value);
+      else setShadowError(shadowResult.reason?.message || 'The ML shadow report is unavailable. Try again after reconnecting.');
+      if(executionShadowResult.status==='fulfilled')setExecutionShadow(executionShadowResult.value);
+      else setExecutionShadowError(executionShadowResult.reason?.message || 'The execution shadow report is unavailable. Try again after reconnecting.');
+      if(forwardResult.status==='fulfilled')setForward(forwardResult.value);
+      else setForwardError(forwardResult.reason?.message || 'The forward-validation scorecard is unavailable. Try again after reconnecting.');
       if(practiceResult.status==='fulfilled')setPractice(practiceResult.value);
       else setPracticeError(practiceResult.reason?.message || 'Practice performance is unavailable. Try again after reconnecting.');
       if(executionResult.status==='fulfilled')setExecution(executionResult.value);
@@ -47,6 +62,9 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
           </dl><p className="mt-4 text-xs leading-5 text-rom-dim">One recorded signal per event. Later outcomes test earlier estimates against market prices. Every live Whale and Momentum entry requires a qualified group and a positive margin after fees, regardless of sizing mode. Practice keeps collecting candidates that are not yet qualified. Enable main data collection in Backtest to build this record.</p></>}
         </div>
       </Card>
+      <ShadowRanker report={shadow} loading={loading} error={shadowError}/>
+      <ForwardValidation report={forward} loading={loading} error={forwardError}/>
+      <ExecutionShadow report={executionShadow} loading={loading} error={executionShadowError}/>
       <PracticeRanking report={practice} loading={loading} error={practiceError}/>
       <ExecutionQuality report={execution} loading={loading} error={executionError}/>
       <Card><div className="flex items-start gap-4"><ClipboardCheck className="mt-1 h-6 w-6 shrink-0 text-rom-purple"/><div><h3 className="text-xl font-semibold">{e.count===0?'Your record starts here.':'A record to review, not a prediction.'}</h3><p className="mt-2 text-sm leading-6 text-rom-muted">{e.count===0?'No completed, filled main-strategy trades are available in the loaded history. Simulated results and unfilled orders are not counted as real performance.':`${e.count} completed trades across ${e.eventCount} distinct market or event identifiers. Correlated trades and changing settings can distort conclusions; a positive total does not demonstrate a repeatable edge.`}</p></div></div></Card>
@@ -55,6 +73,41 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
       <Card><h3 className="mb-4 font-semibold">Test a strategy with context</h3><p className="text-sm leading-6 text-rom-muted">Use historical simulation to explore your settings. Compare several time periods, keep the parameters fixed when reviewing a later period, and include losing results in your assessment.</p><p className="mt-4 text-xs leading-5 text-rom-dim">The historical simulator uses fee assumptions. It cannot replay missing order-book snapshots or the current live quote checks. Its results must not be presented as live Polymarket US returns.</p><button className="rom-btn-primary mt-6" onClick={()=>onNav('backtest')}>Open historical simulation<ArrowRight className="h-4 w-4"/></button><button className="rom-btn-default mt-3" onClick={()=>onNav('history')}>Review trade history</button></Card></div>
     </div>
   </Page>;
+}
+
+function ForwardValidation({report,loading,error}:{report:ForwardValidationReport|null;loading:boolean;error:string}) {
+  const value=(number:number|null)=>number===null?'—':number.toFixed(4);
+  return <Card><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-lg font-semibold">Forward ML scorecard</h3><p className="mt-1 text-sm text-rom-muted">Scores predictions frozen before their markets resolve.</p></div><span className="rounded-full border border-rom-border bg-rom-void/40 px-3 py-1.5 text-xs font-medium text-rom-muted">Append-only evidence</span></div><div className="min-h-24 pt-5" aria-live="polite" aria-busy={loading}>{loading&&<p className="text-sm text-rom-muted">Matching frozen predictions with later settlements…</p>}{error&&<p role="alert" className="text-sm text-rom-lossText">{error}</p>}{report&&<><p className="text-sm leading-6 text-rom-muted">{report.reason}</p><dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5"><Metric label="Resolved" value={`${report.resolvedPredictions}`} detail={`${report.minimumResolved} needed`}/><Metric label="Pending" value={`${report.pendingPredictions}`} detail="Awaiting settlement"/><Metric label="Model Brier" value={value(report.modelBrier)} detail="Frozen model"/><Metric label="Market Brier" value={value(report.marketBrier)} detail="Same observations"/><Metric label="Brier change" value={report.brierImprovementPct===null?'—':`${report.brierImprovementPct>=0?'+':''}${report.brierImprovementPct.toFixed(1)}%`} detail="Positive is better"/></dl><p className="mt-4 text-xs leading-5 text-rom-dim">Only the first prediction for each event and model version is retained. Retraining cannot rewrite this scorecard, and it never controls live orders.</p></>}</div></Card>;
+}
+
+function ExecutionShadow({report,loading,error}:{report:ExecutionShadowReport|null;loading:boolean;error:string}) {
+  const model=(name:string,item:ExecutionShadowReport['fillModel'],samples:number)=><div className="rounded-xl border border-rom-border bg-rom-void/30 p-4"><div className="flex items-center justify-between gap-3"><h4 className="text-sm font-semibold">{name}</h4><span className={`text-xs font-medium ${item.status==='promising'?'text-rom-win':item.status==='not_better'?'text-rom-lossText':'text-amber-300'}`}>{item.status==='promising'?'Promising':item.status==='not_better'?'Below baseline':'Collecting'}</span></div><p className="mt-2 text-xs leading-5 text-rom-dim">{item.reason}</p><dl className="mt-4 grid grid-cols-3 gap-3"><Metric label="Evidence" value={`${samples}`} detail={`${item.trainEvents} train · ${item.testEvents} test`}/><Metric label="Model Brier" value={item.modelBrier===null?'—':item.modelBrier.toFixed(4)} detail="Lower is better"/><Metric label="Baseline" value={item.baselineBrier===null?'—':item.baselineBrier.toFixed(4)} detail={item.baselineRate===null?'Rate unavailable':`${(item.baselineRate*100).toFixed(1)}% prior rate`}/></dl></div>;
+  return <Card><div className="flex flex-wrap items-start justify-between gap-4"><div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cyan-400/10 text-cyan-300"><Activity className="h-5 w-5"/></div><div><h3 className="text-lg font-semibold">Execution intelligence lab</h3><p className="mt-1 text-sm text-rom-muted">Tests which book conditions lead to fills and unfavorable 120-second movement.</p></div></div><span className="rounded-full border border-rom-border bg-rom-void/40 px-3 py-1.5 text-xs font-medium text-rom-muted">Shadow only · risk controls unchanged</span></div><div className="min-h-32 pt-5" aria-live="polite" aria-busy={loading}>{loading&&<p className="text-sm text-rom-muted">Evaluating confirmed order and markout evidence…</p>}{error&&<p role="alert" className="text-sm text-rom-lossText">{error}</p>}{report&&<><p className="mb-4 text-sm leading-6 text-rom-muted">{report.reason}</p><div className="grid gap-4 lg:grid-cols-2">{model('Fill probability challenger',report.fillModel,report.orders)}{model('Adverse-movement challenger',report.adverseModel,report.markoutSamples)}</div><p className="mt-4 text-xs leading-5 text-rom-dim">Each entry stores spread, depth, imbalance, quote age, route, response time and signal movement before the outcome is known. Later orders form the untouched test set. These models cannot change an order.</p></>}</div></Card>;
+}
+
+function ShadowRanker({report,loading,error}:{report:ShadowRankerReport|null;loading:boolean;error:string}) {
+  const metric=(value:number|null)=>value===null?'—':value.toFixed(4);
+  const positive=report?.status==='promising';
+  return <Card>
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-rom-purple/10 text-rom-purple"><BrainCircuit className="h-5 w-5"/></div><div><h3 className="text-lg font-semibold">ML shadow ranker</h3><p className="mt-1 text-sm text-rom-muted">Learns from settled events and tests itself on later data.</p></div></div>
+      <span className="rounded-full border border-rom-border bg-rom-void/40 px-3 py-1.5 text-xs font-medium text-rom-muted">Observation only · no live control</span>
+    </div>
+    <div className="min-h-32 pt-5" aria-live="polite" aria-busy={loading}>
+      {loading&&<p className="text-sm text-rom-muted">Evaluating the untouched chronological holdout…</p>}
+      {error&&<p role="alert" className="text-sm text-rom-lossText">{error}</p>}
+      {report&&<>
+        <div className={`rounded-xl border p-4 ${positive?'border-rom-win/35 bg-rom-win/5':'border-rom-border bg-rom-void/35'}`}><div className="flex flex-wrap items-center justify-between gap-3"><p className="max-w-3xl text-sm leading-6 text-rom-muted">{report.reason}</p><span className={`rom-pill ${positive?'border-rom-win/35 bg-rom-win/10 text-rom-win':'border-rom-border bg-rom-surface2 text-rom-muted'}`}>{report.status==='promising'?'Promising holdout':'Shadow mode'}</span></div></div>
+        <dl className="mt-5 grid grid-cols-2 gap-5 sm:grid-cols-4">
+          <Metric label="Settled events" value={`${report.settledSamples}`} detail={`${report.trainEvents} train · ${report.testEvents} later test`}/>
+          <Metric label="Model Brier" value={metric(report.modelBrier)} detail="Lower is better"/>
+          <Metric label="Market Brier" value={metric(report.marketBrier)} detail="Market-price baseline"/>
+          <Metric label="Brier change" value={report.brierImprovementPct===null?'—':`${report.brierImprovementPct>=0?'+':''}${report.brierImprovementPct.toFixed(1)}%`} detail={`${Math.round(report.shrinkage*100)}% model blend`}/>
+        </dl>
+        <details className="mt-4 rounded-lg border border-rom-border bg-rom-void/30 px-4 py-2"><summary className="cursor-pointer text-xs font-medium text-rom-muted">How this safety phase works</summary><p className="pb-2 pt-3 text-xs leading-5 text-rom-dim">The model uses regularized logistic regression, one candidate per event, a one-day embargo, and a later untouched test set. Its probability is pulled {Math.round((1-report.shrinkage)*100)}% back toward the market price. It cannot approve, reject, size, or route an order. A promising result is research evidence, not a profitability guarantee.</p></details>
+      </>}
+    </div>
+  </Card>;
 }
 
 function ExecutionQuality({report,loading,error}:{report:ExecutionQualityReport|null;loading:boolean;error:string}) {

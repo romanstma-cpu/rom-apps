@@ -740,6 +740,66 @@ export interface SignalCalibrationReport {
   asOf: number;
 }
 
+export interface ShadowRankerReport {
+  version: string;
+  status: 'collecting' | 'promising' | 'not_better' | 'stale';
+  reason: string;
+  asOf: number;
+  settledSamples: number;
+  distinctEvents: number;
+  trainEvents: number;
+  testEvents: number;
+  modelBrier: number | null;
+  marketBrier: number | null;
+  modelLogLoss: number | null;
+  marketLogLoss: number | null;
+  brierImprovementPct: number | null;
+  shrinkage: number;
+  controlsLiveTrading: false;
+  featureNames: string[];
+  minimums: { trainEvents: number; testEvents: number };
+}
+
+export interface ExecutionShadowModelReport {
+  status: 'collecting' | 'promising' | 'not_better';
+  reason: string;
+  trainEvents: number;
+  testEvents: number;
+  modelBrier: number | null;
+  baselineBrier: number | null;
+  modelLogLoss: number | null;
+  baselineLogLoss: number | null;
+  baselineRate: number | null;
+}
+
+export interface ExecutionShadowReport {
+  version: string;
+  status: 'collecting' | 'promising' | 'not_better';
+  reason: string;
+  asOf: number;
+  orders: number;
+  markoutSamples: number;
+  controlsLiveTrading: false;
+  featureNames: string[];
+  fillModel: ExecutionShadowModelReport;
+  adverseModel: ExecutionShadowModelReport;
+}
+
+export interface ForwardValidationReport {
+  status: 'collecting' | 'promising' | 'not_better';
+  reason: string;
+  asOf: number;
+  resolvedPredictions: number;
+  pendingPredictions: number;
+  modelBrier: number | null;
+  marketBrier: number | null;
+  modelLogLoss: number | null;
+  marketLogLoss: number | null;
+  brierImprovementPct: number | null;
+  controlsLiveTrading: false;
+  minimumResolved: number;
+}
+
 export interface PracticePerformanceCandidate {
   key: string;
   name: string;
@@ -1063,6 +1123,9 @@ export interface ROMApi {
   };
   trading: {
     calibration: () => Promise<SignalCalibrationReport>;
+    shadowRanker: () => Promise<ShadowRankerReport>;
+    executionShadow: () => Promise<ExecutionShadowReport>;
+    forwardValidation: () => Promise<ForwardValidationReport>;
     practicePerformance: () => Promise<PracticePerformanceReport>;
     allocationPlan: () => Promise<StrategyAllocationPlan>;
     executionQuality: () => Promise<ExecutionQualityReport>;

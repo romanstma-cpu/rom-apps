@@ -107,6 +107,17 @@ def get_book(slug, max_age=2.0):
         return None
     return cached[1]
 
+
+def get_book_with_age(slug, max_age=2.0):
+    """Return a fresh book and its local receipt age in milliseconds."""
+    cached = _books.get((slug or '').split('::')[0])
+    if not cached:
+        return None
+    age = max(0.0, time.monotonic()-cached[0])
+    if age > max(0.0, float(max_age)):
+        return None
+    return cached[1], age*1000.0
+
 def get_quote_cents(token):
     slug,_,side=token.rpartition('::')
     book=get_book(slug,15)

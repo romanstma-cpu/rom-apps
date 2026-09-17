@@ -5,7 +5,7 @@ from PyInstaller.utils.hooks import copy_metadata
 from PyInstaller.utils.hooks import collect_all
 
 datas = []
-hiddenimports = ['db', 'scanner', 'trader', 'polymarket_api', 'polymarket_auth', 'categorize', 'config', 'webhook', 'crypto15m', 'crypto15m_trader', 'crypto15m_record', 'backtest', 'indicators', 'clob_ws', 'rules', 'copy_trader', 'spot_ws', 'rtds_ws', 'replay', 'parlay_generator', 'ws_ssl', 'script_sandbox', 'script_engine', 'script_backtest', 'script_docs', 'script_audit', 'statistics', 'activity_ws', 'us_market_stream']
+hiddenimports = ['db', 'scanner', 'trader', 'polymarket_api', 'polymarket_auth', 'categorize', 'config', 'webhook', 'crypto15m', 'crypto15m_trader', 'crypto15m_record', 'backtest', 'indicators', 'clob_ws', 'rules', 'copy_trader', 'spot_ws', 'rtds_ws', 'replay', 'parlay_generator', 'ws_ssl', 'script_sandbox', 'script_engine', 'script_backtest', 'script_docs', 'script_audit', 'statistics', 'activity_ws', 'us_market_stream', 'shadow_ranker', 'execution_shadow', 'shadow_forward']
 hiddenimports += collect_submodules('cryptography')
 hiddenimports += collect_submodules('httpx')
 hiddenimports += collect_submodules('cytoolz')

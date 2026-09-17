@@ -625,6 +625,18 @@ export function registerIpc(): void {
     if (!pythonBackend.isRunning()) throw new Error('Start the engine to check calibration evidence.');
     return await pythonBackend.request('signalCalibration', {}, 30_000);
   });
+  ipcMain.handle('trading:shadowRanker', async () => {
+    if (!pythonBackend.isRunning()) throw new Error('Start the engine to evaluate the ML shadow model.');
+    return await pythonBackend.request('shadowRanker', {}, 30_000);
+  });
+  ipcMain.handle('trading:executionShadow', async () => {
+    if (!pythonBackend.isRunning()) throw new Error('Start the engine to evaluate execution shadow models.');
+    return await pythonBackend.request('executionShadow', {}, 30_000);
+  });
+  ipcMain.handle('trading:forwardValidation', async () => {
+    if (!pythonBackend.isRunning()) throw new Error('Start the engine to review forward ML evidence.');
+    return await pythonBackend.request('forwardValidation', {}, 30_000);
+  });
   ipcMain.handle('trading:practicePerformance', async () => {
     if (!pythonBackend.isRunning()) throw new Error('Start the engine to rank practice performance.');
     return await pythonBackend.request('practicePerformance', {}, 30_000);

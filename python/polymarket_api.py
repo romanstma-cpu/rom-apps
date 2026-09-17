@@ -403,9 +403,10 @@ async def get_fast_quote(ticker,side,max_stream_age=2.0):
     import us_market_stream
     us_market_stream.observe(ticker)
     us_market_stream.start()
-    book=us_market_stream.get_book(ticker,max_stream_age)
-    if book is not None:
-        return {**quote_from_book(book,side),'quote_source':'websocket'}
+    cached=us_market_stream.get_book_with_age(ticker,max_stream_age)
+    if cached is not None:
+        book, age_ms = cached
+        return {**quote_from_book(book,side),'quote_source':'websocket','quote_age_ms':age_ms}
     return await get_quote(ticker,side)
 
 def quote_from_book(book,side):

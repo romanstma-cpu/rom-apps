@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS us_entry_execution (
  style TEXT NOT NULL, signal_cents REAL NOT NULL, bid_cents REAL NOT NULL,
  ask_cents REAL NOT NULL, response_ms REAL
 );
+CREATE TABLE IF NOT EXISTS us_entry_features (
+ local_id TEXT PRIMARY KEY, observed_at REAL NOT NULL, payload TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS us_fill_markouts (
  local_id TEXT NOT NULL, horizon_sec INTEGER NOT NULL,
  observed_at REAL NOT NULL, age_sec REAL NOT NULL,
@@ -142,6 +145,12 @@ def begin(local_id, ticker, side, action, quantity, price, position_id=None, exi
             c.execute('INSERT INTO us_entry_execution VALUES (?,?,?,?,?,?,?,NULL)',
                       (local_id,context['network'],context['source'],context['style'],
                        context['signal_cents'],context['bid_cents'],context['ask_cents']))
+            features = context.get('features')
+            if features is not None:
+                if not isinstance(features, dict):
+                    raise ValueError('Invalid entry feature snapshot')
+                c.execute('INSERT INTO us_entry_features VALUES (?,?,?)',
+                          (local_id, now, json.dumps(features, allow_nan=False)))
         if position_id is not None:
             pos = c.execute('SELECT * FROM bot_positions WHERE id=?', (position_id,)).fetchone()
             if (action != 'sell' or not pos or pos['resolved'] or pos['ticker'] != ticker

@@ -704,8 +704,24 @@ async def _scanner_and_trader_loop() -> None:
                     seen = db.already_traded_signal_ids(
                         conn, "whale", polymarket_auth.get_env()
                     )
-                for row in rows:
-                    main_recorder.signal(row,'whale',cfg)
+                quote_slots = asyncio.Semaphore(4)
+                async def whale_quote(row):
+                    async with quote_slots:
+                        try:
+                            return await asyncio.wait_for(
+                                polymarket_api.get_fast_quote(row['ticker'], str(row.get('taker_side') or 'yes').lower()),
+                                timeout=3.0,
+                            )
+                        except Exception:
+                            return None
+                quotes = await asyncio.gather(*(whale_quote(row) for row in rows))
+                for row, quote in zip(rows, quotes):
+                    snapshot = main_recorder.signal(row,'whale',cfg,quote)
+                    try:
+                        import shadow_forward
+                        await asyncio.to_thread(shadow_forward.capture,row,'whale',snapshot)
+                    except Exception as exc:
+                        logger.debug('Could not freeze whale shadow prediction: %s',type(exc).__name__)
                     js = _signal_row_to_js(row, "whale", int(row["id"]) in seen)
                     await emit_event("signal:new", js)
                     if cfg.get("enable_discord") and row.get("status") != "dry_run":
@@ -726,8 +742,24 @@ async def _scanner_and_trader_loop() -> None:
                     seen = db.already_traded_signal_ids(
                         conn, "momentum", polymarket_auth.get_env()
                     )
-                for row in rows:
-                    main_recorder.signal(row,'momentum',cfg)
+                quote_slots = asyncio.Semaphore(4)
+                async def momentum_quote(row):
+                    async with quote_slots:
+                        try:
+                            return await asyncio.wait_for(
+                                polymarket_api.get_fast_quote(row['ticker'], str(row.get('direction') or 'yes').lower()),
+                                timeout=3.0,
+                            )
+                        except Exception:
+                            return None
+                quotes = await asyncio.gather(*(momentum_quote(row) for row in rows))
+                for row, quote in zip(rows, quotes):
+                    snapshot = main_recorder.signal(row,'momentum',cfg,quote)
+                    try:
+                        import shadow_forward
+                        await asyncio.to_thread(shadow_forward.capture,row,'momentum',snapshot)
+                    except Exception as exc:
+                        logger.debug('Could not freeze momentum shadow prediction: %s',type(exc).__name__)
                     js = _signal_row_to_js(row, "momentum", int(row["id"]) in seen)
                     await emit_event("signal:new", js)
                     if cfg.get("enable_discord"):
@@ -1881,6 +1913,21 @@ async def _h_signal_calibration(_p: dict) -> dict:
     return (await asyncio.to_thread(signal_calibration.load_model))['report']
 
 
+async def _h_shadow_ranker(_p: dict) -> dict:
+    import shadow_ranker
+    return (await asyncio.to_thread(shadow_ranker.load_model))["report"]
+
+
+async def _h_execution_shadow(_p: dict) -> dict:
+    import execution_shadow
+    return await asyncio.to_thread(execution_shadow.load_report, polymarket_auth.get_env())
+
+
+async def _h_forward_validation(_p: dict) -> dict:
+    import shadow_forward
+    return await asyncio.to_thread(shadow_forward.load_report)
+
+
 async def _h_practice_performance(_p: dict) -> dict:
     import practice_performance
     env = polymarket_auth.get_env()
@@ -2547,6 +2594,9 @@ _HANDLERS = {
     "c15ParlayArm": _h_c15_parlay_arm,
     "mainBacktest": _h_main_backtest,
     "signalCalibration": _h_signal_calibration,
+    "shadowRanker": _h_shadow_ranker,
+    "executionShadow": _h_execution_shadow,
+    "forwardValidation": _h_forward_validation,
     "practicePerformance": _h_practice_performance,
     "strategyAllocation": _h_strategy_allocation,
     "executionQuality": _h_execution_quality,
@@ -2805,6 +2855,9 @@ def _selftest() -> int:
     _try("import rtds_ws (RTDS Chainlink feed)", lambda: __import__("rtds_ws"))
     _try("import activity_ws (RTDS trade tape)", lambda: __import__("activity_ws"))
     _try("import replay (backtest engine)", lambda: __import__("replay"))
+    _try("import ML shadow ranker", lambda: __import__("shadow_ranker"))
+    _try("import execution shadow models", lambda: __import__("execution_shadow"))
+    _try("import forward prediction ledger", lambda: __import__("shadow_forward"))
     _try("import parlay_generator", lambda: __import__("parlay_generator"))
     _try("model math (settlement sniper)", lambda: (
         __import__("crypto15m").model_up_prob(101.0, 100.0, 0.001, 5.0)))

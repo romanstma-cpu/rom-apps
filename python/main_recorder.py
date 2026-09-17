@@ -1,6 +1,7 @@
 """Bounded, opt-in via mainRecordSignals, point-in-time evidence for US replay."""
 from collections import deque
 import json
+import math
 import threading
 import time
 import db
@@ -12,6 +13,7 @@ _dropped = 0
 _book_at = {}
 _last_prune = 0
 MAX_QUEUE = 20000
+FEATURE_VERSION = 'candidate-book-v2'
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS main_replay_events (
  id INTEGER PRIMARY KEY AUTOINCREMENT, at REAL NOT NULL, kind TEXT NOT NULL,
@@ -85,12 +87,72 @@ def load(since_days, *, end=None):
     return [{**dict(r),'payload':json.loads(r['payload'])} for r in rows]
 
 
-def signal(row, source, cfg):
+def _finite(value):
+    try:
+        number = float(value)
+        return number if math.isfinite(number) else None
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def _depth(levels, count=3):
+    total = 0.0
+    for level in (levels or [])[:count]:
+        try:
+            size = float(level[1])
+        except (TypeError, ValueError, IndexError):
+            continue
+        if math.isfinite(size) and size > 0:
+            total += size
+    return total
+
+
+def feature_snapshot(row, source, quote, *, at=None):
+    """Freeze candidate and side-aware book features without inventing values."""
+    quote = quote or {}
+    bid = _finite(quote.get('bid_cents'))
+    ask = _finite(quote.get('ask_cents'))
+    valid_book = bid is not None and ask is not None and 0 < bid <= ask < 100
+    bid_depth = _depth(quote.get('bid_levels')) if valid_book else None
+    ask_depth = _depth(quote.get('ask_levels')) if valid_book else None
+    total_depth = (bid_depth + ask_depth) if valid_book else 0.0
+    imbalance = ((bid_depth-ask_depth)/total_depth) if total_depth > 0 else None
+    top_bid = _depth(quote.get('bid_levels'), 1) if valid_book else 0.0
+    top_ask = _depth(quote.get('ask_levels'), 1) if valid_book else 0.0
+    top_total = top_bid + top_ask
+    microprice = ((ask*top_bid + bid*top_ask)/top_total) if valid_book and top_total > 0 else None
+    return {
+        'version': FEATURE_VERSION,
+        'observedAt': time.time() if at is None else float(at),
+        'bookStatus': 'available' if valid_book else 'unavailable',
+        'bidCents': bid if valid_book else None,
+        'askCents': ask if valid_book else None,
+        'spreadCents': ask-bid if valid_book else None,
+        'midpointCents': (bid+ask)/2 if valid_book else None,
+        'bidDepth3': bid_depth,
+        'askDepth3': ask_depth,
+        'bookImbalance3': imbalance,
+        'micropriceCents': microprice,
+        'quoteSource': str(quote.get('quote_source') or 'unavailable'),
+        'quoteAgeMs': _finite(quote.get('quote_age_ms')),
+        'marketVolume': _finite(row.get('market_volume', row.get('volume_24h'))),
+        'openInterest': _finite(row.get('open_interest')),
+        'signalDollars': _finite(row.get('dollar_value', row.get('window_dollars'))),
+        'flowCount': _finite(row.get('window_trades', row.get('count_fp'))),
+        'priceChange': _finite(row.get('price_change')),
+        'source': source,
+    }
+
+
+def signal(row, source, cfg, quote=None):
     import trader
     # Capture candidates before execution gates so a later test can reject them
     # differently without inventing records of previously unobserved markets.
+    snapshot = feature_snapshot(row,source,quote)
     record('signal',row['ticker'],{'signal':row,'source':source,
+           'features':snapshot,
            'originalDecision':trader.should_trade(row,source,cfg)})
+    return snapshot
 
 
 def book(ticker, value):

@@ -18,6 +18,7 @@ import strategy_allocator
 import execution_learning
 import execution_health
 import runtime_resilience
+import main_recorder
 import rules as rules_engine
 from execution_quality import (
     affordable_at_depth, entry_price, entry_vwap_cents, remaining_signal_margin,
@@ -887,7 +888,10 @@ async def execute_signal(
             post_only=maker_only,
             execution_context={'network': env, 'source': source, 'style': execution_style,
                                'signal_cents': signal_cost_cents,
-                               'bid_cents': entry_quote['bid_cents'], 'ask_cents': entry_quote['ask_cents']},
+                               'bid_cents': entry_quote['bid_cents'], 'ask_cents': entry_quote['ask_cents'],
+                               'features': main_recorder.feature_snapshot(
+                                   signal, source, entry_quote, at=time.time()
+                               )},
         )
     except PolymarketAPIError as e:
         execution_health.circuit.record_failure("order", e)
