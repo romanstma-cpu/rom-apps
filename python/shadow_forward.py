@@ -7,10 +7,14 @@ import time
 from statistics import mean
 
 import db
+import fees_us
 
 
 MIN_FORWARD = 50
 MAX_AGE = 90 * 86400
+MIN_MODEL_EDGE = 0.04
+SIMULATION_RISK_FRACTION = 0.01
+CONSISTENCY_WINDOWS = 4
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS ml_shadow_predictions (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,6 +80,63 @@ def _log_loss(probability,outcome):
     return -outcome*math.log(probability)-(1-outcome)*math.log(1-probability)
 
 
+def _window_consistency(resolved):
+    """Score fixed chronological windows without choosing the best period."""
+    if len(resolved) < CONSISTENCY_WINDOWS * 10:
+        return 0, 0
+    passed = 0
+    for index in range(CONSISTENCY_WINDOWS):
+        start = len(resolved) * index // CONSISTENCY_WINDOWS
+        end = len(resolved) * (index + 1) // CONSISTENCY_WINDOWS
+        window = resolved[start:end]
+        model_brier = mean((float(row['model_probability'])-row['outcome'])**2
+                           for row in window)
+        market_brier = mean((float(row['market_probability'])-row['outcome'])**2
+                            for row in window)
+        model_log = mean(_log_loss(float(row['model_probability']),row['outcome'])
+                         for row in window)
+        market_log = mean(_log_loss(float(row['market_probability']),row['outcome'])
+                          for row in window)
+        passed += int(model_brier < market_brier and model_log < market_log)
+    return CONSISTENCY_WINDOWS, passed
+
+
+def _trade_stats(resolved):
+    """Simulate only precommitted positive-edge selections at fixed risk."""
+    returns=[]; total_cost=0.0; total_pnl=0.0
+    equity=1.0; peak=1.0; max_drawdown=0.0
+    for row in resolved:
+        market=float(row['market_probability'])
+        model=float(row['model_probability'])
+        if model-market < MIN_MODEL_EDGE:
+            continue
+        try:
+            cost=fees_us.reserved_cost(1,market,float(row['observed_at']))
+        except (TypeError,ValueError):
+            continue
+        if not math.isfinite(cost) or cost <= 0:
+            continue
+        pnl=float(row['outcome'])-cost
+        unit_return=pnl/cost
+        returns.append(unit_return); total_cost+=cost; total_pnl+=pnl
+        equity=max(0.0,equity*(1+SIMULATION_RISK_FRACTION*unit_return))
+        peak=max(peak,equity)
+        max_drawdown=max(max_drawdown,(peak-equity)/peak if peak else 0.0)
+    lower=None
+    if len(returns)>=2:
+        average=mean(returns)
+        variance=sum((value-average)**2 for value in returns)/(len(returns)-1)
+        lower=average-1.645*math.sqrt(variance/len(returns))
+    return {
+        'forwardTrades':len(returns),
+        'netReturnPct':100*total_pnl/total_cost if total_cost else None,
+        'lowerConfidenceReturnPct':100*lower if lower is not None else None,
+        'maxDrawdownPct':100*max_drawdown if returns else None,
+        'minimumModelEdgePct':100*MIN_MODEL_EDGE,
+        'simulationRiskPct':100*SIMULATION_RISK_FRACTION,
+    }
+
+
 def evaluate(predictions,events,asof):
     settlements={}
     for event in sorted(events,key=lambda item:(item.get('at',0),item.get('id',0))):
@@ -102,7 +163,13 @@ def evaluate(predictions,events,asof):
     report={'status':'collecting','reason':'Collect more precommitted predictions and later settlements.',
             'asOf':asof,'resolvedPredictions':len(resolved),'pendingPredictions':pending,
             'modelBrier':None,'marketBrier':None,'modelLogLoss':None,'marketLogLoss':None,
-            'brierImprovementPct':None,'controlsLiveTrading':False,'minimumResolved':MIN_FORWARD}
+            'brierImprovementPct':None,'controlsLiveTrading':False,'minimumResolved':MIN_FORWARD,
+            'observationSpanDays':(max(0.0,(max(row['resolved_at'] for row in resolved)
+                                             -min(float(row['observed_at']) for row in resolved))/86400)
+                                   if resolved else 0.0),
+            'windowsEvaluated':0,'windowsPassed':0,
+            **_trade_stats(resolved)}
+    report['windowsEvaluated'],report['windowsPassed']=_window_consistency(resolved)
     if len(resolved)<MIN_FORWARD:
         return report
     model_brier=mean((float(row['model_probability'])-row['outcome'])**2 for row in resolved)
@@ -122,6 +189,7 @@ def evaluate(predictions,events,asof):
 
 def load_report():
     import main_recorder
+    import shadow_ranker
     now=time.time(); init(); main_recorder.init()
     with db.get_db() as conn:
         prediction_rows=conn.execute(
@@ -132,7 +200,10 @@ def load_report():
             "WHERE at>=? AND kind='settlement' ORDER BY at,id",(now-MAX_AGE,)).fetchall()
     predictions=[]
     for row in prediction_rows:
-        try: predictions.append(json.loads(row['payload']))
+        try:
+            prediction=json.loads(row['payload'])
+            if prediction.get('model_version')==shadow_ranker.VERSION:
+                predictions.append(prediction)
         except (TypeError,ValueError): pass
     events=[]
     for row in event_rows:

@@ -637,6 +637,10 @@ export function registerIpc(): void {
     if (!pythonBackend.isRunning()) throw new Error('Start the engine to review forward ML evidence.');
     return await pythonBackend.request('forwardValidation', {}, 30_000);
   });
+  ipcMain.handle('trading:mlPromotion', async () => {
+    if (!pythonBackend.isRunning()) throw new Error('Start the engine to evaluate the ML promotion gate.');
+    return await pythonBackend.request('mlPromotion', {}, 30_000);
+  });
   ipcMain.handle('trading:practicePerformance', async () => {
     if (!pythonBackend.isRunning()) throw new Error('Start the engine to rank practice performance.');
     return await pythonBackend.request('practicePerformance', {}, 30_000);

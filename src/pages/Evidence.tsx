@@ -1,6 +1,6 @@
-import { Activity, ArrowRight, BrainCircuit, ClipboardCheck, FlaskConical, Trophy } from 'lucide-react';
+import { Activity, ArrowRight, BrainCircuit, ClipboardCheck, FlaskConical, ShieldCheck, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ExecutionQualityReport, ExecutionShadowReport, ForwardValidationReport, PracticePerformanceReport, ShadowRankerReport, SignalCalibrationReport } from '@shared/types';
+import type { ExecutionQualityReport, ExecutionShadowReport, ForwardValidationReport, MlPromotionReport, PracticePerformanceReport, ShadowRankerReport, SignalCalibrationReport } from '@shared/types';
 import { Card, Page, StatCard } from '../components/common';
 import { useApp } from '../state/AppStateProvider';
 import { summarizeEvidence } from '../utils/evidence';
@@ -13,6 +13,7 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
   const [shadow,setShadow]=useState<ShadowRankerReport|null>(null);
   const [executionShadow,setExecutionShadow]=useState<ExecutionShadowReport|null>(null);
   const [forward,setForward]=useState<ForwardValidationReport|null>(null);
+  const [promotion,setPromotion]=useState<MlPromotionReport|null>(null);
   const [practice,setPractice]=useState<PracticePerformanceReport|null>(null);
   const [execution,setExecution]=useState<ExecutionQualityReport|null>(null);
   const [executionError,setExecutionError]=useState('');
@@ -20,21 +21,23 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
   const [shadowError,setShadowError]=useState('');
   const [executionShadowError,setExecutionShadowError]=useState('');
   const [forwardError,setForwardError]=useState('');
+  const [promotionError,setPromotionError]=useState('');
   const [practiceError,setPracticeError]=useState('');
   const [revision,setRevision]=useState(0);
   const [loading,setLoading]=useState(true);
   useEffect(()=>{
     let active=true;
-    setLoading(true);setError('');setShadowError('');setExecutionShadowError('');setForwardError('');setPracticeError('');setCalibration(null);setShadow(null);setExecutionShadow(null);setForward(null);setPractice(null);
+    setLoading(true);setError('');setShadowError('');setExecutionShadowError('');setForwardError('');setPromotionError('');setPracticeError('');setCalibration(null);setShadow(null);setExecutionShadow(null);setForward(null);setPromotion(null);setPractice(null);
     setExecution(null);setExecutionError('');
     Promise.allSettled([
       window.rom.trading.calibration(),
       window.rom.trading.shadowRanker(),
       window.rom.trading.executionShadow(),
       window.rom.trading.forwardValidation(),
+      window.rom.trading.mlPromotion(),
       window.rom.trading.practicePerformance(),
       window.rom.trading.executionQuality(),
-    ]).then(([calibrationResult,shadowResult,executionShadowResult,forwardResult,practiceResult,executionResult])=>{
+    ]).then(([calibrationResult,shadowResult,executionShadowResult,forwardResult,promotionResult,practiceResult,executionResult])=>{
       if(!active)return;
       if(calibrationResult.status==='fulfilled')setCalibration(calibrationResult.value);
       else setError(calibrationResult.reason?.message || 'Calibration evidence is unavailable. Try again after reconnecting.');
@@ -44,6 +47,8 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
       else setExecutionShadowError(executionShadowResult.reason?.message || 'The execution shadow report is unavailable. Try again after reconnecting.');
       if(forwardResult.status==='fulfilled')setForward(forwardResult.value);
       else setForwardError(forwardResult.reason?.message || 'The forward-validation scorecard is unavailable. Try again after reconnecting.');
+      if(promotionResult.status==='fulfilled')setPromotion(promotionResult.value);
+      else setPromotionError(promotionResult.reason?.message || 'The ML promotion gate is unavailable. Try again after reconnecting.');
       if(practiceResult.status==='fulfilled')setPractice(practiceResult.value);
       else setPracticeError(practiceResult.reason?.message || 'Practice performance is unavailable. Try again after reconnecting.');
       if(executionResult.status==='fulfilled')setExecution(executionResult.value);
@@ -63,6 +68,7 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
         </div>
       </Card>
       <ShadowRanker report={shadow} loading={loading} error={shadowError}/>
+      <MlPromotion report={promotion} loading={loading} error={promotionError}/>
       <ForwardValidation report={forward} loading={loading} error={forwardError}/>
       <ExecutionShadow report={executionShadow} loading={loading} error={executionShadowError}/>
       <PracticeRanking report={practice} loading={loading} error={practiceError}/>
@@ -75,9 +81,32 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
   </Page>;
 }
 
+function MlPromotion({report,loading,error}:{report:MlPromotionReport|null;loading:boolean;error:string}) {
+  const eligible=report?.status==='eligible';
+  const rejected=report?.status==='rejected';
+  const tone=eligible?'border-rom-win/35 bg-rom-win/5':rejected?'border-rom-loss/35 bg-rom-loss/5':'border-amber-300/25 bg-amber-300/5';
+  const label=eligible?'Eligible for review':rejected?'Rejected':'Collecting data';
+  const labelTone=eligible?'text-rom-win':rejected?'text-rom-lossText':'text-amber-300';
+  const progress=report?Math.round(100*report.passedGates/Math.max(1,report.totalGates)):0;
+  return <Card>
+    <div className="flex flex-wrap items-start justify-between gap-4"><div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-rom-purple/10 text-rom-purple"><ShieldCheck className="h-5 w-5"/></div><div><h3 className="text-lg font-semibold">ML promotion gate</h3><p className="mt-1 text-sm text-rom-muted">One decision across forward accuracy, fee-adjusted returns, drawdown, and live execution.</p></div></div><span className={`rounded-full border border-rom-border bg-rom-void/40 px-3 py-1.5 text-xs font-semibold ${labelTone}`}>{label}</span></div>
+    <div className="min-h-32 pt-5" aria-live="polite" aria-busy={loading}>
+      {loading&&<p className="text-sm text-rom-muted">Checking every promotion requirement…</p>}
+      {error&&<p role="alert" className="text-sm text-rom-lossText">{error}</p>}
+      {report&&<>
+        <div className={`rounded-xl border p-4 ${tone}`}><div className="flex flex-wrap items-center justify-between gap-3"><p className="max-w-3xl text-sm leading-6 text-rom-muted">{report.reason}</p><span className="text-xs font-semibold tabular-nums">{report.passedGates}/{report.totalGates} passed</span></div><div className="mt-4 h-1.5 overflow-hidden rounded-full bg-rom-void"><div className={`h-full rounded-full ${eligible?'bg-rom-win':rejected?'bg-rom-loss':'bg-amber-300'}`} style={{width:`${progress}%`}}/></div></div>
+        <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4"><Metric label="Gate progress" value={`${progress}%`} detail="All gates required"/><Metric label="Suggested influence" value={`${report.recommendedInfluencePct.toFixed(0)}%`} detail="Ranking weight cap"/><Metric label="Risk cap" value={`${report.recommendedAccountRiskCapPct.toFixed(1)}%`} detail="Account per entry"/><Metric label="Activation" value="Locked" detail="No live control"/></dl>
+        {!!report.blockingReasons.length&&<div className="mt-5"><p className="text-xs font-semibold uppercase tracking-wider text-rom-muted">What needs attention</p><ul className="mt-3 grid gap-2 md:grid-cols-2">{report.blockingReasons.slice(0,4).map((reason,index)=><li key={`${index}-${reason}`} className="rounded-lg border border-rom-border bg-rom-void/30 px-3 py-2 text-xs leading-5 text-rom-dim">{reason}</li>)}</ul></div>}
+        <details className="mt-4 rounded-lg border border-rom-border bg-rom-void/30 px-4 py-2"><summary className="cursor-pointer text-xs font-medium text-rom-muted">Review all {report.totalGates} requirements</summary><div className="grid gap-2 pb-2 pt-3 md:grid-cols-2">{report.gates.map(gate=><div key={gate.id} className="flex items-start gap-3 rounded-lg border border-rom-border/70 bg-rom-panel/50 p-3"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${gate.status==='pass'?'bg-rom-win':gate.status==='fail'?'bg-rom-loss':'bg-amber-300'}`}/><div><p className="text-xs font-semibold">{gate.label}</p><p className="mt-1 text-[11px] leading-5 text-rom-dim">{gate.detail}</p></div></div>)}</div></details>
+        <p className="mt-4 text-xs leading-5 text-rom-dim">Eligibility is a review signal, not automatic activation. The model remains unable to approve, reject, size, or route live orders. Any future rollout must start at the displayed caps and automatically return to zero when a rollback condition trips.</p>
+      </>}
+    </div>
+  </Card>;
+}
+
 function ForwardValidation({report,loading,error}:{report:ForwardValidationReport|null;loading:boolean;error:string}) {
   const value=(number:number|null)=>number===null?'—':number.toFixed(4);
-  return <Card><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-lg font-semibold">Forward ML scorecard</h3><p className="mt-1 text-sm text-rom-muted">Scores predictions frozen before their markets resolve.</p></div><span className="rounded-full border border-rom-border bg-rom-void/40 px-3 py-1.5 text-xs font-medium text-rom-muted">Append-only evidence</span></div><div className="min-h-24 pt-5" aria-live="polite" aria-busy={loading}>{loading&&<p className="text-sm text-rom-muted">Matching frozen predictions with later settlements…</p>}{error&&<p role="alert" className="text-sm text-rom-lossText">{error}</p>}{report&&<><p className="text-sm leading-6 text-rom-muted">{report.reason}</p><dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5"><Metric label="Resolved" value={`${report.resolvedPredictions}`} detail={`${report.minimumResolved} needed`}/><Metric label="Pending" value={`${report.pendingPredictions}`} detail="Awaiting settlement"/><Metric label="Model Brier" value={value(report.modelBrier)} detail="Frozen model"/><Metric label="Market Brier" value={value(report.marketBrier)} detail="Same observations"/><Metric label="Brier change" value={report.brierImprovementPct===null?'—':`${report.brierImprovementPct>=0?'+':''}${report.brierImprovementPct.toFixed(1)}%`} detail="Positive is better"/></dl><p className="mt-4 text-xs leading-5 text-rom-dim">Only the first prediction for each event and model version is retained. Retraining cannot rewrite this scorecard, and it never controls live orders.</p></>}</div></Card>;
+  return <Card><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-lg font-semibold">Forward ML scorecard</h3><p className="mt-1 text-sm text-rom-muted">Scores predictions frozen before their markets resolve.</p></div><span className="rounded-full border border-rom-border bg-rom-void/40 px-3 py-1.5 text-xs font-medium text-rom-muted">Append-only evidence</span></div><div className="min-h-24 pt-5" aria-live="polite" aria-busy={loading}>{loading&&<p className="text-sm text-rom-muted">Matching frozen predictions with later settlements…</p>}{error&&<p role="alert" className="text-sm text-rom-lossText">{error}</p>}{report&&<><p className="text-sm leading-6 text-rom-muted">{report.reason}</p><dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5"><Metric label="Resolved" value={`${report.resolvedPredictions}`} detail={`${report.observationSpanDays.toFixed(1)} observation days`}/><Metric label="Pending" value={`${report.pendingPredictions}`} detail="Awaiting settlement"/><Metric label="Model Brier" value={value(report.modelBrier)} detail="Frozen model"/><Metric label="Market Brier" value={value(report.marketBrier)} detail="Same observations"/><Metric label="Brier change" value={report.brierImprovementPct===null?'—':`${report.brierImprovementPct>=0?'+':''}${report.brierImprovementPct.toFixed(1)}%`} detail="Positive is better"/></dl><dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4"><Metric label="Shadow selections" value={`${report.forwardTrades}`} detail={`Edge at least ${report.minimumModelEdgePct.toFixed(0)}%`}/><Metric label="Fee-adjusted return" value={report.netReturnPct===null?'—':`${report.netReturnPct>=0?'+':''}${report.netReturnPct.toFixed(1)}%`} detail="Scheduled taker costs"/><Metric label="Lower confidence bound" value={report.lowerConfidenceReturnPct===null?'—':`${report.lowerConfidenceReturnPct>=0?'+':''}${report.lowerConfidenceReturnPct.toFixed(1)}%`} detail="One-sided 95%"/><Metric label="Time windows" value={`${report.windowsPassed}/${report.windowsEvaluated}`} detail="Beat both baselines"/></dl><p className="mt-4 text-xs leading-5 text-rom-dim">Return and drawdown use fixed {report.simulationRiskPct.toFixed(0)}% simulated account risk per selected event. Only the first prediction for each event and model version is retained. Retraining cannot rewrite this scorecard, and it never controls live orders.</p></>}</div></Card>;
 }
 
 function ExecutionShadow({report,loading,error}:{report:ExecutionShadowReport|null;loading:boolean;error:string}) {

@@ -1928,6 +1928,11 @@ async def _h_forward_validation(_p: dict) -> dict:
     return await asyncio.to_thread(shadow_forward.load_report)
 
 
+async def _h_ml_promotion(_p: dict) -> dict:
+    import ml_promotion
+    return await asyncio.to_thread(ml_promotion.load_report, polymarket_auth.get_env())
+
+
 async def _h_practice_performance(_p: dict) -> dict:
     import practice_performance
     env = polymarket_auth.get_env()
@@ -2597,6 +2602,7 @@ _HANDLERS = {
     "shadowRanker": _h_shadow_ranker,
     "executionShadow": _h_execution_shadow,
     "forwardValidation": _h_forward_validation,
+    "mlPromotion": _h_ml_promotion,
     "practicePerformance": _h_practice_performance,
     "strategyAllocation": _h_strategy_allocation,
     "executionQuality": _h_execution_quality,
@@ -2858,6 +2864,7 @@ def _selftest() -> int:
     _try("import ML shadow ranker", lambda: __import__("shadow_ranker"))
     _try("import execution shadow models", lambda: __import__("execution_shadow"))
     _try("import forward prediction ledger", lambda: __import__("shadow_forward"))
+    _try("import ML promotion gate", lambda: __import__("ml_promotion"))
     _try("import parlay_generator", lambda: __import__("parlay_generator"))
     _try("model math (settlement sniper)", lambda: (
         __import__("crypto15m").model_up_prob(101.0, 100.0, 0.001, 5.0)))

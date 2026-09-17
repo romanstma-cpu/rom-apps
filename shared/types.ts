@@ -798,6 +798,40 @@ export interface ForwardValidationReport {
   brierImprovementPct: number | null;
   controlsLiveTrading: false;
   minimumResolved: number;
+  observationSpanDays: number;
+  windowsEvaluated: number;
+  windowsPassed: number;
+  forwardTrades: number;
+  netReturnPct: number | null;
+  lowerConfidenceReturnPct: number | null;
+  maxDrawdownPct: number | null;
+  minimumModelEdgePct: number;
+  simulationRiskPct: number;
+}
+
+export interface MlPromotionGate {
+  id: string;
+  label: string;
+  status: 'collecting' | 'pass' | 'fail';
+  detail: string;
+  actual: number | string | null;
+  required: number | string | null;
+}
+
+export interface MlPromotionReport {
+  version: string;
+  status: 'collecting' | 'rejected' | 'eligible';
+  reason: string;
+  asOf: number;
+  gates: MlPromotionGate[];
+  passedGates: number;
+  totalGates: number;
+  blockingReasons: string[];
+  recommendedInfluencePct: number;
+  recommendedAccountRiskCapPct: number;
+  activationAvailable: false;
+  controlsLiveTrading: false;
+  automaticRollback: string[];
 }
 
 export interface PracticePerformanceCandidate {
@@ -1126,6 +1160,7 @@ export interface ROMApi {
     shadowRanker: () => Promise<ShadowRankerReport>;
     executionShadow: () => Promise<ExecutionShadowReport>;
     forwardValidation: () => Promise<ForwardValidationReport>;
+    mlPromotion: () => Promise<MlPromotionReport>;
     practicePerformance: () => Promise<PracticePerformanceReport>;
     allocationPlan: () => Promise<StrategyAllocationPlan>;
     executionQuality: () => Promise<ExecutionQualityReport>;

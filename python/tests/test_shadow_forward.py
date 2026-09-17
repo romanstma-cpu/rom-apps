@@ -32,6 +32,11 @@ def test_forward_report_scores_only_predictions_frozen_before_resolution():
     assert report['resolvedPredictions']==80
     assert report['modelBrier']<report['marketBrier']
     assert report['controlsLiveTrading'] is False
+    assert report['forwardTrades']==64
+    assert report['netReturnPct']>0
+    assert report['lowerConfidenceReturnPct']>0
+    assert report['maxDrawdownPct']==0
+    assert report['windowsEvaluated']==4 and report['windowsPassed']==4
 
 
 def test_future_and_early_settlements_are_excluded():

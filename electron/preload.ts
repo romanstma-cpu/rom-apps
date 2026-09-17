@@ -77,6 +77,7 @@ const api: ROMApi = {
     shadowRanker: () => ipcRenderer.invoke('trading:shadowRanker'),
     executionShadow: () => ipcRenderer.invoke('trading:executionShadow'),
     forwardValidation: () => ipcRenderer.invoke('trading:forwardValidation'),
+    mlPromotion: () => ipcRenderer.invoke('trading:mlPromotion'),
     practicePerformance: () => ipcRenderer.invoke('trading:practicePerformance'),
     allocationPlan: () => ipcRenderer.invoke('trading:allocationPlan'),
     executionQuality: () => ipcRenderer.invoke('trading:executionQuality'),
