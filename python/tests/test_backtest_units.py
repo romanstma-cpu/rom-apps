@@ -3,16 +3,15 @@
 Picks up where test_backtest.py / test_fees_us.py / test_portfolio_backtest.py
 leave off: this file pins the date/time parsing (epoch_of / tick_epoch, both
 recording formats), the exact US fee boundaries (per-price values, the
-unrounded-vs-rounded-cents split, and the theta switch at
-2026-07-01T04:00:00Z), the remaining signal_cost clamps, and the pure sizing /
+unrounded-vs-rounded-cents split, and both dated theta switches), the remaining
+signal_cost clamps, and the pure sizing /
 accounting helpers in portfolio_backtest (_pricing_at, _day_index,
 _edge_points, _limit_cents, _max_drawdown).
 
 All values below are hard numbers derived from the source constants in
-fees_us.SCHEDULES: theta = 0.05 from 2026-04-03T19:00:00Z, theta = 0.06 from
-2026-07-01T04:00:00Z, fee = theta * P * (1 - P) per contract. The US schedule
-is a flat per-window theta - there is no price-tiering; the only "tiers" are
-the two date-bounded coefficients.
+fees_us.SCHEDULES: theta = 0.05 from 2026-04-03T19:00:00Z, 0.06 from
+2026-07-01T04:00:00Z, and 0.0695 from 2026-09-17T04:00:00Z. Fee equals
+theta * P * (1 - P) per contract. The US schedule is a flat per-window theta.
 """
 from __future__ import annotations
 
@@ -26,18 +25,20 @@ import portfolio_backtest as pb
 
 APRIL_START = datetime(2026, 4, 3, 19, tzinfo=timezone.utc)   # earliest schedule
 JULY_SWITCH = datetime(2026, 7, 1, 4, tzinfo=timezone.utc)    # theta 0.06 from here
+SEPTEMBER_SWITCH = datetime(2026, 9, 17, 4, tzinfo=timezone.utc)  # theta 0.0695
 SECOND = timedelta(seconds=1)
 
 
 # --- the schedule itself -------------------------------------------------
 
 
-def test_us_schedule_is_flat_theta_with_two_dated_windows():
-    # No price-tiering on the US schedule; the only switch is the dated
-    # coefficient change. Pin the published windows to the exact instants.
+def test_us_schedule_is_flat_theta_with_three_dated_windows():
+    # No price-tiering on the US schedule. Pin the published windows to the
+    # exact instants.
     assert [(float(start), float(v)) for start, v in fees_us.SCHEDULES] == [
         (APRIL_START.timestamp(), 0.05),
         (JULY_SWITCH.timestamp(), 0.06),
+        (SEPTEMBER_SWITCH.timestamp(), 0.0695),
     ]
 
 
@@ -52,6 +53,15 @@ def test_us_fee_switches_exactly_at_the_july_boundary():
     assert bt.us_fee_per_contract(0.50, before) == pytest.approx(0.0125)
     assert bt.us_fee_per_contract(0.50, at) == pytest.approx(0.0150)
     assert bt.us_fee_per_contract(0.50, after) == pytest.approx(0.0150)
+
+
+def test_us_fee_switches_exactly_at_the_september_boundary():
+    before = (SEPTEMBER_SWITCH - SECOND).timestamp()
+    at = SEPTEMBER_SWITCH.timestamp()
+    after = (SEPTEMBER_SWITCH + SECOND).timestamp()
+    assert bt.us_fee_per_contract(0.50, before) == pytest.approx(0.0150)
+    assert bt.us_fee_per_contract(0.50, at) == pytest.approx(0.017375)
+    assert bt.us_fee_per_contract(0.50, after) == pytest.approx(0.017375)
 
 
 def test_us_fee_april_window_hard_numbers():

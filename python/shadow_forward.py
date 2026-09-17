@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import json
 import math
+import random
 import time
+from collections import defaultdict
 from statistics import mean
 
 import db
@@ -15,6 +17,9 @@ MAX_AGE = 90 * 86400
 MIN_MODEL_EDGE = 0.04
 SIMULATION_RISK_FRACTION = 0.01
 CONSISTENCY_WINDOWS = 4
+BOOTSTRAP_REPLICATES = 2000
+CONFIDENCE_LEVEL_PCT = 95.0
+BOOTSTRAP_SEED = 0x524F4D
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS ml_shadow_predictions (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -101,40 +106,112 @@ def _window_consistency(resolved):
     return CONSISTENCY_WINDOWS, passed
 
 
+def _trade_result(row):
+    market=float(row['market_probability'])
+    model=float(row['model_probability'])
+    if model-market < MIN_MODEL_EDGE:
+        return None
+    try:
+        cost=fees_us.reserved_cost(1,market,float(row['observed_at']))
+    except (TypeError,ValueError):
+        return None
+    if not math.isfinite(cost) or cost <= 0:
+        return None
+    return cost,float(row['outcome'])-cost
+
+
 def _trade_stats(resolved):
     """Simulate only precommitted positive-edge selections at fixed risk."""
-    returns=[]; total_cost=0.0; total_pnl=0.0
+    total_cost=0.0; total_pnl=0.0; trades=0
     equity=1.0; peak=1.0; max_drawdown=0.0
     for row in resolved:
-        market=float(row['market_probability'])
-        model=float(row['model_probability'])
-        if model-market < MIN_MODEL_EDGE:
+        result=_trade_result(row)
+        if result is None:
             continue
-        try:
-            cost=fees_us.reserved_cost(1,market,float(row['observed_at']))
-        except (TypeError,ValueError):
-            continue
-        if not math.isfinite(cost) or cost <= 0:
-            continue
-        pnl=float(row['outcome'])-cost
+        cost,pnl=result
         unit_return=pnl/cost
-        returns.append(unit_return); total_cost+=cost; total_pnl+=pnl
+        trades+=1; total_cost+=cost; total_pnl+=pnl
         equity=max(0.0,equity*(1+SIMULATION_RISK_FRACTION*unit_return))
         peak=max(peak,equity)
         max_drawdown=max(max_drawdown,(peak-equity)/peak if peak else 0.0)
-    lower=None
-    if len(returns)>=2:
-        average=mean(returns)
-        variance=sum((value-average)**2 for value in returns)/(len(returns)-1)
-        lower=average-1.645*math.sqrt(variance/len(returns))
     return {
-        'forwardTrades':len(returns),
+        'forwardTrades':trades,
         'netReturnPct':100*total_pnl/total_cost if total_cost else None,
-        'lowerConfidenceReturnPct':100*lower if lower is not None else None,
-        'maxDrawdownPct':100*max_drawdown if returns else None,
+        'maxDrawdownPct':100*max_drawdown if trades else None,
         'minimumModelEdgePct':100*MIN_MODEL_EDGE,
         'simulationRiskPct':100*SIMULATION_RISK_FRACTION,
     }
+
+
+def _percentile(values,probability):
+    ordered=sorted(values)
+    if not ordered:
+        return None
+    position=(len(ordered)-1)*probability
+    lower=math.floor(position); upper=math.ceil(position)
+    if lower==upper:
+        return ordered[lower]
+    weight=position-lower
+    return ordered[lower]*(1-weight)+ordered[upper]*weight
+
+
+def _clustered_confidence(resolved):
+    """One-sided confidence bounds with resolution-day cluster resampling.
+
+    Markets resolved on the same UTC day can share news and liquidity regimes,
+    so a whole day is sampled as one unit instead of treating every market as
+    independent. A fixed seed makes the promotion decision reproducible.
+    """
+    groups=defaultdict(list)
+    for row in resolved:
+        groups[int(float(row['resolved_at'])//86400)].append(row)
+    days=sorted(groups)
+    output={
+        'independentDays':len(days),
+        'bootstrapReplicates':BOOTSTRAP_REPLICATES,
+        'confidenceLevelPct':CONFIDENCE_LEVEL_PCT,
+        'brierImprovementLowerPct':None,
+        'logLossImprovementPct':None,
+        'logLossImprovementLowerPct':None,
+        'lowerConfidenceReturnPct':None,
+    }
+    if len(days)<2:
+        return output
+    rng=random.Random(BOOTSTRAP_SEED)
+    brier_changes=[]; log_changes=[]; returns=[]
+    for _ in range(BOOTSTRAP_REPLICATES):
+        sample=[]
+        for _day in days:
+            sample.extend(groups[rng.choice(days)])
+        model_brier=mean((float(row['model_probability'])-row['outcome'])**2
+                         for row in sample)
+        market_brier=mean((float(row['market_probability'])-row['outcome'])**2
+                          for row in sample)
+        if market_brier>0:
+            brier_changes.append(100*(market_brier-model_brier)/market_brier)
+        model_log=mean(_log_loss(float(row['model_probability']),row['outcome'])
+                       for row in sample)
+        market_log=mean(_log_loss(float(row['market_probability']),row['outcome'])
+                        for row in sample)
+        if market_log>0:
+            log_changes.append(100*(market_log-model_log)/market_log)
+        trade_results=[result for row in sample if (result:=_trade_result(row)) is not None]
+        total_cost=sum(result[0] for result in trade_results)
+        if total_cost:
+            returns.append(100*sum(result[1] for result in trade_results)/total_cost)
+    tail=(100-CONFIDENCE_LEVEL_PCT)/100
+    model_log=mean(_log_loss(float(row['model_probability']),row['outcome'])
+                   for row in resolved)
+    market_log=mean(_log_loss(float(row['market_probability']),row['outcome'])
+                    for row in resolved)
+    output.update(
+        brierImprovementLowerPct=_percentile(brier_changes,tail),
+        logLossImprovementPct=(100*(market_log-model_log)/market_log
+                               if market_log else None),
+        logLossImprovementLowerPct=_percentile(log_changes,tail),
+        lowerConfidenceReturnPct=_percentile(returns,tail),
+    )
+    return output
 
 
 def evaluate(predictions,events,asof):
@@ -168,7 +245,7 @@ def evaluate(predictions,events,asof):
                                              -min(float(row['observed_at']) for row in resolved))/86400)
                                    if resolved else 0.0),
             'windowsEvaluated':0,'windowsPassed':0,
-            **_trade_stats(resolved)}
+            **_trade_stats(resolved),**_clustered_confidence(resolved)}
     report['windowsEvaluated'],report['windowsPassed']=_window_consistency(resolved)
     if len(resolved)<MIN_FORWARD:
         return report

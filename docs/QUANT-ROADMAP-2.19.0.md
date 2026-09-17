@@ -126,7 +126,7 @@ stage.
   the private WebSocket is quiet.
 - Desktop config and Main Engine UI expose the route and TTL with validation.
 
-Official assumptions checked for this release: Polymarket US documents a 0.06
+Official assumptions rechecked 17 September 2026: Polymarket US documents a 0.0695
 taker coefficient, a -0.0125 maker coefficient, exchange-enforced
 `participateDontInitiate`, a 20-request-per-second retail limit, authenticated
 market/private WebSockets, and mutually-exclusive collateral return. Recheck

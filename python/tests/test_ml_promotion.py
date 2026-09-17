@@ -7,10 +7,13 @@ def forward(**patch):
     report = {
         'resolvedPredictions': 240,
         'observationSpanDays': 35,
+        'independentDays': 30,
         'forwardTrades': 110,
         'brierImprovementPct': 8.0,
+        'brierImprovementLowerPct': 2.0,
         'modelLogLoss': .55,
         'marketLogLoss': .62,
+        'logLossImprovementLowerPct': 1.5,
         'windowsEvaluated': 4,
         'windowsPassed': 4,
         'lowerConfidenceReturnPct': 2.5,
@@ -62,6 +65,30 @@ def test_incomplete_evidence_stays_collecting_even_if_early_metrics_are_bad():
     assert report['status'] == 'collecting'
     assert report['recommendedInfluencePct'] == 0
     assert any(gate['status'] == 'collecting' for gate in report['gates'])
+
+
+def test_correlated_same_day_results_cannot_pass_the_promotion_gate():
+    report = ml_promotion.evaluate(
+        forward(independentDays=1, brierImprovementLowerPct=None,
+                logLossImprovementLowerPct=None, lowerConfidenceReturnPct=None),
+        execution_shadow(), execution_quality(),
+    )
+    assert report['status'] == 'collecting'
+    collecting = {gate['id'] for gate in report['gates'] if gate['status'] == 'collecting'}
+    assert {'independent-days', 'brier-confidence', 'log-loss-confidence',
+            'net-return'} <= collecting
+
+
+def test_negative_clustered_score_bounds_reject_an_apparent_point_win():
+    report = ml_promotion.evaluate(
+        forward(brierImprovementPct=8, brierImprovementLowerPct=-1,
+                modelLogLoss=.55, marketLogLoss=.62,
+                logLossImprovementLowerPct=-.5),
+        execution_shadow(), execution_quality(),
+    )
+    assert report['status'] == 'rejected'
+    failed = {gate['id'] for gate in report['gates'] if gate['status'] == 'fail'}
+    assert {'brier-confidence', 'log-loss-confidence'} <= failed
 
 
 def test_complete_but_unprofitable_evidence_is_rejected():

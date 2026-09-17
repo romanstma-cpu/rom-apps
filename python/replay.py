@@ -339,7 +339,7 @@ def replay(cfg: dict, *, env: str = "mainnet", since_days: int = 60) -> dict:
 
     caveats = [
         f"Replayed the {interval} window series only (the interval this config trades); data recorded while the app watched other intervals is excluded.",
-        "Entries fill at the recorded ask (taker, US fee θ·P·(1−P) at the schedule in force then — θ 0.06 since 1 Jul 2026); real fills can be worse and marketable orders sometimes miss entirely.",
+        "Entries fill at the recorded ask (taker, US fee θ·P·(1−P) at the dated schedule in force); real fills can be worse and marketable orders sometimes miss entirely.",
         "Only ticks with a REAL captured book are fillable — Gamma-fallback prices (CLOB WS cold) are treated as no quote, exactly like live.",
         "Top-of-book depth is not recorded — fills assume the full order size was available at the ask (fine at probe size, optimistic at scale).",
     ]

@@ -9,6 +9,7 @@ import fees_us
 
 APRIL_START = datetime(2026, 4, 3, 19, tzinfo=timezone.utc)
 JULY_START = datetime(2026, 7, 1, 4, tzinfo=timezone.utc)
+SEPTEMBER_START = datetime(2026, 9, 17, 4, tzinfo=timezone.utc)
 SECOND = timedelta(seconds=1)
 
 
@@ -18,6 +19,7 @@ SECOND = timedelta(seconds=1)
 def test_coefficient_picks_the_schedule_in_force():
     assert fees_us.coefficient(APRIL_START.timestamp()) == Decimal("0.05")
     assert fees_us.coefficient(JULY_START.timestamp()) == Decimal("0.06")
+    assert fees_us.coefficient(SEPTEMBER_START.timestamp()) == Decimal("0.0695")
 
 
 def test_coefficient_switches_exactly_at_the_july_boundary():
@@ -27,7 +29,12 @@ def test_coefficient_switches_exactly_at_the_july_boundary():
 
 def test_coefficient_holds_the_latest_schedule_going_forward():
     far = datetime(2030, 1, 1, tzinfo=timezone.utc)
-    assert fees_us.coefficient(far.timestamp()) == Decimal("0.06")
+    assert fees_us.coefficient(far.timestamp()) == Decimal("0.0695")
+
+
+def test_coefficient_switches_exactly_at_the_september_boundary():
+    assert fees_us.coefficient((SEPTEMBER_START - SECOND).timestamp()) == Decimal("0.06")
+    assert fees_us.coefficient(SEPTEMBER_START.timestamp()) == Decimal("0.0695")
 
 
 def test_coefficient_refuses_timestamps_before_the_first_known_schedule():
@@ -96,7 +103,7 @@ def test_reserved_cost_rounds_the_unit_fee_up():
 
 @pytest.mark.parametrize("price", [0.01, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 0.99])
 @pytest.mark.parametrize("quantity", [1, 2, 7, 33, 80, 500])
-@pytest.mark.parametrize("at", [APRIL_START, JULY_START])
+@pytest.mark.parametrize("at", [APRIL_START, JULY_START, SEPTEMBER_START])
 def test_reservation_never_under_reserves(price, quantity, at):
     """The whole point of rounding up: a fragmented fill must still be covered.
 
@@ -116,6 +123,13 @@ def test_july_reserves_at_least_as_much_as_april():
         april = fees_us.reserved_cost(100, price, APRIL_START.timestamp())
         july = fees_us.reserved_cost(100, price, JULY_START.timestamp())
         assert july >= april
+
+
+def test_september_reserves_at_least_as_much_as_july():
+    for price in (0.1, 0.3, 0.5, 0.7, 0.9):
+        july = fees_us.reserved_cost(100, price, JULY_START.timestamp())
+        september = fees_us.reserved_cost(100, price, SEPTEMBER_START.timestamp())
+        assert september >= july
 
 
 # --- budgeting ----------------------------------------------------------
@@ -160,7 +174,8 @@ def test_fallback_uses_the_earliest_schedule_for_older_data():
 
 
 def test_fallback_agrees_with_the_strict_lookup_inside_known_windows():
-    for at in (APRIL_START, JULY_START, datetime(2027, 1, 1, tzinfo=timezone.utc)):
+    for at in (APRIL_START, JULY_START, SEPTEMBER_START,
+               datetime(2027, 1, 1, tzinfo=timezone.utc)):
         ts = at.timestamp()
         assert fees_us.coefficient_at_or_earliest(ts) == fees_us.coefficient(ts)
         assert fees_us.predates_published_schedule(ts) is False

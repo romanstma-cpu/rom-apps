@@ -55,7 +55,7 @@ def us_fee_per_contract(
     """Polymarket US taker fee for one contract: theta * P * (1-P).
 
     `theta` comes from the schedule in force at `at`, so a backtest spanning
-    the 1 July 2026 change prices each signal on the rate that actually
+    a published fee change prices each signal on the rate that actually
     applied to it. Signals older than the first published schedule fall back
     to the earliest known rate; `count_unpriced_signals` reports how many.
     Pass `fee_coeff` to force one rate for sensitivity analysis.
@@ -349,7 +349,7 @@ def format_report(report: dict, source_label: str) -> str:
         "fee model: Polymarket US taker fee, θ × P·(1−P)"
         + (f" (forced θ {float(_fc):.4f})" if _fc is not None
            else " (θ from the schedule in force at each signal: "
-                "0.05, then 0.06 from 1 Jul 2026)")
+                "0.05, 0.06 from 1 Jul, then 0.0695 from 17 Sep 2026)")
     )
     _unpriced = report.get("unpriced_signals") or 0
     if _unpriced:
@@ -404,7 +404,7 @@ def format_report(report: dict, source_label: str) -> str:
 
 
 # Just after the first published US fee schedule, so ~6 months of demo
-# signals span the 1 July coefficient change.
+# signals span published coefficient changes.
 DEMO_START = 1775260800.0   # 2026-04-04T00:00:00Z
 
 

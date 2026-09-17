@@ -796,9 +796,15 @@ export interface ForwardValidationReport {
   modelLogLoss: number | null;
   marketLogLoss: number | null;
   brierImprovementPct: number | null;
+  brierImprovementLowerPct: number | null;
+  logLossImprovementPct: number | null;
+  logLossImprovementLowerPct: number | null;
   controlsLiveTrading: false;
   minimumResolved: number;
   observationSpanDays: number;
+  independentDays: number;
+  bootstrapReplicates: number;
+  confidenceLevelPct: number;
   windowsEvaluated: number;
   windowsPassed: number;
   forwardTrades: number;

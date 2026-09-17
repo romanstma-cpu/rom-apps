@@ -500,7 +500,7 @@ def run(cfg: dict, code: str, *, assets: Optional[list] = None,
 
     caveats = [
         f"Replayed the {interval} window series only (the interval this config trades).",
-        "Entries fill at the recorded REAL-book ask (taker, US fee θ·P·(1−P) at the schedule in force then — θ 0.06 since 1 Jul 2026); Gamma-fallback prices are treated as no quote, exactly like live.",
+        "Entries fill at the recorded REAL-book ask (taker, US fee θ·P·(1−P) at the dated schedule in force); Gamma-fallback prices are treated as no quote, exactly like live.",
         "Resting limits below the ask are NOT modeled as maker fills — an intent only fills when the recorded ask crosses its price.",
         "EXIT FILLS ARE OPTIMISTIC: take-profit / stop-loss / manage() sells fill "
         "into the recorded bid, but that bid can collapse to the model mid when "

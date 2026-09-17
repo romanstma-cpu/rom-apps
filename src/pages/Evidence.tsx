@@ -106,7 +106,34 @@ function MlPromotion({report,loading,error}:{report:MlPromotionReport|null;loadi
 
 function ForwardValidation({report,loading,error}:{report:ForwardValidationReport|null;loading:boolean;error:string}) {
   const value=(number:number|null)=>number===null?'—':number.toFixed(4);
-  return <Card><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-lg font-semibold">Forward ML scorecard</h3><p className="mt-1 text-sm text-rom-muted">Scores predictions frozen before their markets resolve.</p></div><span className="rounded-full border border-rom-border bg-rom-void/40 px-3 py-1.5 text-xs font-medium text-rom-muted">Append-only evidence</span></div><div className="min-h-24 pt-5" aria-live="polite" aria-busy={loading}>{loading&&<p className="text-sm text-rom-muted">Matching frozen predictions with later settlements…</p>}{error&&<p role="alert" className="text-sm text-rom-lossText">{error}</p>}{report&&<><p className="text-sm leading-6 text-rom-muted">{report.reason}</p><dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5"><Metric label="Resolved" value={`${report.resolvedPredictions}`} detail={`${report.observationSpanDays.toFixed(1)} observation days`}/><Metric label="Pending" value={`${report.pendingPredictions}`} detail="Awaiting settlement"/><Metric label="Model Brier" value={value(report.modelBrier)} detail="Frozen model"/><Metric label="Market Brier" value={value(report.marketBrier)} detail="Same observations"/><Metric label="Brier change" value={report.brierImprovementPct===null?'—':`${report.brierImprovementPct>=0?'+':''}${report.brierImprovementPct.toFixed(1)}%`} detail="Positive is better"/></dl><dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4"><Metric label="Shadow selections" value={`${report.forwardTrades}`} detail={`Edge at least ${report.minimumModelEdgePct.toFixed(0)}%`}/><Metric label="Fee-adjusted return" value={report.netReturnPct===null?'—':`${report.netReturnPct>=0?'+':''}${report.netReturnPct.toFixed(1)}%`} detail="Scheduled taker costs"/><Metric label="Lower confidence bound" value={report.lowerConfidenceReturnPct===null?'—':`${report.lowerConfidenceReturnPct>=0?'+':''}${report.lowerConfidenceReturnPct.toFixed(1)}%`} detail="One-sided 95%"/><Metric label="Time windows" value={`${report.windowsPassed}/${report.windowsEvaluated}`} detail="Beat both baselines"/></dl><p className="mt-4 text-xs leading-5 text-rom-dim">Return and drawdown use fixed {report.simulationRiskPct.toFixed(0)}% simulated account risk per selected event. Only the first prediction for each event and model version is retained. Retraining cannot rewrite this scorecard, and it never controls live orders.</p></>}</div></Card>;
+  const percent=(number:number|null)=>number===null?'—':`${number>=0?'+':''}${number.toFixed(1)}%`;
+  return <Card>
+    <div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-lg font-semibold">Forward ML scorecard</h3><p className="mt-1 text-sm text-rom-muted">Scores predictions frozen before their markets resolve.</p></div><span className="rounded-full border border-rom-border bg-rom-void/40 px-3 py-1.5 text-xs font-medium text-rom-muted">Append-only evidence</span></div>
+    <div className="min-h-24 pt-5" aria-live="polite" aria-busy={loading}>
+      {loading&&<p className="text-sm text-rom-muted">Matching frozen predictions with later settlements…</p>}
+      {error&&<p role="alert" className="text-sm text-rom-lossText">{error}</p>}
+      {report&&<>
+        <p className="text-sm leading-6 text-rom-muted">{report.reason}</p>
+        <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+          <Metric label="Resolved" value={`${report.resolvedPredictions}`} detail={`${report.observationSpanDays.toFixed(1)} observation days`}/>
+          <Metric label="Independent days" value={`${report.independentDays}`} detail="UTC resolution clusters"/>
+          <Metric label="Pending" value={`${report.pendingPredictions}`} detail="Awaiting settlement"/>
+          <Metric label="Model Brier" value={value(report.modelBrier)} detail="Frozen model"/>
+          <Metric label="Market Brier" value={value(report.marketBrier)} detail="Same observations"/>
+          <Metric label="Brier change" value={percent(report.brierImprovementPct)} detail={`95% floor ${percent(report.brierImprovementLowerPct)}`}/>
+        </dl>
+        <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+          <Metric label="Log-loss change" value={percent(report.logLossImprovementPct)} detail={`95% floor ${percent(report.logLossImprovementLowerPct)}`}/>
+          <Metric label="Shadow selections" value={`${report.forwardTrades}`} detail={`Edge at least ${report.minimumModelEdgePct.toFixed(0)}%`}/>
+          <Metric label="Fee-adjusted return" value={percent(report.netReturnPct)} detail="Dated taker costs"/>
+          <Metric label="Return confidence" value={percent(report.lowerConfidenceReturnPct)} detail={`One-sided ${report.confidenceLevelPct.toFixed(0)}% floor`}/>
+          <Metric label="Time windows" value={`${report.windowsPassed}/${report.windowsEvaluated}`} detail="Beat both baselines"/>
+          <Metric label="Resamples" value={report.bootstrapReplicates.toLocaleString()} detail="Deterministic clusters"/>
+        </dl>
+        <p className="mt-4 text-xs leading-5 text-rom-dim">Confidence bounds resample entire resolution days, so markets sharing one news and liquidity regime do not masquerade as independent proof. Return and drawdown use fixed {report.simulationRiskPct.toFixed(0)}% simulated account risk per selected event. Only the first prediction for each event and model version is retained. Retraining cannot rewrite this scorecard, and it never controls live orders.</p>
+      </>}
+    </div>
+  </Card>;
 }
 
 function ExecutionShadow({report,loading,error}:{report:ExecutionShadowReport|null;loading:boolean;error:string}) {

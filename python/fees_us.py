@@ -1,7 +1,7 @@
 """US schedules only; reported exchange fees remain authoritative for live fills.
 
-Source: https://docs.polymarket.us/fees (checked 2026-09-09).
-April schedule was published at that same URL before the July update.
+Source: https://docs.polymarket.us/fees (checked 2026-09-17).
+Earlier schedules were published at that same URL before later updates.
 No promotional or volume-tier rebates are assumed.
 """
 from datetime import datetime, timezone
@@ -10,6 +10,9 @@ from decimal import Decimal, ROUND_HALF_EVEN, ROUND_CEILING
 SCHEDULES = (
     (datetime(2026,4,3,19,tzinfo=timezone.utc).timestamp(), Decimal('0.05')),
     (datetime(2026,7,1,4,tzinfo=timezone.utc).timestamp(), Decimal('0.06')),
+    # Effective exchange-wide at 12:00 AM ET on 17 September 2026.
+    # New York was observing EDT (UTC-4) at the published cutoff.
+    (datetime(2026,9,17,4,tzinfo=timezone.utc).timestamp(), Decimal('0.0695')),
 )
 
 

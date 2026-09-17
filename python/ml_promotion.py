@@ -9,9 +9,10 @@ from __future__ import annotations
 import time
 
 
-VERSION = 'ml-promotion-gate-v1'
+VERSION = 'ml-promotion-gate-v2'
 MIN_FORWARD_PREDICTIONS = 200
 MIN_OBSERVATION_DAYS = 21
+MIN_INDEPENDENT_DAYS = 20
 MIN_FORWARD_TRADES = 80
 MIN_BRIER_IMPROVEMENT_PCT = 5.0
 MIN_WINDOWS_PASSED = 3
@@ -56,6 +57,8 @@ def evaluate(forward,execution_shadow,execution_quality,asof=None):
                           forward.get('resolvedPredictions'),MIN_FORWARD_PREDICTIONS))
     gates.append(_minimum('observation-span','Forward observation span',
                           forward.get('observationSpanDays'),MIN_OBSERVATION_DAYS,'days'))
+    gates.append(_minimum('independent-days','Independent resolution days',
+                          forward.get('independentDays'),MIN_INDEPENDENT_DAYS,'days'))
     gates.append(_minimum('forward-trades','Positive-edge shadow trades',
                           forward.get('forwardTrades'),MIN_FORWARD_TRADES))
 
@@ -65,7 +68,14 @@ def evaluate(forward,execution_shadow,execution_quality,asof=None):
         improvement is not None and improvement>=MIN_BRIER_IMPROVEMENT_PCT,
         ('Model improvement is '
          f'{float(improvement):.1f}%; minimum {MIN_BRIER_IMPROVEMENT_PCT:.1f}%.'
-         if improvement is not None else ''),MIN_BRIER_IMPROVEMENT_PCT,
+        if improvement is not None else ''),MIN_BRIER_IMPROVEMENT_PCT,
+    ))
+    brier_lower=forward.get('brierImprovementLowerPct')
+    gates.append(_metric(
+        'brier-confidence','Brier improvement confidence',brier_lower,
+        brier_lower is not None and brier_lower>0,
+        (f'Day-clustered 95% lower bound is {float(brier_lower):.2f}%.'
+         if brier_lower is not None else ''),0.0,
     ))
     model_log=forward.get('modelLogLoss'); market_log=forward.get('marketLogLoss')
     gates.append(_metric(
@@ -73,6 +83,13 @@ def evaluate(forward,execution_shadow,execution_quality,asof=None):
         model_log is not None and market_log is not None and model_log<market_log,
         (f'Model {float(model_log):.4f}; market {float(market_log):.4f}.'
          if model_log is not None and market_log is not None else ''),market_log,
+    ))
+    log_lower=forward.get('logLossImprovementLowerPct')
+    gates.append(_metric(
+        'log-loss-confidence','Log-loss improvement confidence',log_lower,
+        log_lower is not None and log_lower>0,
+        (f'Day-clustered 95% lower bound is {float(log_lower):.2f}%.'
+         if log_lower is not None else ''),0.0,
     ))
     windows=int(forward.get('windowsEvaluated') or 0)
     passed=int(forward.get('windowsPassed') or 0)
@@ -85,7 +102,7 @@ def evaluate(forward,execution_shadow,execution_quality,asof=None):
     gates.append(_metric(
         'net-return','Fee-adjusted return confidence',lower_return,
         lower_return is not None and lower_return>0,
-        (f'One-sided 95% lower bound is {float(lower_return):.2f}% after scheduled fees.'
+        (f'Day-clustered 95% lower bound is {float(lower_return):.2f}% after scheduled fees.'
          if lower_return is not None else ''),0.0,
     ))
     drawdown=forward.get('maxDrawdownPct')

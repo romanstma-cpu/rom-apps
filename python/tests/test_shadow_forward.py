@@ -49,6 +49,39 @@ def test_future_and_early_settlements_are_excluded():
     assert report['resolvedPredictions']==0 and report['pendingPredictions']==2
 
 
+def test_same_day_markets_count_as_one_independent_resolution_cluster():
+    predictions=[]; evidence=[]
+    for i in range(60):
+        observed=T+i*10
+        predictions.append({**prediction(i,model=.8,market=.5),'observed_at':observed})
+        evidence.append({'at':T+1000+i,'kind':'settlement','ticker':f'M{i}',
+                         'payload':{'yes_payout':1}})
+    report=shadow_forward.evaluate(predictions,evidence,T+2000)
+    assert report['independentDays']==1
+    assert report['brierImprovementLowerPct'] is None
+    assert report['logLossImprovementLowerPct'] is None
+    assert report['lowerConfidenceReturnPct'] is None
+
+
+def test_day_clustered_bounds_are_reproducible_with_independent_days():
+    predictions=[]; evidence=[]
+    for day in range(20):
+        for offset in range(3):
+            i=day*3+offset
+            observed=T+day*86400+offset*60
+            predictions.append({**prediction(i,model=.8,market=.5),'observed_at':observed})
+            evidence.append({'at':observed+600,'kind':'settlement','ticker':f'M{i}',
+                             'payload':{'yes_payout':1}})
+    first=shadow_forward.evaluate(predictions,evidence,T+21*86400)
+    second=shadow_forward.evaluate(predictions,evidence,T+21*86400)
+    assert first['independentDays']==20
+    assert first['brierImprovementLowerPct']>0
+    assert first['logLossImprovementLowerPct']>0
+    assert first['lowerConfidenceReturnPct']>0
+    assert first['brierImprovementLowerPct']==second['brierImprovementLowerPct']
+    assert first['lowerConfidenceReturnPct']==second['lowerConfidenceReturnPct']
+
+
 def test_prediction_ledger_keeps_first_model_call_per_event(tmp_path,monkeypatch):
     monkeypatch.setattr(db,'db_path',lambda:tmp_path/'forward.db')
     db.init_db(); shadow_forward.init()

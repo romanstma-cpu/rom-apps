@@ -32,6 +32,8 @@ entry point is a read-only report requested from the Evidence screen.
 | Settlement must follow prediction | `python/tests/test_shadow_forward.py` | Outcome leakage |
 | Report cutoff is respected | `python/tests/test_shadow_forward.py` | Future information entering a past report |
 | Market baseline uses identical observations | `python/tests/test_shadow_forward.py` | Biased model-versus-market comparison |
+| Same-day markets form one evidence cluster | `python/tests/test_shadow_forward.py` | Correlated resolutions overstating confidence |
+| Cluster bootstrap is deterministic | `python/tests/test_shadow_forward.py` | Promotion changing between identical report loads |
 
 ## Safety net for the ML promotion gate
 
@@ -42,6 +44,8 @@ entry point is a read-only report requested from the Evidence screen.
 | Execution circuit breakers veto promotion | `python/tests/test_ml_promotion.py` | A statistically useful model overriding toxic fills |
 | Eligible rollout remains locked | `python/tests/test_ml_promotion.py` | Promotion status changing live orders automatically |
 | Fee-adjusted return and fixed-risk drawdown | `python/tests/test_shadow_forward.py` | Accuracy gains being mistaken for tradable profit |
+| Positive point scores require positive clustered bounds | `python/tests/test_ml_promotion.py` | Noisy apparent wins passing promotion |
+| Dated fee boundaries | `python/tests/test_fees_us.py` and `python/tests/test_backtest_units.py` | Live and historical costs using a stale exchange schedule |
 
 Promotion requires every forward-performance and execution-quality gate. The
 report can recommend a capped review, but it must remain outside

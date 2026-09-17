@@ -91,7 +91,8 @@ to do nothing, or an order-intent dict to buy one side of the market:
 Winning contracts settle at $1.00, losing at $0.00. Taker fee per contract:
 theta x P x (1 - P) dollars at price P, where theta is the Polymarket US
 schedule in force when the order is placed (0.06 since 1 Jul 2026, 0.05
-before). At 0.06 that is ~1.5c at 50c and ~0.5c at 90c.
+before, and 0.0695 since 17 Sep 2026). At 0.0695 that is ~1.7c at 50c and
+~0.6c at 90c before exchange rounding.
 At most ONE position per market window per script — after your first intent
 in a window (even one refused by the rails) that window is consumed.
 
