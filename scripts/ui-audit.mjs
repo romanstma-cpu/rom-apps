@@ -10,10 +10,14 @@ const OUT = process.env.SHOTS || path.resolve('.work', 'ui-audit');
 fs.mkdirSync(OUT, {recursive: true});
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rom-uiaudit-'));
 for (const d of ['Roaming', 'Local']) fs.mkdirSync(path.join(root, d));
-const electronBinary = process.platform === 'win32' ? 'electron.exe' : 'electron';
+const electronBinary = process.platform === 'win32'
+  ? ['electron.exe']
+  : process.platform === 'darwin'
+    ? ['Electron.app', 'Contents', 'MacOS', 'Electron']
+    : ['electron'];
 
 const app = await electron.launch({
-  executablePath: path.resolve('node_modules', 'electron', 'dist', electronBinary),
+  executablePath: path.resolve('node_modules', 'electron', 'dist', ...electronBinary),
   args: [process.cwd(), `--user-data-dir=${root}/profile`],
   env: {...process.env, APPDATA: path.join(root, 'Roaming'), LOCALAPPDATA: path.join(root, 'Local')},
 });
