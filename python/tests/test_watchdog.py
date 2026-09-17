@@ -85,3 +85,37 @@ def test_loop_watchdog_leaves_healthy_loop_alone(monkeypatch):
     same = asyncio.run(_run())
     assert same
     assert spawned["n"] == 0
+
+
+def test_loop_watchdog_bounds_hung_client_cleanup(monkeypatch):
+    monkeypatch.setattr(service, "_WATCHDOG_CHECK_SEC", 0.01)
+    monkeypatch.setattr(service, "_LOOP_STALL_SEC", 0.01)
+    monkeypatch.setattr(service, "_WATCHDOG_RECYCLE_TIMEOUT_SEC", 0.01)
+
+    async def _hung_close():
+        await asyncio.sleep(60)
+
+    async def _replacement():
+        while not service._loop_stop.is_set():
+            await asyncio.sleep(0.01)
+
+    monkeypatch.setattr(service.polymarket_api, "close_clients", _hung_close)
+    monkeypatch.setattr(service.crypto15m, "close_clients", _hung_close)
+    monkeypatch.setattr(service, "_scanner_and_trader_loop", _replacement)
+
+    async def _run():
+        service._loop_stop = asyncio.Event()
+        original = asyncio.create_task(asyncio.sleep(60))
+        service._loop_task = original
+        service._loop_heartbeat = asyncio.get_running_loop().time() - 10
+        watchdog = asyncio.create_task(service._loop_watchdog())
+        await asyncio.sleep(0.12)
+        replacement = service._loop_task
+        service._loop_stop.set()
+        watchdog.cancel()
+        replacement.cancel()
+        await asyncio.gather(watchdog, replacement, original, return_exceptions=True)
+        return original, replacement
+
+    original, replacement = asyncio.run(_run())
+    assert replacement is not original

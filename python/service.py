@@ -434,6 +434,7 @@ _watchdog_task: asyncio.Task | None = None
 _loop_heartbeat: float = 0.0
 _LOOP_STALL_SEC = 240.0
 _WATCHDOG_CHECK_SEC = 20.0
+_WATCHDOG_RECYCLE_TIMEOUT_SEC = 1.0
 
 _bg_tasks: set[asyncio.Task] = set()
 
@@ -1139,11 +1140,23 @@ async def _loop_watchdog() -> None:
                 pass
         if _loop_stop and _loop_stop.is_set():
             break
-        for _name, _mod in (("polymarket_api", polymarket_api), ("crypto15m", crypto15m)):
+        async def _recycle_client(_name: str, _mod: Any) -> None:
             try:
-                await _mod.close_clients()
+                await asyncio.wait_for(
+                    _mod.close_clients(), timeout=_WATCHDOG_RECYCLE_TIMEOUT_SEC,
+                )
+            except TimeoutError:
+                logger.warning(
+                    f"watchdog client recycle ({_name}) timed out; restarting loop"
+                )
             except Exception as e:
                 logger.debug(f"watchdog client recycle ({_name}) failed: {e}")
+        await asyncio.gather(*(
+            _recycle_client(_name, _mod)
+            for _name, _mod in (
+                ("polymarket_api", polymarket_api), ("crypto15m", crypto15m),
+            )
+        ))
         _loop_task = asyncio.create_task(_scanner_and_trader_loop())
         logger.info("trading loop restarted by watchdog (HTTP clients recycled)")
 
