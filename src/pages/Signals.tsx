@@ -33,7 +33,7 @@ export function SignalsPage() {
   return (
     <Page
       title="Signals"
-      subtitle="Live whale + momentum signals as the scanners produce them."
+      subtitle="Live large-trade + momentum signals as the scanners produce them."
     >
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-rom-border bg-rom-surface p-3">
         <div className="inline-flex rounded-md border border-rom-border bg-rom-surface2 p-0.5">
@@ -46,7 +46,7 @@ export function SignalsPage() {
                 src === s ? 'bg-white/10 text-white' : 'text-rom-muted hover:text-white',
               )}
             >
-              {s}
+              {s === 'whale' ? 'large trades' : s}
             </button>
           ))}
         </div>
@@ -113,7 +113,7 @@ function SignalRowView({ s, inPosition }: { s: SignalRow; inPosition: boolean })
             ? 'bg-rom-purple/15 text-rom-purple'
             : 'bg-rom-pink/15 text-rom-pink',
         )}>
-          {s.source}
+          {s.source === 'whale' ? 'large trade' : s.source}
         </span>
       </td>
       <td className="font-mono text-xs">{s.ticker}</td>

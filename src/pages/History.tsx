@@ -584,7 +584,7 @@ function TradeHistory({ resolved, account }: {
                       ? 'bg-rom-purple/15 text-rom-purple'
                       : 'bg-rom-pink/15 text-rom-pink',
                   )}>
-                    {p.signalSource}
+                    {p.signalSource === 'whale' ? 'large trade' : p.signalSource}
                   </span>
                 </td>
                 <td><TickerLink ticker={p.ticker} eventTicker={p.eventTicker} env={p.network} /></td>

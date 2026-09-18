@@ -199,10 +199,10 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
               {!backend.authOk
                 ? 'No API credentials connected — open the API page before starting.'
                 : tradingOn
-                  ? 'Follows whale + momentum signals under the gates below. Affects this engine only.'
+                  ? 'Follows large-trade + momentum signals under the gates below. Affects this engine only.'
                   : paperOn
                     ? 'Uses current signals, quotes, entry checks and sizing with a simulated balance.'
-                  : 'Whale and momentum signals are still recorded while paused — only order placement stops.'}
+                  : 'Large Trade and Momentum signals are still recorded while paused — only order placement stops.'}
             </div>
           </div>
         </div>
@@ -239,7 +239,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
       <details className="mb-5 rounded-xl border border-rom-border p-5">
         <summary className="cursor-pointer text-sm font-medium">How the strategy protects your entry</summary>
         <p className="mt-3 text-sm text-rom-muted">The strategy waits when eligible signals disagree on a market’s direction or a balance refresh fails. Invalid signals and unsuitable quotes are skipped. A market’s minimum order cannot increase your strategy’s selected trade size.</p>
-        <p className="mt-2 text-xs text-rom-dim">Every live Whale and Momentum entry must first pass a chronological holdout check with positive conservative edge after fees. Practice keeps collecting unqualified candidates. Qualified signals still start at 25% live size and priority until their settled practice record qualifies the source; positive sources are considered first when capital is scarce. Live quotes must also pass spread, movement and visible-depth checks. These controls reduce unproven risk; they do not guarantee profits.</p>
+        <p className="mt-2 text-xs text-rom-dim">Every live Large Trade and Momentum entry must first pass a chronological holdout check with positive conservative edge after fees. Practice keeps collecting unqualified candidates. Qualified signals still start at 25% live size and priority until their settled practice record qualifies the source; positive sources are considered first when capital is scarce. Live quotes must also pass spread, movement and visible-depth checks. These controls reduce unproven risk; they do not guarantee profits.</p>
       </details>
       <details className="mb-5 rounded-xl border border-rom-border p-5">
       <summary className="cursor-pointer text-sm font-medium">Choose a strategy preset <span className="ml-2 text-xs font-normal text-rom-muted">Optional starting points</span></summary>
@@ -381,8 +381,8 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
         <Card>
           <div className="grid gap-2 md:grid-cols-3">
             <Switch
-              label="Trade whale signals"
-              description="Follow $2.5k+ taker orders into the same side."
+              label="Trade large-order signals"
+              description="React to $2.5k+ public market orders. This reads market activity; it does not follow or copy wallets."
               checked={config.tradeWhales}
               onChange={(v) => void update('tradeWhales', v)}
             />
@@ -394,7 +394,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
             />
             <Switch
               label="Trade convergence (coming soon)"
-              description="Will fire when 3+ whales agree on the same side within 2h. The convergence scanner is still in development."
+              description="Will fire when 3+ large trades agree on the same side within 2h. The convergence scanner is still in development."
               checked={false}
               disabled
               onChange={() => undefined}
@@ -418,7 +418,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
           <div className="text-sm font-medium text-white">Per-engine refinement</div>
           <p className="mt-1 text-xs leading-relaxed text-rom-muted">
             Optional. These narrow <i>further</i> within the categories allowed above —
-            both filters must pass. Use them to run, say, whales only in crypto while
+            both filters must pass. Use them to run, say, large-trade signals only in crypto while
             momentum only trades sports. Leave on “Any” unless you want that split;
             note that <b className="text-white">strategy presets set these for you</b>,
             which is why a category can look enabled above yet still be skipped.
@@ -426,7 +426,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
           <div className="mt-4 space-y-5">
             <div>
               <div className="mb-2 text-xs font-medium text-rom-muted">
-                Whale &amp; convergence signals
+                Large Trade &amp; convergence signals
               </div>
               <SourceCategoryPicker
                 value={config.allowedWhaleCategories ?? null}
@@ -452,7 +452,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
       >
         <Card>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Min edge (whales)" hint="Pts of edge required for a whale signal to fire">
+            <Field label="Min edge (large trades)" hint="Points of edge required for a large-trade signal to fire">
               <NumberInput value={config.minEdgePtsWhale} step={0.5} suffix="pts"
                 onChange={(v) => void update('minEdgePtsWhale', v)} />
             </Field>
@@ -460,7 +460,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
               <NumberInput value={config.minEdgePtsMomentum} step={0.5} suffix="pts"
                 onChange={(v) => void update('minEdgePtsMomentum', v)} />
             </Field>
-            <Field label="Min confidence (whales)">
+            <Field label="Min confidence (large trades)">
               <NumberInput value={config.minConfidenceWhale} step={1} suffix="%"
                 onChange={(v) => void update('minConfidenceWhale', v)} />
             </Field>
@@ -524,7 +524,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
             description="Every condition must pass (AND). The bot enters any signal whose numbers clear all of your rules."
             tip={
               <>Entry cost is what you actually pay per contract (direction-adjusted), so one rule-set
-              works across whales, momentum and convergence.</>
+              works across large trades, momentum and convergence.</>
             }
           />
         </Card>
@@ -749,7 +749,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
               <NumberInput value={Math.round((config.takeProfitPct ?? 0) * 100)} step={5} suffix="%" min={0} max={100}
                 onChange={(v) => void update('takeProfitPct', Math.max(0, Math.min(100, v)) / 100)} />
             </Field>
-            <Field label="Lifetime loss limit" hint="Circuit-breaker: pause whale/momentum entries once TOTAL realized loss reaches this % of your starting bankroll (survives history wipes; the daily stop re-arms every midnight — this one doesn't). Default 50%. Raise or set 0 (off) to resume a tripped engine.">
+            <Field label="Lifetime loss limit" hint="Circuit-breaker: pause Large Trade/Momentum entries once TOTAL realized loss reaches this % of your starting bankroll (survives history wipes; the daily stop re-arms every midnight — this one doesn't). Default 50%. Raise or set 0 (off) to resume a tripped engine.">
               <NumberInput value={Math.round((config.lifetimeLossLimitPct ?? 0.5) * 100)} step={5} suffix="%" min={0} max={100}
                 onChange={(v) => void update('lifetimeLossLimitPct', Math.max(0, Math.min(100, v)) / 100)} />
             </Field>
@@ -851,7 +851,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
               <NumberInput value={config.resolutionCheckInterval} step={30} suffix="s"
                 onChange={(v) => void update('resolutionCheckInterval', v)} />
             </Field>
-            <Field label="Whale scan interval">
+            <Field label="Large Trade scan interval">
               <NumberInput value={config.whaleScanInterval} step={10} suffix="s"
                 onChange={(v) => void update('whaleScanInterval', v)} />
             </Field>
@@ -868,20 +868,20 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
       </Section>
 
       <Section
-        title="Whale + momentum scanner thresholds"
+        title="Large Trade + Momentum scanner thresholds"
         description="Lower thresholds = more raw signals (which the trade gates will further filter)."
       >
         <Card>
           <div className="grid gap-4 md:grid-cols-3">
-            <Field label="Min whale $">
+            <Field label="Minimum large order">
               <NumberInput value={config.minWhaleUsd} step={500} prefix="$"
                 onChange={(v) => void update('minWhaleUsd', v)} />
             </Field>
-            <Field label="Min whale confidence">
+            <Field label="Minimum Large Trade confidence">
               <NumberInput value={config.minWhaleConfidence} step={1} suffix="%"
                 onChange={(v) => void update('minWhaleConfidence', v)} />
             </Field>
-            <Field label="Min entry price (whale)">
+            <Field label="Minimum Large Trade entry price">
               <NumberInput value={config.minEntryPriceFrac} step={0.05} min={0} max={1}
                 onChange={(v) => void update('minEntryPriceFrac', v)} />
             </Field>
@@ -910,7 +910,7 @@ function EvidenceAllocation({enabled,plan,loading,error,onToggle,onRefresh}:{
 }) {
   return <Card className="mb-5">
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="max-w-2xl"><div className="flex items-center gap-2"><Trophy className="h-5 w-5 text-rom-purple"/><h3 className="font-semibold">Evidence-based allocation</h3></div><p className="mt-2 text-sm leading-6 text-rom-muted">Use rolling practice results to adjust live Whale and Momentum position sizes. Practice sizing stays unchanged so new evidence remains comparable.</p></div>
+      <div className="max-w-2xl"><div className="flex items-center gap-2"><Trophy className="h-5 w-5 text-rom-purple"/><h3 className="font-semibold">Evidence-based allocation</h3></div><p className="mt-2 text-sm leading-6 text-rom-muted">Use rolling practice results to adjust live Large Trade and Momentum position sizes. Practice sizing stays unchanged so new evidence remains comparable.</p></div>
       <Switch label="Use evidence allocation" description="Applies to new live main-strategy entries only." checked={enabled} onChange={onToggle}/>
     </div>
     <div className="mt-5 border-t border-rom-border pt-4" aria-live="polite" aria-busy={loading}>

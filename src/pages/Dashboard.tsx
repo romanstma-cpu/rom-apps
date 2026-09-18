@@ -382,8 +382,8 @@ export function DashboardPage({ onNav }: DashboardProps) {
             ))}
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-            <Mini label="Whales seen" value={`${scannerStats?.whales.total ?? 0}`} />
-            <Mini label="Whales hit" value={`${(scannerStats?.whales.winRate ?? 0).toFixed(1)}%`} />
+            <Mini label="Large trades seen" value={`${scannerStats?.whales.total ?? 0}`} />
+            <Mini label="Large trades hit" value={`${(scannerStats?.whales.winRate ?? 0).toFixed(1)}%`} />
             <Mini label="Momentum seen" value={`${scannerStats?.momentum.total ?? 0}`} />
             <Mini label="Momentum hit" value={`${(scannerStats?.momentum.winRate ?? 0).toFixed(1)}%`} />
             <Mini label="Markets" value={`${scannerStats?.marketsTracked ?? 0}`} />

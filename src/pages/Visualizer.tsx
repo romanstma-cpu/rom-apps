@@ -392,8 +392,8 @@ export function VisualizerPage() {
 
           <Card header={<div className="text-xs uppercase tracking-wider text-rom-muted">Scanner activity</div>}>
             <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <Mini label="Whales seen" value={String(scannerStats?.whales.total ?? 0)} tone="purple" />
-              <Mini label="Whales hit" value={`${(scannerStats?.whales.winRate ?? 0).toFixed(1)}%`} tone="good" />
+              <Mini label="Large trades seen" value={String(scannerStats?.whales.total ?? 0)} tone="purple" />
+              <Mini label="Large trades hit" value={`${(scannerStats?.whales.winRate ?? 0).toFixed(1)}%`} tone="good" />
               <Mini label="Momentum seen" value={String(scannerStats?.momentum.total ?? 0)} tone="pink" />
               <Mini label="Momentum hit" value={`${(scannerStats?.momentum.winRate ?? 0).toFixed(1)}%`} tone="good" />
               <Mini label="Markets" value={String(scannerStats?.marketsTracked ?? 0)} />
@@ -431,7 +431,7 @@ export function VisualizerPage() {
             <canvas ref={canvasRef} className="absolute inset-0" />
 
             <div className="pointer-events-none absolute right-3 top-3 flex flex-col gap-1 rounded-lg border border-rom-border bg-rom-void/80 px-3 py-2 text-[11px] text-rom-muted backdrop-blur">
-              <LegendDot color="#3B82F6" label="Whale signal" />
+              <LegendDot color="#3B82F6" label="Large Trade signal" />
               <LegendDot color="#38BDF8" label="Momentum signal" />
               <LegendDot color="#FFFFFF" label="Open position (orbiting)" outline />
               <LegendDot color="#22C55E" label="Won → wins pot" />

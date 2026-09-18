@@ -688,6 +688,7 @@ export interface TradingStatus {
     placed: number;
     primaryBlock: string;
     categoryLimits: { whale: string[]; momentum: string[] };
+    excludedByCategory: { whale: Record<string, number>; momentum: Record<string, number> };
   };
     c15: {
     enabled: boolean;

@@ -37,7 +37,7 @@ const HOOK_SNIPPETS: { label: string; detail: string; body: string }[] = [
   },
   {
     label: 'decide_signal',
-    detail: 'filter whale / momentum signals',
+    detail: 'filter large-trade / momentum signals',
     body: 'def decide_signal(signal):\n    return None\n',
   },
   {

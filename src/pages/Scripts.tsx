@@ -1002,7 +1002,7 @@ function BacktestResult({ res, busy }: { res: ScriptBacktest | null; busy: boole
       {res.signalResult && (
         <div className="rounded-lg border border-rom-border/70 bg-rom-surface2/30 p-2">
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-rom-muted">
-            Whale / momentum signal replay (decide_signal)
+            Large-trade / momentum signal replay (decide_signal)
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-5">
             <Stat label="Follows" value={`${res.signalResult.n}`} sub={`${res.signalResult.windowsScanned} signals scanned`} />

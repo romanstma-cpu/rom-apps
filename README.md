@@ -3,7 +3,7 @@
 Independent desktop trading app configured for the Polymarket US retail API.
 
 ## Windows app
-Run `release/ROM PolyBot-Setup-2.30.1.exe`, then open ROM PolyBot.
+Run `release/ROM PolyBot-Setup-2.31.0.exe`, then open ROM PolyBot.
 Python and the app runtime are included in the installer.
 
 ## Development
@@ -17,7 +17,7 @@ verification and funding are handled in Polymarket US.
 Settings and encrypted credentials use ROM PolyBot's separate application-data directory.
 The original app and its saved data are not migrated.
 
-US market availability differs. Whale and momentum scanners consume the
+US market availability differs. Large-trade and momentum scanners consume the
 authenticated US trade stream. Those features must not silently use
 international exchange data. Crypto strategies need US-listed markets.
 

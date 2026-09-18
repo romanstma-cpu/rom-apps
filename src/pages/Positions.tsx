@@ -180,7 +180,7 @@ export function PositionsPage() {
           <Tabs value={src} onChange={setSrc}
             options={[
               { value: 'all', label: 'Both' },
-              { value: 'whale', label: 'Whales' },
+              { value: 'whale', label: 'Large Trades' },
               { value: 'momentum', label: 'Momentum' },
             ]}
           />
@@ -270,7 +270,7 @@ function PositionRow({ p }: { p: BotPosition }) {
                   : 'bg-rom-pink/15 text-rom-pink',
           )}
         >
-          {String(p.signalSource) === 'copy' ? 'legacy' : p.signalSource}
+          {p.signalSource === 'whale' ? 'large trade' : String(p.signalSource) === 'copy' ? 'legacy' : p.signalSource}
         </span>
       </td>
       <td><TickerLink ticker={p.ticker} eventTicker={p.eventTicker} env={p.network} /></td>

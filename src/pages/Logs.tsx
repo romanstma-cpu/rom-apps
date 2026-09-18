@@ -82,7 +82,7 @@ export function LogsPage() {
         >
           <option value="all">All sources</option>
           <option value="trader">Trader</option>
-          <option value="whale">Whale</option>
+          <option value="whale">Large Trade</option>
           <option value="momentum">Momentum</option>
           <option value="backend">Backend</option>
           <option value="discord">Discord</option>

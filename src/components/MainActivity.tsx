@@ -23,6 +23,10 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
   const stream = status.executionHealth.marketStream;
   const whaleCategories = funnel?.categoryLimits.whale ?? [];
   const momentumCategories = funnel?.categoryLimits.momentum ?? [];
+  const excludedCategories = funnel ? [
+    ...Object.entries(funnel.excludedByCategory.whale).map(([category, count]) => `Large Trades: ${category} (${count})`),
+    ...Object.entries(funnel.excludedByCategory.momentum).map(([category, count]) => `Momentum: ${category} (${count})`),
+  ] : [];
 
   return <Card>
     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -72,8 +76,9 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
       </div>
       {(funnel.primaryBlock || whaleCategories.length || momentumCategories.length) && <div className="mt-3 space-y-1 rounded-lg bg-rom-void/35 px-3 py-2.5 text-[11px] text-rom-muted">
         {funnel.primaryBlock && <p><span className="font-medium text-white">Latest block:</span> {funnel.primaryBlock}</p>}
-        {whaleCategories.length > 0 && <p><span className="font-medium text-white">Whale categories:</span> {whaleCategories.join(', ')}</p>}
+        {whaleCategories.length > 0 && <p><span className="font-medium text-white">Large Trade categories:</span> {whaleCategories.join(', ')}</p>}
         {momentumCategories.length > 0 && <p><span className="font-medium text-white">Momentum categories:</span> {momentumCategories.join(', ')}</p>}
+        {excludedCategories.length > 0 && <p className="text-rom-warn"><span className="font-medium">Recent signals excluded:</span> {excludedCategories.join(' · ')}. Choose Allow all or include these categories on the Strategy page.</p>}
       </div>}
     </section>}
 

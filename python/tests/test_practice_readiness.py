@@ -16,7 +16,10 @@ def test_trading_status_reports_practice_and_loss_limit_readiness(tmp_path, monk
     monkeypatch.setattr(db, "db_path", lambda: tmp_path / "readiness.db")
     db.init_db()
     main_recorder.init()
-    cfg = merge_with_defaults({"enable_trading": False, "main_paper_trading": False})
+    cfg = merge_with_defaults({
+        "enable_trading": False, "main_paper_trading": False,
+        "allowed_whale_categories": ["sports"],
+    })
     monkeypatch.setattr(service.STATE, "cfg", cfg)
     monkeypatch.setattr(service.STATE, "paused", False)
     monkeypatch.setattr(service.STATE, "auth_ok", False)
@@ -34,7 +37,8 @@ def test_trading_status_reports_practice_and_loss_limit_readiness(tmp_path, monk
         now = service.time.time()
         conn.executemany(
             "INSERT INTO main_replay_events(at,kind,ticker,payload) VALUES (?,?,?,?)",
-            [(now, "trade", "T", "{}"), (now, "signal", "T", "{}")],
+            [(now, "trade", "T", "{}"),
+             (now, "signal", "T", '{"source":"whale","signal":{"category":"politics"}}')],
         )
 
     before = asyncio.run(service._h_trading_status({}))
@@ -49,6 +53,9 @@ def test_trading_status_reports_practice_and_loss_limit_readiness(tmp_path, monk
     assert before["opportunityFunnel"]["candidates"] == 2
     assert before["opportunityFunnel"]["filtered"] == 2
     assert before["opportunityFunnel"]["primaryBlock"] == "no candidates: category filters"
+    assert before["opportunityFunnel"]["excludedByCategory"] == {
+        "whale": {"politics": 1}, "momentum": {},
+    }
 
     with db.get_db() as conn:
         position_id = db.insert_bot_position(conn, {

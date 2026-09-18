@@ -9,7 +9,7 @@ import { cls, fmtDateTime } from '../utils/format';
 import type { Profile, ProfileScope } from '@shared/types';
 
 const SCOPES: { scope: ProfileScope; title: string; subtitle: string }[] = [
-  { scope: 'main', title: 'Main engine', subtitle: 'Whale / momentum / convergence scanner' },
+  { scope: 'main', title: 'Main engine', subtitle: 'Large Trade / Momentum / Convergence scanner' },
   { scope: 'crypto', title: 'Crypto market', subtitle: '15-minute crypto up/down engine' },
 ];
 

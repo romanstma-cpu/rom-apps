@@ -2125,7 +2125,8 @@ async def _h_trading_status(_p: dict) -> dict:
     # Input counts use a rolling day; decision counts describe the latest
     # cycle. Keeping both timeframes explicit makes a dead feed distinguishable
     # from a healthy scanner whose current candidates failed an entry gate.
-    opportunity = {"windowHours": 24, "tradeEvents": 0, "signalEvents": 0}
+    opportunity = {"windowHours": 24, "tradeEvents": 0, "signalEvents": 0,
+                   "excludedByCategory": {"whale": {}, "momentum": {}}}
     try:
         cutoff = time.time() - 24 * 3600
         with db.get_db() as conn:
@@ -2134,10 +2135,34 @@ async def _h_trading_status(_p: dict) -> dict:
                 "WHERE at>=? AND kind IN ('trade','signal') GROUP BY kind",
                 (cutoff,),
             ).fetchall())
+            recent_signals = conn.execute(
+                "SELECT payload FROM main_replay_events "
+                "WHERE at>=? AND kind='signal' ORDER BY at DESC,id DESC LIMIT 500",
+                (cutoff,),
+            ).fetchall()
         opportunity.update(
             tradeEvents=int(counts.get("trade", 0)),
             signalEvents=int(counts.get("signal", 0)),
         )
+        global_categories = cfg.get("allowed_categories")
+        limits_by_source = {
+            "whale": cfg.get("allowed_whale_categories"),
+            "momentum": cfg.get("allowed_momentum_categories"),
+        }
+        excluded = {"whale": {}, "momentum": {}}
+        for row in recent_signals:
+            try:
+                payload = json.loads(row[0])
+            except (TypeError, ValueError):
+                continue
+            source = str(payload.get("source") or "")
+            category = str((payload.get("signal") or {}).get("category") or "unknown").lower()
+            source_categories = limits_by_source.get(source)
+            blocked_globally = global_categories is not None and category not in global_categories
+            blocked_for_source = source_categories is not None and category not in source_categories
+            if source in excluded and (blocked_globally or blocked_for_source):
+                excluded[source][category] = excluded[source].get(category, 0) + 1
+        opportunity["excludedByCategory"] = excluded
     except Exception:
         pass
     stream_health = execution_health.get("marketStream") or {}

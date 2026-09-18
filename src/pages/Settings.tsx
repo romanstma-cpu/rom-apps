@@ -135,7 +135,7 @@ export function SettingsPage() {
               onChange={(v) => void update('eventWebhookUrl', v)} />
             <UrlField label="Stats" value={config.statsWebhookUrl}
               onChange={(v) => void update('statsWebhookUrl', v)} />
-            <UrlField label="Whale alerts" value={config.whaleWebhookUrl}
+            <UrlField label="Large Trade alerts" value={config.whaleWebhookUrl}
               onChange={(v) => void update('whaleWebhookUrl', v)} />
             <UrlField label="Momentum alerts" value={config.momentumWebhookUrl}
               onChange={(v) => void update('momentumWebhookUrl', v)} />
@@ -262,7 +262,7 @@ function DangerZone({
                 <li>all bot positions and trade history</li>
                 <li>all bot runs (session P&amp;L)</li>
                 <li>all P&amp;L snapshots</li>
-                <li>all whale and momentum signals</li>
+                <li>all Large Trade and Momentum signals</li>
               </ul>
               <p className="pt-2">
                 Your API credentials, profiles, and settings are <strong>kept</strong>.

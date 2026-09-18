@@ -487,7 +487,7 @@ export function registerIpc(): void {
         executionHealth: { state: 'open', blocked: true, reason: 'Backend not running', retryAfterSeconds: 0, failureCount: 0, quoteFailures: 0, orderFailures: 0, marketStream: { state: 'unknown', connected: false, stale: false } },
         mainPaper: { bankrollUsd: 1000, availableUsd: 1000, open: 0, resolved: 0, wins: 0, losses: 0, pnlUsd: 0 },
         practiceReadiness: { completedPracticeTrades: 0, hasCompletedPractice: false, hasLossLimit: false, lossLimitSummary: 'Unavailable while the backend is offline' },
-        opportunityFunnel: { windowHours: 24, watchedMarkets: 0, tradeEvents: 0, signalEvents: 0, candidates: 0, filtered: 0, placed: 0, primaryBlock: 'Engine offline', categoryLimits: { whale: [], momentum: [] } },
+        opportunityFunnel: { windowHours: 24, watchedMarkets: 0, tradeEvents: 0, signalEvents: 0, candidates: 0, filtered: 0, placed: 0, primaryBlock: 'Engine offline', categoryLimits: { whale: [], momentum: [] }, excludedByCategory: { whale: {}, momentum: {} } },
         c15: { enabled: false, live: false, authed: false, env: 'mainnet', blockReasons: {} },
       };
     }

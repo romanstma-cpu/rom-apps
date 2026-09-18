@@ -180,7 +180,7 @@ export function TerminalPage() {
       const base: { kind: 'asset' | 'whale' | 'mom'; label: string; a?: Crypto15mAsset }[] =
         (list.length ? list.map(a => ({ kind: 'asset' as const, label: a.asset ?? '·', a }))
           : Array.from({ length: 7 }, () => ({ kind: 'asset' as const, label: '·' })));
-      base.push({ kind: 'whale', label: 'WHALE' }, { kind: 'mom', label: 'MOMENTUM' });
+      base.push({ kind: 'whale', label: 'LARGE TRADE' }, { kind: 'mom', label: 'MOMENTUM' });
       nodesRef.current = base.map((n, i) => {
         const ang = -Math.PI / 2 + i / base.length * Math.PI * 2;
         return { ...n, x: w / 2 + Math.cos(ang) * Math.min(w, h) * .34, y: h / 2 + Math.sin(ang) * Math.min(w, h) * .31, ang };
@@ -473,7 +473,7 @@ export function TerminalPage() {
                 ['rtds.chainlink', snap?.spotSource === 'rtds' || snap?.spotOk],
                 ['clob.ws', assets.some(a => a.priceSource === 'ws')],
                 ['gamma.rest', assets.some(a => a.hasMarket)],
-                ['whale.scan', !!scannerStats?.lastWhaleScanAt],
+                ['large-trade.scan', !!scannerStats?.lastWhaleScanAt],
                 ['momentum', !!scannerStats?.lastMomentumScanAt],
                 ['account.snap', !!account],
               ].map(([name, ok]) => (

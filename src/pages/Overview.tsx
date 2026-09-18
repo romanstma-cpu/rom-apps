@@ -71,7 +71,7 @@ export function OverviewPage({ onNav }: { onNav: (page: PageId) => void }) {
         </div>
         <div className="strategy-pipeline mt-7 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-rom-border bg-rom-border md:grid-cols-4" aria-label="Strategy decision pipeline">
           {[
-            ['01', 'Signals', 'Whale + momentum'],
+            ['01', 'Signals', 'Large Trade + Momentum'],
             ['02', 'Live quote', 'Spread + movement'],
             ['03', 'Risk', 'Balance + limits'],
             ['04', 'Route', 'Maker-first order'],

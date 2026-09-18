@@ -148,7 +148,7 @@ export function BacktestPage() {
         <div className="flex flex-wrap items-end gap-4">
           <Field label="Engine">
             <Chips
-              options={[['crypto15m', 'Crypto up/down'], ['main', 'Main engine (whales + momentum)']]}
+              options={[['crypto15m', 'Crypto up/down'], ['main', 'Main engine (large trades + momentum)']]}
               value={engine}
               onPick={(v) => setEngine(v as Engine)}
             />
@@ -239,11 +239,11 @@ export function BacktestPage() {
               <Switch
                 checked={config?.mainRecordSignals ?? true}
                 onChange={(v) => void toggleMainCollection(v)}
-                label="Collect whale + momentum signals"
-                description="Records whale prints and momentum clusters while the app is open — nothing is bought. Note: if trading is ON, scanning stays on regardless (the engine can't follow signals it never sees)."
+                label="Collect large-trade + momentum signals"
+                description="Records public large orders and momentum clusters while the app is open — nothing is bought. Note: if trading is ON, scanning stays on regardless (the engine can't follow signals it never sees)."
               />
               <p className="mt-1.5 text-[11px] text-rom-dim">
-                {coll ? `${coll.main.whales.toLocaleString()} whale signals · ${coll.main.alerts.toLocaleString()} momentum` : '…'}
+                {coll ? `${coll.main.whales.toLocaleString()} large-trade signals · ${coll.main.alerts.toLocaleString()} momentum` : '…'}
                 {coll?.main.lastAt ? ` · last ${coll.main.lastAt.slice(5, 16)} UTC` : ''}
               </p>
               {coll && coll.main.alerts > coll.main.alertsWindowed ? (
@@ -301,7 +301,7 @@ export function BacktestPage() {
                 </table>
               </div>
               <div>
-                <div className="mb-1 text-[11px] uppercase tracking-wide text-rom-dim">Latest whale signals</div>
+                <div className="mb-1 text-[11px] uppercase tracking-wide text-rom-dim">Latest large-trade signals</div>
                 <table className="w-full text-[11px]">
                   <thead><tr className="text-left text-rom-dim">
                     <th className="py-0.5 pr-2 font-normal">Category</th>
@@ -347,7 +347,7 @@ export function BacktestPage() {
                 (monitor mode is enough — no live trading needed) and it records every
                 {engine === 'crypto15m'
                   ? ' crypto up/down window with its outcome (the interval selected on the Crypto tab is the one recorded).'
-                  : ' whale and momentum signal it sees, with outcomes. Data starts accruing immediately.'}
+                  : ' large-trade and momentum signal it sees, with outcomes. Data starts accruing immediately.'}
                 {' '}Check back after a few hours; the charts get sharper every day it runs.
               </p>
             )}

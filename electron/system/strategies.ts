@@ -10,9 +10,9 @@ export const BUILTIN_STRATEGIES: StrategyPreset[] = [
   {
     id: 'rom-edge',
     name: 'Edge Stack',
-    tagline: 'Two sources at once — crypto whales + sports momentum.',
+    tagline: 'Two sources at once — crypto large trades + sports momentum.',
     description:
-      'Runs both signal sources together, each restricted to where it tends to work: whale-following in CRYPTO / EXOTICS / ENTERTAINMENT and contrarian trade-cluster momentum in SPORTS (confidence ≥ 40, since momentum scores run low), with an 85¢ entry cap to skip near-decided favorites. Diversifies across two independent setups. Experimental — start with a small balance you can afford to lose.',
+      'Runs both signal sources together, each restricted to where it tends to work: large-order signals in CRYPTO / EXOTICS / ENTERTAINMENT and contrarian trade-cluster momentum in SPORTS (confidence ≥ 40, since momentum scores run low), with an 85¢ entry cap to skip near-decided favorites. Diversifies across two independent setups. Experimental — start with a small balance you can afford to lose.',
     riskLabel: 'experimental',
     config: merge({
       tradeWhales: true,
@@ -31,10 +31,10 @@ export const BUILTIN_STRATEGIES: StrategyPreset[] = [
   },
   {
     id: 'rom-crypto-whale',
-    name: 'Crypto Whale',
-    tagline: 'Whale-following, crypto markets only.',
+    name: 'Crypto Large Trades',
+    tagline: 'Large-order signals, crypto markets only.',
     description:
-      'Follows $2.5k+ taker orders in CRYPTO markets only, with momentum disabled. The entry cap is raised to 98¢ so it can follow the high-price favorites that crypto whales tend to back. Experimental — start with a small balance you can afford to lose.',
+      'Reacts to $2.5k+ public taker orders in CRYPTO markets only, with momentum disabled. The entry cap is raised to 98¢ so it can include high-price favorites backed by large orders. Experimental — start with a small balance you can afford to lose.',
     riskLabel: 'experimental',
     badge: 'new',
     config: merge({
