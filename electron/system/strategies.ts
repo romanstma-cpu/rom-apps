@@ -10,17 +10,18 @@ export const BUILTIN_STRATEGIES: StrategyPreset[] = [
   {
     id: 'rom-edge',
     name: 'Edge Stack',
-    tagline: 'Two sources at once — crypto large trades + sports momentum.',
+    tagline: 'Both signal sources, selected by current evidence.',
     description:
-      'Runs both signal sources together, each restricted to where it tends to work: large-order signals in CRYPTO / EXOTICS / ENTERTAINMENT and contrarian trade-cluster momentum in SPORTS (confidence ≥ 40, since momentum scores run low), with an 85¢ entry cap to skip near-decided favorites. Diversifies across two independent setups. Experimental — start with a small balance you can afford to lose.',
+      'Runs Large Trade and contrarian Momentum signals across available categories. Live entries still require a category, side and price group that passed chronological holdout testing after fees; Practice continues collecting unqualified candidates. The 85¢ entry cap avoids near-decided favorites. Experimental — start with Practice and a small balance.',
     riskLabel: 'experimental',
+    badge: 'recommended',
     config: merge({
       tradeWhales: true,
       tradeMomentum: true,
       contrarianOnly: true,
       allowedCategories: null,
-      allowedWhaleCategories: ['crypto', 'exotics', 'entertainment'],
-      allowedMomentumCategories: ['sports'],
+      allowedWhaleCategories: null,
+      allowedMomentumCategories: null,
       allowedMomentumSignalTypes: ['trade_cluster'],
       minConfidenceWhale: 55.0,
       minEdgePtsWhale: 5.0,
@@ -32,11 +33,10 @@ export const BUILTIN_STRATEGIES: StrategyPreset[] = [
   {
     id: 'rom-crypto-whale',
     name: 'Crypto Large Trades',
-    tagline: 'Large-order signals, crypto markets only.',
+    tagline: 'Research-only large-order signals in crypto markets.',
     description:
-      'Reacts to $2.5k+ public taker orders in CRYPTO markets only, with momentum disabled. The entry cap is raised to 98¢ so it can include high-price favorites backed by large orders. Experimental — start with a small balance you can afford to lose.',
+      'Reacts to $2.5k+ public taker orders in CRYPTO markets only, with momentum disabled. Earlier historical performance did not hold on the larger sample, so this preset is retained for research and Practice rather than presented as a current edge.',
     riskLabel: 'experimental',
-    badge: 'new',
     config: merge({
       tradeWhales: true,
       tradeMomentum: false,

@@ -401,19 +401,14 @@ STRATEGY_PRESETS: list[dict[str, Any]] = [
     {
         "id": "rom-edge",
         "name": "Edge Stack",
-        "tagline": "Both live edges at once — sports large trades + sports momentum.",
+        "tagline": "Both signal sources, selected by current evidence.",
         "description": (
-            "Our recommended pick, re-tuned 2026-07-05 on 12 days of data "
-            "(4,152 resolved large-trade + 866 momentum signals). Large trades track "
-            "informed money in SPORTS match markets — currently dominated by "
-            "World Cup soccer, +13.8c/contract at 50-85c entries (52 matches, "
-            "per-event t=+3.6); US-sports large-order signals are ~flat, so the blended "
-            "sports large-order edge is ~+4.4c/ct. Momentum stays SPORTS-only "
-            "(+5.9c/ct, n=598). The old crypto large-order leg was dropped: it "
-            "reversed to -3.9c/ct on the bigger sample. Expect the soccer "
-            "component to fade after the World Cup final (Jul 19) — check "
-            "the Backtest page's category breakdown as data accrues. "
-            "EXPERIMENTAL / in-sample."
+            "Runs Large Trade and contrarian Momentum signals across available "
+            "categories. Live entries still require a category, side and price "
+            "group that passed chronological holdout testing after fees; Practice "
+            "continues collecting unqualified candidates. The 85c entry cap avoids "
+            "near-decided favorites. Experimental — start with Practice and a "
+            "small balance."
         ),
         "riskLabel": "experimental",
         "badge": "recommended",
@@ -422,8 +417,8 @@ STRATEGY_PRESETS: list[dict[str, Any]] = [
             "trade_momentum": True,
             "contrarian_only": True,
             "allowed_categories": None,
-            "allowed_whale_categories": ["sports"],
-            "allowed_momentum_categories": ["sports"],
+            "allowed_whale_categories": None,
+            "allowed_momentum_categories": None,
             "allowed_momentum_signal_types": ["trade_cluster"],
             "min_confidence_whale": 55.0,
             "min_edge_pts_whale": 5.0,

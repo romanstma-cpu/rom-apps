@@ -36,8 +36,9 @@ def test_edge_stack_preset_runs_both_sources_per_category():
     assert cfg["trade_whales"] is True
     assert cfg["trade_momentum"] is True
     assert cfg["allowed_categories"] is None
-    assert cfg["allowed_whale_categories"] == ["sports"]
-    assert cfg["allowed_momentum_categories"] == ["sports"]
+    assert cfg["allowed_whale_categories"] is None
+    assert cfg["allowed_momentum_categories"] is None
+    assert cfg["require_qualified_edge"] is True
     assert cfg["max_entry_price_cents"] == 85
 
 
