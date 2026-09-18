@@ -472,7 +472,7 @@ def _is_blocked_by_trading_hours(cfg: dict, *, now: float | None = None) -> tupl
 
 def entry_budget(balance_usd, filled_exposure, exposure, edge_pts, limit_cents, cfg,
                  *, group_budget_usd=None, allocation_multiplier=1.0,
-                 balance_is_net_of_pending=False):
+                 balance_is_net_of_pending=False, fee_time=None):
     """Shared live/replay dollar budget; reservations never count as equity.
 
     ``group_budget_usd`` bounds what this entry may add to its correlated
@@ -485,12 +485,16 @@ def entry_budget(balance_usd, filled_exposure, exposure, edge_pts, limit_cents, 
     pending = max(0,exposure-filled_exposure)
     multiplier = max(0.0, min(1.5, float(allocation_multiplier)))
     target = _compute_target_usd(bankroll,edge_pts,limit_cents,cfg)*multiplier
-    # Whole contracts make percentage sizing unusable for tiny accounts.
-    # Allow up to 50c for percent-mode accounts below $5, while all explicit
-    # cash, position, portfolio and group ceilings remain authoritative.
-    # Never turn a zero allocation or a zero Kelly edge into an order.
+    # Whole contracts make percentage sizing unusable for tiny accounts. For a
+    # sub-$5 bankroll, raise a positive percent-mode target only to the actual
+    # fee-reserved cost of one contract. Every explicit cash, position,
+    # portfolio and group ceiling below remains authoritative, and exchange
+    # minimum quantities are checked later against this same risk ceiling.
     if 0 < bankroll < 5 and target > 0 and cfg.get('sizing_mode', 'percent') == 'percent':
-        target = max(target, 0.50)
+        target = max(target, fees_us.reserved_cost(
+            1, max(1, min(99, int(limit_cents))) / 100,
+            time.time() if fee_time is None else fee_time,
+        ))
     limits = [target,
         float(cfg['hard_max_position_usd']),
         bankroll*float(cfg['max_total_exposure_fraction'])-exposure,
@@ -677,11 +681,13 @@ async def execute_signal(
         )
         return None
 
+    fee_time = time.time()
     target_usd = entry_budget(
         balance_usd, filled_exposure, exposure, edge_pts, limit_cents, cfg,
         group_budget_usd=group_budget,
         allocation_multiplier=allocation_multiplier,
         balance_is_net_of_pending=not paper,
+        fee_time=fee_time,
     )
     risk_ceiling_usd = target_usd
 
@@ -695,7 +701,6 @@ async def execute_signal(
         logger.info(f"[skip] {signal['ticker']}: no available risk budget")
         return None
 
-    fee_time = time.time()
     contracts = fees_us.affordable_contracts(target_usd,limit_cents/100,fee_time)
     contracts = min(contracts, int((target_usd+1e-9)/((limit_cents+execution_fee_cents)/100)))
     if contracts < 1:
@@ -707,7 +712,17 @@ async def execute_signal(
             contracts=contracts, fee_cents=execution_fee_cents, maker_only=maker_only,
         )
         if quality_multiplier < 1.0:
-            target_usd *= quality_multiplier
+            reduced_target_usd = target_usd * quality_multiplier
+            one_contract_cost = fees_us.reserved_cost(
+                1, limit_cents / 100.0, fee_time)
+            # Contract quantity is indivisible. A quality haircut can reduce a
+            # multi-contract order, but it must not accidentally turn a valid
+            # one-contract micro order into zero after the original budget has
+            # already proven that one contract fits every account-risk ceiling.
+            if 0 < balance_usd < 5 and contracts == 1 and one_contract_cost <= risk_ceiling_usd + 1e-9:
+                target_usd = max(reduced_target_usd, one_contract_cost)
+            else:
+                target_usd = reduced_target_usd
             risk_ceiling_usd = target_usd
             contracts = fees_us.affordable_contracts(target_usd, limit_cents / 100.0, fee_time)
             contracts = min(contracts, int((target_usd + 1e-9) / ((limit_cents + execution_fee_cents) / 100)))

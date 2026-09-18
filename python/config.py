@@ -536,7 +536,7 @@ def _validate_config(cfg: dict[str, Any]) -> dict[str, Any]:
 
     cfg["main_paper_trading"] = bool(cfg.get("main_paper_trading", d["main_paper_trading"]))
     cfg["main_paper_bankroll_usd"] = _clampf(
-        cfg.get("main_paper_bankroll_usd"), 25.0, 1_000_000.0,
+        cfg.get("main_paper_bankroll_usd"), 0.50, 1_000_000.0,
         d["main_paper_bankroll_usd"],
     )
     if bool(cfg.get("enable_trading")):

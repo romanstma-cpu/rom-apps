@@ -361,9 +361,9 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
               >
                 <NumberInput
                   value={config.mainPaperBankrollUsd}
-                  min={25}
+                  min={0.5}
                   max={1000000}
-                  step={25}
+                  step={0.5}
                   prefix="$"
                   disabled={paperOn}
                   onChange={(v) => void update('mainPaperBankrollUsd', v)}
@@ -577,7 +577,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
               </>
             ) : (config.sizingMode ?? 'percent') === 'contracts' ? (
               <>
-                <Field label="Min contracts" hint="weak signals · Polymarket minimum is 5">
+                <Field label="Min contracts" hint="weak signals · use 1 for the smallest possible order">
                   <NumberInput value={config.minContracts ?? 5} step={1} min={1}
                     onChange={(v) => void update('minContracts', Math.round(v))} />
                 </Field>
@@ -599,6 +599,14 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
               </>
             )}
           </div>
+
+          {(config.sizingMode ?? 'percent') === 'percent' && (
+            <p className="mt-3 text-xs leading-relaxed text-rom-muted">
+              Small-balance mode is automatic below $5. The bot may round a positive size up
+              to one whole contract after fees, but it still obeys your cash reserve, exposure,
+              hard cap, available balance, displayed depth, and each market&apos;s live minimum.
+            </p>
+          )}
 
           {(config.sizingMode ?? 'percent') === 'kelly' && (
             <p className="mt-3 text-xs leading-relaxed text-rom-muted">

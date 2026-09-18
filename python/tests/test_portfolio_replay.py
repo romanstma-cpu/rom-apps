@@ -55,6 +55,15 @@ def test_hand_calculated_settlement_and_no_duplicate_payout():
     assert result['openPositions']==result['pendingOrders']==0
 
 
+def test_four_dollar_bankroll_can_replay_a_one_contract_trade():
+    result=replay(config(main_paper_bankroll_usd=4,min_size_fraction=.02,
+                         max_size_fraction=.06,hard_max_position_usd=50),
+                  evidence()+[event('settlement',{'yes_payout':1},3)])
+    assert result['n']==1
+    assert result['trades'][0]['contracts']==1
+    assert result['cashUsd']>4
+
+
 def test_maker_replay_requires_a_later_trade_through():
     passive=config(order_style='maker_join',maker_order_expiration_sec=12)
     no_trade_through=replay(passive,evidence()+[
@@ -135,7 +144,8 @@ def test_replay_groups_separate_events_of_one_series_like_live():
     # One series, one allowance: the second market gets no room of its own.
     assert grouped['submittedOrders'] == 1
     assert sum(grouped['rejections'].get(reason, 0) for reason in
-               ('related-outcome exposure cap', 'cash or exposure budget')) >= 1
+               ('related-outcome exposure cap', 'cash or exposure budget',
+                'market minimum exceeds budget')) >= 1
     # Without a recorded series the two events stay separate groups, unchanged.
     apart = replay(cfg, evidence_both, series={})
     assert apart['submittedOrders'] == 2

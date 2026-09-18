@@ -272,8 +272,8 @@ class Portfolio:
                 if group_budget<=0:
                     self.rejected['related-outcome exposure cap']+=1;continue
             budget=trader.entry_budget(self.cash,filled,filled+reserved,edge,limit,self.cfg,
-                                       group_budget_usd=group_budget)
-            if budget<1 or self.cash<5:
+                                       group_budget_usd=group_budget,fee_time=self.now)
+            if budget<=0:
                 self.rejected['cash or exposure budget']+=1;continue
             qty=fees_us.affordable_contracts(budget,px,self.now)
             minimum=math.ceil(float(meta.get('min_size',1)))
