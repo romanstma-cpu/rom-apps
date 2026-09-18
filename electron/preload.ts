@@ -74,6 +74,7 @@ const api: ROMApi = {
   },
   trading: {
     calibration: () => ipcRenderer.invoke('trading:calibration'),
+    candidateFunnel: () => ipcRenderer.invoke('trading:candidateFunnel'),
     shadowRanker: () => ipcRenderer.invoke('trading:shadowRanker'),
     executionShadow: () => ipcRenderer.invoke('trading:executionShadow'),
     forwardValidation: () => ipcRenderer.invoke('trading:forwardValidation'),

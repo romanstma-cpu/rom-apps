@@ -3,7 +3,7 @@
 Independent desktop trading app configured for the Polymarket US retail API.
 
 ## Windows app
-Run `release/ROM PolyBot-Setup-2.34.0.exe`, then open ROM PolyBot.
+Run `release/ROM PolyBot-Setup-2.35.0.exe`, then open ROM PolyBot.
 Python and the app runtime are included in the installer.
 
 ## Development
@@ -24,7 +24,7 @@ international exchange data. Crypto strategies need US-listed markets.
 Original third-party copyright notices are retained in LICENSE as required.
 
 ## Verification
-The full 1,999-test Python suite completes. The 23 Electron script-arming checks pass, and
+The full 2,002-test Python suite completes. The 23 Electron script-arming checks pass, and
 the packaged Windows app has been opened and its API screen inspected.
 Public US market data was verified. Authenticated account access, streaming,
 and live trading still require validation with the user's own US credentials.

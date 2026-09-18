@@ -980,6 +980,7 @@ async def _scan_for_trades_traced(cfg: dict, trace_id: str) -> list[dict]:
         last_cycle["skipReason"] = reason
         last_cycle["at"] = time.time()
         last_cycle["traceId"] = trace_id
+        main_recorder.blocker(reason)
         key = reason.split(" (", 1)[0]
         last = _last_scan_skip_log.get(key, 0)
         if now_ts - last < 60:

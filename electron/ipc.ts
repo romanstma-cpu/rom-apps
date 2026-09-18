@@ -618,6 +618,10 @@ export function registerIpc(): void {
     if (!pythonBackend.isRunning()) throw new Error('Start the engine to check calibration evidence.');
     return await pythonBackend.request('signalCalibration', {}, 30_000);
   });
+  ipcMain.handle('trading:candidateFunnel', async () => {
+    if (!pythonBackend.isRunning()) throw new Error('Start the engine to inspect the trade funnel.');
+    return await pythonBackend.request('candidateFunnel', {}, 30_000);
+  });
   ipcMain.handle('trading:shadowRanker', async () => {
     if (!pythonBackend.isRunning()) throw new Error('Start the engine to evaluate the ML shadow model.');
     return await pythonBackend.request('shadowRanker', {}, 30_000);

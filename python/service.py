@@ -1870,6 +1870,11 @@ async def _h_signal_calibration(_p: dict) -> dict:
     return (await asyncio.to_thread(signal_calibration.load_model))['report']
 
 
+async def _h_candidate_funnel(_p: dict) -> dict:
+    import candidate_funnel
+    return await asyncio.to_thread(candidate_funnel.load_report)
+
+
 async def _h_shadow_ranker(_p: dict) -> dict:
     import shadow_ranker
     return (await asyncio.to_thread(shadow_ranker.load_model))["report"]
@@ -2611,6 +2616,7 @@ _HANDLERS = {
     "c15ParlayArm": _h_c15_parlay_arm,
     "mainBacktest": _h_main_backtest,
     "signalCalibration": _h_signal_calibration,
+    "candidateFunnel": _h_candidate_funnel,
     "shadowRanker": _h_shadow_ranker,
     "executionShadow": _h_execution_shadow,
     "forwardValidation": _h_forward_validation,

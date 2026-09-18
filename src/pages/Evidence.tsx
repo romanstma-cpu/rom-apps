@@ -1,6 +1,6 @@
 import { Activity, ArrowRight, BrainCircuit, ClipboardCheck, FlaskConical, ShieldCheck, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ExecutionQualityReport, ExecutionShadowReport, ForwardValidationReport, MlPromotionReport, PracticePerformanceReport, ShadowRankerReport, SignalCalibrationReport } from '@shared/types';
+import type { CandidateFunnelReport, ExecutionQualityReport, ExecutionShadowReport, ForwardValidationReport, MlPromotionReport, PracticePerformanceReport, ShadowRankerReport, SignalCalibrationReport } from '@shared/types';
 import { Card, Page, StatCard } from '../components/common';
 import { useApp } from '../state/AppStateProvider';
 import { summarizeEvidence } from '../utils/evidence';
@@ -10,6 +10,7 @@ import type { PageId } from '../App';
 export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
   const {positions}=useApp();const e=summarizeEvidence(positions);
   const [calibration,setCalibration]=useState<SignalCalibrationReport|null>(null);
+  const [funnel,setFunnel]=useState<CandidateFunnelReport|null>(null);
   const [shadow,setShadow]=useState<ShadowRankerReport|null>(null);
   const [executionShadow,setExecutionShadow]=useState<ExecutionShadowReport|null>(null);
   const [forward,setForward]=useState<ForwardValidationReport|null>(null);
@@ -18,6 +19,7 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
   const [execution,setExecution]=useState<ExecutionQualityReport|null>(null);
   const [executionError,setExecutionError]=useState('');
   const [error,setError]=useState('');
+  const [funnelError,setFunnelError]=useState('');
   const [shadowError,setShadowError]=useState('');
   const [executionShadowError,setExecutionShadowError]=useState('');
   const [forwardError,setForwardError]=useState('');
@@ -27,20 +29,23 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
   const [loading,setLoading]=useState(true);
   useEffect(()=>{
     let active=true;
-    setLoading(true);setError('');setShadowError('');setExecutionShadowError('');setForwardError('');setPromotionError('');setPracticeError('');setCalibration(null);setShadow(null);setExecutionShadow(null);setForward(null);setPromotion(null);setPractice(null);
+    setLoading(true);setError('');setFunnelError('');setShadowError('');setExecutionShadowError('');setForwardError('');setPromotionError('');setPracticeError('');setCalibration(null);setFunnel(null);setShadow(null);setExecutionShadow(null);setForward(null);setPromotion(null);setPractice(null);
     setExecution(null);setExecutionError('');
     Promise.allSettled([
       window.rom.trading.calibration(),
+      window.rom.trading.candidateFunnel(),
       window.rom.trading.shadowRanker(),
       window.rom.trading.executionShadow(),
       window.rom.trading.forwardValidation(),
       window.rom.trading.mlPromotion(),
       window.rom.trading.practicePerformance(),
       window.rom.trading.executionQuality(),
-    ]).then(([calibrationResult,shadowResult,executionShadowResult,forwardResult,promotionResult,practiceResult,executionResult])=>{
+    ]).then(([calibrationResult,funnelResult,shadowResult,executionShadowResult,forwardResult,promotionResult,practiceResult,executionResult])=>{
       if(!active)return;
       if(calibrationResult.status==='fulfilled')setCalibration(calibrationResult.value);
       else setError(calibrationResult.reason?.message || 'Calibration evidence is unavailable. Try again after reconnecting.');
+      if(funnelResult.status==='fulfilled')setFunnel(funnelResult.value);
+      else setFunnelError(funnelResult.reason?.message || 'The trade funnel is unavailable. Try again after reconnecting.');
       if(shadowResult.status==='fulfilled')setShadow(shadowResult.value);
       else setShadowError(shadowResult.reason?.message || 'The ML shadow report is unavailable. Try again after reconnecting.');
       if(executionShadowResult.status==='fulfilled')setExecutionShadow(executionShadowResult.value);
@@ -67,6 +72,7 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
           </dl><p className="mt-4 text-xs leading-5 text-rom-dim">One recorded signal per event. Later outcomes test earlier estimates against market prices. Every live Large Trade and Momentum entry requires a qualified group and a positive margin after fees, regardless of sizing mode. Practice keeps collecting candidates that are not yet qualified. Enable main data collection in Backtest to build this record.</p></>}
         </div>
       </Card>
+      <CandidateFunnel report={funnel} loading={loading} error={funnelError}/>
       <ShadowRanker report={shadow} loading={loading} error={shadowError}/>
       <MlPromotion report={promotion} loading={loading} error={promotionError}/>
       <ForwardValidation report={forward} loading={loading} error={forwardError}/>
@@ -79,6 +85,22 @@ export function EvidencePage({onNav}:{onNav:(p:PageId)=>void}) {
       <Card><h3 className="mb-4 font-semibold">Test a strategy with context</h3><p className="text-sm leading-6 text-rom-muted">Use historical simulation to explore your settings. Compare several time periods, keep the parameters fixed when reviewing a later period, and include losing results in your assessment.</p><p className="mt-4 text-xs leading-5 text-rom-dim">The historical simulator uses fee assumptions. It cannot replay missing order-book snapshots or the current live quote checks. Its results must not be presented as live Polymarket US returns.</p><button className="rom-btn-primary mt-6" onClick={()=>onNav('backtest')}>Open historical simulation<ArrowRight className="h-4 w-4"/></button><button className="rom-btn-default mt-3" onClick={()=>onNav('history')}>Review trade history</button></Card></div>
     </div>
   </Page>;
+}
+
+function CandidateFunnel({report,loading,error}:{report:CandidateFunnelReport|null;loading:boolean;error:string}) {
+  const total=Math.max(1,report?.observedEvents||0);
+  const eligiblePct=report?100*report.eligibleEvents/total:0;
+  return <Card>
+    <div className="flex flex-wrap items-start justify-between gap-4"><div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-400/10 text-blue-300"><Activity className="h-5 w-5"/></div><div><h3 className="text-lg font-semibold">Why trades are not firing</h3><p className="mt-1 text-sm text-rom-muted">Event-deduplicated candidates from the last {report?.lookbackDays||30} days.</p></div></div><span className="rounded-full border border-rom-border bg-rom-void/40 px-3 py-1.5 text-xs font-medium text-rom-muted">Diagnostic only · no live control</span></div>
+    <div className="min-h-28 pt-5" aria-live="polite" aria-busy={loading}>
+      {loading&&<p className="text-sm text-rom-muted">Tracing candidates through the entry gates…</p>}
+      {error&&<p role="alert" className="text-sm text-rom-lossText">{error}</p>}
+      {report&&<><p className="text-sm leading-6 text-rom-muted">{report.reason}</p><dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4"><Metric label="Candidates" value={`${report.observedEvents}`} detail="One per source and event"/><Metric label="Signal-gate eligible" value={`${report.eligibleEvents}`} detail={`${eligiblePct.toFixed(1)}% of candidates`}/><Metric label="Signal-gate blocked" value={`${report.blockedEvents}`} detail="Before execution checks"/><Metric label="Evidence span" value={`${report.observationSpanDays.toFixed(1)}d`} detail={Object.entries(report.sources).map(([source,count])=>`${source} ${count}`).join(' · ')||'Waiting for signals'}/></dl>
+        {report.latestRuntimeBlocker&&<div className="mt-5 rounded-xl border border-amber-300/25 bg-amber-300/5 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-amber-200">Latest engine blocker</p><p className="mt-2 text-sm text-rom-muted">{report.latestRuntimeBlocker.reason}</p></div>}
+        {!!report.blockers.length&&<div className="mt-5"><p className="text-xs font-semibold uppercase tracking-wider text-rom-muted">Signal-stage blockers</p><div className="mt-3 space-y-2">{report.blockers.slice(0,5).map(item=><div key={item.reason} className="grid grid-cols-[minmax(130px,1fr)_minmax(120px,2fr)_auto] items-center gap-3 text-xs"><span className="text-rom-muted">{item.reason}</span><div className="h-2 overflow-hidden rounded-full bg-rom-void"><div className="h-full rounded-full bg-blue-400" style={{width:`${Math.max(2,item.sharePct)}%`}}/></div><span className="tabular-nums text-rom-dim">{item.count} · {item.sharePct.toFixed(1)}%</span></div>)}</div></div>}
+        <p className="mt-4 text-xs leading-5 text-rom-dim">This report deduplicates repeated scans of the same event. It explains frequency; it does not recommend relaxing a gate or claim that rejected candidates would be profitable.</p></>}
+    </div>
+  </Card>;
 }
 
 function MlPromotion({report,loading,error}:{report:MlPromotionReport|null;loading:boolean;error:string}) {

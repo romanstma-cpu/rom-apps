@@ -12,6 +12,7 @@ _lock = threading.Lock()
 _dropped = 0
 _book_at = {}
 _last_prune = 0
+_last_blocker = ('', 0.0)
 MAX_QUEUE = 20000
 FEATURE_VERSION = 'candidate-book-v2'
 SCHEMA = """
@@ -153,6 +154,20 @@ def signal(row, source, cfg, quote=None):
            'features':snapshot,
            'originalDecision':trader.should_trade(row,source,cfg)})
     return snapshot
+
+
+def blocker(reason, *, at=None):
+    """Record the chosen engine-wide blocker without affecting execution."""
+    global _last_blocker
+    if not _enabled:
+        return
+    now = time.time() if at is None else float(at)
+    reason = str(reason or 'unknown blocker')
+    previous, previous_at = _last_blocker
+    if reason == previous and now - previous_at < 300:
+        return
+    _last_blocker = (reason, now)
+    record('funnel_blocker', '', {'reason': reason}, at=now)
 
 
 def book(ticker, value):

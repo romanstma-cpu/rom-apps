@@ -717,6 +717,22 @@ export interface SignalCalibrationReport {
   asOf: number;
 }
 
+export interface CandidateFunnelReport {
+  status: 'collecting' | 'open' | 'constrained';
+  reason: string;
+  asOf: number;
+  lookbackDays: number;
+  observedEvents: number;
+  eligibleEvents: number;
+  blockedEvents: number;
+  observationSpanDays: number;
+  dominantBlocker: { reason: string; count: number; sharePct: number } | null;
+  blockers: Array<{ reason: string; count: number; sharePct: number }>;
+  sources: Record<string, number>;
+  latestRuntimeBlocker: { reason: string; at: number } | null;
+  controlsLiveTrading: false;
+}
+
 export interface ShadowRankerReport {
   version: string;
   status: 'collecting' | 'promising' | 'not_better' | 'stale';
@@ -1140,6 +1156,7 @@ export interface ROMApi {
   };
   trading: {
     calibration: () => Promise<SignalCalibrationReport>;
+    candidateFunnel: () => Promise<CandidateFunnelReport>;
     shadowRanker: () => Promise<ShadowRankerReport>;
     executionShadow: () => Promise<ExecutionShadowReport>;
     forwardValidation: () => Promise<ForwardValidationReport>;
