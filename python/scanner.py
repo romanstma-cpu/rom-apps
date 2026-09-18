@@ -81,8 +81,8 @@ def compute_whale_score(
         else:               edge -= 8
 
     if dollar_value >= 25_000:   edge += 2
-    elif dollar_value >= 10_000: edge += 1
-    elif dollar_value >= 5_000:  edge += 1.5
+    elif dollar_value >= 10_000: edge += 1.5
+    elif dollar_value >= 5_000:  edge += 1
     elif dollar_value >= 2_500:  edge += 0.5
 
     if market_volume >= 250_000:    edge += 1.5

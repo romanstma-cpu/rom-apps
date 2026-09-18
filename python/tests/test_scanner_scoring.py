@@ -46,6 +46,13 @@ class TestWhaleScore:
         big = compute_whale_score(30_000, 0.5, "yes")
         assert big >= small
 
+    def test_dollar_tiers_are_monotonic(self):
+        scores = [
+            compute_whale_score(value, 0.7, "yes")
+            for value in (2_500, 5_000, 10_000, 25_000)
+        ]
+        assert scores == sorted(scores)
+
     def test_volume_tier_adds_edge(self):
         thin = compute_whale_score(100, 0.5, "yes", market_volume=500)
         thick = compute_whale_score(100, 0.5, "yes", market_volume=300_000)

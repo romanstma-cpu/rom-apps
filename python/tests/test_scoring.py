@@ -16,7 +16,7 @@ def test_whale_score_no_side_with_all_bonuses():
         market_volume=300_000, open_interest=60_000,
         days_to_close=0.5, category="crypto",
     )
-    assert score == 63.0
+    assert score == 63.5
 
 
 def test_whale_score_clamps_to_ceiling_97():

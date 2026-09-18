@@ -286,6 +286,26 @@ def test_entry_budget_without_a_group_is_unchanged(cfg):
         trader.entry_budget(1000.0, 0.0, 0.0, 20.0, 50, cfg, group_budget_usd=None)
 
 
+def test_live_buying_power_does_not_double_count_pending_orders(cfg):
+    cfg["hard_max_position_usd"] = 1000.0
+    cfg["max_total_exposure_fraction"] = 1.0
+    cfg["min_cash_reserve_fraction"] = 0.05
+    cfg["min_size_fraction"] = 1.0
+    cfg["max_size_fraction"] = 1.0
+    # The exchange reports $100 buying power after reserving the pending $20.
+    live = trader.entry_budget(
+        100.0, 0.0, 20.0, 20.0, 50, cfg,
+        balance_is_net_of_pending=True,
+    )
+    replay = trader.entry_budget(
+        100.0, 0.0, 20.0, 20.0, 50, cfg,
+        balance_is_net_of_pending=False,
+    )
+    assert live > replay
+    assert live == pytest.approx(80.0)
+    assert replay == pytest.approx(75.0)
+
+
 # --- peak-equity drawdown ------------------------------------------------
 
 def test_high_water_mark_rises_but_never_falls(fresh_db):

@@ -471,11 +471,15 @@ def _is_blocked_by_trading_hours(cfg: dict, *, now: float | None = None) -> tupl
 
 
 def entry_budget(balance_usd, filled_exposure, exposure, edge_pts, limit_cents, cfg,
-                 *, group_budget_usd=None, allocation_multiplier=1.0):
+                 *, group_budget_usd=None, allocation_multiplier=1.0,
+                 balance_is_net_of_pending=False):
     """Shared live/replay dollar budget; reservations never count as equity.
 
     ``group_budget_usd`` bounds what this entry may add to its correlated
     outcome group. ``None`` means the caller did not evaluate a group.
+    Polymarket US ``buyingPower`` already deducts open orders. Live callers set
+    ``balance_is_net_of_pending`` so those reservations are not deducted twice;
+    replay cash is gross of its local reservations and keeps the default.
     """
     bankroll = max(0,balance_usd)+max(0,filled_exposure)
     pending = max(0,exposure-filled_exposure)
@@ -490,7 +494,8 @@ def entry_budget(balance_usd, filled_exposure, exposure, edge_pts, limit_cents, 
     limits = [target,
         float(cfg['hard_max_position_usd']),
         bankroll*float(cfg['max_total_exposure_fraction'])-exposure,
-        balance_usd-pending-bankroll*float(cfg['min_cash_reserve_fraction'])]
+        balance_usd-(0 if balance_is_net_of_pending else pending)
+            -bankroll*float(cfg['min_cash_reserve_fraction'])]
     if group_budget_usd is not None:
         limits.append(max(0.0,float(group_budget_usd)))
     return max(0,min(*limits))
@@ -676,6 +681,7 @@ async def execute_signal(
         balance_usd, filled_exposure, exposure, edge_pts, limit_cents, cfg,
         group_budget_usd=group_budget,
         allocation_multiplier=allocation_multiplier,
+        balance_is_net_of_pending=not paper,
     )
     risk_ceiling_usd = target_usd
 
