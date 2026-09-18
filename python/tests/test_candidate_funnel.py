@@ -1,4 +1,7 @@
 import candidate_funnel
+import db
+import json
+import main_recorder
 
 
 def event(source, identity, decision, at):
@@ -52,3 +55,31 @@ def test_funnel_groups_price_and_resolution_filters():
     assert {item['reason'] for item in report['blockers']} == {
         'Entry price range', 'Resolution horizon',
     }
+
+
+def test_persisted_funnel_read_is_bounded(tmp_path, monkeypatch):
+    database = tmp_path / 'funnel.db'
+    monkeypatch.setattr(db, 'db_path', lambda: database)
+    monkeypatch.setattr(candidate_funnel, 'MAX_SIGNAL_ROWS', 3)
+    db.init_db(); main_recorder.init()
+    now = candidate_funnel.time.time()
+    rows = []
+    for index in range(8):
+        payload = {
+            'source': 'momentum',
+            'signal': {'event_ticker': f'E{index}', 'ticker': f'M{index}'},
+            'originalDecision': [True, 'ok'],
+        }
+        rows.append((now-index, 'signal', f'M{index}', json.dumps(payload)))
+    with db.get_db() as conn:
+        conn.executemany(
+            'INSERT INTO main_replay_events(at,kind,ticker,payload) VALUES (?,?,?,?)',
+            rows,
+        )
+        conn.execute(
+            'INSERT INTO main_replay_events(at,kind,ticker,payload) VALUES (?,?,?,?)',
+            (now, 'funnel_blocker', '', json.dumps({'reason': 'waiting'})),
+        )
+    report = candidate_funnel.load_report()
+    assert report['observedEvents'] == 3
+    assert report['latestRuntimeBlocker']['reason'] == 'waiting'

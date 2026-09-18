@@ -93,6 +93,47 @@ const RUN_ONCE_ACTIONS = new Set([
 
 export function registerIpc(): void {
   ipcMain.handle('app:version', () => app.getVersion());
+  ipcMain.handle('app:checkForUpdates', async () => {
+    const currentVersion = app.getVersion();
+    const response = await fetch(
+      'https://api.github.com/repos/romanstma-cpu/rom-apps/releases/latest',
+      {
+        headers: {
+          Accept: 'application/vnd.github+json',
+          'User-Agent': `ROM-PolyBot/${currentVersion}`,
+        },
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+    if (!response.ok) throw new Error(`Update server returned ${response.status}`);
+    const data = await response.json() as {
+      tag_name?: unknown; html_url?: unknown; published_at?: unknown;
+    };
+    const latestVersion = String(data.tag_name || '').replace(/^v/i, '');
+    if (!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(latestVersion)) {
+      throw new Error('Latest release has an invalid version');
+    }
+    const parts = (value: string) => value.split(/[+-]/, 1)[0].split('.').map(Number);
+    const current = parts(currentVersion);
+    const latest = parts(latestVersion);
+    const updateAvailable = [0, 1, 2].some((index) => {
+      if ((latest[index] || 0) === (current[index] || 0)) return false;
+      return (latest[index] || 0) > (current[index] || 0)
+        && [0, 1, 2].slice(0, index).every((prior) =>
+          (latest[prior] || 0) === (current[prior] || 0));
+    });
+    const reportedUrl = typeof data.html_url === 'string' ? data.html_url : '';
+    const releaseUrl = reportedUrl.startsWith('https://github.com/romanstma-cpu/rom-apps/releases/')
+      ? reportedUrl
+      : 'https://github.com/romanstma-cpu/rom-apps/releases/latest';
+    return {
+      currentVersion,
+      latestVersion,
+      updateAvailable,
+      releaseUrl,
+      publishedAt: typeof data.published_at === 'string' ? data.published_at : null,
+    };
+  });
   ipcMain.handle('app:openExternal', async (_e, url: string) => {
     if (typeof url === 'string' && /^(https?|mailto):/i.test(url)) {
       await shell.openExternal(url);

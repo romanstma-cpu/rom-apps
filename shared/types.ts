@@ -1066,6 +1066,13 @@ export interface AccountInfo {
 export interface ROMApi {
   app: {
     version: () => Promise<string>;
+    checkForUpdates: () => Promise<{
+      currentVersion: string;
+      latestVersion: string;
+      updateAvailable: boolean;
+      releaseUrl: string;
+      publishedAt: string | null;
+    }>;
     openExternal: (url: string) => Promise<void>;
     showItemInFolder: (filePath: string) => Promise<void>;
     getUserDataPath: () => Promise<string>;

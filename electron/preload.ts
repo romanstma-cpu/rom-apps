@@ -14,6 +14,7 @@ const sub = <T>(channel: string, cb: (val: T) => void): (() => void) => {
 const api: ROMApi = {
   app: {
     version: () => ipcRenderer.invoke('app:version'),
+    checkForUpdates: () => ipcRenderer.invoke('app:checkForUpdates'),
     openExternal: (url) => ipcRenderer.invoke('app:openExternal', url),
     showItemInFolder: (p) => ipcRenderer.invoke('app:showItemInFolder', p),
     getUserDataPath: () => ipcRenderer.invoke('app:getUserDataPath'),

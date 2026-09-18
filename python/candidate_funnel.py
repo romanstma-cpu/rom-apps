@@ -6,12 +6,15 @@ cannot change configuration, candidate selection, sizing, or order placement.
 from __future__ import annotations
 
 from collections import Counter
+import json
 import time
 
+import db
 import main_recorder
 
 
 LOOKBACK_DAYS = 30
+MAX_SIGNAL_ROWS = 40_000
 
 
 def _reason_group(reason: str) -> str:
@@ -120,4 +123,24 @@ def build(events: list[dict], *, asof: float | None = None) -> dict:
 
 def load_report() -> dict:
     now = time.time()
-    return build(main_recorder.load(LOOKBACK_DAYS, end=now), asof=now)
+    since = now - LOOKBACK_DAYS * 86400
+    main_recorder.init()
+    with db.get_db() as conn:
+        rows = conn.execute(
+            "SELECT id,at,kind,ticker,payload FROM main_replay_events "
+            "WHERE at>=? AND at<=? AND kind='signal' "
+            "ORDER BY at DESC,id DESC LIMIT ?",
+            (since, now, MAX_SIGNAL_ROWS),
+        ).fetchall()
+        blocker = conn.execute(
+            "SELECT id,at,kind,ticker,payload FROM main_replay_events "
+            "WHERE at>=? AND at<=? AND kind='funnel_blocker' "
+            "ORDER BY at DESC,id DESC LIMIT 1",
+            (since, now),
+        ).fetchone()
+    records = list(rows)
+    if blocker is not None:
+        records.append(blocker)
+    records.sort(key=lambda row: (row['at'], row['id']))
+    events = [{**dict(row), 'payload': json.loads(row['payload'])} for row in records]
+    return build(events, asof=now)

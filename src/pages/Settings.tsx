@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { RefreshCw, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Download, RefreshCw, RotateCcw } from 'lucide-react';
 import type { TraderConfig } from '@shared/types';
 import { useApp } from '../state/AppStateProvider';
 import { useToast } from '../state/ToastProvider';
@@ -61,6 +61,27 @@ export function SettingsPage() {
   const { config, refresh, state, backend } = useApp();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
+  const [installedVersion, setInstalledVersion] = useState('');
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateResult, setUpdateResult] = useState<Awaited<ReturnType<typeof window.rom.app.checkForUpdates>>|null>(null);
+  const [updateError, setUpdateError] = useState('');
+
+  useEffect(() => {
+    void window.rom.app.version().then(setInstalledVersion).catch(() => setInstalledVersion('Unavailable'));
+  }, []);
+
+  const checkForUpdates = async (): Promise<void> => {
+    setCheckingUpdate(true);setUpdateError('');
+    try {
+      const result=await window.rom.app.checkForUpdates();
+      setUpdateResult(result);
+    } catch (error: any) {
+      setUpdateResult(null);
+      setUpdateError(error?.message || 'Could not reach the update server.');
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
 
   const restartBackend = async (): Promise<void> => {
     toast.info('Restarting backend — every engine stops and restarts…');
@@ -84,6 +105,18 @@ export function SettingsPage() {
       title="Settings"
       subtitle="App-level preferences for startup behavior, notifications, and data. Main Strategy, Crypto, and Scripts each have their own controls."
     >
+      <Section title="Version and updates" description="Confirm which ROM PolyBot installation is running and compare it with the latest public release.">
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div><p className="text-xs font-semibold uppercase tracking-wider text-rom-dim">Installed version</p><p className="mt-1 font-mono text-2xl font-semibold text-white">{installedVersion?`v${installedVersion}`:'Checking…'}</p></div>
+            <button className="rom-btn-default" disabled={checkingUpdate} onClick={()=>void checkForUpdates()}><RefreshCw className={`h-4 w-4 ${checkingUpdate?'animate-spin':''}`}/>{checkingUpdate?'Checking…':'Check for updates'}</button>
+          </div>
+          {updateResult&&<div className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${updateResult.updateAvailable?'border-blue-300/30 bg-blue-400/5':'border-rom-win/30 bg-rom-win/5'}`} aria-live="polite"><div className="flex items-start gap-3">{updateResult.updateAvailable?<Download className="mt-0.5 h-5 w-5 text-blue-300"/>:<CheckCircle2 className="mt-0.5 h-5 w-5 text-rom-win"/>}<div><p className="text-sm font-semibold">{updateResult.updateAvailable?`Version ${updateResult.latestVersion} is available`:'ROM PolyBot is up to date'}</p><p className="mt-1 text-xs text-rom-dim">Running {updateResult.currentVersion} · Latest public release {updateResult.latestVersion}</p></div></div>{updateResult.updateAvailable&&<button className="rom-btn-primary" onClick={()=>void window.rom.app.openExternal(updateResult.releaseUrl)}>Open download page</button>}</div>}
+          {updateError&&<p role="alert" className="mt-4 text-sm text-rom-lossText">{updateError}</p>}
+          <p className="mt-4 text-xs leading-5 text-rom-dim">The version shown here is the executable currently running. If Windows has two installations, this identifies the active one.</p>
+        </Card>
+      </Section>
+
       <Section
         title="Backend"
         description="The Python process every engine runs inside. Restarting it stops and restarts ALL of them — it is not scoped to any single engine, which is why it lives here rather than on an engine page."
