@@ -173,6 +173,7 @@ async def sync_markets(*, max_pages: int = 10) -> int:
         return 0
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     count = 0
+    watched: list[str] = []
     with db.get_db() as conn:
         for m in raw:
             ticker = m.get("ticker", "")
@@ -182,9 +183,12 @@ async def sync_markets(*, max_pages: int = 10) -> int:
             close_time = m.get("close_time", "")
             if close_time and close_time < now_iso:
                 continue
-            vol = _to_float(m.get("volume_fp", 0))
-            if vol < 10:
-                continue
+            # Polymarket US can omit rolling-volume fields from an otherwise
+            # tradable market response.  Treating a missing field as zero used
+            # to discard every market locally, leaving the live scanner with
+            # no inputs.  Actual trade-flow and quote checks remain the entry
+            # gates, so an unreported aggregate volume is not evidence of
+            # liquidity by itself.
             event_ticker = m.get("event_ticker", "")
             db.upsert_market(
                 conn,
@@ -209,6 +213,14 @@ async def sync_markets(*, max_pages: int = 10) -> int:
                 },
             )
             count += 1
+            watched.append(ticker)
+    # The momentum scanner itself examines at most 500 markets.  Match the
+    # WebSocket watch list to that bounded universe rather than opening extra
+    # subscriptions that cannot contribute a signal.
+    if watched:
+        import us_market_stream
+        us_market_stream.observe(*watched[:500])
+        us_market_stream.start()
     return count
 
 
@@ -374,7 +386,10 @@ async def scan_whales(cfg: dict) -> tuple[int, list[dict]]:
 
 async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
     with db.get_db() as conn:
-        markets = db.get_active_markets(conn, min_volume=MIN_VOLUME_24H, limit=500)
+        # US reference responses may not carry volume24hr.  Fresh stream flow
+        # below, not a missing aggregate field, determines whether a market is
+        # eligible to create a momentum signal.
+        markets = db.get_active_markets(conn, min_volume=0, limit=500)
 
     if not markets:
         return 0, []

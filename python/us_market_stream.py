@@ -24,6 +24,8 @@ _connected_at=0.0
 _last_disconnect_at=0.0
 _reconnects=0
 _trade_stall_reconnects=0
+_subscription_rejections=0
+_last_subscription_error=''
 # A connection can remain open while a subscription is no longer delivering
 # market data. This is a health signal rather than a hard trading block: the
 # quote path has a separately bounded REST fallback.
@@ -50,8 +52,12 @@ async def stop():
     momentum_window.tape.reset()
 
 def ingest(message):
-    global _last_message_at, _last_book_at, _last_trade_at
+    global _last_message_at, _last_book_at, _last_trade_at, _last_subscription_error
     _last_message_at=time.monotonic()
+    # A valid payload proves the active subscription is usable.  Preserve the
+    # cumulative rejection count for diagnostics, but do not leave the engine
+    # permanently blocked after the exchange has recovered.
+    _last_subscription_error=''
     book=message.get('marketData')
     if book and book.get('marketSlug'):
         _last_book_at=time.monotonic()
@@ -99,7 +105,9 @@ def health():
     book_age=max(0.0,now-_last_book_at) if _last_book_at else None
     trade_stalled=trade_flow_stalled(now)
     stale=bool(_connected and _wanted and (age is None or age>STREAM_STALE_AFTER_SECONDS))
-    if stale:
+    if _last_subscription_error:
+        state='blocked'
+    elif stale:
         state='degraded'
     elif _connected:
         state='connected'
@@ -120,6 +128,8 @@ def health():
         'tradeFlowStalled':trade_stalled,
         'tradeStallReconnects':_trade_stall_reconnects,
         'bufferedTrades':len(_trades),
+        'subscriptionRejections':_subscription_rejections,
+        'lastSubscriptionError':_last_subscription_error,
     }
 
 def get_book(slug, max_age=2.0):
@@ -157,6 +167,7 @@ def get_quote_cents(token):
 
 async def _run():
     global _connected, _connected_at, _last_disconnect_at, _reconnects, _trade_stall_reconnects
+    global _subscription_rejections, _last_subscription_error
     while auth.credentials_present():
         try:
             async with websockets.connect('wss://api.polymarket.us/v1/ws/markets',
@@ -166,7 +177,10 @@ async def _run():
                 subscribed=set()
                 while True:
                     missing=sorted(_wanted-subscribed)
-                    for offset in range(0,len(missing),100):
+                    # One market data plus one trade subscription is opened per
+                    # batch.  Keep the feed aligned with scanner.sync_markets'
+                    # 500-market universe (five batches / ten subscriptions).
+                    for offset in range(0,min(len(missing),500),100):
                         batch=missing[offset:offset+100]
                         for kind in ('MARKET_DATA','TRADE'):
                             await ws.send(json.dumps({'subscribe':{'requestId':f'{kind}-{len(subscribed)+offset}',
@@ -174,7 +188,11 @@ async def _run():
                     subscribed.update(missing)
                     try:
                         message=json.loads(await asyncio.wait_for(ws.recv(),timeout=2))
-                        if 'error' in message: logger.warning('US market subscription rejected')
+                        if 'error' in message:
+                            _subscription_rejections += 1
+                            detail=' '.join(json.dumps(message.get('error'), sort_keys=True).split())[:240]
+                            _last_subscription_error=detail or 'Polymarket US rejected a market-data subscription'
+                            logger.warning('US market subscription rejected: %s', _last_subscription_error)
                         else:
                             ingest(message)
                             if trade_flow_stalled():

@@ -15,9 +15,14 @@ export function TradingCheck({ onOpenStrategy }: { onOpenStrategy: () => void })
   const live = !!config?.enableTrading;
   const practice = !!config?.mainPaperTrading && !live;
   const dailyStopped = dailyRemaining === 0 && dailyStop > 0 && dailyLossUsed >= dailyStop;
-  const attention = !backend.authOk || !activity.healthy || !!execution?.blocked || readiness?.status === 'not_ready' || dailyStopped;
+  const feedBlocked = execution?.marketStream.state === 'blocked' || ((live || practice) && !(execution?.marketStream.watchedMarkets || 0));
+  const attention = !backend.authOk || !activity.healthy || !!execution?.blocked || feedBlocked || readiness?.status === 'not_ready' || dailyStopped;
   const streamDetail = execution?.blocked
     ? execution.reason
+    : execution?.marketStream.state === 'blocked'
+      ? execution.marketStream.lastSubscriptionError || 'Polymarket US rejected the live market-data subscription.'
+      : (live || practice) && !(execution?.marketStream.watchedMarkets || 0)
+        ? 'No active US markets are loaded, so the scanner cannot create candidates.'
     : execution?.marketStream.stale
       ? 'Live price stream is quiet; fresh REST quotes are being used.'
       : execution?.marketStream.connected

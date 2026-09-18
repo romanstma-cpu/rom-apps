@@ -348,9 +348,10 @@ async def fetch_all_open_markets(max_pages=10):
     for page in range(max_pages):
         batch=await fetch_markets(offset=page*100); rows.extend(batch)
         if len(batch)<100: break
-    import us_market_stream
-    us_market_stream.observe(*(m['ticker'] for m in rows))
-    us_market_stream.start()
+    # Subscription selection belongs to ``scanner.sync_markets``.  The public
+    # market response can contain far more rows than the strategy actively
+    # scans, and blindly subscribing to all of them exceeds the practical
+    # per-connection subscription budget.
     return rows
 
 async def fetch_market(ticker):

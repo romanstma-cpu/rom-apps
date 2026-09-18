@@ -2045,10 +2045,25 @@ async def _h_trading_status(_p: dict) -> dict:
     gate("master", "Main strategy running", enabled or paper,
          "strategy is paused", off=not (enabled or paper))
     execution_health = trader.execution_health.status()
+    stream_health = execution_health.get("marketStream") or {}
     if enabled:
         gate("executionHealth", "Execution connection", not execution_health["blocked"], execution_health["reason"])
     else:
         gate("executionHealth", "Live execution connection", True, off=True)
+    if enabled or paper:
+        stream_state = str(stream_health.get("state") or "unknown")
+        watched = int(stream_health.get("watchedMarkets") or 0)
+        stream_error = str(stream_health.get("lastSubscriptionError") or "")
+        if stream_state == "blocked":
+            gate("marketFeed", "Polymarket US market feed", False,
+                 stream_error or "Polymarket US rejected the market-data subscription")
+        elif watched <= 0:
+            gate("marketFeed", "Polymarket US market feed", False,
+                 "No active US markets are loaded; scanner cannot create candidates")
+        else:
+            gate("marketFeed", "Polymarket US market feed", True)
+    else:
+        gate("marketFeed", "Polymarket US market feed", True, off=True)
     if enabled:
         try:
             blocked, why = trader._is_blocked_by_daily_risk(cfg, env)
@@ -2170,7 +2185,6 @@ async def _h_trading_status(_p: dict) -> dict:
         opportunity["excludedByCategory"] = excluded
     except Exception:
         pass
-    stream_health = execution_health.get("marketStream") or {}
     filtered = sum(int(value or 0) for value in (lc.get("filterCounts") or {}).values())
     category_limits = {
         "whale": list(cfg.get("allowed_whale_categories") or cfg.get("allowed_categories") or []),
@@ -2275,9 +2289,21 @@ async def _deep_readiness() -> dict:
         "reason": execution.get("reason") or "",
     }
     stream = execution.get("marketStream") or {}
+    stream_state = str(stream.get("state") or "unknown")
+    watched = int(stream.get("watchedMarkets") or 0)
+    if stream_state == "blocked":
+        stream_status = "down"
+    elif watched <= 0 and STATE.cfg.get("enable_trading"):
+        stream_status = "down"
+    elif stream.get("connected") and not stream.get("stale"):
+        stream_status = "up"
+    else:
+        stream_status = "degraded"
     checks["marketStream"] = {
-        "status": "up" if stream.get("connected") and not stream.get("stale") else "degraded",
-        "state": stream.get("state", "unknown"),
+        "status": stream_status,
+        "state": stream_state,
+        "watchedMarkets": watched,
+        "error": str(stream.get("lastSubscriptionError") or ""),
     }
     resilience = runtime_resilience.resilience_snapshot()
     for name, snapshot in resilience["dependencies"].items():

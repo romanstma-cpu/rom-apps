@@ -51,6 +51,8 @@ def clean_stream():
     stream._last_book_at = 0.0
     stream._last_trade_at = 0.0
     stream._connected_at = 0.0
+    stream._subscription_rejections = 0
+    stream._last_subscription_error = ''
     momentum_window.tape.reset()
     yield
     stream._books.clear()
@@ -61,6 +63,8 @@ def clean_stream():
     stream._last_book_at = 0.0
     stream._last_trade_at = 0.0
     stream._connected_at = 0.0
+    stream._subscription_rejections = 0
+    stream._last_subscription_error = ''
     momentum_window.tape.reset()
 
 
@@ -201,6 +205,12 @@ class TestIngestBooks:
         monkeypatch.setattr(stream.time, 'monotonic', lambda: 999.0)
         assert stream.health()['state'] == 'connected'
         assert stream.health()['stale'] is False
+
+    def test_valid_message_clears_a_recovered_subscription_error(self):
+        stream._last_subscription_error = 'temporary rejection'
+        stream.ingest({"marketData": _book()})
+        assert stream.health()['state'] != 'blocked'
+        assert stream.health()['lastSubscriptionError'] == ''
 
     def test_active_books_with_silent_trade_channel_trigger_reconnect(self, monkeypatch):
         stream._wanted.add('timed')

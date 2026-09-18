@@ -640,7 +640,7 @@ export interface TradingStatus {
     quoteFailures: number;
     orderFailures: number;
     marketStream: {
-      state: 'connected' | 'degraded' | 'reconnecting' | 'starting' | 'stopped' | 'unknown';
+      state: 'connected' | 'degraded' | 'blocked' | 'reconnecting' | 'starting' | 'stopped' | 'unknown';
       connected: boolean;
       stale?: boolean;
       lastMessageAgeSeconds?: number | null;
@@ -653,6 +653,8 @@ export interface TradingStatus {
       tradeFlowStalled?: boolean;
       tradeStallReconnects?: number;
       bufferedTrades?: number;
+      subscriptionRejections?: number;
+      lastSubscriptionError?: string;
     };
   };
   mainMode: 'paused' | 'paper' | 'live';
