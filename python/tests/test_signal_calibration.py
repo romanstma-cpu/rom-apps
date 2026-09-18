@@ -24,12 +24,29 @@ def dataset(n=400, rate=.8):
 
 def test_realistic_empirical_estimate_qualifies_against_overconfident_score():
     model=calibration.fit(dataset(),T+401*7200)
-    assert model['report']['qualifiedBuckets']==1
-    item=next(iter(model['bins'].values()))
+    assert model['report']['qualifiedBuckets']==3
+    item=model['bins'][calibration.features(dataset(1)[0]['payload']['signal'],'whale')[0]]
     assert .75 < item['probability'] < .82
     assert item['lowerProbability'] < item['probability'] < .98
     assert item['brier'] < item['marketBrier'] and item['brier'] < item['scoreBrier']
     assert model['report']['trainEvents']+model['report']['testEvents']<400  # embargo purges recent labels
+
+
+def test_same_category_fallback_qualifies_when_exact_price_bins_are_sparse():
+    events=dataset(300)
+    prices=(.1,.3,.5,.7,.9)
+    for item in events:
+        if item['kind']=='signal':
+            item['payload']['signal']['price']=prices[int(item['ticker'][1:])%len(prices)]
+    model=calibration.fit(events,T+301*7200)
+    exact_keys={calibration.features(item['payload']['signal'],'whale')[0]
+                for item in events if item['kind']=='signal'}
+    assert not exact_keys.intersection(model['bins'])
+    signal=dataset(1)[0]['payload']['signal']
+    assert calibration.calibrated_edge(signal,'whale',50,model['asof'],model)>0
+    signal['category']='politics'
+    with pytest.raises(ValueError,match='qualified'):
+        calibration.calibrated_edge(signal,'whale',50,model['asof'],model)
 
 
 def test_unchanged_market_accuracy_does_not_qualify():

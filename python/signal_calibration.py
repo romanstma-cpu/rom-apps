@@ -15,7 +15,7 @@ import evidence_loader
 import fees_us
 from execution_quality import signal_problem, signal_freshness_problem
 
-VERSION = 'event-bins-v2-net-holdout'
+VERSION = 'event-hierarchy-v3-net-holdout'
 MIN_TRAIN = 60
 MIN_TEST = 40
 EMBARGO = 86400
@@ -83,6 +83,36 @@ def features(signal, source):
     return key, price, score
 
 
+def feature_keys(signal, source):
+    """Return calibration pools from most specific to broadest safe fallback.
+
+    Fallbacks never cross source, side, category, or scoring-version boundaries.
+    The fixed hierarchy lets sparse exact bins borrow nearby evidence without
+    searching the holdout for a convenient grouping.
+    """
+    exact, price, score = features(signal, source)
+    signal_source, side, category, price_band, _score_band, regime = exact
+    return [
+        exact,
+        ('category-price', signal_source, side, category, price_band, regime),
+        ('category', signal_source, side, category, regime),
+    ], price, score
+
+
+def key_details(key):
+    if key[0] in ('whale', 'momentum'):
+        source, side, category, price_band, score_band, regime = key
+        return dict(level='exact', source=source, side=side, category=category,
+                    priceBand=price_band, scoreBand=score_band, scoreVersion=regime)
+    if key[0] == 'category-price':
+        _, source, side, category, price_band, regime = key
+        return dict(level='category_price', source=source, side=side, category=category,
+                    priceBand=price_band, scoreBand=None, scoreVersion=regime)
+    _, source, side, category, regime = key
+    return dict(level='category', source=source, side=side, category=category,
+                priceBand=None, scoreBand=None, scoreVersion=regime)
+
+
 def samples(events, asof, *, include_pending=False):
     metadata = {}; pending = []; settled = {}; seen = set(); excluded = Counter()
     for event in sorted(events, key=lambda e: (e['at'], e.get('id', 0))):
@@ -101,7 +131,7 @@ def samples(events, asof, *, include_pending=False):
         elif kind == 'signal':
             signal = payload.get('signal', {}); source = payload.get('source')
             try:
-                key, price, score = features(signal, source)
+                keys, price, score = feature_keys(signal, source)
             except (ValueError, TypeError, KeyError):
                 excluded['invalid_signal'] += 1; continue
             group = signal.get('event_ticker') or metadata.get(ticker, {}).get('event_ticker')
@@ -115,7 +145,7 @@ def samples(events, asof, *, include_pending=False):
             # Deduplicate before checking outcome so unresolved early candidates
             # cannot be replaced by later, conveniently resolved candidates.
             seen.add(identity)
-            pending.append(dict(key=key, price=price, score=score, at=at,
+            pending.append(dict(key=keys[0], keys=keys, price=price, score=score, at=at,
                                 event=group, ticker=ticker))
     rows = []
     for row in pending:
@@ -156,11 +186,15 @@ def fit(events, asof):
     test = [r for r in rows if r['event'] in test_groups]
     report.update(trainEvents=len(train), testEvents=len(test), splitAt=cutoff)
     bins = defaultdict(list); tests = defaultdict(list)
-    for row in train: bins[row['key']].append(row)
-    for row in test: tests[row['key']].append(row)
+    for row in train:
+        for key in row['keys']:
+            bins[key].append(row)
+    for row in test:
+        for key in row['keys']:
+            tests[key].append(row)
     for key, group in bins.items():
         evaluation = tests[key]; n = len(group); m = len(evaluation)
-        expected = sum(r['key']==key for r in test_cohort)
+        expected = sum(key in r['keys'] for r in test_cohort)
         if n < MIN_TRAIN or m < MIN_TEST or m != expected:
             continue
         wins = sum(r['outcome'] for r in group)
@@ -182,8 +216,7 @@ def fit(events, asof):
         qualified = (recent and span >= 14*86400 and market_brier-brier >= .005
                      and gain_lower > 0 and brier <= score_brier and log_loss < market_log_loss
                      and economics['qualified'])
-        item = dict(source=key[0], side=key[1], category=key[2], priceBand=key[3],
-                    scoreBand=key[4], scoreVersion=key[5], trainEvents=n, testEvents=m,
+        item = dict(**key_details(key), trainEvents=n, testEvents=m,
                     probability=probability,
                     lowerProbability=lower, observedTestRate=mean(r['outcome'] for r in evaluation),
                     brier=brier, marketBrier=market_brier, scoreBrier=score_brier,
@@ -214,10 +247,10 @@ def load_model():
 
 
 def calibrated_edge(signal, source, limit_cents, at, model):
-    key, _, _ = features(signal, source)
+    keys, _, _ = feature_keys(signal, source)
     if model['asof'] > at or at-model['asof'] > 600:
         raise ValueError('Calibration model is stale or contains future evidence')
-    bucket = model['bins'].get(key)
+    bucket = next((model['bins'][key] for key in keys if key in model['bins']), None)
     if not bucket:
         raise ValueError('Live trading requires a qualified calibration group; collect settled event evidence in Practice')
     # Per-contract reserve includes adverse cent rounding. Margin is net of
@@ -229,11 +262,14 @@ def calibrated_edge(signal, source, limit_cents, at, model):
 def capital_priority(signal, source, at, model):
     """Rank qualified Kelly candidates by conservative stressed return on cost."""
     try:
-        key,price,_=features(signal,source)
+        keys,price,_=feature_keys(signal,source)
         if model['asof']>at or at-model['asof']>600:
             return float('-inf')
         cost=stressed_cost(price,at)
-        lower=model['bins'][key]['lowerProbability']
+        bucket=next((model['bins'][key] for key in keys if key in model['bins']),None)
+        if not bucket:
+            return float('-inf')
+        lower=bucket['lowerProbability']
         return (lower-cost)/cost if lower>cost else float('-inf')
     except (ValueError,KeyError,TypeError):
         return float('-inf')
