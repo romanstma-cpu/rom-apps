@@ -26,6 +26,7 @@ _reconnects=0
 _trade_stall_reconnects=0
 _subscription_rejections=0
 _last_subscription_error=''
+MAX_WATCHED_MARKETS=500
 # A connection can remain open while a subscription is no longer delivering
 # market data. This is a health signal rather than a hard trading block: the
 # quote path has a separately bounded REST fallback.
@@ -34,7 +35,17 @@ TRADE_STALE_AFTER_SECONDS=15*60.0
 BOOK_ACTIVE_WITHIN_SECONDS=30.0
 
 def observe(*tokens):
-    _wanted.update(t.split('::')[0] for t in tokens if t)
+    # The US stream rejects oversized subscription sets.  Preserve the first
+    # bounded scanner universe and ignore overflow instead of slowly growing
+    # an invalid subscription after every market refresh or quote request.
+    for token in tokens:
+        slug=(token or '').split('::')[0]
+        if slug in _wanted:
+            continue
+        if len(_wanted) >= MAX_WATCHED_MARKETS:
+            break
+        if slug:
+            _wanted.add(slug)
 
 def start():
     global _task
@@ -180,12 +191,16 @@ async def _run():
                     # One market data plus one trade subscription is opened per
                     # batch.  Keep the feed aligned with scanner.sync_markets'
                     # 500-market universe (five batches / ten subscriptions).
-                    for offset in range(0,min(len(missing),500),100):
-                        batch=missing[offset:offset+100]
+                    pending=missing[:MAX_WATCHED_MARKETS]
+                    for offset in range(0,len(pending),100):
+                        batch=pending[offset:offset+100]
                         for kind in ('MARKET_DATA','TRADE'):
                             await ws.send(json.dumps({'subscribe':{'requestId':f'{kind}-{len(subscribed)+offset}',
                                 'subscriptionType':'SUBSCRIPTION_TYPE_'+kind,'marketSlugs':batch}}))
-                    subscribed.update(missing)
+                    # Only mark batches that were actually sent.  Marking the
+                    # entire missing set made overflow markets look subscribed
+                    # even though no request for them left the process.
+                    subscribed.update(pending)
                     try:
                         message=json.loads(await asyncio.wait_for(ws.recv(),timeout=2))
                         if 'error' in message:

@@ -167,7 +167,7 @@ def compute_momentum_confidence(
     return max(5, min(round(implied + edge, 1), 97.0))
 
 
-async def sync_markets(*, max_pages: int = 10) -> int:
+async def sync_markets(*, max_pages: int = 10, connect_stream: bool = True) -> int:
     raw = await polymarket_api.fetch_all_open_markets(max_pages=max_pages)
     if not raw:
         return 0
@@ -217,7 +217,7 @@ async def sync_markets(*, max_pages: int = 10) -> int:
     # The momentum scanner itself examines at most 500 markets.  Match the
     # WebSocket watch list to that bounded universe rather than opening extra
     # subscriptions that cannot contribute a signal.
-    if watched:
+    if watched and connect_stream:
         import us_market_stream
         us_market_stream.observe(*watched[:500])
         us_market_stream.start()

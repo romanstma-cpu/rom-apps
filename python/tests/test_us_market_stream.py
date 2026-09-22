@@ -155,6 +155,20 @@ class TestIngestNormalization:
 
 
 class TestIngestBooks:
+    def test_observe_keeps_subscription_universe_bounded(self):
+        stream.observe(*(f"market-{i}" for i in range(stream.MAX_WATCHED_MARKETS + 50)))
+        assert len(stream._wanted) == stream.MAX_WATCHED_MARKETS
+        assert "market-0" in stream._wanted
+        assert f"market-{stream.MAX_WATCHED_MARKETS - 1}" in stream._wanted
+        assert f"market-{stream.MAX_WATCHED_MARKETS}" not in stream._wanted
+
+    def test_observe_accepts_an_existing_market_after_reaching_cap(self):
+        stream.observe(*(f"market-{i}" for i in range(stream.MAX_WATCHED_MARKETS)))
+        stream.observe("market-10::yes", "overflow")
+        assert len(stream._wanted) == stream.MAX_WATCHED_MARKETS
+        assert "market-10" in stream._wanted
+        assert "overflow" not in stream._wanted
+
     def test_book_is_cached(self):
         stream.ingest({"marketData": _book()})
         slug = stream._books.get("btc-will-up")

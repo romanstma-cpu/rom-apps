@@ -632,6 +632,7 @@ async def _scanner_and_trader_loop() -> None:
     last_external_exits = 0.0
     last_tp_sweep = 0.0
     last_auth_retry = 0.0
+    last_auth_probe = 0.0
     last_crypto15m = 0.0
     last_crypto15m_record = 0.0
     last_script = 0.0
@@ -641,7 +642,9 @@ async def _scanner_and_trader_loop() -> None:
     last_stats_push = asyncio.get_event_loop().time()
 
     try:
-        cnt = await scanner.sync_markets(max_pages=10)
+        cnt = await scanner.sync_markets(
+            max_pages=10, connect_stream=STATE.auth_ok,
+        )
         logger.info(f"Initial market sync: {cnt} markets")
     except Exception as e:
         logger.warning(f"initial market sync failed: {e}")
@@ -662,6 +665,26 @@ async def _scanner_and_trader_loop() -> None:
             continue
 
         try:
+            # A key can be revoked while the desktop remains open.  Account
+            # reads previously failed into a stale balance cache without
+            # clearing auth_ok, leaving the UI looking connected and the trade
+            # loop silently inert.  Re-prove live credentials periodically and
+            # publish the state transition as soon as Polymarket rejects them.
+            if (
+                STATE.auth_ok
+                and now - last_auth_probe >= 60
+            ):
+                last_auth_probe = now
+                if not await _establish_auth(retries=1):
+                    STATE.auth_ok = False
+                    last_auth_retry = now
+                    logger.warning(
+                        "Polymarket US credentials are no longer accepted; "
+                        "live trading paused until the API connection recovers"
+                    )
+                    await emit_event("backend:authChanged", {"authOk": False})
+                    await us_market_stream.stop()
+                    await us_account_stream.stop()
             if (
                 not STATE.auth_ok
                 and polymarket_auth.credentials_present()
@@ -677,7 +700,9 @@ async def _scanner_and_trader_loop() -> None:
 
         try:
             if now - last_market_sync >= float(cfg.get("market_refresh_interval", 300)):
-                await scanner.sync_markets(max_pages=10)
+                await scanner.sync_markets(
+                    max_pages=10, connect_stream=STATE.auth_ok,
+                )
                 last_market_sync = now
             if now - last_event_sync >= 600:
                 await scanner.sync_events()
@@ -792,7 +817,8 @@ async def _scanner_and_trader_loop() -> None:
             logger.error(f"trade scan error: {e}", exc_info=True)
 
         try:
-            us_account_stream.start()
+            if STATE.auth_ok:
+                us_account_stream.start()
             account_changed = us_account_stream.consume_dirty()
             poll_every = float(cfg.get("position_poll_interval", 30))
             if cfg.get('enable_trading'):
