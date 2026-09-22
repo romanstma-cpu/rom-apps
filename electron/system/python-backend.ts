@@ -32,6 +32,7 @@ class PythonBackend {
   private startedAt: string | null = null;
   private lastError: string | null = null;
   private authOk = false;
+  private authError = '';
   private pythonOk = false;
   private restartTimer: NodeJS.Timeout | null = null;
   private slowRetryTimer: NodeJS.Timeout | null = null;
@@ -112,6 +113,7 @@ class PythonBackend {
       lastError: this.lastError,
       pythonOk: this.pythonOk,
       authOk: this.authOk,
+      authError: this.authError,
     };
   }
 
@@ -500,6 +502,7 @@ class PythonBackend {
       const data = obj.data;
       if (name === 'backend:authChanged') {
         this.authOk = !!data?.authOk;
+        this.authError = String(data?.authError || '');
         this.emitStatus();
       }
       for (const h of this.eventHandlers) h(name, data);

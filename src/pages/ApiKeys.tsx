@@ -61,6 +61,7 @@ export function ApiKeysPage() {
       <div className="flex items-center gap-4"><div className="grid h-12 w-12 place-items-center rounded-xl bg-blue-500/10 text-blue-300"><KeyRound className="h-6 w-6" /></div><div><h3 className="font-semibold">Polymarket US</h3><p className="mt-1 text-xs text-rom-muted">Official exchange API connection</p></div></div>
       <span className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${backend.authOk ? 'border-rom-win/20 bg-rom-win/10 text-rom-win' : 'border-rom-border text-rom-muted'}`}>{backend.authOk ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3 w-3" />}{backend.authOk ? 'Connected' : 'Not connected'}</span>
     </div>
+    {!backend.authOk && backend.authError && <div role="alert" className="mb-6 rounded-xl border border-rom-warn/30 bg-rom-warn/[0.06] p-4 text-sm leading-6 text-rom-warn">{backend.authError}</div>}
     <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(260px,1fr)]">
       <Card>
         <div className="mb-7"><h3 className="text-base font-semibold">Connect your account</h3><p className="mt-2 text-sm leading-relaxed text-rom-muted">Enter the API credentials from your Polymarket US account.</p></div>

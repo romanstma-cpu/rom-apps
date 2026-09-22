@@ -26,6 +26,7 @@ _reconnects=0
 _trade_stall_reconnects=0
 _subscription_rejections=0
 _last_subscription_error=''
+_auth_paused=False
 MAX_WATCHED_MARKETS=500
 # A connection can remain open while a subscription is no longer delivering
 # market data. This is a health signal rather than a hard trading block: the
@@ -49,8 +50,16 @@ def observe(*tokens):
 
 def start():
     global _task
-    if (_task is None or _task.done()) and auth.credentials_present():
+    if not _auth_paused and (_task is None or _task.done()) and auth.credentials_present():
         _task=asyncio.create_task(_run())
+
+def pause_for_auth():
+    global _auth_paused
+    _auth_paused=True
+
+def resume_after_auth():
+    global _auth_paused
+    _auth_paused=False
 
 async def stop():
     global _task, _connected, _connected_at
@@ -116,7 +125,9 @@ def health():
     book_age=max(0.0,now-_last_book_at) if _last_book_at else None
     trade_stalled=trade_flow_stalled(now)
     stale=bool(_connected and _wanted and (age is None or age>STREAM_STALE_AFTER_SECONDS))
-    if _last_subscription_error:
+    if _auth_paused:
+        state='blocked'
+    elif _last_subscription_error:
         state='blocked'
     elif stale:
         state='degraded'

@@ -270,6 +270,7 @@ export interface BackendInfo {
   lastError: string | null;
   pythonOk: boolean;
   authOk: boolean;
+  authError?: string;
 }
 
 export interface AccountSnapshot {

@@ -75,6 +75,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
   const executionBlocked = !!activity.status?.executionHealth?.blocked;
   const readinessBlocked = activity.status?.readiness?.status === 'not_ready';
   const canStart = backend.status === 'running' && backend.authOk && activity.healthy && !executionBlocked && !readinessBlocked && !riskDraft && !busy && !busyId;
+  const evidenceBlocked = activity.status?.main.some((gate) => gate.id === 'qualifiedEdge' && !!gate.reason) ?? false;
   const changeMode = async (action: () => Promise<void>) => {
     if (switching) return;
     setSwitching(true);
@@ -85,7 +86,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
 
   const toggleTrading = async (): Promise<void> => {
     const next = !tradingOn;
-    if(next && !canStart)return;
+    if(next && (!canStart || evidenceBlocked))return;
     const r = await window.rom.trading.setEnabled(next);
     if (!r.ok) {
       toast.error(r.message || 'Failed to toggle the main engine');
@@ -177,7 +178,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
           </button>
           <button
             onClick={() => tradingOn ? void changeMode(toggleTrading) : setLiveReview(true)}
-            disabled={switching || (!tradingOn && !canStart)}
+            disabled={switching || (!tradingOn && (!canStart || evidenceBlocked))}
             className={cls(
               tradingOn ? 'rom-btn-danger' : 'rom-btn-primary',
               'min-w-[150px]',
@@ -197,7 +198,9 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
             </div>
             <div className="text-[11px] text-rom-dim">
               {!backend.authOk
-                ? 'No API credentials connected — open the API page before starting.'
+                ? backend.authError || 'No API credentials connected — open the API page before starting.'
+                : evidenceBlocked && !tradingOn
+                  ? 'Live orders need qualified evidence. Start Practice to collect settled outcomes.'
                 : tradingOn
                   ? 'Follows large-trade + momentum signals under the gates below. Affects this engine only.'
                   : paperOn

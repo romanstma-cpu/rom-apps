@@ -12,6 +12,7 @@ import time
 import traceback
 import shutil
 import us_account_stream
+import us_market_stream
 import main_recorder
 import order_journal
 import account_risk
@@ -126,6 +127,7 @@ def _iso_utc(s: Any) -> Any:
 class State:
     cfg: dict[str, Any] = dict(DEFAULT_CONFIG)
     auth_ok: bool = False
+    auth_error: str = ""
     paused: bool = False
     last_whale_scan_at: str | None = None
     last_momentum_scan_at: str | None = None
@@ -682,7 +684,8 @@ async def _scanner_and_trader_loop() -> None:
                         "Polymarket US credentials are no longer accepted; "
                         "live trading paused until the API connection recovers"
                     )
-                    await emit_event("backend:authChanged", {"authOk": False})
+                    us_market_stream.pause_for_auth()
+                    await emit_event("backend:authChanged", _auth_event())
                     await us_market_stream.stop()
                     await us_account_stream.stop()
             if (
@@ -693,8 +696,10 @@ async def _scanner_and_trader_loop() -> None:
                 last_auth_retry = now
                 if await _establish_auth(retries=1):
                     STATE.auth_ok = True
+                    us_market_stream.resume_after_auth()
+                    last_market_sync = 0.0
                     logger.info("auth recovered (was transiently disconnected)")
-                    await emit_event("backend:authChanged", {"authOk": True})
+                    await emit_event("backend:authChanged", _auth_event())
         except Exception as e:
             logger.debug(f"auth self-heal failed: {e}")
 
@@ -716,7 +721,7 @@ async def _scanner_and_trader_loop() -> None:
             logger.warning('Main replay recording gap: %s',type(exc).__name__)
 
         try:
-            if collect_main and now - last_whale >= float(cfg.get("whale_scan_interval", 120)):
+            if STATE.auth_ok and collect_main and now - last_whale >= float(cfg.get("whale_scan_interval", 120)):
                 cnt, rows = await scanner.scan_whales(cfg)
                 last_whale = now
                 STATE.last_whale_scan_at = datetime.now(timezone.utc).isoformat()
@@ -754,7 +759,7 @@ async def _scanner_and_trader_loop() -> None:
             logger.warning(f"whale scan error: {e}")
 
         try:
-            if collect_main and now - last_momentum >= float(cfg.get("momentum_scan_interval", 90)):
+            if STATE.auth_ok and collect_main and now - last_momentum >= float(cfg.get("momentum_scan_interval", 90)):
                 cnt, rows = await scanner.scan_momentum(cfg)
                 last_momentum = now
                 STATE.last_momentum_scan_at = datetime.now(timezone.utc).isoformat()
@@ -1212,7 +1217,7 @@ async def _h_setConfig(p: dict) -> dict:
             STATE.auth_ok = await _establish_auth()
         else:
             STATE.auth_ok = False
-        await emit_event("backend:authChanged", {"authOk": STATE.auth_ok})
+        await emit_event("backend:authChanged", _auth_event())
 
         try:
             if STATE.active_run_id:
@@ -1264,7 +1269,17 @@ async def _h_setCredentials(p: dict) -> dict:
                 await _establish_auth()
                 if polymarket_auth.credentials_present(active_env) else False
             )
-            await emit_event("backend:authChanged", {"authOk": STATE.auth_ok})
+            if STATE.auth_ok:
+                us_market_stream.resume_after_auth()
+                try:
+                    await scanner.sync_markets(max_pages=10)
+                except Exception as exc:
+                    logger.warning("market sync after API connection failed: %s", exc)
+            else:
+                us_market_stream.pause_for_auth()
+                await us_market_stream.stop()
+                await us_account_stream.stop()
+            await emit_event("backend:authChanged", _auth_event())
         except Exception as e:
             logger.warning(f"auth re-verify after API credential change failed: {e}")
         try:
@@ -1303,7 +1318,11 @@ async def _h_clearCredentials(p: dict) -> dict:
     polymarket_auth.clear_credentials(env)
     if env in (None, polymarket_auth.get_env()):
         STATE.auth_ok = False
-        await emit_event("backend:authChanged", {"authOk": False})
+        STATE.auth_error = "Connect a Polymarket US API key to scan and trade."
+        us_market_stream.pause_for_auth()
+        await us_market_stream.stop()
+        await us_account_stream.stop()
+        await emit_event("backend:authChanged", _auth_event())
     status = polymarket_auth.credentials_status_all()
     await emit_event("credentials:changed", status)
     return status
@@ -1340,6 +1359,23 @@ async def _reconcile_signature_type() -> None:
         logger.debug(f"[wallet] signature-type reconcile skipped: {e}")
 
 
+def _auth_event() -> dict:
+    return {"authOk": STATE.auth_ok, "authError": STATE.auth_error}
+
+
+def _auth_failure_message(exc: Exception | None) -> str:
+    if isinstance(exc, polymarket_api.PolymarketAPIError):
+        if exc.status_code == 401 and "API key not found" in str(exc):
+            return (
+                "Polymarket US does not recognize the saved API key. "
+                "Create a new Key ID and Secret Key in the Polymarket US developer portal."
+            )
+        if exc.status_code in (401, 403):
+            return "Polymarket US rejected the saved API credentials. Check the API page."
+        return f"Polymarket US connection failed (HTTP {exc.status_code})."
+    return "Polymarket US connection could not be verified. Check your network and API key."
+
+
 async def _establish_auth(retries: int = 3) -> bool:
     last_exc = None
     for attempt in range(1, retries + 1):
@@ -1357,8 +1393,10 @@ async def _establish_auth(retries: int = 3) -> bool:
             await polymarket_api.get_balance()
         except Exception as be:
             logger.debug(f"auth verify: balance warm failed (non-fatal): {be}")
+        STATE.auth_error = ""
         return True
     logger.warning(f"auth verify failed after {retries} attempts: {last_exc}")
+    STATE.auth_error = _auth_failure_message(last_exc)
     return False
 
 
@@ -1370,15 +1408,30 @@ async def _h_testCredentials(p: dict) -> dict:
 
     polymarket_auth.reset_credential_cache()
     polymarket_auth.prime_credentials(sync_time=True)
-    ready = await polymarket_api.check_trading_ready()
+    try:
+        ready = await polymarket_api.check_trading_ready()
+    except Exception as exc:
+        STATE.auth_ok = False
+        STATE.auth_error = _auth_failure_message(exc)
+        us_market_stream.pause_for_auth()
+        await us_market_stream.stop()
+        await us_account_stream.stop()
+        await emit_event("backend:authChanged", _auth_event())
+        raise
     if not ready.get("address"):
         STATE.auth_ok = False
-        await emit_event("backend:authChanged", {"authOk": False})
+        STATE.auth_error = "Polymarket US did not confirm this API key. Check the API page."
+        us_market_stream.pause_for_auth()
+        await us_market_stream.stop()
+        await us_account_stream.stop()
+        await emit_event("backend:authChanged", _auth_event())
         raise RuntimeError(
             (ready.get("issues") or ["could not connect to Polymarket"])[0]
         )
     STATE.auth_ok = True
-    await emit_event("backend:authChanged", {"authOk": True})
+    STATE.auth_error = ""
+    us_market_stream.resume_after_auth()
+    await emit_event("backend:authChanged", _auth_event())
     for msg in ready.get("issues", []):
         logger.warning(f"trading-readiness: {msg}")
     return {
@@ -2056,7 +2109,8 @@ async def _h_trading_status(_p: dict) -> dict:
         })
 
     gate("paused", "Engine not paused", not STATE.paused, "paused by user")
-    gate("auth", "Polymarket US API", bool(STATE.auth_ok), "auth failed — check API credentials")
+    gate("auth", "Polymarket US API", bool(STATE.auth_ok),
+         STATE.auth_error or "Connect your Polymarket US API key on the API page")
     # Sits next to auth deliberately: a drifted clock presents as an auth
     # failure, and an operator who sees only "auth failed" re-checks keys that
     # are fine. Unknown skew reads ok — this reports a measurement, not a guess.
@@ -2070,6 +2124,24 @@ async def _h_trading_status(_p: dict) -> dict:
     mode = "live" if enabled else ("paper" if paper else "paused")
     gate("master", "Main strategy running", enabled or paper,
          "strategy is paused", off=not (enabled or paper))
+    if cfg.get("require_qualified_edge", True):
+        try:
+            import signal_calibration
+            model = await asyncio.to_thread(signal_calibration.load_model)
+            has_qualified_group = bool(model.get("bins"))
+            gate(
+                "qualifiedEdge", "Qualified live signal evidence",
+                has_qualified_group,
+                "No qualified signal group exists yet. Run Practice to collect "
+                "settled outcomes before live orders can pass this safety rule.",
+                off=not enabled,
+            )
+        except Exception as exc:
+            gate("qualifiedEdge", "Qualified live signal evidence", False,
+                 f"Calibration evidence is unavailable: {type(exc).__name__}. "
+                 "Review the Evidence page before live trading.", off=not enabled)
+    else:
+        gate("qualifiedEdge", "Qualified live signal evidence", True, off=True)
     execution_health = trader.execution_health.status()
     stream_health = execution_health.get("marketStream") or {}
     if enabled:
@@ -2849,9 +2921,11 @@ async def _main() -> None:
         STATE.auth_ok = await _establish_auth()
         if STATE.auth_ok:
             logger.info("Saved credentials verified")
+        else:
+            us_market_stream.pause_for_auth()
 
     await emit_event("backend:ready", {"startedAt": STATE.started_at})
-    await emit_event("backend:authChanged", {"authOk": STATE.auth_ok})
+    await emit_event("backend:authChanged", _auth_event())
     try:
         await emit_event(
             "credentials:changed", polymarket_auth.credentials_status_all(),

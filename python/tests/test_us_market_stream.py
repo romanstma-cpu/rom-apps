@@ -53,6 +53,7 @@ def clean_stream():
     stream._connected_at = 0.0
     stream._subscription_rejections = 0
     stream._last_subscription_error = ''
+    stream.resume_after_auth()
     momentum_window.tape.reset()
     yield
     stream._books.clear()
@@ -65,6 +66,7 @@ def clean_stream():
     stream._connected_at = 0.0
     stream._subscription_rejections = 0
     stream._last_subscription_error = ''
+    stream.resume_after_auth()
     momentum_window.tape.reset()
 
 
@@ -155,6 +157,13 @@ class TestIngestNormalization:
 
 
 class TestIngestBooks:
+    def test_auth_pause_keeps_rejected_stream_stopped(self, monkeypatch):
+        monkeypatch.setattr(stream.auth, 'credentials_present', lambda: True)
+        stream.pause_for_auth()
+        stream.start()
+        assert stream._task is None
+        assert stream.health()['state'] == 'blocked'
+
     def test_observe_keeps_subscription_universe_bounded(self):
         stream.observe(*(f"market-{i}" for i in range(stream.MAX_WATCHED_MARKETS + 50)))
         assert len(stream._wanted) == stream.MAX_WATCHED_MARKETS
