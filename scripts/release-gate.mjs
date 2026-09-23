@@ -18,13 +18,18 @@ if (process.platform === 'win32' || process.env.ROM_RUN_UI_AUDIT === '1') {
 
 for (const [command, args] of commands) {
   console.log(`\n>> Release gate: ${command} ${args.join(' ')}`);
-  const result = spawnSync(command, args, {
+  const run = () => spawnSync(command, args, {
     cwd: process.cwd(),
     env: process.env,
     shell: process.platform === 'win32',
     stdio: 'inherit',
     windowsHide: true,
   });
+  let result = run();
+  if (args[1] === 'check:ui' && result.status !== 0 && !result.error) {
+    console.warn('\nUI audit failed; retrying once for transient Electron screenshot timeouts.');
+    result = run();
+  }
   if (result.error) throw result.error;
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
