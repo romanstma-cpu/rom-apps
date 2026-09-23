@@ -8,11 +8,12 @@ const commands = [
   ['npm', ['run', 'build']],
 ];
 
+// The visual audit loads dist/, so it must run after the production build.
 // Electron's interactive visual audit requires a desktop session. GitHub's
 // macOS runner can start Electron but never exposes its window to Playwright;
 // the Mac workflow performs a packaged-app launch smoke test after this gate.
 if (process.platform === 'win32' || process.env.ROM_RUN_UI_AUDIT === '1') {
-  commands.splice(1, 0, ['npm', ['run', 'check:ui']]);
+  commands.push(['npm', ['run', 'check:ui']]);
 }
 
 for (const [command, args] of commands) {
