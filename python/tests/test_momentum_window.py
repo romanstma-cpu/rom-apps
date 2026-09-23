@@ -42,16 +42,14 @@ def tape():
 
 # --- rejection accounting -----------------------------------------------
 #
-# The gate itself is unchanged. These cover only the counters that explain it.
+# The gate counts skew beyond its two-second tolerance separately from stale data.
 # A starved tape and a quiet market produce the same empty summarize() result,
 # so without this accounting a host-clock fault is indistinguishable from
 # "nothing is trading" — see the reasons surfaced by scanner's momentum log.
 
 def test_clock_behind_exchange_is_counted_apart_from_staleness(tape):
-    # Local clock 2s behind the exchange: now-at is negative, every receipt is
-    # dropped. This is a host fault, not a market condition, and must not be
-    # pooled with ordinary staleness.
-    assert tape.add(trade(1, at=T + 2), T) is False
+    # A larger skew is a host fault, distinct from an old exchange print.
+    assert tape.add(trade(1, at=T + 3), T) is False
     assert tape.rejects["local clock behind exchange"] == 1
     assert tape.rejects["older than 30s at receipt"] == 0
 
@@ -81,7 +79,7 @@ def test_every_rejection_path_is_attributed(tape):
 
 
 def test_counters_survive_reset_because_a_reset_is_itself_the_diagnosis(tape):
-    tape.add(trade(1, at=T + 2), T)
+    tape.add(trade(1, at=T + 3), T)
     tape.add(trade(2), T)
     tape.reset()
     assert tape.rows == deque([])           # window state cleared
@@ -100,7 +98,7 @@ def test_disconnect_driven_resets_are_counted(tape):
 
 def test_stats_reports_reasons_most_common_first(tape):
     for i in range(3):
-        tape.add(trade(i, at=T + 2), T)
+        tape.add(trade(i, at=T + 3), T)
     tape.add(trade(99, at=T - 3600), T)
     stats = tape.stats()
     assert stats["rejected"] == 4
@@ -124,6 +122,12 @@ def test_old_prints_are_rejected_so_they_cannot_look_like_fresh_pressure(tape):
 
 def test_future_dated_trade_is_rejected(tape):
     assert tape.add(trade(1, at=T + 60), T) is False
+
+
+def test_one_second_exchange_lead_is_accepted_at_receipt_time(tape):
+    assert tape.add(trade(1, at=T + 1), T) is True
+    assert tape.rows[0]['at'] == T
+    assert tape.stats()['rejected'] == 0
 
 
 def test_duplicate_trade_id_after_reconnect_is_counted_once(tape):

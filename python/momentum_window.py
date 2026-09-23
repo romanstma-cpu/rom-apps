@@ -5,6 +5,10 @@ import math
 
 WINDOW = 300
 FRESH = 30
+# Exchange timestamps can lead the host receipt clock by about one second.
+# Bound that skew tightly and score tolerated prints at receipt time so a
+# future-dated trade never enters a signal before it was observed locally.
+MAX_FORWARD_SKEW = 2
 MAX_TRADES = 50000
 SCORE_VERSION = 'momentum-window-v2'
 HORIZON = 2*WINDOW+FRESH
@@ -75,16 +79,12 @@ class Tape:
                 return self._reject('bad identity fields')
             if not all(math.isfinite(v) for v in (at, now, price, qty)) or not 0 < price < 1 or qty <= 0:
                 return self._reject('bad numeric values')
-            # Same gate as before, split only so the two sides are counted
-            # apart. A negative skew means the local clock is behind the
-            # exchange, which rejects every receipt wholesale and leaves a tape
-            # indistinguishable from a quiet market. That case gets its own
-            # counter because it is a host-clock fault, not a market condition.
             skew = now-at
-            if skew < 0:
+            if skew < -MAX_FORWARD_SKEW:
                 return self._reject('local clock behind exchange')
             if skew > FRESH:
                 return self._reject('older than %ds at receipt' % FRESH)
+            at = min(at, now)
         except (KeyError, ValueError, TypeError, OverflowError):
             return self._reject('malformed payload')
         if self.last_receive is not None and now < self.last_receive:

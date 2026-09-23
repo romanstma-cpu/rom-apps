@@ -20,6 +20,7 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
     .sort((a, b) => b[1] - a[1]).slice(0, 3);
   const paper = status.mainPaper;
   const funnel = status.opportunityFunnel;
+  const tape = funnel?.tradeTape;
   const stream = status.executionHealth.marketStream;
   const whaleCategories = funnel?.categoryLimits.whale ?? [];
   const momentumCategories = funnel?.categoryLimits.momentum ?? [];
@@ -74,6 +75,13 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
         <FunnelStat label="Candidates" value={funnel.candidates} warn={funnel.signalEvents > 0 && funnel.candidates === 0} />
         <FunnelStat label="Trades created" value={funnel.placed} />
       </div>
+      {funnel.tradeEvents > 0 && funnel.signalEvents === 0 && tape && <p className="mt-3 text-xs text-rom-muted">
+        {tape.rejected > 0 && tape.accepted === 0
+          ? `Trade feed received prints, but the scanner rejected them: ${Object.entries(tape.reasons).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'check feed diagnostics'}.`
+          : tape.accepted > 0
+            ? `Scanner accepted ${tape.accepted.toLocaleString()} trade prints this session. None has passed the current signal thresholds yet.`
+            : 'Trade prints were recorded earlier; this scanner session is still collecting its live trade window.'}
+      </p>}
       {(funnel.primaryBlock || whaleCategories.length || momentumCategories.length) && <div className="mt-3 space-y-1 rounded-lg bg-rom-void/35 px-3 py-2.5 text-[11px] text-rom-muted">
         {funnel.primaryBlock && <p><span className="font-medium text-white">Latest block:</span> {funnel.primaryBlock}</p>}
         {whaleCategories.length > 0 && <p><span className="font-medium text-white">Large Trade categories:</span> {whaleCategories.join(', ')}</p>}
