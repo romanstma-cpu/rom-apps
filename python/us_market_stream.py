@@ -27,7 +27,11 @@ _trade_stall_reconnects=0
 _subscription_rejections=0
 _last_subscription_error=''
 _auth_paused=False
+_scanner_wanted=set()
 MAX_WATCHED_MARKETS=500
+
+class _UniverseChanged(Exception):
+    pass
 # A connection can remain open while a subscription is no longer delivering
 # market data. This is a health signal rather than a hard trading block: the
 # quote path has a separately bounded REST fallback.
@@ -47,6 +51,27 @@ def observe(*tokens):
             break
         if slug:
             _wanted.add(slug)
+
+def set_scanner_universe(tokens):
+    """Replace the scanner subscription set after a catalog refresh.
+
+    Ad-hoc quote observations are kept only while capacity remains. Expired
+    scanner markets must not permanently occupy one of the 500 stream slots.
+    """
+    global _scanner_wanted
+    selected = []
+    for token in tokens:
+        slug = (token or '').split('::')[0]
+        if slug and slug not in selected:
+            selected.append(slug)
+        if len(selected) >= MAX_WATCHED_MARKETS:
+            break
+    new_scanner = set(selected)
+    extras = sorted(_wanted - _scanner_wanted - new_scanner)
+    _scanner_wanted = new_scanner
+    _wanted.clear()
+    _wanted.update(new_scanner)
+    _wanted.update(extras[:MAX_WATCHED_MARKETS-len(_wanted)])
 
 def start():
     global _task
@@ -68,7 +93,7 @@ async def stop():
         try: await _task
         except asyncio.CancelledError: pass
     _task=None; _connected=False; _connected_at=0.0
-    _books.clear(); _trades.clear(); _wanted.clear()
+    _books.clear(); _trades.clear(); _wanted.clear(); _scanner_wanted.clear()
     momentum_window.tape.reset()
 
 def ingest(message):
@@ -198,6 +223,10 @@ async def _run():
                 _connected_at=time.monotonic()
                 subscribed=set()
                 while True:
+                    if subscribed - _wanted:
+                        # The protocol has no unsubscribe in this client. A
+                        # clean reconnect replaces the old subscription set.
+                        raise _UniverseChanged()
                     missing=sorted(_wanted-subscribed)
                     # One market data plus one trade subscription is opened per
                     # batch.  Keep the feed aligned with scanner.sync_markets'
@@ -226,6 +255,10 @@ async def _run():
                                 main_recorder.record('gap','',{'reason':'trade subscription stalled'})
                                 raise RuntimeError('trade subscription stalled while books remained active')
                     except asyncio.TimeoutError: pass
+        except _UniverseChanged:
+            _connected=False
+            _last_disconnect_at=time.monotonic()
+            main_recorder.record('gap','',{'reason':'market universe refreshed'})
         except asyncio.CancelledError: raise
         except Exception as exc:
             _connected=False

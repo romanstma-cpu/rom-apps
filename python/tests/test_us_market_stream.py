@@ -46,6 +46,7 @@ def clean_stream():
     stream._books.clear()
     stream._trades.clear()
     stream._wanted.clear()
+    stream._scanner_wanted.clear()
     stream._connected = False
     stream._last_message_at = 0.0
     stream._last_book_at = 0.0
@@ -59,6 +60,7 @@ def clean_stream():
     stream._books.clear()
     stream._trades.clear()
     stream._wanted.clear()
+    stream._scanner_wanted.clear()
     stream._connected = False
     stream._last_message_at = 0.0
     stream._last_book_at = 0.0
@@ -177,6 +179,19 @@ class TestIngestBooks:
         assert len(stream._wanted) == stream.MAX_WATCHED_MARKETS
         assert "market-10" in stream._wanted
         assert "overflow" not in stream._wanted
+
+    def test_scanner_refresh_replaces_old_markets_and_preserves_quote_observations(self):
+        stream.set_scanner_universe(["old", "still-open"])
+        stream.observe("quote-only::yes")
+        stream.set_scanner_universe(["still-open", "new"])
+        assert stream._wanted == {"still-open", "new", "quote-only"}
+        assert stream._scanner_wanted == {"still-open", "new"}
+
+    def test_scanner_refresh_prioritizes_full_scanner_universe(self):
+        stream.observe("quote-only")
+        stream.set_scanner_universe(f"market-{i}" for i in range(stream.MAX_WATCHED_MARKETS))
+        assert len(stream._wanted) == stream.MAX_WATCHED_MARKETS
+        assert "quote-only" not in stream._wanted
 
     def test_book_is_cached(self):
         stream.ingest({"marketData": _book()})

@@ -173,7 +173,6 @@ async def sync_markets(*, max_pages: int = 10, connect_stream: bool = True) -> i
         return 0
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     count = 0
-    watched: list[str] = []
     with db.get_db() as conn:
         for m in raw:
             ticker = m.get("ticker", "")
@@ -213,13 +212,16 @@ async def sync_markets(*, max_pages: int = 10, connect_stream: bool = True) -> i
                 },
             )
             count += 1
-            watched.append(ticker)
+        # Use the same bounded, ranked and non-expired universe as the scanner.
+        # The API page order is not the scanner's ranking, and old subscriptions
+        # otherwise crowd out new markets during long running sessions.
+        watched = [m['ticker'] for m in db.get_active_markets(conn, limit=500)]
     # The momentum scanner itself examines at most 500 markets.  Match the
     # WebSocket watch list to that bounded universe rather than opening extra
     # subscriptions that cannot contribute a signal.
     if watched and connect_stream:
         import us_market_stream
-        us_market_stream.observe(*watched[:500])
+        us_market_stream.set_scanner_universe(watched)
         us_market_stream.start()
     return count
 

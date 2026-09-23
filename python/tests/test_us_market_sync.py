@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 
 import db
 import scanner
@@ -24,7 +25,7 @@ def test_us_market_without_reported_volume_is_kept_and_watched(tmp_path, monkeyp
 
     monkeypatch.setattr(api, 'fetch_all_open_markets', markets)
     import us_market_stream
-    monkeypatch.setattr(us_market_stream, 'observe', lambda *tickers: watched.extend(tickers))
+    monkeypatch.setattr(us_market_stream, 'set_scanner_universe', lambda tickers: watched.extend(tickers))
     monkeypatch.setattr(us_market_stream, 'start', lambda: None)
     assert asyncio.run(scanner.sync_markets()) == 1
     with db.get_db() as conn:
@@ -59,3 +60,29 @@ def test_market_catalog_sync_does_not_start_private_stream_when_auth_is_down(
     assert asyncio.run(scanner.sync_markets(connect_stream=False)) == 1
     with db.get_db() as conn:
         assert db.get_active_markets(conn, min_volume=0)[0]['ticker'] == 'public-market'
+
+
+def test_scanner_and_stream_share_ranked_nonexpired_market_universe(tmp_path, monkeypatch):
+    monkeypatch.setattr(db, 'db_path', lambda: tmp_path / 'polybot.db')
+    db.init_db()
+    future = (datetime.now(timezone.utc) + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    past = (datetime.now(timezone.utc) - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    async def markets(*_args, **_kwargs):
+        def row(ticker, volume, close_time):
+            return {'ticker': ticker, 'slug': ticker, 'status': 'open',
+                    'close_time': close_time, 'volume_fp': volume,
+                    'volume_24h_fp': volume, 'yes_bid_dollars': .4,
+                    'yes_ask_dollars': .6, 'last_price_dollars': .5}
+        return [row('quiet', 1, future), row('closed', 1000, past),
+                row('busy', 100, future)]
+
+    monkeypatch.setattr(api, 'fetch_all_open_markets', markets)
+    import us_market_stream
+    watched = []
+    monkeypatch.setattr(us_market_stream, 'set_scanner_universe',
+                        lambda tickers: watched.extend(tickers))
+    monkeypatch.setattr(us_market_stream, 'start', lambda: None)
+    assert asyncio.run(scanner.sync_markets()) == 2
+    with db.get_db() as conn:
+        assert [m['ticker'] for m in db.get_active_markets(conn)] == watched == ['busy', 'quiet']
