@@ -28,15 +28,15 @@ try {
           { tag_name: 'v99.0.0', html_url: 'https://github.com/romanstma-cpu/rom-apps/releases/tag/v99.0.0', assets: [{ name: 'ROM.Trader-Setup-99.0.0.exe' }] },
           { tag_name: 'polybot-mac-999', html_url: 'https://github.com/romanstma-cpu/rom-apps/releases/tag/polybot-mac-999', assets: [{ name: 'ROM.PolyBot-2.35.9-arm64.dmg' }] },
           { tag_name: 'v2.35.3', html_url: 'https://github.com/romanstma-cpu/rom-apps/releases/tag/v2.35.3', assets: [{ name: 'ROM.PolyBot-Setup-2.35.3.exe' }] },
-          { tag_name: 'v2.35.7', html_url: 'https://github.com/romanstma-cpu/rom-apps/releases/tag/v2.35.7', assets: [{ name: 'ROM.PolyBot-Setup-2.35.7.exe' }] },
+          { tag_name: 'v2.35.8', html_url: 'https://github.com/romanstma-cpu/rom-apps/releases/tag/v2.35.8', assets: [{ name: 'ROM.PolyBot-Setup-2.35.8.exe' }] },
         ],
       };
     };
   });
   const result = await page.evaluate(() => window.rom.app.checkForUpdates());
-  assert.equal(result.latestVersion, '2.35.7');
+  assert.equal(result.latestVersion, '2.35.8');
   assert.equal(result.updateAvailable, true);
-  assert.equal(result.releaseUrl, 'https://github.com/romanstma-cpu/rom-apps/releases/tag/v2.35.7');
+  assert.equal(result.releaseUrl, 'https://github.com/romanstma-cpu/rom-apps/releases/tag/v2.35.8');
   console.log('PASS: update check selects the newest Windows PolyBot installer, ignoring ROM Trader and Mac CI releases');
 } finally {
   await app.evaluate(() => { globalThis.fetch = globalThis.__originalFetch; }).catch(() => {});
