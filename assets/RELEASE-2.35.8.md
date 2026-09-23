@@ -1,0 +1,3 @@
+ROM PolyBot 2.35.8 makes live-trading readiness explicit when the Polymarket US API is connected but the account has no USD buying power. The trading-status gate now distinguishes an empty account from an unreadable balance and clears automatically when a successful balance poll sees funds. The Overview and title bar show the no-funds state instead of implying that live orders are ready.
+
+No strategy threshold, sizing formula, or order-routing behavior changed. A funded account and valid API credentials are still required to validate live order placement; these checks do not establish profitability.
