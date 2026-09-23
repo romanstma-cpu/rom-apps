@@ -69,3 +69,23 @@ def test_trading_status_reports_practice_and_loss_limit_readiness(tmp_path, monk
     after = asyncio.run(service._h_trading_status({}))
     assert after["practiceReadiness"]["completedPracticeTrades"] == 1
     assert after["practiceReadiness"]["hasCompletedPractice"] is True
+
+    cfg["enable_trading"] = True
+    monkeypatch.setattr(service.STATE, "auth_ok", True)
+    buying_power = [0, True]
+    monkeypatch.setattr(service.trader, "cached_buying_power", lambda *_: tuple(buying_power))
+
+    empty = asyncio.run(service._h_trading_status({}))
+    gate = next(g for g in empty["main"] if g["id"] == "buyingPower")
+    assert gate["state"] == "blocked"
+    assert "Fund your Polymarket US account" in gate["reason"]
+
+    buying_power[:] = [315, True]
+    funded = asyncio.run(service._h_trading_status({}))
+    assert next(g for g in funded["main"] if g["id"] == "buyingPower")["state"] == "ok"
+
+    buying_power[:] = [315, False]
+    unreadable = asyncio.run(service._h_trading_status({}))
+    gate = next(g for g in unreadable["main"] if g["id"] == "buyingPower")
+    assert gate["state"] == "blocked"
+    assert "Could not verify buying power" in gate["reason"]

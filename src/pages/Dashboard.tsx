@@ -100,6 +100,12 @@ export function DashboardPage({ onNav }: DashboardProps) {
       tone: 'bad',
       cta: { label: 'Re-test', page: 'api' },
     });
+  } else if (account?.cashUsd === 0) {
+    issues.push({
+      label: 'API connected, but no USD buying power is available — fund your Polymarket US account before live trades can start',
+      tone: 'warn',
+      cta: { label: 'Check account', page: 'api' },
+    });
   }
   if (config && !config.enableTrading && walletConnected) {
     issues.push({

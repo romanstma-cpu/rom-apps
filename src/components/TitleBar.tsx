@@ -5,7 +5,7 @@ import { useToast } from '../state/ToastProvider';
 import { cls } from '../utils/format';
 
 export function TitleBar() {
-  const { backend, config, refresh } = useApp();
+  const { account, backend, config, refresh } = useApp();
   const toast = useToast();
   const [maxed, setMaxed] = useState(false);
   const [stopping, setStopping] = useState(false);
@@ -61,6 +61,11 @@ export function TitleBar() {
           ) : (
             <span className="rom-pill border-rom-warn/40 bg-rom-warn/10 text-rom-warn">
               API not connected
+            </span>
+          )}
+          {backend.authOk && account?.cashUsd === 0 && (
+            <span className="rom-pill border-rom-warn/40 bg-rom-warn/10 text-rom-warn">
+              No buying power
             </span>
           )}
         </div>

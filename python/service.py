@@ -2124,6 +2124,20 @@ async def _h_trading_status(_p: dict) -> dict:
     mode = "live" if enabled else ("paper" if paper else "paused")
     gate("master", "Main strategy running", enabled or paper,
          "strategy is paused", off=not (enabled or paper))
+    if enabled and STATE.auth_ok:
+        buying_power_cents, balance_read_ok = trader.cached_buying_power(env)
+        gate(
+            "buyingPower", "Available USD buying power",
+            balance_read_ok and buying_power_cents is not None
+            and buying_power_cents > 0,
+            ("Could not verify buying power with Polymarket US. "
+             "Live entries remain paused until the account read succeeds."
+             if not balance_read_ok else
+             "No available USD buying power. Fund your Polymarket US account "
+             "before live entries can be placed."),
+        )
+    else:
+        gate("buyingPower", "Live buying power", True, off=True)
     if cfg.get("require_qualified_edge", True):
         try:
             import signal_calibration

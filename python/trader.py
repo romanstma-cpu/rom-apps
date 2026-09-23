@@ -41,6 +41,16 @@ _balance_cache: dict[str, dict] = {}
 def last_balance_read_ok(env: str | None = None) -> bool:
     cached = _balance_cache.get(env or get_env())
     return bool(cached and cached.get("ok"))
+
+
+def cached_buying_power(env: str | None = None) -> tuple[int | None, bool]:
+    """Return the last exchange buying power and whether that read succeeded."""
+    cached = _balance_cache.get(env or get_env())
+    if not cached:
+        return None, False
+    return int(cached["cents"]), bool(cached.get("ok"))
+
+
 _balance_fail_log_at: dict[str, float] = {}
 _BALANCE_FAIL_LOG_EVERY = 300.0
 

@@ -16,7 +16,9 @@ export function TradingCheck({ onOpenStrategy }: { onOpenStrategy: () => void })
   const practice = !!config?.mainPaperTrading && !live;
   const dailyStopped = dailyRemaining === 0 && dailyStop > 0 && dailyLossUsed >= dailyStop;
   const feedBlocked = execution?.marketStream.state === 'blocked' || ((live || practice) && !(execution?.marketStream.watchedMarkets || 0));
-  const attention = !backend.authOk || !activity.healthy || !!execution?.blocked || feedBlocked || readiness?.status === 'not_ready' || dailyStopped;
+  const buyingPowerGate = activity.status?.main.find((gate) => gate.id === 'buyingPower');
+  const buyingPowerBlocked = live && (buyingPowerGate?.state === 'blocked' || account?.cashUsd === 0);
+  const attention = !backend.authOk || !activity.healthy || !!execution?.blocked || feedBlocked || readiness?.status === 'not_ready' || dailyStopped || buyingPowerBlocked;
   const streamDetail = execution?.blocked
     ? execution.reason
     : execution?.marketStream.state === 'blocked'
@@ -37,6 +39,7 @@ export function TradingCheck({ onOpenStrategy }: { onOpenStrategy: () => void })
     { label: 'Mode', value: mode, detail: backend.authOk ? 'Polymarket US API connected' : 'Connect API before live trading', tone: live ? 'text-rom-win' : 'text-white' },
     { label: 'Execution guard', value: execution?.blocked ? 'Paused for safety' : 'Controls clear', detail: streamDetail, tone: execution?.blocked ? 'text-rom-warn' : 'text-rom-win' },
     { label: 'System readiness', value: readiness?.status === 'not_ready' ? 'Not ready' : readiness?.status === 'degraded' ? 'Degraded' : readiness ? 'Ready' : 'Checking', detail: readiness ? `Deep check completed in ${Math.round(readiness.durationMs)} ms` : 'Checking database, disk, streams, and API lanes', tone: readiness?.status === 'not_ready' ? 'text-rom-warn' : readiness?.status === 'degraded' ? 'text-rom-warn' : readiness ? 'text-rom-win' : 'text-white' },
+    { label: 'Buying power', value: account ? fmtUsd(account.cashUsd) : '—', detail: buyingPowerGate?.state === 'blocked' ? buyingPowerGate.reason : live ? 'Available for live entry sizing' : 'Live account cash, separate from Practice', tone: buyingPowerBlocked ? 'text-rom-warn' : 'text-white' },
     { label: 'Exposure', value: account ? fmtUsd(account.openCostUsd) : '—', detail: exposureCap === null ? 'Account value unavailable' : `${fmtUsd(exposureCap)} maximum at current balance`, tone: 'text-white' },
     { label: 'Today’s P&L', value: fmtUsd(todayPnl, { sign: true }), detail: dailyRemaining === null ? 'Daily loss stop is off' : `${fmtUsd(dailyRemaining)} until daily loss stop`, tone: (todayPnl || 0) < 0 ? 'text-rom-loss' : (todayPnl || 0) > 0 ? 'text-rom-win' : 'text-white' },
     { label: 'Open orders', value: `${account?.pendingCount ?? 0}`, detail: `${account?.openCount ?? 0} filled position${(account?.openCount ?? 0) === 1 ? '' : 's'} open`, tone: 'text-white' },
@@ -44,8 +47,8 @@ export function TradingCheck({ onOpenStrategy }: { onOpenStrategy: () => void })
     { label: 'Position limit', value: fmtUsd(config?.hardMaxPositionUsd), detail: config ? `${Math.round(config.maxTotalExposureFraction * 100)}% portfolio cap` : 'Load strategy settings', tone: 'text-white' },
     { label: 'Loss limit', value: dailyStop > 0 ? fmtUsd(dailyStop) : 'Off', detail: dailyStopped ? 'Daily stop has been reached' : 'Pauses new main-strategy entries', tone: dailyStopped ? 'text-rom-warn' : 'text-white' },
   ];
-  const primaryFacts = [facts[0], facts[1], facts[2], facts[4]];
-  const supportingFacts = [facts[3], facts[5], facts[6], facts[7], facts[8]];
+  const primaryFacts = [facts[0], facts[1], facts[2], facts[3]];
+  const supportingFacts = [facts[4], facts[5], facts[6], facts[7], facts[8], facts[9]];
 
   return <section className={cls('rounded-2xl border p-5', attention ? 'border-rom-warn/40 bg-rom-warn/[0.045]' : 'border-rom-win/30 bg-rom-win/[0.035]')} aria-labelledby="trading-check-title">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

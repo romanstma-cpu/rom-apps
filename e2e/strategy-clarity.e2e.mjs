@@ -16,14 +16,15 @@ try{
  await p.getByText('Needed: Risk limits saved',{exact:true}).waitFor();
  await p.getByRole('button',{name:'Discard changes'}).click();
  await p.getByText('Ready: Risk limits saved',{exact:true}).waitFor();
- await app.evaluate(({ipcMain})=>{ipcMain.removeHandler('trading:status');ipcMain.handle('trading:status',()=>({main:[],mainMode:'paper',mainState:'scanning',mainSummary:'Fixture scanning',mainLastCycleAt:Date.now()/1000,mainFilterCounts:{},mainCandidates:0,mainPlaced:0,mainPaper:{bankrollUsd:1000,availableUsd:1000,pnlUsd:0,open:0,resolved:0}}));});
+ await app.evaluate(({ipcMain})=>{ipcMain.removeHandler('trading:status');ipcMain.handle('trading:status',()=>({main:[],mainMode:'paper',mainState:'scanning',mainSummary:'Fixture scanning',mainLastCycleAt:Date.now()/1000,mainFilterCounts:{},mainCandidates:0,mainPlaced:0,mainPaper:{bankrollUsd:1000,availableUsd:1000,pnlUsd:0,open:0,resolved:0},executionHealth:{state:'closed',blocked:false,reason:'',marketStream:{state:'connected',connected:true,watchedMarkets:1}}}));});
  await p.getByRole('navigation').getByRole('button',{name:'Overview',exact:true}).click();
- await p.getByRole('heading',{name:'Main strategy: scanning.'}).waitFor({timeout:15000});
+ await p.getByRole('heading',{name:'What Polybot is doing'}).waitFor({timeout:15000});
+ await p.getByText('Fixture scanning',{exact:true}).first().waitFor({timeout:15000});
  await app.evaluate(({ipcMain})=>{ipcMain.removeHandler('trading:status');ipcMain.handle('trading:status',()=>{throw Error('Fixture unavailable');});});
- await p.getByRole('heading',{name:'Main strategy: activity unavailable.'}).waitFor({timeout:15000});
+ await p.getByRole('heading',{name:'Activity unavailable',exact:true}).waitFor({timeout:15000});
  assert.equal(await p.getByText('Fixture scanning',{exact:true}).count(),0);
  await p.evaluate(()=>window.rom.backend.stop());
- await p.getByRole('heading',{name:'Main strategy: engine offline.'}).waitFor({timeout:15000});
+ await p.getByRole('heading',{name:'Engine offline',exact:true}).waitFor({timeout:15000});
  assert.deepEqual(errors,[]);
  console.log('PASS: shared scanning status, failed-refresh invalidation, offline precedence, setup, draft gating and no duplicate start switches');
 }finally{await app.close();}
