@@ -3,7 +3,7 @@
 Independent desktop trading app configured for the Polymarket US retail API.
 
 ## Windows app
-Run `release/ROM PolyBot-Setup-2.35.5.exe`, then open ROM PolyBot.
+Run `release/ROM PolyBot-Setup-2.35.6.exe`, then open ROM PolyBot.
 Python and the app runtime are included in the installer.
 
 ## Development

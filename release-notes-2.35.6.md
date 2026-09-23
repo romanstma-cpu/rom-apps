@@ -1,0 +1,3 @@
+ROM PolyBot 2.35.6 makes quiet trading sessions easier to diagnose. The Opportunity funnel shows how many markets had a fresh, warmed momentum window and the strongest observed directional trade cluster beside the live entry threshold. Markets absent from the refreshed catalog age out of the scanner universe instead of consuming watch slots indefinitely.
+
+This release does not lower the $500 live cluster threshold or claim improved returns. Live trading still requires a Polymarket US API key accepted by the exchange and qualified, fee-adjusted strategy evidence. Start in Practice and compare settled outcomes before changing risk or entry settings.
