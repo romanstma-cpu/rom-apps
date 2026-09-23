@@ -86,3 +86,18 @@ def test_scanner_and_stream_share_ranked_nonexpired_market_universe(tmp_path, mo
     assert asyncio.run(scanner.sync_markets()) == 2
     with db.get_db() as conn:
         assert [m['ticker'] for m in db.get_active_markets(conn)] == watched == ['busy', 'quiet']
+
+
+def test_market_dropped_from_catalog_ages_out_of_scanner_universe(tmp_path, monkeypatch):
+    monkeypatch.setattr(db, 'db_path', lambda: tmp_path / 'polybot.db')
+    db.init_db()
+    future = (datetime.now(timezone.utc) + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    with db.get_db() as conn:
+        for ticker in ('current', 'stale'):
+            db.upsert_market(conn, {
+                'ticker': ticker, 'slug': ticker, 'status': 'open',
+                'close_time': future, 'volume': 1_000,
+            })
+        conn.execute("UPDATE markets SET last_updated=? WHERE ticker='stale'",
+                     ((datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),))
+        assert [m['ticker'] for m in db.get_active_markets(conn)] == ['current']

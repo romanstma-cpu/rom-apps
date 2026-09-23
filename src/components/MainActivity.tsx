@@ -21,6 +21,7 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
   const paper = status.mainPaper;
   const funnel = status.opportunityFunnel;
   const tape = funnel?.tradeTape;
+  const momentum = funnel?.momentumDiagnostics;
   const stream = status.executionHealth.marketStream;
   const whaleCategories = funnel?.categoryLimits.whale ?? [];
   const momentumCategories = funnel?.categoryLimits.momentum ?? [];
@@ -81,6 +82,10 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
           : tape.accepted > 0
             ? `Scanner accepted ${tape.accepted.toLocaleString()} trade prints this session. None has passed the current signal thresholds yet.`
             : 'Trade prints were recorded earlier; this scanner session is still collecting its live trade window.'}
+      </p>}
+      {momentum?.observedAt && momentum.readyMarkets !== undefined && <p className="mt-2 text-xs text-rom-muted">
+        Latest momentum scan: {momentum.readyMarkets} of {momentum.marketsScanned ?? 0} markets had a warmed, fresh trade window.
+        {momentum.readyMarkets > 0 && ` Strongest directional flow was $${(momentum.maxDirectionalDollars ?? 0).toFixed(2)} across ${momentum.maxDirectionalTrades ?? 0} trades; a live cluster needs at least ${momentum.minimumTrades ?? 5} trades and $${momentum.minimumDollars ?? 500}.`}
       </p>}
       {(funnel.primaryBlock || whaleCategories.length || momentumCategories.length) && <div className="mt-3 space-y-1 rounded-lg bg-rom-void/35 px-3 py-2.5 text-[11px] text-rom-muted">
         {funnel.primaryBlock && <p><span className="font-medium text-white">Latest block:</span> {funnel.primaryBlock}</p>}

@@ -25,6 +25,7 @@ ALERT_COOLDOWN_MINUTES = 30
 MOMENTUM_YES_MAX_YES_PRICE = 0.50
 MOMENTUM_NO_MIN_YES_PRICE = 0.50
 ALLOWED_MOMENTUM_SIGNALS = {"trade_cluster"}
+last_momentum_diagnostics: dict = {}
 
 
 def _to_float(v) -> float:
@@ -219,10 +220,11 @@ async def sync_markets(*, max_pages: int = 10, connect_stream: bool = True) -> i
     # The momentum scanner itself examines at most 500 markets.  Match the
     # WebSocket watch list to that bounded universe rather than opening extra
     # subscriptions that cannot contribute a signal.
-    if watched and connect_stream:
+    if connect_stream:
         import us_market_stream
         us_market_stream.set_scanner_universe(watched)
-        us_market_stream.start()
+        if watched:
+            us_market_stream.start()
     return count
 
 
@@ -387,6 +389,7 @@ async def scan_whales(cfg: dict) -> tuple[int, list[dict]]:
 
 
 async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
+    global last_momentum_diagnostics
     with db.get_db() as conn:
         # US reference responses may not carry volume24hr.  Fresh stream flow
         # below, not a missing aggregate field, determines whether a market is
@@ -394,6 +397,7 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
         markets = db.get_active_markets(conn, min_volume=0, limit=500)
 
     if not markets:
+        last_momentum_diagnostics = {}
         return 0, []
 
     # The tape is fed by the market stream; this call keeps that stream
@@ -429,6 +433,10 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
 
     now = time.time()
     skipped: Counter[str] = Counter()
+    ready_markets = 0
+    max_directional_dollars = 0.0
+    max_directional_trades = 0
+    cluster_bands = {"over50": 0, "over100": 0, "over250": 0, "over500": 0}
 
     with db.get_db() as conn:
         db.save_snapshots_bulk(conn, markets)
@@ -458,6 +466,15 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
             cluster_dir = window["direction"]
             cluster_count = int(window["cluster_count"])
             cluster_dollars = _to_float(window["cluster_dollars"])
+            ready_markets += 1
+            if cluster_dir:
+                if cluster_dollars > max_directional_dollars:
+                    max_directional_dollars = cluster_dollars
+                    max_directional_trades = cluster_count
+                if cluster_count >= MIN_TRADE_CLUSTER_COUNT:
+                    for label, floor in (("over50", 50), ("over100", 100),
+                                         ("over250", 250), ("over500", 500)):
+                        cluster_bands[label] += int(cluster_dollars >= floor)
 
             signals: list[str] = []
             # A ratio needs a full prior window; a move needs a comparable
@@ -551,6 +568,17 @@ async def scan_momentum(cfg: dict) -> tuple[int, list[dict]]:
                 if row:
                     new_alerts.append(dict(row))
 
+    last_momentum_diagnostics = {
+        "observedAt": now,
+        "marketsScanned": len(markets),
+        "readyMarkets": ready_markets,
+        "maxDirectionalDollars": round(max_directional_dollars, 2),
+        "maxDirectionalTrades": max_directional_trades,
+        "minimumTrades": MIN_TRADE_CLUSTER_COUNT,
+        "minimumDollars": MIN_TRADE_CLUSTER_DOLLARS,
+        "clusterBands": cluster_bands,
+        "skipReasons": dict(skipped.most_common(4)),
+    }
     if skipped:
         # The skip reasons alone cannot distinguish a quiet market from a tape
         # that is discarding every receipt (host clock behind the exchange, a

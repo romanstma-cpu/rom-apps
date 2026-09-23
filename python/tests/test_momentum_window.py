@@ -249,7 +249,7 @@ def _run(cfg=None):
     return asyncio.run(scanner.scan_momentum(cfg))
 
 
-def _fill_cluster(ticker="M1", side="no", price=0.60):
+def _fill_cluster(ticker="M1", side="no", price=0.60, qty=600):
     """Enough fresh one-sided dollar flow to clear the cluster thresholds.
 
     Priced so the contrarian gate admits the signal: a NO signal needs a yes
@@ -258,11 +258,11 @@ def _fill_cluster(ticker="M1", side="no", price=0.60):
     now = T
     for i in range(6):
         momentum_window.tape.add(
-            trade(f"seed{i}", ticker=ticker, at=now, qty=600, side=side, price=price), now)
+            trade(f"seed{i}", ticker=ticker, at=now, qty=qty, side=side, price=price), now)
     later = now + momentum_window.WINDOW + 1
     for i in range(6):
         momentum_window.tape.add(
-            trade(f"live{i}", ticker=ticker, at=later, qty=600, side=side, price=price), later)
+            trade(f"live{i}", ticker=ticker, at=later, qty=qty, side=side, price=price), later)
     return later
 
 
@@ -278,6 +278,18 @@ def test_scanner_emits_a_cluster_alert_from_window_flow(wired, monkeypatch):
     assert count == 1
     assert alerts[0]["signal_type"] == "trade_cluster"
     assert alerts[0]["direction"] == "no"
+
+
+def test_scanner_reports_near_miss_flow_without_creating_live_alert(wired, monkeypatch):
+    at = _fill_cluster(qty=50)
+    monkeypatch.setattr(scanner.time, "time", lambda: at)
+    assert _run() == (0, [])
+    diagnostic = scanner.last_momentum_diagnostics
+    assert diagnostic["readyMarkets"] == 1
+    assert diagnostic["maxDirectionalDollars"] == pytest.approx(120)
+    assert diagnostic["clusterBands"] == {
+        "over50": 1, "over100": 1, "over250": 0, "over500": 0,
+    }
 
 
 def test_alert_records_the_window_measurement_that_produced_it(wired, monkeypatch):

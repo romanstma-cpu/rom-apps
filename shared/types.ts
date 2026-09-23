@@ -687,6 +687,7 @@ export interface TradingStatus {
     tradeEvents: number;
     signalEvents: number;
     tradeTape: { accepted: number; rejected: number; reasons: Record<string, number>; resets: number; rows: number; tickers: number };
+    momentumDiagnostics: { observedAt?: number; marketsScanned?: number; readyMarkets?: number; maxDirectionalDollars?: number; maxDirectionalTrades?: number; minimumTrades?: number; minimumDollars?: number; clusterBands?: Record<string, number>; skipReasons?: Record<string, number> };
     candidates: number;
     filtered: number;
     placed: number;

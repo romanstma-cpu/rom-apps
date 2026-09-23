@@ -986,11 +986,14 @@ def get_market(conn, ticker: str) -> dict | None:
 
 
 def get_active_markets(conn, min_volume: float = 0, limit: int = 500) -> list:
+    now = datetime.now(timezone.utc)
     rows = conn.execute(
         "SELECT * FROM markets WHERE status IN ('active','open') AND volume >= ? "
         "AND (close_time = '' OR close_time > ?) "
+        "AND last_updated >= ? "
         "ORDER BY volume_24h DESC, volume DESC, ticker ASC LIMIT ?",
-        (min_volume, datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), limit),
+        (min_volume, now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+         (now - timedelta(hours=1)).isoformat(), limit),
     ).fetchall()
     return [dict(r) for r in rows]
 

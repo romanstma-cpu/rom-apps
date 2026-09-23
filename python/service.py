@@ -2291,6 +2291,7 @@ async def _h_trading_status(_p: dict) -> dict:
     opportunity.update(
         watchedMarkets=int(stream_health.get("watchedMarkets") or 0),
         tradeTape=momentum_window.tape.stats(),
+        momentumDiagnostics=dict(scanner.last_momentum_diagnostics),
         candidates=int(lc.get("candidates") or 0),
         filtered=filtered,
         placed=int(lc.get("placed") or 0),
