@@ -1,0 +1,3 @@
+ROM PolyBot 2.35.5 fixes two causes of missed momentum opportunities. The scanner and market stream now follow the same non-expired market universe as it refreshes. The trade tape also accepts exchange timestamps up to two seconds ahead of the local receipt clock; affected trades are scored at receipt time, while larger skew and stale trades remain rejected.
+
+The Opportunity funnel now shows whether trade prints were accepted by the scanner or rejected and names the leading rejection reason. Existing live-entry evidence, order-size and risk rules remain in force. This update does not establish that a strategy is profitable, and live trading still requires a valid Polymarket US API key.
