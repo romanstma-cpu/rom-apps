@@ -10,6 +10,8 @@ try{
  await p.getByRole('navigation').getByRole('button',{name:'Strategy',exact:true}).click();
  await p.getByRole('heading',{name:'Your starting setup'}).waitFor();
  assert.equal(await p.getByRole('button',{name:'Start live',exact:true}).isDisabled(),true);
+ await p.getByText('Needed: Qualified live evidence',{exact:true}).waitFor();
+ await p.getByText('Needed: USD buying power',{exact:true}).waitFor();
  await p.getByText('Advanced strategy settings',{exact:false}).click();
  assert.equal(await p.getByText('Auto-trading enabled',{exact:true}).count(),0);
  await p.getByLabel('Maximum per position ($)',{exact:false}).fill('23');

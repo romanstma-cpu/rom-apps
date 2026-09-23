@@ -96,9 +96,9 @@ export function DashboardPage({ onNav }: DashboardProps) {
     });
   } else if (!backend.authOk) {
     issues.push({
-      label: 'Saved API credentials could not connect to Polymarket US',
+      label: backend.authError || 'Saved API credentials could not connect to Polymarket US',
       tone: 'bad',
-      cta: { label: 'Re-test', page: 'api' },
+      cta: { label: 'Open API', page: 'api' },
     });
   } else if (account?.cashUsd === 0) {
     issues.push({

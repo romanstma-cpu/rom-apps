@@ -43,7 +43,7 @@ function matchesPreset(cfg: TraderConfig, preset: TraderConfig): boolean {
 }
 
 export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
-  const { config, refresh, strategies, backend } = useApp();
+  const { account, config, refresh, strategies, backend } = useApp();
   const toast = useToast();
   const activity = useStrategyActivity();
   const [busy, setBusy] = useState(false);
@@ -75,7 +75,11 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
   const executionBlocked = !!activity.status?.executionHealth?.blocked;
   const readinessBlocked = activity.status?.readiness?.status === 'not_ready';
   const canStart = backend.status === 'running' && backend.authOk && activity.healthy && !executionBlocked && !readinessBlocked && !riskDraft && !busy && !busyId;
-  const evidenceBlocked = activity.status?.main.some((gate) => gate.id === 'qualifiedEdge' && !!gate.reason) ?? false;
+  const evidenceGate = activity.status?.main.find((gate) => gate.id === 'qualifiedEdge');
+  const evidenceBlocked = !!evidenceGate?.reason;
+  const evidenceReady = !!evidenceGate && !evidenceBlocked;
+  const buyingPowerReady = !!account && account.cashUsd > 0;
+  const canStartLive = canStart && evidenceReady && buyingPowerReady;
   const changeMode = async (action: () => Promise<void>) => {
     if (switching) return;
     setSwitching(true);
@@ -86,7 +90,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
 
   const toggleTrading = async (): Promise<void> => {
     const next = !tradingOn;
-    if(next && (!canStart || evidenceBlocked))return;
+    if(next && !canStartLive)return;
     const r = await window.rom.trading.setEnabled(next);
     if (!r.ok) {
       toast.error(r.message || 'Failed to toggle the main engine');
@@ -178,7 +182,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
           </button>
           <button
             onClick={() => tradingOn ? void changeMode(toggleTrading) : setLiveReview(true)}
-            disabled={switching || (!tradingOn && (!canStart || evidenceBlocked))}
+            disabled={switching || (!tradingOn && !canStartLive)}
             className={cls(
               tradingOn ? 'rom-btn-danger' : 'rom-btn-primary',
               'min-w-[150px]',
@@ -201,6 +205,8 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
                 ? backend.authError || 'No API credentials connected — open the API page before starting.'
                 : evidenceBlocked && !tradingOn
                   ? 'Live orders need qualified evidence. Start Practice to collect settled outcomes.'
+                : !buyingPowerReady && !tradingOn
+                  ? 'Live orders need available USD buying power. Practice can run with a simulated balance.'
                 : tradingOn
                   ? 'Follows large-trade + momentum signals under the gates below. Affects this engine only.'
                   : paperOn
@@ -209,8 +215,8 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
             </div>
           </div>
         </div>
-        <ul className="mt-5 grid gap-3 border-t border-rom-border pt-4 text-xs sm:grid-cols-3" aria-label="Start checklist">
-          {[[backend.status === 'running', 'Engine online'], [backend.authOk, 'Account connected'], [!riskDraft, 'Risk limits saved']].map(([ready,label]) => <li key={String(label)} className={ready ? 'text-rom-win' : 'text-rom-warn'}>{ready ? 'Ready:' : 'Needed:'} {label}</li>)}
+        <ul className="mt-5 grid gap-3 border-t border-rom-border pt-4 text-xs sm:grid-cols-2 xl:grid-cols-5" aria-label="Start checklist">
+          {[[backend.status === 'running', 'Engine online'], [backend.authOk, 'Account connected'], [!riskDraft, 'Risk limits saved'], [evidenceReady, 'Qualified live evidence'], [buyingPowerReady, 'USD buying power']].map(([ready,label]) => <li key={String(label)} className={ready ? 'text-rom-win' : 'text-rom-warn'}>{ready ? 'Ready:' : 'Needed:'} {label}</li>)}
         </ul>
         <p className="mt-3 text-xs text-rom-muted">{activity.summary}</p>
         {activity.status?.executionHealth && (

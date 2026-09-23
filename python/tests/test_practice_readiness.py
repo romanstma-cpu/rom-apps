@@ -79,6 +79,8 @@ def test_trading_status_reports_practice_and_loss_limit_readiness(tmp_path, monk
     gate = next(g for g in empty["main"] if g["id"] == "buyingPower")
     assert gate["state"] == "blocked"
     assert "Fund your Polymarket US account" in gate["reason"]
+    evidence = next(g for g in empty["main"] if g["id"] == "qualifiedEdge")
+    assert "0 settled event sample(s) recorded" in evidence["reason"]
 
     buying_power[:] = [315, True]
     funded = asyncio.run(service._h_trading_status({}))

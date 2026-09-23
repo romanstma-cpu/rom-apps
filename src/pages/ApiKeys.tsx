@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, ArrowUpRight, CheckCircle2, Circle, Gift, KeyRound, LockKeyhole, Radio, ShieldCheck } from 'lucide-react';
 import type { TradingStatus } from '@shared/types';
 import { Card, Page } from '../components/common';
@@ -22,6 +22,10 @@ export function ApiKeysPage() {
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState('');
   const [preflight, setPreflight] = useState<Preflight | null>(null);
+
+  useEffect(() => {
+    if (backend.authError) setPreflight(null);
+  }, [backend.authError]);
 
   const update = async () => {
     await refresh.credentials();

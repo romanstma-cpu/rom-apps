@@ -1417,7 +1417,7 @@ async def _h_testCredentials(p: dict) -> dict:
         await us_market_stream.stop()
         await us_account_stream.stop()
         await emit_event("backend:authChanged", _auth_event())
-        raise
+        raise ValueError(STATE.auth_error) from exc
     if not ready.get("address"):
         STATE.auth_ok = False
         STATE.auth_error = "Polymarket US did not confirm this API key. Check the API page."
@@ -1425,9 +1425,7 @@ async def _h_testCredentials(p: dict) -> dict:
         await us_market_stream.stop()
         await us_account_stream.stop()
         await emit_event("backend:authChanged", _auth_event())
-        raise RuntimeError(
-            (ready.get("issues") or ["could not connect to Polymarket"])[0]
-        )
+        raise ValueError(STATE.auth_error)
     STATE.auth_ok = True
     STATE.auth_error = ""
     us_market_stream.resume_after_auth()
@@ -2143,10 +2141,12 @@ async def _h_trading_status(_p: dict) -> dict:
             import signal_calibration
             model = await asyncio.to_thread(signal_calibration.load_model)
             has_qualified_group = bool(model.get("bins"))
+            settled_samples = int((model.get("report") or {}).get("eventSamples") or 0)
             gate(
                 "qualifiedEdge", "Qualified live signal evidence",
                 has_qualified_group,
-                "No qualified signal group exists yet. Run Practice to collect "
+                f"{settled_samples} settled event sample(s) recorded; no "
+                "qualified signal group exists yet. Run Practice to collect "
                 "settled outcomes before live orders can pass this safety rule.",
                 off=not enabled,
             )
