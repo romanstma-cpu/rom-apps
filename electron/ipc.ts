@@ -95,43 +95,73 @@ export function registerIpc(): void {
   ipcMain.handle('app:version', () => app.getVersion());
   ipcMain.handle('app:checkForUpdates', async () => {
     const currentVersion = app.getVersion();
-    const response = await fetch(
-      'https://api.github.com/repos/romanstma-cpu/rom-apps/releases/latest',
-      {
-        headers: {
-          Accept: 'application/vnd.github+json',
-          'User-Agent': `ROM-PolyBot/${currentVersion}`,
-        },
-        signal: AbortSignal.timeout(10_000),
-      },
-    );
-    if (!response.ok) throw new Error(`Update server returned ${response.status}`);
-    const data = await response.json() as {
+    // The repository also publishes ROM Trader and Mac CI releases. GitHub's
+    // generic /latest endpoint therefore does not mean "latest PolyBot".
+    const assetPattern = process.platform === 'darwin'
+      ? /^ROM[. ]PolyBot-(\d+\.\d+\.\d+)-arm64\.dmg$/i
+      : /^ROM[. ]PolyBot-Setup-(\d+\.\d+\.\d+)\.exe$/i;
+    type Release = {
       tag_name?: unknown; html_url?: unknown; published_at?: unknown;
+      draft?: unknown; assets?: { name?: unknown }[];
     };
-    const latestVersion = String(data.tag_name || '').replace(/^v/i, '');
-    if (!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(latestVersion)) {
-      throw new Error('Latest release has an invalid version');
+    const releases: Release[] = [];
+    for (let page = 1; page <= 3; page++) {
+      const response = await fetch(
+        `https://api.github.com/repos/romanstma-cpu/rom-apps/releases?per_page=100&page=${page}`,
+        {
+          headers: {
+            Accept: 'application/vnd.github+json',
+            'User-Agent': `ROM-PolyBot/${currentVersion}`,
+          },
+          signal: AbortSignal.timeout(10_000),
+        },
+      );
+      if (!response.ok) throw new Error(`Update server returned ${response.status}`);
+      const batch = await response.json() as unknown;
+      if (!Array.isArray(batch)) throw new Error('Update server returned an invalid release list');
+      releases.push(...batch as Release[]);
+      if (batch.length < 100) break;
     }
-    const parts = (value: string) => value.split(/[+-]/, 1)[0].split('.').map(Number);
+    const parts = (value: string) => value.split('.').map(Number);
+    const compare = (a: string, b: string) => {
+      const left = parts(a), right = parts(b);
+      for (let i = 0; i < 3; i++) {
+        if (left[i] !== right[i]) return left[i] - right[i];
+      }
+      return 0;
+    };
+    let selected: { release: Release; version: string } | null = null;
+    for (const release of releases) {
+      if (!release || release.draft || !Array.isArray(release.assets)) continue;
+      const tag = typeof release.tag_name === 'string' ? release.tag_name : '';
+      for (const asset of release.assets) {
+        const match = typeof asset?.name === 'string' ? asset.name.match(assetPattern) : null;
+        if (!match) continue;
+        if (process.platform === 'darwin' ? !/^polybot-mac-\d+$/.test(tag) : tag !== `v${match[1]}`) continue;
+        if (!selected || compare(match[1], selected.version) > 0) {
+          selected = { release, version: match[1] };
+        }
+      }
+    }
+    if (!selected) throw new Error('No public ROM PolyBot installer was found');
+    const latestVersion = selected.version;
     const current = parts(currentVersion);
     const latest = parts(latestVersion);
     const updateAvailable = [0, 1, 2].some((index) => {
-      if ((latest[index] || 0) === (current[index] || 0)) return false;
-      return (latest[index] || 0) > (current[index] || 0)
-        && [0, 1, 2].slice(0, index).every((prior) =>
-          (latest[prior] || 0) === (current[prior] || 0));
+      if (latest[index] === current[index]) return false;
+      return latest[index] > current[index]
+        && [0, 1, 2].slice(0, index).every((prior) => latest[prior] === current[prior]);
     });
-    const reportedUrl = typeof data.html_url === 'string' ? data.html_url : '';
+    const reportedUrl = typeof selected.release.html_url === 'string' ? selected.release.html_url : '';
     const releaseUrl = reportedUrl.startsWith('https://github.com/romanstma-cpu/rom-apps/releases/')
       ? reportedUrl
-      : 'https://github.com/romanstma-cpu/rom-apps/releases/latest';
+      : `https://github.com/romanstma-cpu/rom-apps/releases/tag/${encodeURIComponent(String(selected.release.tag_name))}`;
     return {
       currentVersion,
       latestVersion,
       updateAvailable,
       releaseUrl,
-      publishedAt: typeof data.published_at === 'string' ? data.published_at : null,
+      publishedAt: typeof selected.release.published_at === 'string' ? selected.release.published_at : null,
     };
   });
   ipcMain.handle('app:openExternal', async (_e, url: string) => {
