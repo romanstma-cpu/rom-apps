@@ -155,7 +155,7 @@ try {
 
   await setSize(1440, 900);
   await p.waitForTimeout(900);
-  await p.screenshot({path: path.join(OUT, '00-onboarding.png')});
+  await p.screenshot({path: path.join(OUT, '00-onboarding.png'), animations: 'disabled', timeout: 60000});
   report.push({page: 'Onboarding', shot: '00-onboarding.png', ...(await p.evaluate(PROBE))});
 
   await p.getByRole('button', {name: 'Continue to API setup'}).click();
@@ -174,7 +174,7 @@ try {
     }
     await p.waitForTimeout(1500);
     const slug = String(i).padStart(2, '0') + '-' + label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    await p.screenshot({path: path.join(OUT, slug + '.png')});
+    await p.screenshot({path: path.join(OUT, slug + '.png'), animations: 'disabled', timeout: 60000});
     report.push({page: label, shot: slug + '.png', ...(await p.evaluate(PROBE)), errors: errs.slice(before)});
     i++;
   }
@@ -187,7 +187,7 @@ try {
     } catch { /* icon rail at narrow width */ }
     await p.waitForTimeout(900);
     const slug = 'narrow-' + label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    await p.screenshot({path: path.join(OUT, slug + '.png')});
+    await p.screenshot({path: path.join(OUT, slug + '.png'), animations: 'disabled', timeout: 60000});
     const a = await p.evaluate(PROBE);
     report.push({page: 'narrow:' + label, shot: slug + '.png', overflowX: a.overflowX, contrast: a.contrast});
   }
