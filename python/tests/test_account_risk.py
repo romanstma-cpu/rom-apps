@@ -60,11 +60,11 @@ def seed_event(event, *, series=""):
         })
 
 
-def seed_position(ticker, cost_usd, *, event="", status="filled"):
+def seed_position(ticker, cost_usd, *, event="", status="filled", paper=False):
     n = next(_ids)
     with db.get_db() as conn:
         return db.insert_bot_position(conn, {
-            "signal_source": "whale", "signal_id": n, "ticker": ticker,
+            "signal_source": "whale", "signal_id": -n if paper else n, "ticker": ticker,
             "event_ticker": event, "direction": "yes", "target_contracts": 10,
             "limit_price_cents": 50, "filled_contracts": 10,
             "cost_usd": cost_usd, "client_order_id": f"ar-{n}",
@@ -213,6 +213,28 @@ def test_group_budget_shrinks_as_related_exposure_grows(fresh_db, cfg):
     with db.get_db() as conn:
         budget = account_risk.group_budget_usd(conn, ENV, "B", "E2", 1000.0, cfg)
     assert budget == pytest.approx(40.0)
+
+
+def test_practice_group_budget_counts_only_simulated_positions(fresh_db, cfg):
+    cfg["max_group_exposure_fraction"] = 0.10
+    seed_market("A", series="TOURNEY", event="E1")
+    seed_market("B", series="TOURNEY", event="E2")
+    seed_market("C", series="TOURNEY", event="E3")
+    seed_position("A", 90.0, event="E1", status="filled")
+    seed_position("B", 60.0, event="E2", status="dry_run", paper=True)
+    seed_position("B", 30.0, event="E2", status="dry_run")
+    with db.get_db() as conn:
+        assert account_risk.group_budget_usd(
+            conn, ENV, "C", "E3", 1000.0, cfg, paper=True,
+        ) == pytest.approx(40.0)
+        assert account_risk.group_budget_usd(
+            conn, ENV, "C", "E3", 1000.0, cfg,
+        ) == pytest.approx(10.0)
+    seed_position("C", 45.0, event="E3", status="dry_run", paper=True)
+    with db.get_db() as conn:
+        assert account_risk.group_budget_usd(
+            conn, ENV, "C", "E3", 1000.0, cfg, paper=True,
+        ) == 0.0
 
 
 def test_full_group_leaves_no_budget(fresh_db, cfg):

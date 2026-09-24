@@ -226,7 +226,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setAppVersion(ver);
       setStrategies(strat);
     };
-    void init();
+    void init().catch((error) => {
+      // Startup data is best-effort. A temporarily unavailable IPC handler
+      // must not leave an unhandled rejection that tears down the renderer.
+      console.error('Initial application state refresh failed', error);
+    });
 
     const offState = window.rom.state.onChange((s) => setState(s));
     const offBackend = window.rom.backend.onInfo((b) => setBackend(b));

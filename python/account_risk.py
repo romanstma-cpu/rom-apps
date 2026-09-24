@@ -56,6 +56,18 @@ GROUP_SQL = """SELECT grp, SUM(usd) AS usd FROM (
                    AND c.network=? AND COALESCE(c.dry_run,0)=0
                ) GROUP BY grp"""
 
+PAPER_GROUP_SQL = """SELECT COALESCE(NULLIF(m.series_ticker,''),
+                                      NULLIF(e.series_ticker,''),
+                                      NULLIF(p.event_ticker,''),
+                                      p.ticker) AS grp,
+                             SUM(CASE WHEN p.cost_usd>0 THEN p.cost_usd
+                                      ELSE p.filled_contracts*p.limit_price_cents/100.0 END) AS usd
+                      FROM bot_positions p LEFT JOIN markets m ON m.ticker=p.ticker
+                           LEFT JOIN events e ON p.event_ticker<>'' AND e.event_ticker=p.event_ticker
+                      WHERE p.resolved=0 AND p.status='dry_run'
+                        AND p.signal_id<0 AND p.network=?
+                      GROUP BY grp"""
+
 
 def _f(value, default=0.0):
     try:
@@ -99,6 +111,11 @@ def group_exposure_usd(conn, env):
     return {str(r['grp']): _f(r['usd']) for r in conn.execute(GROUP_SQL, (env, env)) if r['grp']}
 
 
+def paper_group_exposure_usd(conn, env):
+    """Practice exposure belongs to its simulated bankroll, never live cash."""
+    return {str(r['grp']): _f(r['usd']) for r in conn.execute(PAPER_GROUP_SQL, (env,)) if r['grp']}
+
+
 def cap_bankroll_usd(balance_usd, filled_exposure_usd):
     """The one quantity a group fraction is measured against.
 
@@ -140,14 +157,18 @@ def group_budget_for_key(conn, env, key, bankroll_usd, cfg, used=None):
     return max(0.0, bankroll*fraction-_f(used.get(str(key), 0.0)))
 
 
-def group_budget_usd(conn, env, ticker, event_ticker, bankroll_usd, cfg):
+def group_budget_usd(conn, env, ticker, event_ticker, bankroll_usd, cfg, *, paper=False):
     """Dollars this entry may still add to its correlated group.
 
     Returns 0 when the group is full. A non-positive configured fraction
     disables the control rather than blocking every entry.
     """
+    paper_used = (paper_group_exposure_usd(conn, env)
+                  if paper and _f(cfg.get('max_group_exposure_fraction')) > 0
+                  and _f(bankroll_usd) > 0 else None)
     return group_budget_for_key(
-        conn, env, group_key(conn, ticker, event_ticker), bankroll_usd, cfg)
+        conn, env, group_key(conn, ticker, event_ticker), bankroll_usd, cfg,
+        used=paper_used)
 
 
 def equity_usd(conn, env):

@@ -74,12 +74,14 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
   const paperOn = !!config.mainPaperTrading && !tradingOn;
   const executionBlocked = !!activity.status?.executionHealth?.blocked;
   const readinessBlocked = activity.status?.readiness?.status === 'not_ready';
-  const canStart = backend.status === 'running' && backend.authOk && activity.healthy && !executionBlocked && !readinessBlocked && !riskDraft && !busy && !busyId;
+  const readinessChecks = activity.status?.readiness?.checks;
+  const storageReady = readinessChecks?.database?.status !== 'down' && readinessChecks?.disk?.status !== 'down';
+  const canStartPractice = backend.status === 'running' && backend.authOk && activity.healthy && storageReady && !riskDraft && !busy && !busyId;
   const evidenceGate = activity.status?.main.find((gate) => gate.id === 'qualifiedEdge');
   const evidenceBlocked = !!evidenceGate?.reason;
   const evidenceReady = !!evidenceGate && !evidenceBlocked;
   const buyingPowerReady = !!account && account.cashUsd > 0;
-  const canStartLive = canStart && evidenceReady && buyingPowerReady;
+  const canStartLive = canStartPractice && !executionBlocked && !readinessBlocked && evidenceReady && buyingPowerReady;
   const changeMode = async (action: () => Promise<void>) => {
     if (switching) return;
     setSwitching(true);
@@ -174,7 +176,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => void changeMode(togglePaper)}
-            disabled={switching || (!paperOn && !canStart)}
+            disabled={switching || (!paperOn && !canStartPractice)}
             className={cls(paperOn ? 'rom-btn-danger' : 'rom-btn-default', 'min-w-[145px]')}
           >
             {paperOn ? <Pause className="h-4 w-4" /> : <FlaskConical className="h-4 w-4" />}
@@ -215,7 +217,8 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
             </div>
           </div>
         </div>
-        <ul className="mt-5 grid gap-3 border-t border-rom-border pt-4 text-xs sm:grid-cols-2 xl:grid-cols-5" aria-label="Start checklist">
+        <p className="mt-5 border-t border-rom-border pt-4 text-xs font-medium text-rom-muted">Live readiness · Practice uses simulated funds and does not require qualified live evidence.</p>
+        <ul className="mt-2 grid gap-3 text-xs sm:grid-cols-2 xl:grid-cols-5" aria-label="Start checklist">
           {[[backend.status === 'running', 'Engine online'], [backend.authOk, 'Account connected'], [!riskDraft, 'Risk limits saved'], [evidenceReady, 'Qualified live evidence'], [buyingPowerReady, 'USD buying power']].map(([ready,label]) => <li key={String(label)} className={ready ? 'text-rom-win' : 'text-rom-warn'}>{ready ? 'Ready:' : 'Needed:'} {label}</li>)}
         </ul>
         <p className="mt-3 text-xs text-rom-muted">{activity.summary}</p>
@@ -907,7 +910,7 @@ export function MainEnginePage({ onNav }: { onNav: (page: PageId) => void }) {
       </Section>
 
       </div></details>
-      <LiveReview config={config} readiness={activity.status?.practiceReadiness} open={liveReview} busy={switching} canStart={!!canStart} onClose={()=>setLiveReview(false)} onConfirm={()=>void changeMode(toggleTrading)} />
+      <LiveReview config={config} readiness={activity.status?.practiceReadiness} open={liveReview} busy={switching} canStart={canStartLive} onClose={()=>setLiveReview(false)} onConfirm={()=>void changeMode(toggleTrading)} />
       <NameDialog
         open={saveProfileOpen}
         title="Save these settings as a profile"

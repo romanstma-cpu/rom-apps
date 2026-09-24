@@ -626,6 +626,7 @@ async def _scanner_and_trader_loop() -> None:
     last_trade = 0.0
     last_poll = 0.0
     last_resolve = 0.0
+    last_signal_followup = 0.0
     last_market_sync = 0.0
     last_event_sync = 0.0
     last_account_emit = 0.0
@@ -947,6 +948,15 @@ async def _scanner_and_trader_loop() -> None:
                             ))
         except Exception as e:
             logger.error(f"resolution error: {e}", exc_info=True)
+
+        try:
+            if collect_main and now - last_signal_followup >= 600:
+                last_signal_followup = now
+                resolved = await scanner.resolve_recorded_signal_settlements()
+                if resolved:
+                    logger.info("Recorded %d late signal settlement(s)", resolved)
+        except Exception as exc:
+            logger.warning("Recorded-signal settlement follow-up failed: %s", exc)
 
         try:
             if (

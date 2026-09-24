@@ -89,11 +89,36 @@ function createMainWindow(): BrowserWindow {
     if (/^https?:\/\//i.test(target)) void shell.openExternal(target);
   });
 
+  // A React boundary handles render exceptions, but it cannot recover a
+  // renderer-process crash or a failed Electron navigation. Retry once so a
+  // transient GPU/load failure does not leave the window as a blank surface.
+  // The cap avoids a crash loop when the underlying issue is persistent.
+  let rendererRecoveryUsed = false;
+  const recoverRenderer = (reason: string): void => {
+    console.error(`renderer recovery requested: ${reason}`);
+    if (rendererRecoveryUsed || !mainWindow || mainWindow.isDestroyed()) return;
+    rendererRecoveryUsed = true;
+    setTimeout(() => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      mainWindow.webContents.reloadIgnoringCache();
+    }, 500);
+  };
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    recoverRenderer(`process gone (${details.reason})`);
+  });
+  mainWindow.webContents.on('did-fail-load', (_event, code, description, url) => {
+    if (code !== -3) recoverRenderer(`load ${code}: ${description} (${url})`);
+  });
+
   const url = process.env['VITE_DEV_SERVER_URL'];
   if (url) {
-    void mainWindow.loadURL(url);
+    void mainWindow.loadURL(url).catch((error) => {
+      recoverRenderer(`initial URL load: ${String(error)}`);
+    });
   } else {
-    void mainWindow.loadFile(join(process.env.DIST!, 'index.html'));
+    void mainWindow.loadFile(join(process.env.DIST!, 'index.html')).catch((error) => {
+      recoverRenderer(`initial file load: ${String(error)}`);
+    });
   }
 
   mainWindow.once('ready-to-show', () => {

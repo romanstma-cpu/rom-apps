@@ -86,3 +86,51 @@ def test_age_and_count_pruning(fresh_recorder_db, monkeypatch):
         assert "FRESH" in tickers
         assert "TRIGGER" in tickers
         assert len(tickers) == 6
+
+
+def test_noisy_event_cap_preserves_signal_and_settlement(fresh_recorder_db, monkeypatch):
+    now = time.time()
+    monkeypatch.setattr(main_recorder, "MAX_EVENTS", 4)
+    monkeypatch.setattr(main_recorder, "_last_prune", 0)
+    with db.get_db() as conn:
+        conn.executemany(
+            "INSERT INTO main_replay_events(at,kind,ticker,payload) VALUES (?,?,?,?)",
+            [(now - 50 * 86400, "signal", "S", '{}'),
+             (now - 10 * 86400, "settlement", "S", '{"yes_payout":1}')]
+            + [(now - (9 - i) * 86400, "book", f"B{i}", '{}') for i in range(5)],
+        )
+    main_recorder.record("market", "TRIGGER", {}, at=now)
+    main_recorder.flush()
+    with db.get_db() as conn:
+        rows = conn.execute("SELECT kind,ticker FROM main_replay_events").fetchall()
+    assert ("signal", "S") in [tuple(row) for row in rows]
+    assert ("settlement", "S") in [tuple(row) for row in rows]
+    assert sum(row[0] in ("book", "market") for row in rows) <= 4
+
+
+def test_full_queue_keeps_signal_by_dropping_a_noisy_snapshot(fresh_recorder_db, monkeypatch):
+    monkeypatch.setattr(main_recorder, "MAX_QUEUE", 3)
+    main_recorder.record("book", "B", {})
+    main_recorder.record("market", "M", {})
+    main_recorder.record("trade", "T", {})
+    main_recorder.record("signal", "S", {})
+    assert [(kind, ticker) for _, kind, ticker, _ in main_recorder._queue] == [
+        ("market", "M"), ("trade", "T"), ("signal", "S"),
+    ]
+    assert main_recorder._dropped == 1
+
+
+def test_pending_signal_markets_only_returns_unsettled_older_candidates(fresh_recorder_db):
+    now = time.time()
+    with db.get_db() as conn:
+        conn.executemany(
+            "INSERT INTO main_replay_events(at,kind,ticker,payload) VALUES (?,?,?,?)",
+            [(now - 40 * 86400, "signal", "LATE", '{}'),
+             (now - 40 * 86400, "signal", "DONE", '{}'),
+             (now - 2 * 86400, "settlement", "DONE", '{"yes_payout":0}'),
+             (now - 40 * 86400, "signal", "VOID", '{}'),
+             (now - 2 * 86400, "settlement", "VOID", '{"yes_payout":0.5}'),
+             (now - 5 * 86400, "signal", "FRESH", '{}'),
+             (now - 65 * 86400, "signal", "EXPIRED", '{}')],
+        )
+    assert [row["ticker"] for row in main_recorder.pending_signal_markets(now)] == ["LATE"]

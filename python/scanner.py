@@ -8,6 +8,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 import db
+import main_recorder
 import polymarket_api
 from categorize import (
     CATEGORY_EDGE, POLYMARKET_CATEGORY_MAP, categorize_by_keywords, is_micro_market,
@@ -26,6 +27,7 @@ MOMENTUM_YES_MAX_YES_PRICE = 0.50
 MOMENTUM_NO_MIN_YES_PRICE = 0.50
 ALLOWED_MOMENTUM_SIGNALS = {"trade_cluster"}
 last_momentum_diagnostics: dict = {}
+_signal_settlement_retry_at: dict[str, float] = {}
 
 
 def _to_float(v) -> float:
@@ -665,4 +667,51 @@ async def resolve_whales_from_markets() -> int:
                 conn, t["id"], correct, 1.0 if correct else 0.0, pnl
             )
             resolved += 1
+    return resolved
+
+
+async def resolve_recorded_signal_settlements(*, limit: int = 20,
+                                              now: float | None = None) -> int:
+    """Follow older recorded candidates without a live position or deposit.
+
+    The normal alert resolver stops after 30 days, while calibration uses 60.
+    Only signals recorded before their outcome are eligible; this never
+    retroactively creates a candidate from a known settlement.
+    """
+    now = time.time() if now is None else now
+    monotonic_now = time.monotonic()
+    for ticker, retry_at in list(_signal_settlement_retry_at.items()):
+        if retry_at <= monotonic_now:
+            del _signal_settlement_retry_at[ticker]
+    checked = resolved = 0
+    for row in main_recorder.pending_signal_markets(now):
+        ticker = row['ticker']
+        if ticker in _signal_settlement_retry_at:
+            continue
+        close_time = row.get('close_time') or ''
+        if close_time:
+            try:
+                close_at = datetime.fromisoformat(
+                    close_time.replace('Z', '+00:00')
+                )
+                if close_at.tzinfo is None:
+                    close_at = close_at.replace(tzinfo=timezone.utc)
+                if close_at.timestamp() > now:
+                    continue
+            except ValueError:
+                pass
+        if checked >= limit:
+            break
+        checked += 1
+        _signal_settlement_retry_at[ticker] = monotonic_now + 3600
+        try:
+            market = await polymarket_api.fetch_market(ticker)
+            if market and market.get('status') == 'settled' and market.get('result') in ('yes', 'no'):
+                resolved += 1
+        except Exception as exc:
+            logger.warning('Recorded-signal settlement check failed for %s: %s',
+                           ticker, type(exc).__name__)
+    if resolved:
+        # Make the outcome visible to the model before another follow-up run.
+        await asyncio.to_thread(main_recorder.flush)
     return resolved

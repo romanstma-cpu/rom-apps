@@ -605,7 +605,7 @@ async def execute_signal(
         # exposure read so both describe one consistent account state.
         group_budget = account_risk.group_budget_usd(
             conn, env, signal["ticker"], signal.get("event_ticker") or "",
-            max(0.0, balance_usd)+max(0.0, filled_exposure), cfg,
+            max(0.0, balance_usd)+max(0.0, filled_exposure), cfg, paper=paper,
         )
         if group_budget <= 0:
             logger.info(

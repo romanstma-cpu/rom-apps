@@ -85,7 +85,7 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
       </p>}
       {momentum?.observedAt && momentum.readyMarkets !== undefined && <p className="mt-2 text-xs text-rom-muted">
         Latest momentum scan: {momentum.readyMarkets} of {momentum.marketsScanned ?? 0} markets had a warmed, fresh trade window.
-        {momentum.readyMarkets > 0 && ` Strongest directional flow was $${(momentum.maxDirectionalDollars ?? 0).toFixed(2)} across ${momentum.maxDirectionalTrades ?? 0} trades; a live cluster needs at least ${momentum.minimumTrades ?? 5} trades and $${momentum.minimumDollars ?? 500}.`}
+        {momentum.readyMarkets > 0 && ` Strongest directional flow was $${(momentum.maxDirectionalDollars ?? 0).toFixed(2)} across ${momentum.maxDirectionalTrades ?? 0} trades; a cluster signal needs at least ${momentum.minimumTrades ?? 5} trades and $${momentum.minimumDollars ?? 500}.`}
       </p>}
       {(funnel.primaryBlock || whaleCategories.length || momentumCategories.length) && <div className="mt-3 space-y-1 rounded-lg bg-rom-void/35 px-3 py-2.5 text-[11px] text-rom-muted">
         {funnel.primaryBlock && <p><span className="font-medium text-white">Latest block:</span> {funnel.primaryBlock}</p>}
@@ -111,7 +111,7 @@ export function MainActivity({ onOpenStrategy }: { onOpenStrategy: () => void })
 
     {status.mainMode === 'paper' && <p className="mt-4 flex gap-2 border-t border-rom-border pt-3 text-[11px] leading-5 text-rom-dim">
       <FlaskConical className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-      Practice fills assume the selected entry price plus 1¢ per contract. They are estimates, not exchange fills.
+      Practice fills assume the selected entry price plus the applicable Polymarket US taker fee. They are estimates, not exchange fills.
     </p>}
   </Card>;
 }

@@ -1,14 +1,35 @@
 import { _electron as electron } from 'playwright-core';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { mkdirSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 const executablePath = process.argv[2];
 if (!executablePath) throw new Error('Pass the packaged app executable path');
 const profile = mkdtempSync(join(tmpdir(), 'rom-mac-smoke-'));
-const app = await electron.launch({executablePath, args: [`--user-data-dir=${profile}`]});
+const roaming = join(profile, 'Roaming');
+const local = join(profile, 'Local');
+mkdirSync(roaming);
+mkdirSync(local);
+const app = await electron.launch({
+  executablePath,
+  args: [`--user-data-dir=${profile}`],
+  env: {...process.env, APPDATA: roaming, LOCALAPPDATA: local},
+});
 try {
+  if (process.platform === 'win32') {
+    const runtime = await app.evaluate(({app}) => ({
+      executablePath: process.execPath,
+      userData: app.getPath('userData'),
+      localAppData: process.env.LOCALAPPDATA,
+    }));
+    assert.equal(resolve(runtime.executablePath).toLowerCase(), resolve(executablePath).toLowerCase(),
+      'Packaged smoke test attached to a different app process');
+    assert.equal(resolve(runtime.userData).toLowerCase(), resolve(profile).toLowerCase(),
+      'Packaged smoke test must use an isolated user data directory');
+    assert.equal(resolve(runtime.localAppData).toLowerCase(), resolve(local).toLowerCase(),
+      'Packaged smoke test must use an isolated settings vault');
+  }
   const page = await app.firstWindow();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));

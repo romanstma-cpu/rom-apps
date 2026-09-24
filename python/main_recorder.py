@@ -14,6 +14,7 @@ _book_at = {}
 _last_prune = 0
 _last_blocker = ('', 0.0)
 MAX_QUEUE = 20000
+MAX_EVENTS = 500000
 FEATURE_VERSION = 'candidate-book-v2'
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS main_replay_events (
@@ -42,6 +43,14 @@ def record(kind, ticker, payload, *, at=None):
     event = (time.time() if at is None else at,kind,ticker,json.dumps(payload,allow_nan=False))
     with _lock:
         if len(_queue) >= MAX_QUEUE:
+            if kind not in ('book', 'market'):
+                # A busy quote feed must not crowd out the rare signal or
+                # settlement needed to evaluate the strategy later.
+                noisy = next((i for i, queued in enumerate(_queue)
+                              if queued[1] in ('book', 'market')), None)
+                if noisy is not None:
+                    del _queue[noisy]
+                    _queue.append(event)
             _dropped += 1
         else:
             _queue.append(event)
@@ -69,7 +78,15 @@ def flush():
             now = time.time()
             if now-_last_prune >= 60:
                 c.execute('DELETE FROM main_replay_events WHERE at < ?', (now-60*86400,))
-                c.execute('DELETE FROM main_replay_events WHERE id < COALESCE((SELECT id FROM main_replay_events ORDER BY at DESC, id DESC LIMIT 1 OFFSET 499999),0)')
+                # Books and market snapshots are plentiful; do not let them
+                # evict scarce precommitted signals, trades, or settlements
+                # before the 60-day evidence window has elapsed.
+                c.execute(
+                    "DELETE FROM main_replay_events WHERE kind IN ('book','market') "
+                    'AND id < COALESCE((SELECT id FROM main_replay_events '
+                    'ORDER BY at DESC, id DESC LIMIT 1 OFFSET ?),0)',
+                    (MAX_EVENTS - 1,),
+                )
                 _last_prune = now
     except Exception:
         with _lock:
@@ -86,6 +103,37 @@ def load(since_days, *, end=None):
     if len(rows) > 100000:
         raise ValueError('Replay exceeds 100,000 recorded events. Choose a shorter history window.')
     return [{**dict(r),'payload':json.loads(r['payload'])} for r in rows]
+
+
+def pending_signal_markets(now=None):
+    """Find precommitted signals past the normal 30-day resolver window."""
+    init()
+    now = time.time() if now is None else now
+    oldest, youngest = now-60*86400, now-30*86400
+    with db.get_db() as conn:
+        settled = set()
+        for row in conn.execute(
+            "SELECT ticker,payload FROM main_replay_events "
+            "WHERE kind='settlement' AND at>=?", (oldest,),
+        ):
+            try:
+                raw_payout = json.loads(row['payload']).get('yes_payout')
+            except (TypeError, ValueError, AttributeError):
+                continue
+            payout = None if isinstance(raw_payout, bool) else _finite(raw_payout)
+            # A fractional final payout is unscorable for the binary model,
+            # but the market is settled and should not be polled again.
+            if payout is not None and 0 <= payout <= 1:
+                settled.add(row['ticker'])
+        rows = conn.execute(
+            "SELECT e.ticker, MIN(e.at) first_at, "
+            "MAX(COALESCE(m.close_time,'')) close_time "
+            "FROM main_replay_events e LEFT JOIN markets m ON m.ticker=e.ticker "
+            "WHERE e.kind='signal' AND e.at>=? AND e.at<? "
+            "AND e.ticker<>'' GROUP BY e.ticker ORDER BY first_at",
+            (oldest, youngest),
+        ).fetchall()
+    return [dict(row) for row in rows if row['ticker'] not in settled]
 
 
 def _finite(value):
