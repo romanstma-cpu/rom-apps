@@ -1,0 +1,3 @@
+ROM PolyBot 2.35.9 clarifies why live trading cannot start. The Strategy checklist now shows whether qualified signal evidence and USD buying power are available, and the Evidence gate reports how many settled event samples it has recorded. A rejected Polymarket US API key appears as an actionable replacement-key message in the connection test and Overview rather than leaving a stale no-funds preflight on screen.
+
+This release does not change entry rules or make an unverified strategy profitable. Live orders still require a valid Polymarket US API key, available buying power, and qualified evidence. Practice remains available with a simulated balance while evidence accumulates.
