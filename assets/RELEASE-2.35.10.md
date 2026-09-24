@@ -1,0 +1,5 @@
+ROM PolyBot 2.35.10 makes Practice usable with a connected Polymarket US API and no money in the account. Practice uses a simulated bankroll and can start while live buying power or live execution readiness is unavailable. Live trading remains gated by account funds and qualified evidence.
+
+This release improves the evidence used to judge strategy changes. Busy market snapshots no longer evict recorded signals and settlements during the 60-day evidence window or when the recorder queue fills. Older recorded signals can be matched to public Polymarket US settlement results without placing an order. Practice's correlated-position limit now counts simulated positions separately from live positions, and its fee description reflects the applicable US taker fee.
+
+The desktop window also has a visible recovery screen for renderer errors and a bounded reload attempt after a renderer-process or navigation failure. These changes do not establish that the strategy is profitable or increase the number of qualifying market signals by themselves.
