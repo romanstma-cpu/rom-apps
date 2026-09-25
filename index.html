@@ -20,6 +20,7 @@
   <meta name="twitter:image" content="https://romapps.xyz/assets/rom-polybot-overview-2.35.11.png">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/market-stage.css">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"ROM Polybot","softwareVersion":"2.35.11","operatingSystem":["Windows 10","Windows 11","macOS 15 or later"],"applicationCategory":"FinanceApplication","url":"https://romapps.xyz/#polybot","downloadUrl":"https://github.com/romanstma-cpu/rom-apps/releases/download/v2.35.11/ROM.PolyBot-Setup-2.35.11.exe","description":"A Polymarket US desktop workspace to scan markets, practice with simulated funds, inspect evidence and choose when to enable live trading.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 </head>
@@ -38,7 +39,7 @@
       <div class="wrap hero-inner" id="polybot">
         <p class="eyebrow hero-eyebrow"><span class="eyebrow-line"></span> ROM / THE TRADING DESK</p>
         <div class="hero-intro">
-          <h1 id="hero-title">Markets move fast.<br><span>You stay in command.</span></h1>
+          <h1 id="hero-title"><span class="title-line">Markets move.</span><span class="title-line title-accent">Stay in command.</span></h1>
           <div class="hero-side">
             <p>Polybot scans Polymarket US, lets you practice with simulated funds, and shows why its strategy waits or trades.</p>
             <div class="hero-actions"><a class="button button-primary" href="#download-polybot">Download Polybot <span aria-hidden="true">↗</span></a><a class="button button-text" href="#how-it-works">See how it works <span aria-hidden="true">↓</span></a></div>
@@ -50,10 +51,23 @@
           <a href="https://polymarket.us/join/romanr" target="_blank" rel="noopener noreferrer sponsored">View offer <span aria-hidden="true">↗</span><span class="sr-only"> Opens in a new tab.</span></a>
         </aside>
 
-        <div class="terminal-stage" aria-label="ROM Polybot desktop preview">
-          <div class="terminal-top"><span class="terminal-brand"><span class="terminal-indicator" aria-hidden="true"></span> ROM POLYBOT <span class="terminal-divider">/</span> WORKSPACE</span><span>ACTUAL DESKTOP APP · 2.35.11</span></div>
-          <a class="terminal-preview" href="assets/rom-polybot-overview-2.35.11.png" target="_blank" rel="noopener" aria-label="View full-size screenshot of the ROM Polybot desktop app (opens in a new tab)"><img src="assets/rom-polybot-overview-2.35.11.png" width="1440" height="900" alt="ROM Polybot Overview showing its paused strategy, decision cycle, and account metrics" fetchpriority="high"><span class="scan-pass" aria-hidden="true"></span></a>
-          <div class="terminal-bottom"><span>REAL SCREEN · TRADING STARTS PAUSED</span><span class="terminal-bottom-actions"><a href="assets/rom-polybot-overview-2.35.11.png" target="_blank" rel="noopener">Full-size preview <span aria-hidden="true">↗</span></a><button id="replay-preview" type="button" aria-label="Replay preview animation">Replay motion <span aria-hidden="true">↻</span></button></span></div>
+        <div class="product-theater">
+          <div class="theater-wordmark" aria-hidden="true">POLYBOT</div>
+          <div class="theater-orbit" aria-hidden="true"></div>
+          <div class="theater-glow" aria-hidden="true"></div>
+          <div class="showcase-heading"><span>YOUR DESK. EVERY ANGLE.</span><span>EXPLORE THE APP <span aria-hidden="true">↓</span></span></div>
+          <div class="terminal-stage" aria-label="ROM Polybot desktop preview">
+            <div class="terminal-top"><span class="terminal-brand"><span class="terminal-indicator" aria-hidden="true"></span> ROM POLYBOT</span><span>ACTUAL DESKTOP APP · 2.35.11</span></div>
+            <div class="preview-controls" role="group" aria-label="Choose an app screenshot">
+              <button type="button" class="preview-choice" data-preview="overview" aria-pressed="true"><span aria-hidden="true">01</span> Workspace</button>
+              <button type="button" class="preview-choice" data-preview="practice" aria-pressed="false"><span aria-hidden="true">02</span> Practice &amp; risk</button>
+              <button type="button" class="preview-choice" data-preview="evidence" aria-pressed="false"><span aria-hidden="true">03</span> Evidence</button>
+            </div>
+            <a class="terminal-preview" id="preview-image-link" href="assets/rom-polybot-overview-2.35.11.png" target="_blank" rel="noopener" aria-label="View full-size Workspace screenshot (opens in a new tab)"><img id="preview-image" src="assets/rom-polybot-overview-2.35.11.png" width="1440" height="900" alt="ROM Polybot Overview showing its paused strategy, decision cycle, and account metrics" fetchpriority="high"><span class="scan-pass" aria-hidden="true"></span><span class="preview-expand" aria-hidden="true">EXPAND VIEW ↗</span></a>
+            <div class="preview-caption" aria-live="polite" aria-atomic="true"><div><span id="preview-kicker">01 / WORKSPACE</span><h2 id="preview-title">The whole picture. One place.</h2></div><p id="preview-description">Your account, strategy, and latest decisions at a glance. Trading starts paused.</p></div>
+            <p class="preview-status" id="preview-status" role="status"></p>
+            <div class="terminal-bottom"><span>REAL APP SCREENS · 2.35.11</span><span class="terminal-bottom-actions"><a id="preview-full-size" href="assets/rom-polybot-overview-2.35.11.png" target="_blank" rel="noopener">Full-size preview <span aria-hidden="true">↗</span><span class="sr-only"> Opens in a new tab.</span></a><button id="replay-preview" type="button" aria-label="Replay preview animation">Replay motion <span aria-hidden="true">↻</span></button></span></div>
+          </div>
         </div>
       </div>
     </section>
@@ -109,7 +123,7 @@
     </section>
   </main>
 
-  <footer class="footer"><div class="wrap footer-inner"><div><a class="brand" href="#top" aria-label="ROM Apps home"><img src="assets/rom-icon-nav.png" width="32" height="32" loading="lazy" alt=""><span>ROM<span class="brand-apps"> APPS</span></span></a><p>Trading tools built by ROM.</p></div><div class="footer-links"><a href="#download-polybot">Polybot</a><a href="#apps">All apps</a><a href="code-signing-policy.html">Verification &amp; support</a><a href="https://github.com/romanstma-cpu/rom-apps">GitHub <span aria-hidden="true">↗</span></a></div><small>© 2026 ROM Apps</small></div></footer>
+  <footer class="footer"><div class="wrap footer-inner"><div><a class="brand" href="#top" aria-label="ROM Apps home"><img src="assets/rom-icon-nav.png" width="32" height="32" loading="lazy" alt=""><span>ROM<span class="brand-apps"> APPS</span></span></a><p>Trading tools built by ROM.</p></div><div class="footer-links"><a href="#download-polybot">Polybot</a><a href="#apps">All apps</a><a href="code-signing-policy.html">Verification &amp; support</a><a href="https://github.com/romanstma-cpu/rom-apps">GitHub <span aria-hidden="true">↗</span></a></div><small>© 2026 ROM Apps</small></div><div class="wrap footer-wordmark" aria-hidden="true">ROM APPS<span>↗</span></div></footer>
   <script src="assets/market-stage.js" defer></script>
 </body>
 </html>
