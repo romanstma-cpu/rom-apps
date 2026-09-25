@@ -5,6 +5,8 @@ deserve characterisation tests even though the constants are heuristic.
 """
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 import scanner
@@ -175,3 +177,26 @@ class TestParseDaysToClose:
         past = datetime.now(timezone.utc) - timedelta(days=1)
         d = _parse_days_to_close(past.strftime("%Y-%m-%dT%H:%M:%SZ"))
         assert d == 0.0
+
+
+class TestLargeTradeFreshness:
+    def test_requires_recent_exchange_timestamp(self):
+        now = datetime.now(timezone.utc)
+        clock = now.timestamp()
+        assert scanner._recent_large_trade({"created_time": now.isoformat()}, clock)
+        assert not scanner._recent_large_trade({"created_time": (now - timedelta(minutes=2)).isoformat()}, clock)
+        assert not scanner._recent_large_trade({"created_time": (now + timedelta(seconds=10)).isoformat()}, clock)
+        assert not scanner._recent_large_trade({"created_time": now.replace(tzinfo=None).isoformat()}, clock)
+
+    @pytest.mark.asyncio
+    async def test_scan_drops_old_print_before_creating_a_signal(self, monkeypatch):
+        old_time = (datetime.now(timezone.utc) - timedelta(minutes=2)).isoformat()
+
+        async def old_prints(limit):
+            return [{"trade_id": "delayed-print", "ticker": "event-slug", "slug": "event-slug",
+                     "created_time": old_time, "count_fp": 5000, "yes_price_dollars": .8,
+                     "no_price_dollars": .2, "taker_side": "yes"}]
+
+        monkeypatch.setattr(scanner.polymarket_api, "fetch_recent_trades", old_prints)
+        monkeypatch.setattr(scanner.db, "get_db", lambda: pytest.fail("stale print reached the database"))
+        assert await scanner.scan_whales({}) == (0, [])

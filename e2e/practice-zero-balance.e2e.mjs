@@ -61,8 +61,29 @@ try {
   await page.waitForFunction(async () => (await window.rom.config.get()).mainPaperTrading === true);
   const config = await page.evaluate(() => window.rom.config.get());
   assert.equal(config.enableTrading, false);
+  const practiceStatus = {
+    ...blockedStatus,
+    mainMode: 'paper',
+    executionHealth: {
+      ...blockedStatus.executionHealth,
+      blocked: false,
+      marketStream: {...blockedStatus.executionHealth.marketStream, state: 'connected', watchedMarkets: 1},
+    },
+    readiness: {...blockedStatus.readiness, status: 'ready'},
+  };
+  await app.evaluate(({ipcMain}, fixture) => {
+    ipcMain.removeHandler('trading:status');
+    ipcMain.handle('trading:status', () => fixture);
+  }, practiceStatus);
+  await page.getByRole('navigation').getByRole('button', {name: 'Overview', exact: true}).click();
+  const readiness = page.getByRole('heading', {name: 'Trade readiness'}).locator('..');
+  await page.waitForFunction(() => document.body.textContent?.includes('Practice checks clear'));
+  assert.match(await readiness.innerText(), /Practice checks clear/i);
+  const liveNeeds = page.getByText('Live trading still needs:', {exact: false}).locator('..');
+  assert.match(await liveNeeds.innerText(), /More settled evidence needed/);
+  assert.match(await liveNeeds.innerText(), /buying power/i);
   assert.deepEqual(errors, []);
-  console.log('PASS: zero-balance Practice can start while live execution and evidence are blocked');
+  console.log('PASS: zero-balance Practice works and Overview keeps live requirements separate');
 } finally {
   await app.close();
 }

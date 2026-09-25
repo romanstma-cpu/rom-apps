@@ -125,13 +125,13 @@ export function OnboardingModal({onDone}:{onDone:()=>void}) {
               <Gift className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold">New to Polymarket US? Get $50 to trade.</p>
+              <p className="text-sm font-semibold">New to Polymarket US? See the current offer.</p>
               <p className="mt-1 text-xs leading-relaxed text-rom-muted">
                 Join with referral code{' '}
                 <span className="font-semibold text-rom-text">
                   {POLYMARKET_REFERRAL_CODE}
                 </span>{' '}
-                and make a qualifying $10 deposit to unlock the current reward.
+                to see the amount, eligibility and qualifying steps set by Polymarket US.
               </p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export function OnboardingModal({onDone}:{onDone:()=>void}) {
             className="rom-btn-default mt-4 w-full"
             onClick={() => void window.rom.app.openExternal(POLYMARKET_REFERRAL_URL)}
           >
-            Claim new-user offer
+            View current offer
             <ArrowUpRight className="h-4 w-4" />
           </button>
           <p className="mt-3 text-xs leading-relaxed text-rom-muted">

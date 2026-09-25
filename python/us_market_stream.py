@@ -118,15 +118,17 @@ def ingest(message):
     side=(trade.get('taker') or {}).get('side')
     if side not in ('ORDER_SIDE_BUY','ORDER_SIDE_SELL'): return
     if not (0<px<1) or not math.isfinite(qty) or qty<=0: return
-    _last_trade_at=time.monotonic()
     # Stable exchange payload fingerprint avoids duplicates after reconnect.
     tid=hashlib.sha256(json.dumps(trade,sort_keys=True).encode()).hexdigest()
     normalized={'trade_id':tid,'ticker':trade['marketSlug'],'slug':trade['marketSlug'],
                     'created_time':trade.get('tradeTime',''),'count_fp':qty,'yes_price_dollars':px,
                     'no_price_dollars':1-px,'taker_side':'yes' if side=='ORDER_SIDE_BUY' else 'no'}
-    # Existing consumers keep their own age policy; momentum requires fresh,
-    # unique receipts and maintains a separate bounded ten-minute tape.
-    momentum_window.tape.add(normalized,time.time())
+    # Share the tape's timestamp and replay checks with the Large Trade queue.
+    # A delayed print must not become a new signal merely because it arrived
+    # over a live socket; the scanner otherwise timestamps it on insertion.
+    if not momentum_window.tape.add(normalized,time.time()):
+        return
+    _last_trade_at=time.monotonic()
     main_recorder.record('trade',trade['marketSlug'],{'id':tid,'trade':trade})
     _trades.append(normalized)
 

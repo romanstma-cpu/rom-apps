@@ -9,7 +9,7 @@ momentum tape, so its guards are safety-critical:
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -124,14 +124,23 @@ class TestIngestNormalization:
         assert len(stream._trades) == 1
 
     def test_tape_deduplicates_same_trade(self):
-        """_trades appends every payload; dedup lives at tape.ids level."""
+        """Replayed receipts cannot become a second Large Trade candidate."""
         t = _trade()
         stream.ingest({"trade": t})
         stream.ingest({"trade": t})
-        # _trades gets both (append-only)
-        assert len(stream._trades) == 2
-        # but tape has one entry (fingerprint-based dedup)
+        assert len(stream._trades) == 1
         assert len(momentum_window.tape.ids) == 1
+
+    @pytest.mark.parametrize("offset", [-31, 3])
+    def test_stale_or_future_trade_is_not_scanned(self, offset):
+        stamped = (datetime.now(timezone.utc) + timedelta(seconds=offset)).isoformat()
+        stream.ingest({"trade": _trade(time_iso=stamped)})
+        assert stream.recent(10) == []
+        assert stream.health()["bufferedTrades"] == 0
+
+    def test_trade_without_timezone_is_not_scanned(self):
+        stream.ingest({"trade": _trade(time_iso="2026-09-25T12:00:00")})
+        assert stream.recent(10) == []
 
     def test_fingerprint_is_stable_across_reconnects(self):
         t = _trade()
@@ -151,7 +160,7 @@ class TestIngestNormalization:
     def test_fingerprint_matches_expected_sha256(self):
         import hashlib, json
         t = _trade(price="0.50", qty="1.0", side="ORDER_SIDE_BUY",
-                   time_iso="2026-09-10T00:00:00Z")
+                   time_iso=_now_iso())
         stream.ingest({"trade": t})
         row = stream._trades[0]
         expected = hashlib.sha256(json.dumps(t, sort_keys=True).encode()).hexdigest()

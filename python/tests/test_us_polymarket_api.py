@@ -1,6 +1,7 @@
 import base64
 import json
 import uuid
+from datetime import datetime, timezone
 import httpx
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -156,7 +157,7 @@ async def test_zero_size_levels_are_not_quotable(monkeypatch):
 
 def test_us_trade_stream_normalizes_taker():
     stream.ingest({'trade':{'marketSlug':'example','price':{'value':'.6'},'quantity':{'value':'50'},
-        'tradeTime':'2026-09-08T00:00:00Z','taker':{'side':'ORDER_SIDE_SELL'}}})
+        'tradeTime':datetime.now(timezone.utc).isoformat(),'taker':{'side':'ORDER_SIDE_SELL'}}})
     t=stream.recent(1)[0]
     assert t['taker_side']=='no' and t['count_fp']==50
     assert t['no_price_dollars']==.4

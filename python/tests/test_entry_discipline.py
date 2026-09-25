@@ -54,6 +54,19 @@ def test_failed_balance_refresh_stops_cycle_before_signal_selection(monkeypatch)
     assert "Balance unavailable" in trader.last_cycle["skipReason"]
 
 
+def test_paused_cycle_clears_old_funnel_counts(monkeypatch):
+    monkeypatch.setattr(trader, "last_cycle", {
+        "skipReason": None, "filterCounts": {"old filter": 2},
+        "candidates": 3, "placed": 1, "at": 1, "traceId": "old",
+    })
+    cfg = merge_with_defaults({"enable_trading": False, "main_paper_trading": False})
+    assert asyncio.run(trader.scan_for_trades(cfg)) == []
+    assert trader.last_cycle["skipReason"] == "Main strategy is paused"
+    assert trader.last_cycle["filterCounts"] == {}
+    assert trader.last_cycle["candidates"] == 0
+    assert trader.last_cycle["placed"] == 0
+
+
 @pytest.mark.parametrize("second_side,second_confidence,healthy_after_entry,expected", [
     ("no", 80, True, 0), ("no", 10, True, 1), ("yes", 80, True, 2),
     ("yes", 80, False, 1),

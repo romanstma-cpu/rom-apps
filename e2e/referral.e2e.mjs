@@ -26,17 +26,17 @@ try {
     if (message.type() === 'error') errors.push(message.text());
   });
 
-  await page.getByText('New to Polymarket US? Get $50 to trade.').waitFor();
+  await page.getByText('New to Polymarket US? See the current offer.').waitFor();
   await page.getByText('ROMANR', { exact: true }).waitFor();
-  await page.getByText('qualifying $10 deposit', { exact: false }).waitFor();
-  await page.getByRole('button', { name: 'Claim new-user offer' }).waitFor();
+  await page.getByText('amount, eligibility and qualifying steps', { exact: false }).waitFor();
+  await page.getByRole('button', { name: 'View current offer' }).waitFor();
   await page.getByRole('button', { name: 'Continue to API setup' }).click();
   await page.getByRole('button', { name: 'API', exact: true }).click();
-  await page.getByRole('heading', { name: 'Get $50 to trade' }).waitFor();
-  await page.getByRole('button', { name: 'Claim offer' }).waitFor();
+  await page.getByRole('heading', { name: 'See the current offer' }).waitFor();
+  await page.getByRole('button', { name: 'View current offer' }).waitFor();
 
   if (errors.length) throw new Error(`renderer console errors: ${errors.join(' | ')}`);
-  console.log('Referral offer is visible in onboarding and API setup with code ROMANR and the $10 condition.');
+  console.log('Current referral offer is visible in onboarding and API setup with code ROMANR.');
 } finally {
   await app.close();
   fs.rmSync(sandbox, { recursive: true, force: true });

@@ -988,6 +988,11 @@ async def _scan_for_trades_traced(cfg: dict, trace_id: str) -> list[dict]:
 
     def _skip_log(reason: str) -> None:
         last_cycle["skipReason"] = reason
+        # An early exit is a new decision cycle, not a continuation of the
+        # previous scan. Keep its visible funnel from showing old placements.
+        last_cycle["filterCounts"] = {}
+        last_cycle["candidates"] = 0
+        last_cycle["placed"] = 0
         last_cycle["at"] = time.time()
         last_cycle["traceId"] = trace_id
         main_recorder.blocker(reason)

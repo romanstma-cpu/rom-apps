@@ -26,6 +26,10 @@ ALERT_COOLDOWN_MINUTES = 30
 MOMENTUM_YES_MAX_YES_PRICE = 0.50
 MOMENTUM_NO_MIN_YES_PRICE = 0.50
 ALLOWED_MOMENTUM_SIGNALS = {"trade_cluster"}
+# The stream accepts prints within 30 seconds of exchange time. A scan may
+# follow several seconds later, but a delayed cycle must not turn old prints
+# into new Large Trade signals with a fresh database insertion timestamp.
+MAX_LARGE_TRADE_SIGNAL_AGE_SECONDS = 60
 last_momentum_diagnostics: dict = {}
 _signal_settlement_retry_at: dict[str, float] = {}
 
@@ -37,6 +41,17 @@ def _to_float(v) -> float:
         return float(v)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _recent_large_trade(trade: dict, now: float) -> bool:
+    try:
+        stamp = datetime.fromisoformat(str(trade["created_time"]).replace("Z", "+00:00"))
+        if stamp.tzinfo is None:
+            return False
+        age = now - stamp.timestamp()
+        return -momentum_window.MAX_FORWARD_SKEW <= age <= MAX_LARGE_TRADE_SIGNAL_AGE_SECONDS
+    except (KeyError, ValueError, TypeError, OverflowError):
+        return False
 
 
 def _parse_days_to_close(close_time: str) -> float | None:
@@ -260,6 +275,8 @@ async def scan_whales(cfg: dict) -> tuple[int, list[dict]]:
 
     candidates: list[dict] = []
     for t in raw:
+        if not _recent_large_trade(t, time.time()):
+            continue
         count_fp = _to_float(t.get("count_fp", 0))
         yes_p = _to_float(t.get("yes_price_dollars", 0))
         no_p = _to_float(t.get("no_price_dollars", 0))
@@ -302,6 +319,8 @@ async def scan_whales(cfg: dict) -> tuple[int, list[dict]]:
     with db.get_db() as conn:
         for entry in candidates:
             t = entry["raw"]
+            if not _recent_large_trade(t, time.time()):
+                continue
             trade_id = t.get("trade_id", "")
             if not trade_id or db.whale_trade_exists(conn, trade_id):
                 continue
