@@ -14,6 +14,8 @@ Base palette and typography are in index.html. Homepage refinements are in asset
 
 All navigation uses native links; motion replay is a native button. Motion runs once under three seconds; reduced-motion disables it. Content remains visible without JavaScript. Mobile stacks the preview below the main action and offers a share/copy handoff because Polybot needs a desktop. Windows and Apple Silicon downloads have equal, clearly labelled platform choices. The three-step product walkthrough uses real app screenshots and explicitly distinguishes simulated Practice from live trading. Referral remains a dedicated high-contrast section with eligibility language tied to the live Polymarket US offer page.
 
+The walkthrough links directly to Polymarket US key creation. Essential mobile download details and verification links remain readable and touchable. Nova and Trader share the market-tools shelf; Scribe is grouped separately as a nontrading ROM utility. The download-help page gives platform-specific checksum steps and points to Apple's current first-launch guidance. The 404 page keeps the same navy, blue and mint palette and returns to the actual apps anchor.
+
 ## Scope
 
 This is homepage presentation only. Downloads, Nova routes, desktop application, account access and trading behavior remain owned by their existing implementations.

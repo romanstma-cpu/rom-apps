@@ -3,27 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Page not found — ROM</title>
+<title>Page not found — ROM Apps</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#0b0812">
+<meta name="theme-color" content="#0b1018">
 <meta name="color-scheme" content="dark">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&family=Space+Grotesk:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
-    --void: #0b0812;
-    --panel: #151020;
-    --border: #2a2140;
-    --text: #ece7f5;
-    --muted: #8d84a3;
-    --violet: #7c3aed;
-    --pink: #ff2d9a;
-    --mono: "IBM Plex Mono", Consolas, monospace;
+    --void: #0b1018;
+    --panel: #121b28;
+    --border: #a1c7ff33;
+    --text: #eef3fb;
+    --muted: #a7b5c8;
+    --blue: #a1c7ff;
+    --mint: #8de0c5;
+    --mono: Consolas, "SFMono-Regular", monospace;
   }
 
   body {
@@ -33,12 +30,12 @@
     padding: 32px;
     background: var(--void);
     color: var(--text);
-    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-family: "Segoe UI", system-ui, sans-serif;
     line-height: 1.6;
     text-align: center;
   }
 
-  .card { max-width: 520px; }
+  .card { width: min(100%, 520px); padding: 36px; border: 1px solid var(--border); border-radius: 18px; background: var(--panel); }
 
   img { width: 56px; height: 56px; border-radius: 14px; }
 
@@ -47,13 +44,14 @@
     font-family: var(--mono);
     font-size: 13px;
     letter-spacing: 2px;
-    color: var(--pink);
+    color: var(--mint);
   }
 
   h1 {
-    font-family: "Unbounded", sans-serif;
+    font-weight: 650;
     font-size: clamp(28px, 6vw, 40px);
     line-height: 1.15;
+    letter-spacing: -.035em;
     margin: 8px 0 14px;
   }
 
@@ -79,14 +77,15 @@
   }
 
   a.primary {
-    background: linear-gradient(135deg, var(--violet), var(--pink));
+    background: var(--blue);
     border-color: transparent;
-    color: #fff;
+    color: var(--void);
   }
 
-  a:hover { filter: brightness(1.2); }
+  a:hover { filter: brightness(1.12); }
 
-  a:focus-visible { outline: 2px solid var(--pink); outline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
+  @media(max-width:420px) { body { padding: 16px; } .card { padding: 28px 20px; } }
 </style>
 </head>
 <body>
@@ -94,10 +93,10 @@
     <img src="/assets/rom-icon-nav.png" alt="ROM logo">
     <div class="code">ERROR 404</div>
     <h1>That page doesn't exist.</h1>
-    <p>The link may be out of date, or the file may have moved. Everything ROM publishes is listed on the board.</p>
+    <p>The link may be out of date, or the file may have moved. Find the current apps and downloads on the homepage.</p>
     <div class="actions">
       <a class="primary" href="/">Back to ROM</a>
-      <a href="/#board">See the board</a>
+      <a href="/#apps">Browse apps</a>
     </div>
   </div>
 </body>
