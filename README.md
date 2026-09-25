@@ -6,7 +6,7 @@ The independently built Nova web application lives under `nova/`; preserve that 
 
 ## Polybot downloads
 
-The current Windows download is attached to `v2.35.10`; the current macOS 15 Apple Silicon download is attached to `polybot-mac-46`. Their SHA-256 hashes are in `assets/SHA256SUMS-Polybot-2.35.10.txt` and `assets/POLYBOT-MAC-CHECKSUMS-2.35.10.txt`. Intel Mac builds are not distributed. Versioned filenames prevent stale browser caches from serving a different build under the same name. The corresponding source and release notes are maintained in the ROM Polybot desktop workspace; the legacy Python code under `polybot/` is not the source of this desktop release.
+The current Windows download is attached to `v2.35.11`; the current macOS 15 Apple Silicon download is attached to `polybot-mac-47`. Their SHA-256 hashes are in `assets/SHA256SUMS-Polybot-2.35.11.txt` and `assets/POLYBOT-MAC-CHECKSUMS-2.35.11.txt`. Intel Mac builds are not distributed. Versioned filenames prevent stale browser caches from serving a different build under the same name. The corresponding source and release notes are maintained in the ROM Polybot desktop workspace; the legacy Python code under `polybot/` is not the source of this desktop release.
 
 When publishing a new build, update the homepage metadata, download link, screenshot and verification page together. Verify the downloaded artifact against the locally built installer before announcing availability. Check the live Polymarket US referral page before changing offer copy; its bonus amount and terms are controlled by Polymarket US.
 
