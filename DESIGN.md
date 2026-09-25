@@ -1,21 +1,19 @@
 # ROM Apps design context
 
-Marketing homepage for independent trading tools. Audience: traders exploring automated strategies, including phone visitors. The primary job is helping a visitor understand and choose a ROM Polybot desktop download; the referral and other apps remain visible but secondary. Preserve product limitations and referral eligibility language.
+ROM Apps is a marketing site for independent trading tools. Its primary job is to help someone understand ROM Polybot and choose the correct desktop download. Nova, Trader, and Scribe form a smaller secondary shelf. Visitors include phone users who need a simple way to share the download page with a computer. The Polymarket US referral must remain noticeable and disclose that ROM may receive a reward.
 
 ## Visual direction
 
-Amplify the existing navy, icy blue and mint identity. A real Polybot desktop screenshot is the signature hero artifact, with a brief perspective entrance and light sweep. Never fabricate trading performance or present decorative graphics as live market data.
+The actual Polybot workspace is the signature artifact. The homepage gives that screenshot one large, framed appearance in the hero; other product screenshots remain small and secondary. The page should feel like a calm trading desk: deep navy space, precise hairline rules, restrained mint status accents, and broad icy-blue actions. Grid and light-sweep decoration frame the real product rather than posing as market data. Do not fabricate trading results or imply profitable live returns have been demonstrated.
 
 ## Runtime ownership
 
-Base palette and typography are in index.html. Homepage refinements are in assets/market-stage.css. Navy #0b1018, surface #121b28, foreground #eef3fb, secondary #a7b5c8, blue #a1c7ff, mint #8de0c5. Preserve the installed system sans stack for this scoped enhancement. Display uses heavier weight; supporting content stays quiet. Compact monospace labels describe real trading workflows and platforms, not decorative market data. Use the optimized ROM icon for browser and navigation surfaces.
+The homepage structure and metadata live in `index.html`. `assets/market-stage.css` owns all homepage styling and the `:root` tokens: background `#090f19`, surface `#101b29`, text `#f3f7fd`, secondary text `#b0bfd0`, action blue `#b7d7ff`, and signal mint `#91e2c8`. Display type uses the platform display stack; body copy uses the platform UI stack; compact metadata uses a monospace stack. `assets/market-stage.js` owns motion replay, once-only section reveals, and mobile sharing. The separate app pages and Nova application keep their own styling.
 
-## Interaction
+## Content hierarchy
 
-All navigation uses native links; motion replay is a native button. Motion runs once under three seconds; reduced-motion disables it. Content remains visible without JavaScript. Mobile stacks the preview below the main action and offers a share/copy handoff because Polybot needs a desktop. Windows and Apple Silicon downloads have equal, clearly labelled platform choices. The three-step product walkthrough uses real app screenshots and explicitly distinguishes simulated Practice from live trading. Referral remains a dedicated high-contrast section with eligibility language tied to the live Polymarket US offer page.
+The first screen states Polybot's purpose, presents one download action, keeps the ROMANR offer visible with its disclosure, and shows a real app screenshot. The next section offers equal Windows and Apple Silicon choices, checksums, release notes, and installation guidance. A short Connect → Practice → Inspect sequence explains the workflow. Smaller cards introduce Nova, Trader, and Scribe. FAQ disclosures hold the longer requirements and risk explanations. Preserve links to the official Polymarket US API and referral pages, the latest verified installers, and checksums.
 
-The walkthrough links directly to Polymarket US key creation. Essential mobile download details and verification links remain readable and touchable. A compact referral teaser appears in the mobile hero before the app preview; the full referral card retains eligibility and reward disclosure. The referral amount is not hard-coded because Polymarket US controls and changes it. Nova and Trader share the market-tools shelf; Scribe is grouped separately as a nontrading ROM utility. The download-help page gives platform-specific checksum steps and points to Apple's current first-launch guidance. The 404 page keeps the same navy, blue and mint palette and returns to the actual apps anchor.
+## Motion and access
 
-## Scope
-
-This is homepage presentation only. Downloads, Nova routes, desktop application, account access and trading behavior remain owned by their existing implementations.
+The hero entrance and one light sweep run once. A replay button restarts that short moment. Lower sections reveal only after entering view, with content visible by default if JavaScript is unavailable. Animation moves opacity and transforms only; reduced-motion disables it and hides replay. Native links, buttons, details, visible focus, readable contrast, and a 320px mobile layout remain baseline requirements. Phone visitors can share the download page; Polybot itself remains a desktop app.
