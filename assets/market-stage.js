@@ -7,27 +7,21 @@ const previewViews = {
     image: 'assets/rom-polybot-overview-2.35.11.png',
     fullSize: 'assets/rom-polybot-overview-2.35.11.png',
     label: 'Workspace',
-    kicker: '01 / WORKSPACE',
-    title: 'The whole picture. One place.',
-    description: 'Your account, strategy, and latest decisions at a glance. Trading starts paused.',
+    description: 'Your account and strategy at a glance. Trading starts paused.',
     alt: 'ROM Polybot Overview showing its paused strategy, decision cycle, and account metrics',
   },
   practice: {
     image: 'assets/polybot-practice-2.35.11.webp',
     fullSize: 'assets/polybot-practice-2.35.11.png',
     label: 'Practice and risk',
-    kicker: '02 / PRACTICE & RISK',
-    title: 'Set the limits. Then explore.',
-    description: 'Choose risk settings and start Practice with simulated funds before committing real money.',
+    description: 'Set risk limits and start Practice with simulated funds.',
     alt: 'ROM Polybot Strategy setup showing risk settings and separate Start practice and Start live controls',
   },
   evidence: {
     image: 'assets/polybot-evidence-2.35.11.webp',
     fullSize: 'assets/polybot-evidence-2.35.11.png',
     label: 'Evidence',
-    kicker: '03 / EVIDENCE',
-    title: 'See what backs the decision.',
-    description: 'Inspect recorded results and data limits. This screen shows the initial state, before settled samples.',
+    description: 'Inspect results and data limits. Shown before any settled samples.',
     alt: 'ROM Polybot Evidence screen in its initial state with zero settled samples and account diagnostics',
   },
 };
@@ -63,8 +57,6 @@ async function selectPreview(key) {
     previewLink.href = view.fullSize;
     previewLink.setAttribute('aria-label', `View full-size ${view.label} screenshot (opens in a new tab)`);
     document.querySelector('#preview-full-size').href = view.fullSize;
-    document.querySelector('#preview-kicker').textContent = view.kicker;
-    document.querySelector('#preview-title').textContent = view.title;
     document.querySelector('#preview-description').textContent = view.description;
     for (const button of previewButtons) {
       button.setAttribute('aria-pressed', String(button.dataset.preview === key));
@@ -94,32 +86,6 @@ if (previewImage && previewLink && previewStatus && previewButtons.length) {
   // Each native button stays in the tab order; Enter/Space selects a screen.
   stage?.classList.add('preview-ready');
 }
-
-const theater = document.querySelector('.product-theater');
-const precisePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-let glowFrame = 0;
-theater?.addEventListener('pointermove', (event) => {
-  if (reducedMotion.matches || !precisePointer.matches || event.pointerType === 'touch') return;
-  cancelAnimationFrame(glowFrame);
-  glowFrame = requestAnimationFrame(() => {
-    const bounds = theater.getBoundingClientRect();
-    theater.style.setProperty('--glow-x', `${((event.clientX - bounds.left) / bounds.width - .5) * 48}px`);
-    theater.style.setProperty('--glow-y', `${((event.clientY - bounds.top) / bounds.height - .5) * 32}px`);
-  });
-});
-theater?.addEventListener('pointerleave', () => {
-  cancelAnimationFrame(glowFrame);
-  theater.style.removeProperty('--glow-x');
-  theater.style.removeProperty('--glow-y');
-});
-
-document.querySelector('#replay-preview')?.addEventListener('click', () => {
-  if (!stage || reducedMotion.matches) return;
-  stage.classList.remove('replaying');
-  // Restart the short entrance and light sweep without adding a looping effect.
-  void stage.offsetWidth;
-  stage.classList.add('replaying');
-});
 
 if ('IntersectionObserver' in window && !reducedMotion.matches) {
   const sections = document.querySelectorAll('[data-reveal]');
