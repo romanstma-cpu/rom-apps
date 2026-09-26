@@ -1,0 +1,30 @@
+name: Check downloads and update feeds
+
+# Follows every installer link on the site and checks the update feeds that
+# installed ROM Trader and ROM Nova read. A failed run emails the repository
+# owner, which is the point: a broken download link is otherwise invisible
+# until a visitor reports it.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  push:
+    branches: [main]
+    paths: ["index.html", "code-signing-policy.html", "scripts/site.py"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check installer links and update feeds
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/site.py downloads
