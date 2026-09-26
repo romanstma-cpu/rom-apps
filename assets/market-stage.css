@@ -341,6 +341,17 @@ html.motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0
 .doc code { font-family: var(--font-data); font-size: .92em; }
 .doc-note { padding: 2px 0 2px 18px; border-left: 3px solid var(--mint); }
 .doc-updated { margin-top: 52px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--dim); font: 600 11px/1.5 var(--font-data); letter-spacing: .08em; text-transform: uppercase; }
+.doc h3 { margin: 24px 0 10px; font-size: 18px; font-weight: 650; letter-spacing: -.02em; }
+.doc ul { margin: 0 0 14px; padding-left: 20px; }
+.doc li { margin-bottom: 6px; }
+.version-index { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 22px; }
+.version-index a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); font: 600 11px/1 var(--font-data); }
+.version-index a:hover { border-color: var(--blue); color: var(--text); }
+.release { padding-top: 34px; border-top: 1px solid var(--line); }
+.release h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.release-current { padding: 5px 8px; border: 1px solid #91e2c866; border-radius: 6px; color: var(--mint); font: 700 10px/1 var(--font-data); letter-spacing: .12em; }
+.release-files { color: var(--dim); font-size: 13px; }
+.release-files a { margin-left: 10px; }
 .notfound { padding-block: 110px 130px; }
 .notfound .hero-actions { margin-top: 32px; }
 

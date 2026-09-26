@@ -1,0 +1,1 @@
+ROM Polybot 2.31.0 renames Whale signals to Large Trade Signals, adds clearer public-order-flow guidance, and surfaces category filters that are blocking recent opportunities. Includes the Windows installer and SHA-256 checksum.
