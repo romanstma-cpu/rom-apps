@@ -8,7 +8,7 @@ The direction is a sleek, uncluttered trading desk: strong display type, mint-to
 
 ## Runtime ownership
 
-The homepage structure and metadata live in `index.html`. `assets/market-stage.css` owns all homepage styling and the `:root` tokens: background `#090f19`, surface `#101b29`, text `#f3f7fd`, secondary text `#b0bfd0`, action blue `#b7d7ff`, signal mint `#91e2c8`, and Nova blue `#9ed5ff`. Display type uses self-hosted Space Grotesk (22 KB, SIL OFL, `assets/fonts/`); body copy uses the platform UI stack; metadata uses monospace. `assets/market-stage.js` owns screenshot selection, the shared enlarged preview, once-only reveals, and mobile sharing. The Nova application keeps its own styling. No framework or animation dependency is required.
+The homepage structure and metadata live in `index.html`. `assets/market-stage.css` owns all homepage styling and the `:root` tokens: background `#090f19`, surface `#101b29`, text `#f3f7fd`, secondary text `#b0bfd0`, action blue `#b7d7ff`, signal mint `#91e2c8`, and Nova blue `#9ed5ff`. Display type uses self-hosted Space Grotesk (22 KB, SIL OFL, `assets/fonts/`); body copy uses the platform UI stack; metadata uses monospace. `assets/market-stage.js` owns screenshot selection, the shared enlarged preview, once-only reveals, and mobile sharing. The verification and 404 pages reuse the homepage header, footer and tokens from the same stylesheet; the 404 page uses root-absolute URLs because Pages serves it at any depth. The Nova application keeps its own styling. No framework or animation dependency is required.
 
 ## Content hierarchy
 

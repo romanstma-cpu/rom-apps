@@ -1,103 +1,35 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Page not found — ROM Apps</title>
-<meta name="robots" content="noindex">
-<meta name="theme-color" content="#0b1018">
-<meta name="color-scheme" content="dark">
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  :root {
-    --void: #0b1018;
-    --panel: #121b28;
-    --border: #a1c7ff33;
-    --text: #eef3fb;
-    --muted: #a7b5c8;
-    --blue: #a1c7ff;
-    --mint: #8de0c5;
-    --mono: Consolas, "SFMono-Regular", monospace;
-  }
-
-  body {
-    min-height: 100vh;
-    display: grid;
-    place-items: center;
-    padding: 32px;
-    background: var(--void);
-    color: var(--text);
-    font-family: "Segoe UI", system-ui, sans-serif;
-    line-height: 1.6;
-    text-align: center;
-  }
-
-  .card { width: min(100%, 520px); padding: 36px; border: 1px solid var(--border); border-radius: 18px; background: var(--panel); }
-
-  img { width: 56px; height: 56px; border-radius: 14px; }
-
-  .code {
-    margin-top: 22px;
-    font-family: var(--mono);
-    font-size: 13px;
-    letter-spacing: 2px;
-    color: var(--mint);
-  }
-
-  h1 {
-    font-weight: 650;
-    font-size: clamp(28px, 6vw, 40px);
-    line-height: 1.15;
-    letter-spacing: -.035em;
-    margin: 8px 0 14px;
-  }
-
-  p { color: var(--muted); font-size: 15px; }
-
-  .actions {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 26px;
-  }
-
-  a {
-    padding: 11px 22px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-size: 14px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: filter 0.15s;
-  }
-
-  a.primary {
-    background: var(--blue);
-    border-color: transparent;
-    color: var(--void);
-  }
-
-  a:hover { filter: brightness(1.12); }
-
-  a:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
-  @media(max-width:420px) { body { padding: 16px; } .card { padding: 28px 20px; } }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found — ROM Apps</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#090f19">
+  <!-- Served for a missing path at any depth, so every URL here is root-absolute. -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/market-stage.css?v=viewer-2">
 </head>
 <body>
-  <div class="card">
-    <img src="/assets/rom-icon-nav.png" alt="ROM logo">
-    <div class="code">ERROR 404</div>
-    <h1>That page doesn't exist.</h1>
-    <p>The link may be out of date. Explore ROM Polybot for Polymarket US or ROM Nova for Solana research.</p>
-    <div class="actions">
-      <a class="primary" href="/#polybot">ROM Polybot</a>
-      <a href="/#nova-h">ROM Nova</a>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <nav class="wrap nav" aria-label="Main navigation">
+      <a class="brand" href="/" aria-label="ROM Apps home"><img src="/assets/rom-icon-nav.png" width="36" height="36" alt=""><span>ROM<span class="brand-apps"> APPS</span></span></a>
+      <div class="nav-links"><a href="/#polybot">Polybot</a><a href="/#nova-h">Nova</a><a class="nav-cta" href="/#download-polybot">Get Polybot <span aria-hidden="true">↗</span></a></div>
+    </nav>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <div class="wrap doc notfound">
+      <p class="eyebrow">ERROR 404</p>
+      <h1>That page doesn’t exist.</h1>
+      <p class="doc-intro">The link may be out of date. Explore ROM Polybot for Polymarket US or ROM Nova for Solana research.</p>
+      <div class="hero-actions"><a class="button button-primary" href="/#polybot">ROM Polybot <span aria-hidden="true">↗</span></a><a class="button button-outline" href="/#nova-h">ROM Nova</a></div>
     </div>
-  </div>
+  </main>
+
+  <footer class="footer"><div class="wrap footer-inner"><a class="brand" href="/" aria-label="ROM Apps home"><img src="/assets/rom-icon-nav.png" width="32" height="32" loading="lazy" alt=""><span>ROM<span class="brand-apps"> APPS</span></span></a><div class="footer-links"><a href="/changelog.html">Release notes</a><a href="/code-signing-policy.html">Verification &amp; support</a><a href="https://github.com/romanstma-cpu/rom-apps">GitHub <span aria-hidden="true">↗</span></a></div><small>© 2026 ROM Apps</small></div></footer>
 </body>
 </html>

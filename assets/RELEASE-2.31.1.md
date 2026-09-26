@@ -1,0 +1,1 @@
+Bugfix release: prevents Polymarket US buying power from having pending orders deducted twice, and fixes non-monotonic large-trade size scoring. Includes regression tests, the Windows installer, and SHA-256 checksum.
