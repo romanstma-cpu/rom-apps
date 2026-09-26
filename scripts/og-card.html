@@ -17,16 +17,15 @@
     color: var(--text); font-family: "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased;
   }
   .grid { position: absolute; inset: 0; opacity: .3; background-image: linear-gradient(#a6d0f012 1px, transparent 1px), linear-gradient(90deg, #a6d0f012 1px, transparent 1px); background-size: 60px 60px; mask-image: linear-gradient(180deg, #000a, transparent 85%); }
-  .orbit { position: absolute; left: 380px; top: 150px; width: 1000px; height: 420px; border: 1px solid #91e2c83b; border-radius: 50%; transform: rotate(-14deg); }
   .copy { position: absolute; left: 64px; top: 60px; width: 560px; }
   .brand { display: flex; align-items: center; gap: 14px; font: 760 22px/1 "Space Grotesk"; letter-spacing: .075em; }
   .brand img { width: 46px; height: 46px; border-radius: 12px; box-shadow: 0 0 25px #8acbff30; }
   .brand span { color: var(--dim); font-size: 12px; letter-spacing: .23em; }
-  .eyebrow { margin-top: 58px; display: flex; align-items: center; gap: 12px; color: var(--mint); font: 700 14px/1 Consolas, "Liberation Mono", monospace; letter-spacing: .16em; }
-  .eyebrow::before { content: ""; width: 26px; height: 1px; background: var(--mint); }
+  .eyebrow { margin-top: 50px; display: flex; align-items: center; gap: 12px; color: var(--mint); font: 700 14px/1 Consolas, "Liberation Mono", monospace; letter-spacing: .16em; }
+  .eyebrow img { width: 30px; height: 30px; border-radius: 8px; }
   h1 { margin-top: 22px; font: 600 66px/1.04 "Space Grotesk"; letter-spacing: -.06em; }
-  h1 span { display: block; color: var(--mint); }
-  p { margin-top: 22px; max-width: 31ch; color: var(--muted); font-size: 22px; line-height: 1.45; }
+  h1 span { display: block; background: linear-gradient(110deg, #c5f5df, var(--mint) 60%, var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  p { margin-top: 22px; max-width: 34ch; color: var(--muted); font-size: 21px; line-height: 1.45; }
   .chips { position: absolute; left: 64px; bottom: 54px; display: flex; gap: 10px; }
   .chips span { padding: 9px 15px; border: 1px solid #afc9e150; border-radius: 8px; background: #101b29cc; color: var(--muted); font: 600 14px/1 Consolas, "Liberation Mono", monospace; letter-spacing: .04em; }
   .chips span:last-child { color: var(--blue); border-color: #b7d7ff70; }
@@ -38,14 +37,13 @@
 </head>
 <body>
   <div class="grid"></div>
-  <div class="orbit"></div>
   <div class="copy">
     <div class="brand"><img src="../assets/rom-icon-nav.png" alt="">ROM <span>APPS</span></div>
-    <div class="eyebrow">ROM POLYBOT / POLYMARKET US</div>
+    <div class="eyebrow"><img src="../assets/app-polybot-small.png" alt="">ROM POLYBOT / POLYMARKET US</div>
     <h1>Markets move.<span>Stay in command.</span></h1>
-    <p>Scan markets, practice with simulated funds, and inspect the evidence before you trade live.</p>
+    <p>Your Polymarket US trading desk. Scan markets, practice with simulated funds, and see what drives each decision.</p>
   </div>
-  <div class="chips"><span>WINDOWS · APPLE SILICON</span><span>FREE</span><span>ROMAPPS.XYZ</span></div>
+  <div class="chips"><span>FREE · WINDOWS &amp; APPLE SILICON</span><span>ROMAPPS.XYZ</span></div>
   <div class="stage">
     <div class="stage-top"><i></i>ROM POLYBOT · ACTUAL DESKTOP APP</div>
     <img src="../assets/rom-polybot-overview-2.35.11.webp" alt="">

@@ -85,7 +85,7 @@ START HERE
   #announcements     read-only · announcement channel, so other servers can follow releases
 
 HELP & FEEDBACK
-  #support           one channel for all three apps
+  #support           one channel for both apps
   #bugs-and-requests confirmed bugs get promoted to GitHub Issues
   #showcase
 
@@ -114,7 +114,7 @@ pinned message states plainly that nobody from ROM will ever DM first and that
 no real request for an API key exists. Say it before it happens, not after.
 
 **The honesty notice.** It repeats what the apps' own docs already say: no ROM
-app has demonstrated a profitable edge, Polybot and Trader start without live
+app has demonstrated a profitable edge, Polybot starts without live
 orders, and Nova labels the parts of its data that are simulated. The site refuses to imply a profit; the Discord has to hold the same line,
 because a community is exactly where that erodes first.
 

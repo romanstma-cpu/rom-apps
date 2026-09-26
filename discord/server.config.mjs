@@ -106,7 +106,6 @@ export const STRUCTURE = [
 const apps = [
   ["ROM Polybot", "Polymarket US desktop app for Windows and Apple Silicon Macs. Scan markets, practice with simulated funds, and inspect the evidence before you allow live orders.", `${SITE}/#download-polybot`],
   ["ROM Nova", "Solana research terminal. Runs in your browser, no install; a Windows app is also available.", `${GH}/rom-nova`],
-  ["ROM Trader", "Kalshi strategy tester. Starts in dry-run; its published study found every measured strategy lost after fees.", `${GH}/rom-trader`],
 ];
 
 export const POSTS = {
@@ -121,7 +120,7 @@ export const POSTS = {
       `**Everything** → ${SITE}`,
       `**Try Nova right now, no install** → ${SITE}/nova/`,
       "",
-      "Nova and Trader are open source under MIT. Read the code, fork it, or tell me it is wrong.",
+      "Nova is open source under MIT. Read the code, fork it, or tell me it is wrong.",
     ].join("\n"),
   },
 
@@ -153,7 +152,7 @@ export const POSTS = {
       "",
       "**Nobody from ROM will ever DM you first.** Not for support, not to verify anything, not about a giveaway.",
       "",
-      "**Nobody will ever ask for your API key, private key, seed phrase, wallet, or password.** There is no situation where that is a real request. Polybot encrypts your Polymarket US keys on your own computer with a key held in the operating system's credential store. ROM Trader stores your Kalshi key encrypted with Windows DPAPI and sends it only to Kalshi.",
+      "**Nobody will ever ask for your API key, private key, seed phrase, wallet, or password.** There is no situation where that is a real request. Polybot encrypts your Polymarket US keys on your own computer with a key held in the operating system's credential store.",
       "",
       `**Download only from ${SITE} or the GitHub releases linked above.** Every release publishes a SHA-256 so you can check the file is byte-for-byte the one that was built. The steps are at ${SITE}/code-signing-policy.html`,
       "",
@@ -171,9 +170,7 @@ export const POSTS = {
       "",
       "**ROM Nova** reads real Solana data from public sources. The parts it cannot get for free, wallet activity and smart-money scoring, run on a simulation that is labelled wherever it appears. Nova places no trades.",
       "",
-      "**ROM Trader** has no demonstrated edge — measured, written down, and published in its own `docs/STRATEGY-FINDINGS.md`. It ships in dry-run and places no real orders until you supply your own key and explicitly enable live mode.",
-      "",
-      "**None of them is financial advice** and none is a prediction engine. If that disappoints you, that is the honest version, and it will keep being the honest version here.",
+      "**Neither is financial advice** and neither is a prediction engine. If that disappoints you, that is the honest version, and it will keep being the honest version here.",
     ].join("\n"),
   },
 
@@ -188,7 +185,7 @@ export const POSTS = {
       "• **The exact error text** if there is one. A screenshot of the Logs page beats a description of it.",
       "• Windows or macOS version, if it looks like an install or permissions problem.",
       "",
-      "Never paste an API key, private key or seed phrase — not even a partial one, not even to prove a point. If you already have, revoke it at Polymarket US or Kalshi now and generate a new one.",
+      "Never paste an API key, private key or seed phrase — not even a partial one, not even to prove a point. If you already have, revoke it at Polymarket US now and generate a new one.",
     ].join("\n"),
   },
 
@@ -202,7 +199,7 @@ export const POSTS = {
       "",
       "Feature requests are welcome in the same channel. Say what you are trying to *do*, not just what button you want — the underlying problem is often solvable a better way.",
       "",
-      `Issues: [Polybot](${GH}/rom-apps/issues) · [Nova](${GH}/rom-nova/issues) · [Trader](${GH}/rom-trader/issues)`,
+      `Issues: [Polybot](${GH}/rom-apps/issues) · [Nova](${GH}/rom-nova/issues)`,
     ].join("\n"),
   },
 };

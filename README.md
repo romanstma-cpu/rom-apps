@@ -1,8 +1,8 @@
 # ROM Apps
 
-The public site at https://romapps.xyz, served by GitHub Pages from `main`. It is static HTML and CSS with one small local script for motion and mobile sharing; there is no build step or client-side framework.
+The public site at https://romapps.xyz, served by GitHub Pages from `main`. It is static HTML and CSS with a small local script for screenshot selection, the enlarged preview, motion and mobile sharing; there is no build step or client-side framework.
 
-ROM ships **ROM Polybot** (the homepage's main product) and **ROM Nova**. **ROM Trader** stays listed and downloadable but is no longer developed. ROM Convert and ROM Scribe are discontinued and are not listed anywhere.
+The website features only **ROM Polybot** and **ROM Nova**. Keep retired apps (ROM Trader, ROM Scribe, ROM Convert) out of the public catalog, metadata and support pages. This repository still hosts ROM Trader's update feed for copies already installed; see below.
 
 ## What gets published
 
@@ -21,7 +21,7 @@ python3 scripts/site.py build /tmp/romapps-site   # any new directory
 | Path | What it is |
 |---|---|
 | `index.html`, `assets/market-stage.css`, `assets/market-stage.js` | Homepage. `DESIGN.md` describes its design rules. |
-| `code-signing-policy.html` | Verification and support. The URL is referenced by signing applications; keep it. |
+| `code-signing-policy.html` | Verification and support. Shares the homepage header, footer and stylesheet. The URL is referenced by signing applications; keep it. |
 | `404.html` | Served for any missing path, so its URLs are root-absolute. |
 | `nova/` | The ROM Nova static build, mirrored from `rom-nova`. Do not edit by hand. |
 | `whalenova/` | Redirect from Nova's old name. |
@@ -34,7 +34,9 @@ python3 scripts/site.py build /tmp/romapps-site   # any new directory
 
 The Windows installer is attached to a `v<version>` release here and the Apple Silicon installer to a `polybot-mac-<build>` release. Their SHA-256 hashes go in `assets/SHA256SUMS-Polybot-<version>.txt` and `assets/POLYBOT-MAC-CHECKSUMS-<version>.txt`. Versioned filenames prevent stale browser caches from serving a different build under the same name. Intel Macs are not supported.
 
-**Create every Polybot release with `--latest=false`.** This repository's *latest* release is ROM Trader's update feed: installed Trader copies read `latest.yml` from it, and the homepage used to download Trader through it. A Polybot release marked latest silently breaks both. Polybot's own update check does not use *latest*. If it happens anyway, run `gh release edit v1.15.1 --latest` (or the newest Trader tag).
+**Create every Polybot release with `--latest=false`.** This repository's *latest* release is ROM Trader's update feed: installed Trader copies read `latest.yml` from it, and a Polybot release marked latest silently cuts them off. Polybot's own update check does not use *latest*. If it happens anyway, run `gh release edit v1.15.1 --latest` (or the newest Trader tag).
+
+The desktop source lives on the `build` branch; each release tag (for example `v2.35.11`) points at the commit it was built from, and the Apple Silicon workflow there publishes `polybot-mac-<build>` prereleases.
 
 When publishing a new version, update together:
 
@@ -49,9 +51,9 @@ When publishing a new version, update together:
 
 Nova is built in `rom-nova` (`npm run build:static`) and its `out/` folder is mirrored into `nova/`. **Replace the folder; do not copy over it.** Copying over it left three old builds and 84 unreachable files (3.5 MB) behind before this was cleaned up.
 
-## ROM Trader
+## ROM Trader's update feed
 
-Trader's installers are built in `rom-trader`. The "Publish ROM Trader" workflow mirrors a release here, re-checking its checksum and `latest.yml`, and marks it latest. The homepage download link points at `rom-trader`'s own releases.
+Trader is retired from the website, but installed copies still check this repository's latest release for `latest.yml`. If Trader ever ships again, build it in `rom-trader` and run the "Publish ROM Trader" workflow here, which mirrors the release, re-checks its checksum and `latest.yml`, and marks it latest.
 
 ## Page requirements
 

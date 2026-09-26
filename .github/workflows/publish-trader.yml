@@ -104,7 +104,7 @@ jobs:
 
       # Polybot's installers are also released in this repository. A Polybot
       # release created without --latest=false silently takes over "latest",
-      # which 404s the Trader download and hides latest.yml from the updater.
+      # which hides latest.yml from every installed copy of Trader.
       - name: Confirm this is the latest release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
