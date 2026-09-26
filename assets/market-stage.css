@@ -15,6 +15,7 @@
   --dim: #8c9fb5;
   --blue: #b7d7ff;
   --mint: #91e2c8;
+  --nova: #9ed5ff;
   --line: #afc9e129;
   --line-strong: #afc9e150;
   --scroll-thumb: #637a94;
@@ -59,11 +60,16 @@ h1, h2, h3 { font-family: var(--font-display); }
 /* One headline, one action, and the product itself. */
 .hero { padding: 74px 0 85px; background: radial-gradient(ellipse 70% 55% at 50% 80%, #22445530, transparent 76%), var(--bg); }
 .eyebrow { margin: 0 0 21px; color: var(--mint); font: 600 10px/1.5 var(--font-data); letter-spacing: .14em; }
-.hero-eyebrow { animation: enter-up .6s var(--ease-out) both; }
+.hero-eyebrow { display: flex; align-items: center; gap: 12px; animation: enter-up .6s var(--ease-out) both; }
+.hero-eyebrow img { border-radius: 8px; }
+.product-market { color: var(--dim); margin-left: 5px; }
 .hero-intro { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, .8fr); gap: 54px; align-items: center; margin-bottom: 35px; }
 h1 { margin: 0; font-size: clamp(48px, 6vw, 84px); line-height: 1.05; letter-spacing: -.065em; font-weight: 600; }
 .title-line { display: block; animation: enter-up .8s .08s var(--ease-out) both; }
 .title-accent { color: var(--mint); animation-delay: .16s; }
+@supports (background-clip: text) {
+  .title-accent { background: linear-gradient(110deg, #c5f5df, var(--mint) 60%, var(--blue)); background-clip: text; color: transparent; }
+}
 .hero-side { animation: enter-up .7s .2s var(--ease-out) both; }
 .hero-side > p { max-width: 36ch; margin: 0 0 23px; color: var(--muted); font-size: 17px; line-height: 1.7; }
 .hero-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 11px; }
@@ -73,6 +79,8 @@ h1 { margin: 0; font-size: clamp(48px, 6vw, 84px); line-height: 1.05; letter-spa
 .button:active { transform: translateY(0); }
 .button-primary { color: #0b1828; background: var(--blue); }
 .button-primary:hover { background: #d4e8ff; }
+.button > span[aria-hidden] { transition: transform .25s var(--ease-out); }
+.button:hover > span[aria-hidden] { transform: translate(2px, -2px); }
 .button-outline { color: var(--text); border-color: var(--line-strong); background: #1b2a3d; }
 .button-outline:hover { border-color: var(--blue); background: #243852; }
 .offer-line { display: flex; align-items: center; justify-content: space-between; gap: 22px; margin: 0 0 31px; padding: 17px 0; border-block: 1px solid var(--line); }
@@ -84,7 +92,8 @@ h1 { margin: 0; font-size: clamp(48px, 6vw, 84px); line-height: 1.05; letter-spa
 
 /* The selector explains the product; extra framing and labels are unnecessary. */
 .product-theater { max-width: 1120px; margin-inline: auto; }
-.terminal-stage { overflow: hidden; border: 1px solid var(--line-strong); border-radius: 12px; padding: 10px; background: #101b29; box-shadow: 0 30px 70px #0005; animation: enter-up .9s .25s var(--ease-out) both; }
+.terminal-stage { position: relative; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 12px; padding: 10px; background: #101b29; box-shadow: 0 30px 70px #0005; animation: enter-up .9s .25s var(--ease-out) both; }
+.terminal-stage::before { content: ""; position: absolute; inset: 0 18% auto; height: 1px; background: linear-gradient(90deg, transparent, var(--mint), var(--blue), transparent); pointer-events: none; animation: rim-reveal 1s .5s var(--ease-out) both; }
 .preview-controls { display: none; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; max-width: 550px; margin: 0 auto 10px; }
 .preview-ready .preview-controls { display: grid; }
 .preview-choice { min-height: 44px; padding: 9px 12px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; transition: color .2s var(--ease-out), background .2s var(--ease-out); }
@@ -128,24 +137,28 @@ h1 { margin: 0; font-size: clamp(48px, 6vw, 84px); line-height: 1.05; letter-spa
 .download-support a:hover { color: var(--mint); }
 .mobile-share { display: none; }
 
-/* Secondary apps stay compact until someone chooses to explore them. */
+/* Nova has its own visual chapter; only two products belong on this site. */
 .section-heading { margin-bottom: 33px; }
-.app-list { border-top: 1px solid var(--line); }
-.app-row { border-bottom: 1px solid var(--line); }
-.app-row > summary { display: grid; grid-template-columns: 44px 200px 1fr 28px; align-items: center; gap: 25px; min-height: 111px; padding: 23px 4px; cursor: pointer; list-style: none; }
 summary::-webkit-details-marker { display: none; }
-.app-row > summary > img { border-radius: 10px; }
-.app-label { display: flex; flex-direction: column; gap: 6px; }
-.app-label strong { color: var(--text); font: 500 21px/1.2 var(--font-display); letter-spacing: -.035em; }
-.app-label small { color: var(--dim); font-size: 11px; }
-.app-summary { color: var(--muted); font-size: 14px; line-height: 1.6; }
-.app-chevron { color: var(--blue); font-size: 24px; font-weight: 300; text-align: center; transition: transform .25s var(--ease-out); }
-.app-row > summary:hover .app-label strong, .app-row > summary:hover .app-chevron { color: var(--mint); }
-.app-row[open] .app-chevron { transform: rotate(45deg); }
-.app-detail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 35px; padding: 5px 4px 30px; }
-.app-detail > img { width: 100%; border: 1px solid var(--line); border-radius: 8px; }
-.app-detail p { margin: 0 0 20px; max-width: 52ch; color: var(--muted); font-size: 13px; line-height: 1.8; }
-.app-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 20px; }
+.nova-section { overflow: hidden; background: radial-gradient(ellipse 70% 90% at 85% 55%, #27628a36, transparent 78%), #0d1926; }
+.nova-showcase { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); align-items: center; gap: 55px; }
+.nova-brand { display: flex; align-items: center; gap: 11px; color: var(--nova); margin-bottom: 25px; }
+.nova-brand img { border-radius: 10px; }
+.nova-copy h2 { margin: 0; font-size: clamp(37px, 4vw, 58px); line-height: 1.08; letter-spacing: -.055em; font-weight: 500; }
+.nova-description { max-width: 38ch; margin: 22px 0 26px; color: var(--muted); font-size: 15px; line-height: 1.75; }
+.nova-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 22px; }
+.nova-actions .button-primary { background: var(--nova); }
+.nova-actions .button-primary:hover { background: #cceaff; }
+.nova-note { max-width: 48ch; margin: 22px 0 0; color: var(--dim); font-size: 11px; line-height: 1.7; }
+.nova-visual { position: relative; margin: 0; padding: 8px; border: 1px solid #9ed5ff52; border-radius: 12px; background: #12283b; box-shadow: 0 28px 64px #0006; }
+.nova-visual > a { display: block; overflow: hidden; border: 1px solid var(--line); border-radius: 6px; cursor: zoom-in; }
+.nova-visual img { width: 100%; transition: transform .65s var(--ease-out); }
+.nova-visual > a:hover img { transform: scale(1.025); }
+.nova-visual figcaption { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 3px 5px 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.nova-visual figcaption > a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--nova); }
+.nova-visual figcaption > a:hover { color: var(--text); }
+.nova-visual::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(110deg, transparent 36%, #b7d7ff0f 48%, transparent 60%); opacity: 0; pointer-events: none; }
+.nova-showcase.is-visible .nova-visual::after { animation: nova-light 1.2s .15s var(--ease-out) both; }
 
 .questions-section { border-top: 1px solid var(--line); }
 .questions-layout { align-items: start; }
@@ -170,6 +183,8 @@ summary::-webkit-details-marker { display: none; }
 /* Short transitions support orientation; nothing loops or follows the pointer. */
 @keyframes enter-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes preview-switch { from { opacity: .55; } to { opacity: 1; } }
+@keyframes rim-reveal { from { transform: scaleX(.2); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
+@keyframes nova-light { 0% { opacity: 0; transform: translateX(-20px); } 35% { opacity: 1; } 100% { opacity: 0; transform: translateX(20px); } }
 html.motion-ready [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity .55s var(--ease-out), transform .55s var(--ease-out); }
 html.motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
 
@@ -186,8 +201,10 @@ html.motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0
   .section-pad { padding-block: 68px; }
   .download-layout, .questions-layout { grid-template-columns: 1fr; gap: 29px; }
   .section-intro > p { max-width: 66ch; }
-  .app-row > summary { grid-template-columns: 44px 170px 1fr 24px; gap: 17px; }
-  .app-summary { font-size: 13px; }
+  .nova-showcase { grid-template-columns: 1fr; gap: 34px; }
+  .nova-copy h2 { font-size: 47px; }
+  .nova-description { max-width: 60ch; }
+  .nova-note { max-width: 65ch; }
 }
 @media (max-width: 600px) {
   html { scroll-padding-top: 78px; }
@@ -197,7 +214,7 @@ html.motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0
   .brand img { width: 32px; height: 32px; }
   .brand-apps { display: none; }
   .nav-links { gap: 15px; font-size: 12px; }
-  .nav-links > a:nth-child(2) { display: none; }
+  .nav-links > a:first-child { display: none; }
   .nav-links .nav-cta { padding-inline: 11px; font-size: 11px; }
   .hero { padding-block: 42px 54px; }
   .eyebrow { font-size: 9px; margin-bottom: 18px; }
@@ -231,15 +248,14 @@ html.motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0
   .mobile-share #share-status { margin-top: 8px; color: var(--mint); }
   .mobile-share #share-status:empty { display: none; }
   .section-heading { margin-bottom: 24px; }
-  .app-row > summary { grid-template-columns: 40px minmax(0, 1fr) 22px; gap: 9px 15px; padding-block: 23px; }
-  .app-row > summary > img { width: 40px; height: 40px; grid-row: 1 / 3; align-self: start; }
-  .app-label { gap: 5px; }
-  .app-label strong { font-size: 20px; }
-  .app-summary { grid-column: 2; grid-row: 2; font-size: 12px; }
-  .app-chevron { grid-column: 3; grid-row: 1 / 3; font-size: 23px; }
-  .app-detail { grid-template-columns: 1fr; gap: 18px; padding: 0 0 25px; }
-  .app-detail p { font-size: 12px; margin-bottom: 16px; }
-  .app-actions { gap: 6px 18px; }
+  .nova-showcase { gap: 28px; }
+  .nova-brand { margin-bottom: 20px; }
+  .nova-copy h2 { font-size: 43px; }
+  .nova-description { font-size: 14px; margin-block: 20px; }
+  .nova-actions { gap: 10px 18px; }
+  .nova-note { margin-top: 17px; }
+  .nova-visual { padding: 6px; border-radius: 9px; }
+  .nova-visual figcaption { padding-inline: 5px; }
   .faq summary { min-height: 65px; font-size: 13px; }
   .faq details p { margin-right: 0; }
   .footer-inner { display: flex; flex-wrap: wrap; gap: 14px 25px; padding-block: 25px; }
@@ -261,6 +277,8 @@ html.motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0
   html { scrollbar-color: auto; }
   .terminal-stage, .platform-card, .offer-line { border: 1px solid CanvasText; }
   .preview-choice[aria-pressed="true"] { border-color: Highlight; }
+  .title-accent { color: CanvasText; background: none; }
+  .terminal-stage::before, .nova-visual::after { display: none; }
 }
 @media print {
   :root { color-scheme: light; }

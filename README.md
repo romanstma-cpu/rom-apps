@@ -1,6 +1,6 @@
 # ROM Apps
 
-The public catalog at https://romapps.xyz is served by GitHub Pages from `main`. The homepage is static HTML and CSS with a small local script for motion and mobile sharing; it has no build step or client-side framework. It lists ROM Polybot, Nova, Trader and Scribe. ROM Convert is no longer listed.
+The public site at https://romapps.xyz is served by GitHub Pages from `main`. The homepage is static HTML and CSS with a small local script for screenshot selection, motion and mobile sharing; it has no build step or client-side framework. The website features only ROM Polybot and ROM Nova. Keep retired apps out of the public catalog, metadata and support pages.
 
 The independently built Nova web application lives under `nova/`; preserve that directory when updating the homepage. `CNAME` keeps the existing custom domain.
 
