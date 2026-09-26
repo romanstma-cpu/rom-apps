@@ -55,8 +55,13 @@ async function selectPreview(key) {
     previewImage.src = view.image;
     previewImage.alt = view.alt;
     previewLink.href = view.fullSize;
-    previewLink.setAttribute('aria-label', `View full-size ${view.label} screenshot (opens in a new tab)`);
+    previewLink.setAttribute('aria-label', previewLink.hasAttribute('aria-haspopup')
+      ? `Open ROM Polybot ${view.label} screenshot preview`
+      : `View full-size ${view.label} screenshot (opens in a new tab)`);
     document.querySelector('#preview-full-size').href = view.fullSize;
+    if (previewLink.hasAttribute('aria-haspopup')) {
+      document.querySelector('#preview-full-size').setAttribute('aria-label', `Expand ROM Polybot ${view.label} screenshot`);
+    }
     document.querySelector('#preview-description').textContent = view.description;
     for (const button of previewButtons) {
       button.setAttribute('aria-pressed', String(button.dataset.preview === key));
@@ -85,6 +90,108 @@ if (previewImage && previewLink && previewStatus && previewButtons.length) {
   });
   // Each native button stays in the tab order; Enter/Space selects a screen.
   stage?.classList.add('preview-ready');
+}
+
+const viewer = document.querySelector('#image-viewer');
+if (viewer && typeof viewer.showModal === 'function') {
+  const viewerImage = document.querySelector('#viewer-image');
+  const canvas = document.querySelector('#viewer-canvas');
+  const zoom = document.querySelector('#viewer-zoom');
+  const status = document.querySelector('#viewer-status');
+  let opener = null;
+  let request = 0;
+  let naturalWidth = 0;
+  let backdropPress = false;
+
+  function imageInfo(link) {
+    if (link.closest('.nova-visual')) {
+      const image = document.querySelector('.nova-visual img');
+      return {title: 'ROM Nova · Radar', src: image.currentSrc || image.src, alt: image.alt};
+    }
+    const view = previewViews[activePreview];
+    return {title: `ROM Polybot · ${view.label}`, src: view.image, alt: view.alt};
+  }
+
+  function resetZoom() {
+    canvas.classList.remove('is-zoomed');
+    canvas.tabIndex = -1;
+    canvas.scrollTop = 0;
+    canvas.scrollLeft = 0;
+    zoom.textContent = 'Zoom in';
+  }
+
+  async function openViewer(link) {
+    const current = ++request;
+    const info = imageInfo(link);
+    opener = link;
+    resetZoom();
+    zoom.disabled = true;
+    viewerImage.hidden = true;
+    document.querySelector('#viewer-title').textContent = info.title;
+    document.querySelector('#viewer-original').href = link.href;
+    status.textContent = 'Loading preview…';
+    viewer.showModal();
+    document.documentElement.classList.add('preview-open');
+    try {
+      const image = new Image();
+      image.src = info.src;
+      await image.decode();
+      if (current !== request || !viewer.open) return;
+      naturalWidth = image.naturalWidth;
+      viewerImage.src = info.src;
+      viewerImage.alt = info.alt;
+      viewerImage.hidden = false;
+      zoom.disabled = false;
+      status.textContent = 'Screenshot preview. Zoom in to explore the details.';
+    } catch {
+      if (current !== request || !viewer.open) return;
+      status.textContent = 'Preview could not load. Try the Open image link, or close and retry.';
+    }
+  }
+
+  for (const link of document.querySelectorAll('#preview-image-link, #preview-full-size, .nova-visual a')) {
+    link.setAttribute('aria-haspopup', 'dialog');
+    link.setAttribute('aria-controls', 'image-viewer');
+    link.setAttribute('aria-label', `${link.querySelector('img') ? 'Open' : 'Expand'} ${imageInfo(link).title} screenshot preview`);
+    const hint = link.querySelector('.sr-only');
+    if (hint) hint.textContent = ' screenshot preview.';
+    link.addEventListener('click', (event) => {
+      // Preserve new-tab shortcuts and the original link when JS is unavailable.
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      openViewer(link);
+    });
+  }
+
+  zoom.addEventListener('click', () => {
+    if (canvas.classList.contains('is-zoomed')) {
+      resetZoom();
+      status.textContent = 'Preview fitted to the screen.';
+      return;
+    }
+    viewerImage.style.setProperty('--zoom-width', `${Math.max(naturalWidth, canvas.clientWidth * 1.75)}px`);
+    canvas.classList.add('is-zoomed');
+    canvas.tabIndex = 0;
+    zoom.textContent = 'Fit screen';
+    status.textContent = 'Scroll to inspect the image. Choose Fit screen to zoom out.';
+  });
+  document.querySelector('#viewer-close').addEventListener('click', () => viewer.close());
+  function outside(event) {
+    const bounds = viewer.getBoundingClientRect();
+    return event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom;
+  }
+  viewer.addEventListener('pointerdown', (event) => { backdropPress = event.target === viewer && outside(event); });
+  viewer.addEventListener('click', (event) => {
+    if (backdropPress && event.target === viewer && outside(event)) viewer.close();
+    backdropPress = false;
+  });
+  viewer.addEventListener('close', () => {
+    ++request;
+    document.documentElement.classList.remove('preview-open');
+    viewerImage.hidden = true;
+    viewerImage.removeAttribute('src');
+    opener?.focus({preventScroll: true});
+  });
 }
 
 if ('IntersectionObserver' in window && !reducedMotion.matches) {
