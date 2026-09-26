@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ROM Apps — Trading tools built for control</title>
-  <meta name="description" content="Meet ROM Polybot: scan Polymarket US, practice with simulated funds, and inspect the decisions. Explore ROM's Solana, Kalshi, and transcription tools.">
+  <meta name="description" content="Meet ROM Polybot: scan Polymarket US, practice with simulated funds, and inspect the decisions. Explore ROM Nova for Solana research and ROM Trader for Kalshi strategy testing.">
   <meta name="theme-color" content="#090f19">
   <link rel="canonical" href="https://romapps.xyz/">
   <meta property="og:type" content="website">
@@ -12,16 +12,18 @@
   <meta property="og:url" content="https://romapps.xyz/">
   <meta property="og:title" content="ROM Apps — Trading tools built for control">
   <meta property="og:description" content="Scan Polymarket US, practice with simulated funds, and keep the decision in your hands.">
-  <meta property="og:image" content="https://romapps.xyz/assets/rom-polybot-overview-2.35.11.png">
-  <meta property="og:image:alt" content="The ROM Polybot desktop app showing its strategy workspace">
+  <meta property="og:image" content="https://romapps.xyz/assets/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="ROM Polybot: Markets move. Stay in command. The desktop workspace for Polymarket US.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="ROM Apps — Trading tools built for control">
   <meta name="twitter:description" content="ROM Polybot scans, practices, and shows its work before you choose to trade live.">
-  <meta name="twitter:image" content="https://romapps.xyz/assets/rom-polybot-overview-2.35.11.png">
+  <meta name="twitter:image" content="https://romapps.xyz/assets/og-card.png">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/market-stage.css?v=showcase-1">
+  <link rel="stylesheet" href="assets/market-stage.css?v=focus-1">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"ROM Polybot","softwareVersion":"2.35.11","operatingSystem":["Windows 10","Windows 11","macOS 15 or later"],"applicationCategory":"FinanceApplication","url":"https://romapps.xyz/#polybot","downloadUrl":"https://github.com/romanstma-cpu/rom-apps/releases/download/v2.35.11/ROM.PolyBot-Setup-2.35.11.exe","description":"A Polymarket US desktop workspace to scan markets, practice with simulated funds, inspect evidence and choose when to enable live trading.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 </head>
 <body>
@@ -63,7 +65,7 @@
               <button type="button" class="preview-choice" data-preview="practice" aria-pressed="false"><span aria-hidden="true">02</span> Practice &amp; risk</button>
               <button type="button" class="preview-choice" data-preview="evidence" aria-pressed="false"><span aria-hidden="true">03</span> Evidence</button>
             </div>
-            <a class="terminal-preview" id="preview-image-link" href="assets/rom-polybot-overview-2.35.11.png" target="_blank" rel="noopener" aria-label="View full-size Workspace screenshot (opens in a new tab)"><img id="preview-image" src="assets/rom-polybot-overview-2.35.11.png" width="1440" height="900" alt="ROM Polybot Overview showing its paused strategy, decision cycle, and account metrics" fetchpriority="high"><span class="scan-pass" aria-hidden="true"></span><span class="preview-expand" aria-hidden="true">EXPAND VIEW ↗</span></a>
+            <a class="terminal-preview" id="preview-image-link" href="assets/rom-polybot-overview-2.35.11.png" target="_blank" rel="noopener" aria-label="View full-size Workspace screenshot (opens in a new tab)"><img id="preview-image" src="assets/rom-polybot-overview-2.35.11.webp" width="1440" height="900" alt="ROM Polybot Overview showing its paused strategy, decision cycle, and account metrics" fetchpriority="high"><span class="scan-pass" aria-hidden="true"></span><span class="preview-expand" aria-hidden="true">EXPAND VIEW ↗</span></a>
             <div class="preview-caption" aria-live="polite" aria-atomic="true"><div><span id="preview-kicker">01 / WORKSPACE</span><h2 id="preview-title">The whole picture. One place.</h2></div><p id="preview-description">Your account, strategy, and latest decisions at a glance. Trading starts paused.</p></div>
             <p class="preview-status" id="preview-status" role="status"></p>
             <div class="terminal-bottom"><span>REAL APP SCREENS · 2.35.11</span><span class="terminal-bottom-actions"><a id="preview-full-size" href="assets/rom-polybot-overview-2.35.11.png" target="_blank" rel="noopener">Full-size preview <span aria-hidden="true">↗</span><span class="sr-only"> Opens in a new tab.</span></a><button id="replay-preview" type="button" aria-label="Replay preview animation">Replay motion <span aria-hidden="true">↻</span></button></span></div>
@@ -80,7 +82,7 @@
             <a class="platform-card" href="https://github.com/romanstma-cpu/rom-apps/releases/download/v2.35.11/ROM.PolyBot-Setup-2.35.11.exe"><span class="platform-top">WINDOWS <span aria-hidden="true">↗</span></span><strong>Download for Windows</strong><small>Windows 10 or 11 · 64-bit · 91.6 MB</small></a>
             <a class="platform-card" href="https://github.com/romanstma-cpu/rom-apps/releases/download/polybot-mac-47/ROM.PolyBot-2.35.11-arm64.dmg"><span class="platform-top">APPLE SILICON <span aria-hidden="true">↗</span></span><strong>Download for Mac</strong><small>macOS 15 or later · M-series chip</small></a>
           </div>
-          <div class="download-support"><span>Check your download:</span><a href="assets/SHA256SUMS-Polybot-2.35.11.txt">Windows checksum</a><a href="assets/POLYBOT-MAC-CHECKSUMS-2.35.11.txt">Mac checksum</a><a href="code-signing-policy.html">Install &amp; verify <span aria-hidden="true">↗</span></a></div>
+          <div class="download-support" id="verify"><span>Check your download:</span><a href="assets/SHA256SUMS-Polybot-2.35.11.txt">Windows checksum</a><a href="assets/POLYBOT-MAC-CHECKSUMS-2.35.11.txt">Mac checksum</a><a href="code-signing-policy.html">Install &amp; verify <span aria-hidden="true">↗</span></a></div>
           <p class="download-caution">The Mac build is not Apple-notarized. Both installers can be checked against the published SHA-256 hashes.</p>
           <div class="mobile-share"><p>On your phone? Share this page with your computer to download Polybot there.</p><button id="share-download" type="button">Share download page <span aria-hidden="true">↗</span></button><p id="share-status" role="status" aria-live="polite"></p><small>romapps.xyz/#download-polybot</small></div>
         </div>
@@ -104,8 +106,7 @@
         <div class="section-heading apps-heading" data-reveal><div><p class="eyebrow">BEYOND POLYBOT</p><h2 id="apps-title">More tools from ROM.</h2></div><p>Different markets. Same idea: see more, decide better.</p></div>
         <div class="app-grid">
           <article class="app-card" id="nova-h" data-reveal><div class="app-art"><img src="assets/rom-nova-radar.webp" width="1586" height="993" loading="lazy" alt="ROM Nova radar showing observed Solana wallets and market activity"></div><div class="app-content"><div class="app-title"><img src="assets/app-nova.png" width="42" height="42" loading="lazy" alt=""><div><span>SOLANA RESEARCH</span><h3>ROM Nova</h3></div></div><p>Follow market activity and investigate wallets before making your own call.</p><div class="app-actions"><a class="button button-outline" href="nova/">Launch Nova <span aria-hidden="true">↗</span></a><a class="subtle-link" href="https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe">Windows download</a></div><small>Nova does not execute trades. Some data is marked as simulation; the hosted radar requires sign-in.</small></div></article>
-          <article class="app-card" id="trader-h" data-reveal><div class="app-art"><img src="assets/rom-trader-dashboard.webp" width="1400" height="900" loading="lazy" alt="ROM Trader dashboard with account performance and scanner statistics"></div><div class="app-content"><div class="app-title"><img src="assets/app-trader.png" width="42" height="42" loading="lazy" alt=""><div><span>KALSHI STRATEGY TESTING</span><h3>ROM Trader</h3></div></div><p>Test settings against recorded markets and inspect the results before risking money.</p><div class="app-actions"><a class="button button-outline" href="https://github.com/romanstma-cpu/rom-apps/releases/latest/download/ROM-Trader-Setup.exe">Windows download <span aria-hidden="true">↓</span></a><a class="subtle-link" href="https://github.com/romanstma-cpu/rom-trader">Source code</a></div><small>The published study found all seven measured strategies lost after fees. Real orders require your keys and an explicit switch.</small></div></article>
-          <article class="app-card" id="scribe-h" data-reveal><div class="app-art"><img src="assets/rom-scribe-live.webp" width="1400" height="900" loading="lazy" alt="ROM Scribe transcribing an audio recording into text"></div><div class="app-content"><div class="app-title"><img src="assets/app-scribe.png" width="42" height="42" loading="lazy" alt=""><div><span>OFFLINE UTILITY</span><h3>ROM Scribe</h3></div></div><p>Turn recordings into transcripts and subtitles on your own computer.</p><div class="app-actions"><a class="button button-outline" href="https://github.com/romanstma-cpu/rom-scribe/releases/latest/download/ROM-Scribe-Setup.exe">Windows download <span aria-hidden="true">↓</span></a><a class="subtle-link" href="https://github.com/romanstma-cpu/rom-scribe">Source code</a></div><small>Download a model once, then work offline. Review generated text for transcription errors.</small></div></article>
+          <article class="app-card" id="trader-h" data-reveal><div class="app-art"><img src="assets/rom-trader-dashboard.webp" width="1400" height="900" loading="lazy" alt="ROM Trader dashboard with account performance and scanner statistics"></div><div class="app-content"><div class="app-title"><img src="assets/app-trader.png" width="42" height="42" loading="lazy" alt=""><div><span>KALSHI STRATEGY TESTING</span><h3>ROM Trader</h3></div></div><p>Test settings against recorded markets and inspect the results before risking money.</p><div class="app-actions"><a class="button button-outline" href="https://github.com/romanstma-cpu/rom-trader/releases/latest/download/ROM-Trader-Setup.exe">Windows download <span aria-hidden="true">↓</span></a><a class="subtle-link" href="https://github.com/romanstma-cpu/rom-trader">Source code</a></div><small>The published study found all seven measured strategies lost after fees. Real orders require your keys and an explicit switch.</small></div></article>
         </div>
       </div>
     </section>
@@ -124,6 +125,6 @@
   </main>
 
   <footer class="footer"><div class="wrap footer-inner"><div><a class="brand" href="#top" aria-label="ROM Apps home"><img src="assets/rom-icon-nav.png" width="32" height="32" loading="lazy" alt=""><span>ROM<span class="brand-apps"> APPS</span></span></a><p>Trading tools built by ROM.</p></div><div class="footer-links"><a href="#download-polybot">Polybot</a><a href="#apps">All apps</a><a href="code-signing-policy.html">Verification &amp; support</a><a href="https://github.com/romanstma-cpu/rom-apps">GitHub <span aria-hidden="true">↗</span></a></div><small>© 2026 ROM Apps</small></div><div class="wrap footer-wordmark" aria-hidden="true">ROM APPS<span>↗</span></div></footer>
-  <script src="assets/market-stage.js?v=showcase-1" defer></script>
+  <script src="assets/market-stage.js?v=focus-1" defer></script>
 </body>
 </html>

@@ -4,7 +4,7 @@ document.documentElement.classList.add('js-ready');
 
 const previewViews = {
   overview: {
-    image: 'assets/rom-polybot-overview-2.35.11.png',
+    image: 'assets/rom-polybot-overview-2.35.11.webp',
     fullSize: 'assets/rom-polybot-overview-2.35.11.png',
     label: 'Workspace',
     kicker: '01 / WORKSPACE',

@@ -1,6 +1,6 @@
 # ROM Apps design context
 
-ROM Apps is a marketing site for independent trading tools. Its primary job is to help someone understand ROM Polybot and choose the correct desktop download. Nova, Trader, and Scribe form a smaller secondary shelf. Visitors include phone users who need a simple way to share the download page with a computer. The Polymarket US referral must remain noticeable and disclose that ROM may receive a reward.
+ROM Apps is a marketing site for independent trading tools. Its primary job is to help someone understand ROM Polybot and choose the correct desktop download. Nova and Trader form a smaller secondary shelf. Visitors include phone users who need a simple way to share the download page with a computer. The Polymarket US referral must remain noticeable and disclose that ROM may receive a reward.
 
 ## Visual direction
 
@@ -12,7 +12,7 @@ The homepage structure and metadata live in `index.html`. `assets/market-stage.c
 
 ## Content hierarchy
 
-The first screen states Polybot's purpose, presents one download action, keeps the ROMANR offer visible with its disclosure, and shows a real app screenshot. The next section offers equal Windows and Apple Silicon choices, checksums, release notes, and installation guidance. A short Connect → Practice → Inspect sequence explains the workflow. Smaller cards introduce Nova, Trader, and Scribe. FAQ disclosures hold the longer requirements and risk explanations. Preserve links to the official Polymarket US API and referral pages, the latest verified installers, and checksums.
+The first screen states Polybot's purpose, presents one download action, keeps the ROMANR offer visible with its disclosure, and shows a real app screenshot. The next section offers equal Windows and Apple Silicon choices, checksums, release notes, and installation guidance. A short Connect → Practice → Inspect sequence explains the workflow. Two smaller cards introduce Nova and Trader. FAQ disclosures hold the longer requirements and risk explanations. Preserve links to the official Polymarket US API and referral pages, the latest verified installers, and checksums.
 
 ## Motion and access
 

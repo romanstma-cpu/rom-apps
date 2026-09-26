@@ -85,7 +85,7 @@ START HERE
   #announcements     read-only · announcement channel, so other servers can follow releases
 
 HELP & FEEDBACK
-  #support           one channel for all five apps
+  #support           one channel for all three apps
   #bugs-and-requests confirmed bugs get promoted to GitHub Issues
   #showcase
 
@@ -94,7 +94,7 @@ COMMUNITY
   #github            read-only · webhook feed
 ```
 
-Roles: **Maintainer** (violet) and **Contributor** (cyan), both hoisted so they
+Roles: **Maintainer** (mint) and **Contributor** (blue), both hoisted so they
 show separately in the member list. Neither carries any permission bits — grant
 those by hand in the UI, so a config file in a public repo can never quietly
 widen somebody's access.
@@ -113,9 +113,9 @@ want your keys, and the impersonation-DM pattern is completely predictable. The
 pinned message states plainly that nobody from ROM will ever DM first and that
 no real request for an API key exists. Say it before it happens, not after.
 
-**The honesty notice.** It repeats what the apps' own docs already say: ROM
-Trader has no demonstrated edge and ships dry-run, ROM Nova runs on simulated
-data. The site refuses to imply a profit; the Discord has to hold the same line,
+**The honesty notice.** It repeats what the apps' own docs already say: no ROM
+app has demonstrated a profitable edge, Polybot and Trader start without live
+orders, and Nova labels the parts of its data that are simulated. The site refuses to imply a profit; the Discord has to hold the same line,
 because a community is exactly where that erodes first.
 
 ## Later, if it grows

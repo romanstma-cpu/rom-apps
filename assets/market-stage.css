@@ -178,10 +178,10 @@ html.js-ready .terminal-bottom button { display: inline-flex; }
 .apps-section { border-block: 1px solid var(--line); background: #0e1825; }
 .apps-heading { display: flex; align-items: end; justify-content: space-between; gap: 32px; }
 .apps-heading > p { margin: 0 0 4px; }
-.app-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px; }
+.app-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px; }
 .app-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: #142132; transition: transform .25s var(--ease-out), border-color .25s var(--ease-out), box-shadow .25s var(--ease-out); }
 .app-card:hover { transform: translateY(-4px); border-color: #b7d7ff75; box-shadow: 0 20px 42px #0003; }
-.app-art { overflow: hidden; height: 152px; border-bottom: 1px solid var(--line); background: #0b1420; }
+.app-art { overflow: hidden; height: 220px; border-bottom: 1px solid var(--line); background: #0b1420; }
 .app-art img { width: 100%; height: 100%; object-fit: cover; object-position: top left; opacity: .85; transition: transform .35s var(--ease-out), opacity .35s var(--ease-out); }
 .app-card:hover .app-art img { transform: scale(1.035); opacity: 1; }
 .app-content { display: flex; flex: 1; flex-direction: column; padding: 23px; }
@@ -217,6 +217,29 @@ html.js-ready .terminal-bottom button { display: inline-flex; }
 .footer-links a { display: inline-flex; align-items: center; min-height: 44px; }
 .footer-links a:hover { color: var(--mint); }
 
+/* Document pages (verification, 404) share the header, footer and tokens. */
+.doc { max-width: 800px; padding-block: 76px 100px; }
+.doc h1 { margin: 0 0 20px; font-size: clamp(38px, 6vw, 64px); line-height: 1.05; font-weight: 650; letter-spacing: -.055em; }
+.doc-intro { max-width: 60ch; margin: 0; color: var(--muted); font-size: 17px; line-height: 1.7; }
+.doc-toc { display: flex; flex-wrap: wrap; gap: 2px 20px; margin-top: 30px; padding: 8px 0; border-block: 1px solid var(--line); font-size: 12px; font-weight: 650; }
+.doc-toc a { display: inline-flex; align-items: center; min-height: 40px; color: var(--blue); }
+.doc-toc a:hover { color: var(--mint); }
+.doc section { margin-top: 54px; }
+.doc h2 { margin: 0 0 14px; font-size: clamp(24px, 3vw, 31px); line-height: 1.2; font-weight: 650; letter-spacing: -.035em; }
+.doc p, .doc li { color: var(--muted); font-size: 15px; line-height: 1.8; }
+.doc p { margin: 0 0 14px; }
+.doc ul { margin: 0 0 14px; padding-left: 20px; }
+.doc li { margin-bottom: 8px; }
+.doc strong { color: var(--text); }
+.doc p a, .doc li a { color: var(--blue); text-decoration: underline; text-underline-offset: 4px; }
+.doc p a:hover, .doc li a:hover { color: var(--mint); }
+.doc pre { margin: 0 0 16px; padding: 18px 20px; overflow-x: auto; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--text); font: 12.5px/1.8 var(--font-data); }
+.doc code { font-family: var(--font-data); font-size: .92em; }
+.doc-note { padding: 2px 0 2px 18px; border-left: 3px solid var(--mint); }
+.doc-updated { margin-top: 52px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--dim); font: 600 11px/1.5 var(--font-data); letter-spacing: .08em; text-transform: uppercase; }
+.notfound { padding-block: 110px 130px; }
+.notfound .hero-actions { margin-top: 32px; }
+
 /* Motion is short, once-only, and never required to see content. */
 @keyframes enter-up { from { opacity: 0; transform: translateY(17px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes title-arrive { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
@@ -227,7 +250,7 @@ html.js-ready .terminal-bottom button { display: inline-flex; }
 html.motion-ready [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity .6s var(--ease-out), transform .6s cubic-bezier(.18,.8,.23,1); }
 html.motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
 .journey-step:nth-child(2), .app-card:nth-child(2) { transition-delay: .07s; }
-.journey-step:nth-child(3), .app-card:nth-child(3) { transition-delay: .14s; }
+.journey-step:nth-child(3) { transition-delay: .14s; }
 
 @media (max-width: 1100px) {
   .hero-intro { grid-template-columns: 1fr; gap: 20px; }
@@ -249,9 +272,7 @@ html.motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0
   .download-layout, .questions-layout { grid-template-columns: 1fr; gap: 30px; }
   .section-intro > p:not(.eyebrow) { max-width: 64ch; }
   .journey-grid { gap: 17px; }
-  .app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .app-card:last-child { grid-column: 1 / -1; }
-  .app-card:last-child .app-art { height: 170px; }
+  .app-art { height: 170px; }
 }
 
 @media (max-width: 600px) {
@@ -321,14 +342,17 @@ html.motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0
   .journey-note { margin-top: 19px; }
   .apps-heading { display: block; }
   .apps-heading > p { margin-top: 15px; font-size: 13px; }
-  .app-card:last-child { grid-column: auto; }
-  .app-art, .app-card:last-child .app-art { height: 150px; }
+  .app-art { height: 150px; }
   .app-content { padding: 20px; }
   .app-actions .button { width: auto; }
   .faq summary { font-size: 14px; min-height: 61px; }
   .faq details p { margin-right: 0; }
   .footer-inner { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
   .footer-links { gap: 0 20px; }
+  .doc { padding-block: 48px 70px; }
+  .doc p, .doc li { font-size: 14px; }
+  .doc pre { padding: 14px; font-size: 11.5px; }
+  .notfound { padding-block: 70px 90px; }
 }
 
 @media (max-width: 350px) {
@@ -360,4 +384,6 @@ html.motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0
   html.motion-ready [data-reveal] { opacity: 1 !important; transform: none !important; }
   a { text-decoration: underline; }
   .terminal-stage, .app-card, .platform-card { box-shadow: none !important; break-inside: avoid; }
+  .doc pre { border: 1px solid #999; white-space: pre-wrap; }
+  .doc-toc { display: none; }
 }

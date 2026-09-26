@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- The 1200x630 social card for romapps.xyz. Rendered to assets/og-card.png
+     by scripts/make_og.py. Uses the site's own font, tokens and screenshot so
+     the card cannot drift from the page. Update the screenshot path when a
+     new Polybot release replaces it. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "Space Grotesk"; src: url("../assets/fonts/space-grotesk-latin-variable.woff2") format("woff2"); font-weight: 400 700; }
+  :root { --bg: #090f19; --text: #f3f7fd; --muted: #b0bfd0; --dim: #8c9fb5; --blue: #b7d7ff; --mint: #91e2c8; --line: #afc9e129; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    position: relative; background: radial-gradient(ellipse 60% 70% at 88% 55%, #2f5e8e55, transparent 70%),
+      radial-gradient(ellipse 55% 60% at 0% 0%, #1a53664d, transparent 75%), var(--bg);
+    color: var(--text); font-family: "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+  }
+  .grid { position: absolute; inset: 0; opacity: .3; background-image: linear-gradient(#a6d0f012 1px, transparent 1px), linear-gradient(90deg, #a6d0f012 1px, transparent 1px); background-size: 60px 60px; mask-image: linear-gradient(180deg, #000a, transparent 85%); }
+  .orbit { position: absolute; left: 380px; top: 150px; width: 1000px; height: 420px; border: 1px solid #91e2c83b; border-radius: 50%; transform: rotate(-14deg); }
+  .copy { position: absolute; left: 64px; top: 60px; width: 560px; }
+  .brand { display: flex; align-items: center; gap: 14px; font: 760 22px/1 "Space Grotesk"; letter-spacing: .075em; }
+  .brand img { width: 46px; height: 46px; border-radius: 12px; box-shadow: 0 0 25px #8acbff30; }
+  .brand span { color: var(--dim); font-size: 12px; letter-spacing: .23em; }
+  .eyebrow { margin-top: 58px; display: flex; align-items: center; gap: 12px; color: var(--mint); font: 700 14px/1 Consolas, "Liberation Mono", monospace; letter-spacing: .16em; }
+  .eyebrow::before { content: ""; width: 26px; height: 1px; background: var(--mint); }
+  h1 { margin-top: 22px; font: 600 66px/1.04 "Space Grotesk"; letter-spacing: -.06em; }
+  h1 span { display: block; color: var(--mint); }
+  p { margin-top: 22px; max-width: 31ch; color: var(--muted); font-size: 22px; line-height: 1.45; }
+  .chips { position: absolute; left: 64px; bottom: 54px; display: flex; gap: 10px; }
+  .chips span { padding: 9px 15px; border: 1px solid #afc9e150; border-radius: 8px; background: #101b29cc; color: var(--muted); font: 600 14px/1 Consolas, "Liberation Mono", monospace; letter-spacing: .04em; }
+  .chips span:last-child { color: var(--blue); border-color: #b7d7ff70; }
+  .stage { position: absolute; left: 640px; top: 96px; width: 680px; padding: 0 12px 12px; border: 1px solid #9fc6ee68; border-radius: 16px; background: linear-gradient(135deg, #1a3040, #101a27 40%, #0e1723); box-shadow: 0 40px 90px #000a, 0 0 0 6px #9ec9ff08; transform: perspective(1600px) rotateY(-9deg); transform-origin: left center; }
+  .stage-top { display: flex; align-items: center; gap: 9px; height: 40px; color: var(--mint); font: 600 11px/1 Consolas, "Liberation Mono", monospace; letter-spacing: .08em; }
+  .stage-top i { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 12px var(--mint); }
+  .stage img { display: block; width: 100%; border: 1px solid #c9dffa26; border-radius: 8px; }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="orbit"></div>
+  <div class="copy">
+    <div class="brand"><img src="../assets/rom-icon-nav.png" alt="">ROM <span>APPS</span></div>
+    <div class="eyebrow">ROM POLYBOT / POLYMARKET US</div>
+    <h1>Markets move.<span>Stay in command.</span></h1>
+    <p>Scan markets, practice with simulated funds, and inspect the evidence before you trade live.</p>
+  </div>
+  <div class="chips"><span>WINDOWS · APPLE SILICON</span><span>FREE</span><span>ROMAPPS.XYZ</span></div>
+  <div class="stage">
+    <div class="stage-top"><i></i>ROM POLYBOT · ACTUAL DESKTOP APP</div>
+    <img src="../assets/rom-polybot-overview-2.35.11.webp" alt="">
+  </div>
+</body>
+</html>

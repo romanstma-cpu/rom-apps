@@ -1,147 +1,83 @@
 """
-Build the 1200x630 Open Graph card for romapps.xyz.
+Render the 1200x630 Open Graph card, assets/og-card.png.
 
-Social platforms crop and letterbox anything far from 1.91:1, and a square app
-icon renders as a tiny badge on a grey field. This composes a real card that
-mirrors the site's hero: a perspective point-grid on a slow wave.
+The card is plain HTML (scripts/og-card.html) using the site's own font,
+colours and product screenshot, so it cannot drift from the page. This script
+screenshots it with the Chrome or Edge you already have, in headless mode.
 
     python scripts/make_og.py
+    CHROME="C:/path/to/chrome.exe" python scripts/make_og.py   # pick a browser
+
+Needs Pillow (pip install pillow). Social platforms crop anything far from
+1.91:1, which is why the homepage points og:image here rather than at a raw
+1440x900 screenshot.
 """
 
 from __future__ import annotations
 
-import math
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image
 
-W, H = 1200, 630
 ROOT = Path(__file__).resolve().parent.parent
-ASSETS = ROOT / "assets"
+TEMPLATE = ROOT / "scripts" / "og-card.html"
+OUT = ROOT / "assets" / "og-card.png"
+W, H = 1200, 630
 
-VOID = (11, 8, 18)
-TEXT = (236, 231, 245)
-MUTED = (141, 132, 163)
-VIOLET = (124, 58, 237)
-PINK = (255, 45, 154)
-GREEN = (34, 197, 94)
-
-FONTS = Path("C:/Windows/Fonts")
-
-
-def font(name: str, size: int) -> ImageFont.FreeTypeFont:
-    return ImageFont.truetype(str(FONTS / name), size)
-
-
-def lerp(a, b, t: float):
-    t = max(0.0, min(1.0, t))
-    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
+CANDIDATES = [
+    "google-chrome", "chrome", "chromium", "chromium-browser", "msedge",
+    "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+]
 
 
-def point_field(t: float = 2.1) -> Image.Image:
-    """Same projection and wave as the site's hero canvas."""
-    field = Image.new("RGB", (W, H), VOID)
-    d = ImageDraw.Draw(field, "RGBA")
-
-    COLS, ROWS = 104, 44
-    SPAN, NEAR, DEPTH, FOV = 30.0, 4.2, 33.0, 330.0
-    cx, cy = W * 0.5, H * 0.56
-
-    for r in range(ROWS - 1, -1, -1):
-        z = NEAR + (r / (ROWS - 1)) * DEPTH
-        near = 1 - (z - NEAR) / DEPTH
-        scale = FOV / z
-        alpha = int(pow(near, 2.1) * 0.9 * 255)
-        if alpha < 4:
-            continue
-        size = max(1, round(2.5 * near + 0.6))
-
-        for c in range(COLS):
-            gx = (c / (COLS - 1) - 0.5) * SPAN
-            y = (
-                math.sin(gx * 0.40 + t * 0.5 + z * 0.15) * 0.95
-                + math.sin(gx * 0.16 - t * 0.29 + z * 0.08) * 0.62
-            )
-            sx = cx + gx * scale
-            if sx < -8 or sx > W + 8:
-                continue
-            sy = cy + (y - 1.35) * scale
-            if sy < -8 or sy > H + 8:
-                continue
-            col = lerp(VIOLET, PINK, c / (COLS - 1))
-            d.rectangle([sx, sy, sx + size, sy + size], fill=col + (alpha,))
-
-    return field.filter(ImageFilter.GaussianBlur(0.4))
+def find_browser() -> str:
+    for cand in [os.environ.get("CHROME", "")] + CANDIDATES:
+        if cand and (shutil.which(cand) or Path(cand).is_file()):
+            return shutil.which(cand) or cand
+    sys.exit("No Chrome or Edge found. Set CHROME to the browser's executable path.")
 
 
-def build() -> Path:
-    img = point_field()
+def run(browser: str, *args: str) -> str:
+    base = [browser, "--headless=new", "--disable-gpu", "--hide-scrollbars",
+            "--force-device-scale-factor=1"]
+    # Chromium refuses to start as root (CI containers) without this. The page
+    # is a local file with no scripts, so the sandbox protects nothing here.
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        base.append("--no-sandbox")
+    result = subprocess.run(base + list(args), capture_output=True, text=True)
+    if result.returncode != 0:
+        sys.exit(f"{Path(browser).name} failed:\n{result.stderr[-2000:]}")
+    return result.stdout
 
-    # Fade the field out under the copy so the type stays crisp.
-    veil = Image.new("L", (W, H), 0)
-    vd = ImageDraw.Draw(veil)
-    for x in range(W):
-        vd.line([(x, 0), (x, H)], fill=int(238 * max(0.0, 1 - (x / W) ** 1.45)))
-    img = Image.composite(Image.new("RGB", (W, H), VOID), img, veil)
-    d = ImageDraw.Draw(img)
 
-    # --- logo + wordmark ---
-    logo = Image.open(ASSETS / "rom-icon.png").convert("RGBA").resize((88, 88), Image.LANCZOS)
-    img.paste(logo, (72, 66), logo)
-    d.text((178, 78), "ROM", font=font("segoeuib.ttf", 40), fill=TEXT)
-    d.text((180, 126), "romapps.xyz", font=font("consola.ttf", 20), fill=MUTED)
-
-    # --- headline ---
-    d.text((72, 226), "Apps.", font=font("segoeuib.ttf", 82), fill=TEXT)
-
-    line2 = "No strings."
-    f2 = font("segoeuib.ttf", 82)
-    mask = Image.new("L", (W, H), 0)
-    ImageDraw.Draw(mask).text((72, 320), line2, font=f2, fill=255)
-    grad = Image.new("RGB", (W, H))
-    gd = ImageDraw.Draw(grad)
-    bbox = f2.getbbox(line2)
-    span = max(1, bbox[2] - bbox[0])
-    for x in range(W):
-        gd.line([(x, 0), (x, H)], fill=lerp(VIOLET, PINK, (x - 72) / span))
-    img.paste(grad, (0, 0), mask)
-    d = ImageDraw.Draw(img)
-
-    d.text(
-        (72, 442),
-        "Free Windows apps. No accounts, no subscriptions, no bloat.",
-        font=font("segoeui.ttf", 27),
-        fill=MUTED,
-    )
-
-    # --- chips ---
-    x = 72
-    for label, col in (
-        # Naming a version here means the card goes stale on every release.
-        ("TRADER + CONVERT", GREEN),
-        ("OPEN SOURCE", MUTED),
-        ("WINDOWS 10/11", MUTED),
-    ):
-        f = font("consolab.ttf", 18)
-        cw, ch = int(d.textlength(label, font=f)) + 34, 44
-        chip = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-        ImageDraw.Draw(chip).rounded_rectangle(
-            [0, 0, cw - 1, ch - 1], 22, outline=col + (150,), width=2
-        )
-        img.paste(chip, (x, 508), chip)
-        d.text((x + 17, 508 + 12), label, font=f, fill=col)
-        x += cw + 14
-
-    for px in range(W):
-        c = lerp(VIOLET, PINK, px / W)
-        d.point((px, 0), fill=c)
-        d.point((px, 1), fill=c)
-
-    out = ASSETS / "og-card.png"
-    img.save(out, "PNG", optimize=True)
-    return out
+def main() -> None:
+    browser = find_browser()
+    # Headless Chrome reserves part of the window for browser UI it does not
+    # draw, so the page area is shorter than --window-size by a version-
+    # dependent amount. Measure it, then ask for a window that much taller.
+    probe = run(browser, f"--window-size={W},{H}", "--dump-dom",
+                "data:text/html,<script>document.title=innerHeight</script>")
+    shortfall = H - int(re.search(r"<title>(\d+)</title>", probe).group(1))
+    with tempfile.TemporaryDirectory() as tmp:
+        shot = Path(tmp) / "card.png"
+        run(browser, f"--window-size={W},{H + shortfall}",
+            "--virtual-time-budget=4000",  # let the web font and screenshot load
+            f"--screenshot={shot}", TEMPLATE.as_uri())
+        Image.open(shot).convert("RGB").crop((0, 0, W, H)).save(OUT, "PNG", optimize=True)
+    print(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size:,} bytes) with "
+          f"{Path(browser).name}; page area was {shortfall}px short of the window")
 
 
 if __name__ == "__main__":
-    p = build()
-    print(f"wrote {p} ({p.stat().st_size} bytes)")
+    main()
