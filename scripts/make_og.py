@@ -8,9 +8,9 @@ screenshots it with the Chrome or Edge you already have, in headless mode.
     python scripts/make_og.py
     CHROME="C:/path/to/chrome.exe" python scripts/make_og.py   # pick a browser
 
-Needs Pillow (pip install pillow). Social platforms crop anything far from
-1.91:1, which is why the homepage points og:image here rather than at a raw
-1440x900 screenshot.
+Needs Pillow or FFmpeg for cropping the browser screenshot. Social platforms
+crop anything far from 1.91:1, which is why the homepage points og:image
+here rather than at a raw app screenshot.
 """
 
 from __future__ import annotations
@@ -22,8 +22,6 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-
-from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "scripts" / "og-card.html"
@@ -61,6 +59,24 @@ def run(browser: str, *args: str) -> str:
     return result.stdout
 
 
+def crop_card(shot: Path) -> None:
+    try:
+        from PIL import Image
+    except ImportError:
+        ffmpeg = shutil.which("ffmpeg")
+        if not ffmpeg:
+            sys.exit("Install Pillow or FFmpeg to crop the social card")
+        result = subprocess.run(
+            [ffmpeg, "-y", "-loglevel", "error", "-i", str(shot),
+             "-vf", f"crop={W}:{H}:0:0", "-frames:v", "1", str(OUT)],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            sys.exit(f"FFmpeg failed to crop the card:\n{result.stderr[-2000:]}")
+    else:
+        Image.open(shot).convert("RGB").crop((0, 0, W, H)).save(OUT, "PNG", optimize=True)
+
+
 def main() -> None:
     browser = find_browser()
     # Headless Chrome reserves part of the window for browser UI it does not
@@ -74,7 +90,7 @@ def main() -> None:
         run(browser, f"--window-size={W},{H + shortfall}",
             "--virtual-time-budget=4000",  # let the web font and screenshot load
             f"--screenshot={shot}", TEMPLATE.as_uri())
-        Image.open(shot).convert("RGB").crop((0, 0, W, H)).save(OUT, "PNG", optimize=True)
+        crop_card(shot)
     print(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size:,} bytes) with "
           f"{Path(browser).name}; page area was {shortfall}px short of the window")
 
