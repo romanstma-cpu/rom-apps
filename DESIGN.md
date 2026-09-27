@@ -2,20 +2,20 @@
 name: ROM Apps
 description: Signal in focus — expressive product chapters built around real app screens.
 colors:
-  bg: "#0c100f"
-  text: "#f2f4ed"
-  muted: "#bac4bc"
-  dim: "#a5b2a9"
-  signal-lime: "#c7f568"
-  signal-hover: "#ddffa2"
-  stage: "#18241f"
-  line: "#c6d9ca26"
-  line-strong: "#c6d9ca4d"
-  paper: "#f0f1e9"
-  paper-ink: "#19221c"
-  paper-link: "#274536"
-  paper-muted: "#4b5b50"
-  paper-hover: "#dfe7d8"
+  bg: "#080f1e"
+  text: "#f2f6ff"
+  muted: "#b5c4db"
+  dim: "#9eafca"
+  signal-blue: "#91c5ff"
+  signal-hover: "#c2dfff"
+  stage: "#12223b"
+  line: "#adc8ef26"
+  line-strong: "#adc8ef4d"
+  paper: "#edf3fc"
+  paper-ink: "#152540"
+  paper-link: "#23559c"
+  paper-muted: "#425976"
+  paper-hover: "#dce9fa"
   nova-cobalt: "#142fc4"
   nova-stage: "#0d1b50"
   nova-muted: "#d2ddff"
@@ -66,8 +66,8 @@ spacing:
   gutter-compact: "16px"
 components:
   button-primary:
-    backgroundColor: "{colors.signal-lime}"
-    textColor: "#17200d"
+    backgroundColor: "{colors.signal-blue}"
+    textColor: "#0b2343"
     typography: "{typography.action}"
     rounded: "{rounded.control}"
     padding: "14px 22px"
@@ -80,7 +80,7 @@ components:
     rounded: "{rounded.control}"
     padding: "14px 22px"
   nav-action:
-    textColor: "{colors.signal-lime}"
+    textColor: "{colors.signal-blue}"
     rounded: "{rounded.control}"
     padding: "10px 17px"
   preview-choice:
@@ -89,12 +89,12 @@ components:
     rounded: "{rounded.choice}"
     padding: "8px 5px"
   preview-choice-selected:
-    backgroundColor: "{colors.signal-lime}"
-    textColor: "#17200d"
+    backgroundColor: "{colors.signal-blue}"
+    textColor: "#0b2343"
     rounded: "{rounded.choice}"
     padding: "8px 5px"
   referral-code:
-    textColor: "#16220b"
+    textColor: "#0b2343"
     rounded: "{rounded.control}"
     padding: "8px 21px"
   platform-row:
@@ -112,14 +112,14 @@ components:
 
 **Creative North Star: "Signal in focus"**
 
-ROM Apps pairs oversized, compact display type with real product screens and broad changes of color. A green-black opening gives lime actions and the dimensional Polybot preview prominence. A lime referral ribbon, off-white download section, and cobalt Nova chapter establish distinct landmarks before the quieter FAQ and footer.
+ROM Apps pairs oversized, compact display type with real product screens and broad changes of color. A midnight navy opening gives ice blue actions and the dimensional Polybot preview prominence. A ice blue referral ribbon, ice-white download section, and cobalt Nova chapter establish distinct landmarks before the quieter FAQ and footer.
 
 Depth belongs to the product imagery. Thin geometric signal arcs draw once behind the opening composition; Nova uses static circular outlines. These shapes are decoration, not market data. Product interfaces stay recognizable, and short captions explain what each screenshot actually shows. The verification, changelog, and 404 pages reuse the homepage header, footer, and stylesheet; the 404 page uses root-absolute URLs for nested paths.
 
 **Key Characteristics:**
 
 - Large, tightly set Space Grotesk headlines with restrained body copy.
-- Lime, off-white, and cobalt chapters within a green-black page.
+- Ice blue, ice-white, and cobalt chapters within a midnight navy page.
 - Real product screenshots in gently dimensional frames.
 - A single entrance composition followed by a still page.
 - Native links, buttons, disclosures, scrolling, and modal behavior.
@@ -128,13 +128,13 @@ This documents the homepage implementation in `index.html`, `assets/market-stage
 
 ## Colors
 
-Lime supplies the opening's visual energy, warm paper makes downloads easy to scan, and saturated cobalt gives Nova a separate identity.
+Ice blue supplies the opening's visual energy, blue-tinted paper makes downloads easy to scan, and saturated cobalt gives Nova a separate identity.
 
 ### Primary
 
-- **Signal Lime** supplies Polybot actions, the selected preview choice, highlighted headline words, focus rings, and the full-width referral ribbon.
+- **Signal Blue** supplies Polybot actions, the selected preview choice, highlighted headline words, focus rings, and the full-width referral ribbon.
 - **Signal Hover** lightens the primary action on hover.
-- The stylesheet's legacy `--blue` and `--mint` names both resolve to Signal Lime at the root. `--blue` is a shared link/action role, not a promise that the rendered color is blue.
+- The stylesheet uses `--blue` for shared links and `--accent` for highlights. Both resolve to Signal Blue at the root, with readable local colors on paper and cobalt sections.
 
 ### Secondary
 
@@ -143,11 +143,11 @@ Lime supplies the opening's visual energy, warm paper makes downloads easy to sc
 
 ### Neutral
 
-- **Background**, **Text**, **Muted**, and **Dim** provide the green-black page and its reading hierarchy.
+- **Background**, **Text**, **Muted**, and **Dim** provide the midnight navy page and its reading hierarchy.
 - **Stage** is the Polybot preview frame. **Line** and **Line Strong** separate navigation, controls, downloads, and FAQ rows without heavy card outlines.
 - **Paper**, **Paper Ink**, **Paper Link**, and **Paper Muted** form the download section's light theme. **Paper Hover** gives the entire platform row a hover response.
 
-**The Chapter Color Rule.** Resolve shared colors in the section's context: dark green links and focus on paper, white actions on cobalt, lime accents on green-black. Do not apply the root lime blindly to every section.
+**The Chapter Color Rule.** Resolve shared colors in the section's context: deep blue links and focus on paper, white actions on cobalt, ice blue accents on midnight navy. Do not apply the root ice blue blindly to every section.
 
 ## Typography
 
@@ -173,7 +173,7 @@ Above 900px, the opening places its text stack and product preview in two column
 
 The referral ribbon spans the viewport. Its copy, linked code, and disclosure occupy three columns on desktop, then reflow into fewer columns. On phones the terms occupy a full-width row beneath the code. Downloads place introductory copy beside equally weighted Windows and Mac rows. Nova pairs copy with its screen; FAQ pairs a short introduction with native disclosures. Downloads, Nova, and FAQ become single-column sections at 650px.
 
-The header is sticky, with visible product navigation and a Get Polybot action. On phones, the redundant Polybot link and APPS suffix are hidden while Nova and the download action remain visible. Anchor scroll padding accounts for the header. The footer closes with a large lime signoff and a compact link row.
+The header is sticky, with visible product navigation and a Get Polybot action. On phones, the redundant Polybot link and APPS suffix are hidden while Nova and the download action remain visible. Anchor scroll padding accounts for the header. The footer closes with a large ice blue signoff and a compact link row.
 
 ## Elevation & Depth
 
@@ -195,7 +195,7 @@ Thin dividers structure the flat sections. Preserve recognizable product icons; 
 
 ### Actions and navigation
 
-Primary links have a solid lime fill, compact semibold labels, and a directional icon. They rise 3px on hover and return on press. The secondary hero link stays unfilled. The navigation download action uses a thin lime outline. Nova uses the same action geometry with its local white-and-cobalt colors. Links and buttons retain visible focus outlines and native activation. The selected lime preview choice uses a dark focus outline so its focused state stays distinguishable.
+Primary links have a solid ice blue fill, compact semibold labels, and a directional icon. They rise 3px on hover and return on press. The secondary hero link stays unfilled. The navigation download action uses a thin ice blue outline. Nova uses the same action geometry with its local white-and-cobalt colors. Links and buttons retain visible focus outlines and native activation. The selected ice blue preview choice uses a dark focus outline so its focused state stays distinguishable.
 
 ### Product preview
 
@@ -205,7 +205,7 @@ Only the real screens in `assets/` are used. Practice shows setup; Evidence show
 
 ### Referral ribbon
 
-The ROMANR code is a real link to the current Polymarket US offer, displayed within the full-width lime ribbon. Its adjacent reward disclosure remains readable at all sizes. Hover adds a light wash within the dashed code outline.
+The ROMANR code is a real link to the current Polymarket US offer, displayed within the full-width ice blue ribbon. Its adjacent reward disclosure remains readable at all sizes. Hover adds a light wash within the dashed code outline.
 
 ### Download rows and disclosures
 
@@ -225,7 +225,7 @@ Both products share a native modal image viewer when supported. It has a visible
 
 - Keep the website focused on ROM Polybot and ROM Nova.
 - Use actual product screens with accurate, nearby state captions.
-- Preserve the distinct green-black, lime, paper, and cobalt chapters.
+- Preserve the distinct midnight navy, ice blue, paper, and cobalt chapters.
 - Keep referral terms, platform requirements, and download verification readable.
 - Preserve native navigation, disclosures, keyboard focus, and image-link fallbacks.
 - Keep the 320px layout usable and respect reduced-motion preferences.

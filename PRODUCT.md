@@ -24,7 +24,7 @@ People evaluating market tools, including visitors on iPhones and other mobile d
 
 ## Brand Commitments
 
-ROM Apps, ROM Polybot and ROM Nova are the product names. The owner authorizes a complete website layout redesign with expressive color and animation, while preferring less information clutter. Existing product icons remain recognizable.
+ROM Apps, ROM Polybot and ROM Nova are the product names. The owner authorizes a complete website layout redesign with expressive color and animation, while preferring less information clutter. Existing product icons remain recognizable. Keep the site in a cohesive blue color scheme: midnight navy, ice blue, and cobalt. The owner explicitly requested blue after the lime redesign.
 
 ## Evidence on Hand
 

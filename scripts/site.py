@@ -315,12 +315,12 @@ def render_changelog(root: Path) -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ROM Polybot release notes — ROM Apps</title>
   <meta name="description" content="What changed in every ROM Polybot release, newest first, with SHA-256 checksums for each version's installers.">
-  <meta name="theme-color" content="#0c100f">
+  <meta name="theme-color" content="#080f1e">
   <link rel="canonical" href="https://romapps.xyz/changelog.html">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/market-stage.css?v=signal-2">
+  <link rel="stylesheet" href="assets/market-stage.css?v=blue-1">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>

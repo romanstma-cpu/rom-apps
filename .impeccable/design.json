@@ -6,255 +6,75 @@
     "colorMeta": {
       "bg": {
         "role": "neutral",
-        "displayName": "Green-black Background",
-        "tonalRamp": [
-          "oklch(15% 0.0067 178.68)",
-          "oklch(26% 0.0067 178.68)",
-          "oklch(38% 0.0067 178.68)",
-          "oklch(49% 0.0067 178.68)",
-          "oklch(61% 0.0067 178.68)",
-          "oklch(72% 0.0067 178.68)",
-          "oklch(84% 0.0067 178.68)",
-          "oklch(95% 0.0067 178.68)"
-        ]
+        "displayName": "Midnight Navy Background"
       },
       "text": {
         "role": "neutral",
-        "displayName": "Warm Text",
-        "tonalRamp": [
-          "oklch(15% 0.0095 119.58)",
-          "oklch(26% 0.0095 119.58)",
-          "oklch(38% 0.0095 119.58)",
-          "oklch(49% 0.0095 119.58)",
-          "oklch(61% 0.0095 119.58)",
-          "oklch(72% 0.0095 119.58)",
-          "oklch(84% 0.0095 119.58)",
-          "oklch(95% 0.0095 119.58)"
-        ]
+        "displayName": "Ice White Text"
       },
       "muted": {
         "role": "neutral",
-        "displayName": "Muted Sage",
-        "tonalRamp": [
-          "oklch(15% 0.0156 151.71)",
-          "oklch(26% 0.0156 151.71)",
-          "oklch(38% 0.0156 151.71)",
-          "oklch(49% 0.0156 151.71)",
-          "oklch(61% 0.0156 151.71)",
-          "oklch(72% 0.0156 151.71)",
-          "oklch(84% 0.0156 151.71)",
-          "oklch(95% 0.0156 151.71)"
-        ]
+        "displayName": "Muted Blue"
       },
       "dim": {
         "role": "neutral",
-        "displayName": "Dim Sage",
-        "tonalRamp": [
-          "oklch(15% 0.0193 155.68)",
-          "oklch(26% 0.0193 155.68)",
-          "oklch(38% 0.0193 155.68)",
-          "oklch(49% 0.0193 155.68)",
-          "oklch(61% 0.0193 155.68)",
-          "oklch(72% 0.0193 155.68)",
-          "oklch(84% 0.0193 155.68)",
-          "oklch(95% 0.0193 155.68)"
-        ]
+        "displayName": "Dim Blue"
       },
-      "signal-lime": {
+      "signal-blue": {
         "role": "primary",
-        "displayName": "Signal Lime",
-        "tonalRamp": [
-          "oklch(15% 0.1752 124.95)",
-          "oklch(26% 0.1752 124.95)",
-          "oklch(38% 0.1752 124.95)",
-          "oklch(49% 0.1752 124.95)",
-          "oklch(61% 0.1752 124.95)",
-          "oklch(72% 0.1752 124.95)",
-          "oklch(84% 0.1752 124.95)",
-          "oklch(95% 0.1752 124.95)"
-        ]
+        "displayName": "Signal Blue"
       },
       "signal-hover": {
         "role": "primary",
-        "displayName": "Signal Hover",
-        "tonalRamp": [
-          "oklch(15% 0.1232 125.02)",
-          "oklch(26% 0.1232 125.02)",
-          "oklch(38% 0.1232 125.02)",
-          "oklch(49% 0.1232 125.02)",
-          "oklch(61% 0.1232 125.02)",
-          "oklch(72% 0.1232 125.02)",
-          "oklch(84% 0.1232 125.02)",
-          "oklch(95% 0.1232 125.02)"
-        ]
+        "displayName": "Signal Hover"
       },
       "stage": {
         "role": "neutral",
-        "displayName": "Polybot Stage",
-        "tonalRamp": [
-          "oklch(15% 0.0193 167.23)",
-          "oklch(26% 0.0193 167.23)",
-          "oklch(38% 0.0193 167.23)",
-          "oklch(49% 0.0193 167.23)",
-          "oklch(61% 0.0193 167.23)",
-          "oklch(72% 0.0193 167.23)",
-          "oklch(84% 0.0193 167.23)",
-          "oklch(95% 0.0193 167.23)"
-        ]
+        "displayName": "Polybot Stage"
       },
       "line": {
         "role": "neutral",
-        "displayName": "Soft Divider",
-        "tonalRamp": [
-          "oklch(15% 0.0289 151.87 / 0.149)",
-          "oklch(26% 0.0289 151.87 / 0.149)",
-          "oklch(38% 0.0289 151.87 / 0.149)",
-          "oklch(49% 0.0289 151.87 / 0.149)",
-          "oklch(61% 0.0289 151.87 / 0.149)",
-          "oklch(72% 0.0289 151.87 / 0.149)",
-          "oklch(84% 0.0289 151.87 / 0.149)",
-          "oklch(95% 0.0289 151.87 / 0.149)"
-        ]
+        "displayName": "Soft Divider"
       },
       "line-strong": {
         "role": "neutral",
-        "displayName": "Strong Divider",
-        "tonalRamp": [
-          "oklch(15% 0.0289 151.87 / 0.302)",
-          "oklch(26% 0.0289 151.87 / 0.302)",
-          "oklch(38% 0.0289 151.87 / 0.302)",
-          "oklch(49% 0.0289 151.87 / 0.302)",
-          "oklch(61% 0.0289 151.87 / 0.302)",
-          "oklch(72% 0.0289 151.87 / 0.302)",
-          "oklch(84% 0.0289 151.87 / 0.302)",
-          "oklch(95% 0.0289 151.87 / 0.302)"
-        ]
+        "displayName": "Strong Divider"
       },
       "paper": {
         "role": "neutral",
-        "displayName": "Warm Paper",
-        "tonalRamp": [
-          "oklch(15% 0.0106 112.37)",
-          "oklch(26% 0.0106 112.37)",
-          "oklch(38% 0.0106 112.37)",
-          "oklch(49% 0.0106 112.37)",
-          "oklch(61% 0.0106 112.37)",
-          "oklch(72% 0.0106 112.37)",
-          "oklch(84% 0.0106 112.37)",
-          "oklch(95% 0.0106 112.37)"
-        ]
+        "displayName": "Warm Paper"
       },
       "paper-ink": {
         "role": "neutral",
-        "displayName": "Paper Ink",
-        "tonalRamp": [
-          "oklch(15% 0.0172 155.72)",
-          "oklch(26% 0.0172 155.72)",
-          "oklch(38% 0.0172 155.72)",
-          "oklch(49% 0.0172 155.72)",
-          "oklch(61% 0.0172 155.72)",
-          "oklch(72% 0.0172 155.72)",
-          "oklch(84% 0.0172 155.72)",
-          "oklch(95% 0.0172 155.72)"
-        ]
+        "displayName": "Paper Ink"
       },
       "paper-link": {
         "role": "neutral",
-        "displayName": "Forest Link",
-        "tonalRamp": [
-          "oklch(15% 0.0448 161.28)",
-          "oklch(26% 0.0448 161.28)",
-          "oklch(38% 0.0448 161.28)",
-          "oklch(49% 0.0448 161.28)",
-          "oklch(61% 0.0448 161.28)",
-          "oklch(72% 0.0448 161.28)",
-          "oklch(84% 0.0448 161.28)",
-          "oklch(95% 0.0448 161.28)"
-        ]
+        "displayName": "Forest Link"
       },
       "paper-muted": {
         "role": "neutral",
-        "displayName": "Paper Muted",
-        "tonalRamp": [
-          "oklch(15% 0.0266 155.19)",
-          "oklch(26% 0.0266 155.19)",
-          "oklch(38% 0.0266 155.19)",
-          "oklch(49% 0.0266 155.19)",
-          "oklch(61% 0.0266 155.19)",
-          "oklch(72% 0.0266 155.19)",
-          "oklch(84% 0.0266 155.19)",
-          "oklch(95% 0.0266 155.19)"
-        ]
+        "displayName": "Paper Muted"
       },
       "paper-hover": {
         "role": "neutral",
-        "displayName": "Paper Hover",
-        "tonalRamp": [
-          "oklch(15% 0.0218 130.02)",
-          "oklch(26% 0.0218 130.02)",
-          "oklch(38% 0.0218 130.02)",
-          "oklch(49% 0.0218 130.02)",
-          "oklch(61% 0.0218 130.02)",
-          "oklch(72% 0.0218 130.02)",
-          "oklch(84% 0.0218 130.02)",
-          "oklch(95% 0.0218 130.02)"
-        ]
+        "displayName": "Paper Hover"
       },
       "nova-cobalt": {
         "role": "secondary",
-        "displayName": "Nova Cobalt",
-        "tonalRamp": [
-          "oklch(15% 0.2271 265.95)",
-          "oklch(26% 0.2271 265.95)",
-          "oklch(38% 0.2271 265.95)",
-          "oklch(49% 0.2271 265.95)",
-          "oklch(61% 0.2271 265.95)",
-          "oklch(72% 0.2271 265.95)",
-          "oklch(84% 0.2271 265.95)",
-          "oklch(95% 0.2271 265.95)"
-        ]
+        "displayName": "Nova Cobalt"
       },
       "nova-stage": {
         "role": "secondary",
-        "displayName": "Nova Stage",
-        "tonalRamp": [
-          "oklch(15% 0.0989 267.27)",
-          "oklch(26% 0.0989 267.27)",
-          "oklch(38% 0.0989 267.27)",
-          "oklch(49% 0.0989 267.27)",
-          "oklch(61% 0.0989 267.27)",
-          "oklch(72% 0.0989 267.27)",
-          "oklch(84% 0.0989 267.27)",
-          "oklch(95% 0.0989 267.27)"
-        ]
+        "displayName": "Nova Stage"
       },
       "nova-muted": {
         "role": "secondary",
-        "displayName": "Nova Muted",
-        "tonalRamp": [
-          "oklch(15% 0.0482 271.24)",
-          "oklch(26% 0.0482 271.24)",
-          "oklch(38% 0.0482 271.24)",
-          "oklch(49% 0.0482 271.24)",
-          "oklch(61% 0.0482 271.24)",
-          "oklch(72% 0.0482 271.24)",
-          "oklch(84% 0.0482 271.24)",
-          "oklch(95% 0.0482 271.24)"
-        ]
+        "displayName": "Nova Muted"
       },
       "white": {
         "role": "neutral",
-        "displayName": "White",
-        "tonalRamp": [
-          "oklch(15% 0.0000 89.88)",
-          "oklch(26% 0.0000 89.88)",
-          "oklch(38% 0.0000 89.88)",
-          "oklch(49% 0.0000 89.88)",
-          "oklch(61% 0.0000 89.88)",
-          "oklch(72% 0.0000 89.88)",
-          "oklch(84% 0.0000 89.88)",
-          "oklch(95% 0.0000 89.88)"
-        ]
+        "displayName": "White"
       }
     },
     "typographyMeta": {
@@ -375,9 +195,9 @@
       "name": "Polybot Primary Action",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Lime primary download link with a short lift and dark text.",
+      "description": "Ice blue primary download link with a short lift and dark text.",
       "html": "<a class=\"ds-primary\" href=\"#download-polybot\">Download Polybot <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 4v15m-6-6 6 6 6-6\"/></svg></a>",
-      "css": ".ds-primary { display:inline-flex; align-items:center; justify-content:center; gap:25px; min-height:54px; padding:14px 22px; border:0; border-radius:6px; background:var(--mint,#c7f568); color:#17200d; text-decoration:none; font-size:13px; font-weight:650; font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); transition:transform .25s var(--ease-out,cubic-bezier(.16,1,.3,1)),background .25s; } .ds-primary:hover { background:#ddffa2; transform:translateY(-3px); } .ds-primary:active { transform:translateY(0); } .ds-primary:focus-visible { outline:2px solid var(--mint,#c7f568); outline-offset:5px; } .ds-primary svg { transition:transform .25s; } .ds-primary:hover svg { transform:translateY(3px); } @media(prefers-reduced-motion:reduce) { .ds-primary,.ds-primary svg { transition-duration:.01ms; } }"
+      "css": ".ds-primary { display:inline-flex; align-items:center; justify-content:center; gap:25px; min-height:54px; padding:14px 22px; border:0; border-radius:6px; background:var(--accent,#91c5ff); color:#0b2343; text-decoration:none; font-size:13px; font-weight:650; font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); transition:transform .25s var(--ease-out,cubic-bezier(.16,1,.3,1)),background .25s; } .ds-primary:hover { background:#c2dfff; transform:translateY(-3px); } .ds-primary:active { transform:translateY(0); } .ds-primary:focus-visible { outline:2px solid var(--accent,#91c5ff); outline-offset:5px; } .ds-primary svg { transition:transform .25s; } .ds-primary:hover svg { transform:translateY(3px); } @media(prefers-reduced-motion:reduce) { .ds-primary,.ds-primary svg { transition-duration:.01ms; } }"
     },
     {
       "name": "Nova Launch Action",
@@ -393,31 +213,31 @@
       "refersTo": "nav-action",
       "description": "Outlined download link from the sticky navigation.",
       "html": "<nav class=\"ds-nav\" aria-label=\"Product navigation\"><a class=\"ds-nav-action\" href=\"#download-polybot\">Get Polybot <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a></nav>",
-      "css": ".ds-nav { background:var(--bg,#0c100f); padding:12px; font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); } .ds-nav-action { display:inline-flex; align-items:center; justify-content:center; gap:20px; min-height:44px; padding:10px 17px; border:1px solid #c7f56865; border-radius:6px; color:var(--mint,#c7f568); text-decoration:none; font-size:13px; font-weight:550; } .ds-nav-action:hover { background:#c7f56812; } .ds-nav-action:focus-visible { outline:2px solid var(--mint,#c7f568); outline-offset:5px; }"
+      "css": ".ds-nav { background:var(--bg,#080f1e); padding:12px; font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); } .ds-nav-action { display:inline-flex; align-items:center; justify-content:center; gap:20px; min-height:44px; padding:10px 17px; border:1px solid #91c5ff65; border-radius:6px; color:var(--accent,#91c5ff); text-decoration:none; font-size:13px; font-weight:550; } .ds-nav-action:hover { background:#91c5ff12; } .ds-nav-action:focus-visible { outline:2px solid var(--accent,#91c5ff); outline-offset:5px; }"
     },
     {
       "name": "Preview Selection",
       "kind": "button",
       "refersTo": "preview-choice-selected",
-      "description": "Native screenshot choice; selected state has a dark focus ring on lime.",
+      "description": "Native screenshot choice; selected state has a dark focus ring on ice blue.",
       "html": "<div class=\"ds-preview-choices\" role=\"group\" aria-label=\"Choose an app screenshot\"><button class=\"ds-preview-choice\" type=\"button\" aria-pressed=\"true\">Workspace</button><button class=\"ds-preview-choice\" type=\"button\" aria-pressed=\"false\">Practice &amp; risk</button><button class=\"ds-preview-choice\" type=\"button\" aria-pressed=\"false\">Evidence</button></div>",
-      "css": ".ds-preview-choices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; padding:12px; background:#18241f; } .ds-preview-choice { min-height:44px; padding:8px 5px; border:0; border-radius:5px; background:transparent; color:var(--muted,#bac4bc); font-size:12px; font-weight:600; font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); cursor:pointer; transition:color .2s,background .2s; } .ds-preview-choice:hover { color:var(--text,#f2f4ed); background:#c7f5680a; } .ds-preview-choice[aria-pressed=\"true\"] { background:var(--mint,#c7f568); color:#17200d; } .ds-preview-choice:focus-visible { outline:2px solid var(--text,#f2f4ed); outline-offset:-3px; } .ds-preview-choice[aria-pressed=\"true\"]:focus-visible { outline-color:#17200d; } @media(prefers-reduced-motion:reduce) { .ds-preview-choice { transition-duration:.01ms; } }"
+      "css": ".ds-preview-choices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; padding:12px; background:#12223b; } .ds-preview-choice { min-height:44px; padding:8px 5px; border:0; border-radius:5px; background:transparent; color:var(--muted,#b5c4db); font-size:12px; font-weight:600; font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); cursor:pointer; transition:color .2s,background .2s; } .ds-preview-choice:hover { color:var(--text,#f2f6ff); background:#91c5ff0a; } .ds-preview-choice[aria-pressed=\"true\"] { background:var(--accent,#91c5ff); color:#0b2343; } .ds-preview-choice:focus-visible { outline:2px solid var(--text,#f2f6ff); outline-offset:-3px; } .ds-preview-choice[aria-pressed=\"true\"]:focus-visible { outline-color:#0b2343; } @media(prefers-reduced-motion:reduce) { .ds-preview-choice { transition-duration:.01ms; } }"
     },
     {
       "name": "ROMANR Referral Code",
       "kind": "custom",
       "refersTo": "referral-code",
-      "description": "Dashed code link on the lime referral ribbon, with adjacent reward disclosure.",
+      "description": "Dashed code link on the ice blue referral ribbon, with adjacent reward disclosure.",
       "html": "<div class=\"ds-offer\"><a class=\"ds-offer-code\" href=\"https://polymarket.us/join/romanr\" target=\"_blank\" rel=\"noopener noreferrer sponsored\">ROMANR <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a><p class=\"ds-offer-terms\">Eligibility and qualifying steps apply.<br>ROM may receive a referral reward.</p></div>",
-      "css": ".ds-offer { padding:27px; background:var(--mint,#c7f568); color:#16220b; font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); } .ds-offer-code { display:inline-flex; align-items:center; gap:36px; min-height:52px; padding:8px 21px; border:1px dashed #34421b88; border-radius:6px; color:#16220b; text-decoration:none; font-family: var(--font-display, \"Space Grotesk\", system-ui, sans-serif); font-size:26px; font-weight:600; line-height:1; letter-spacing:.03em; transition:background .2s; } .ds-offer-code:hover { background:#efffd35c; } .ds-offer-code:focus-visible { outline:2px solid #16220b; outline-offset:5px; } .ds-offer-terms { margin:16px 0 0; color:#364622; font-size:12px; line-height:1.7; } @media(prefers-reduced-motion:reduce) { .ds-offer-code { transition-duration:.01ms; } }"
+      "css": ".ds-offer { padding:27px; background:var(--accent,#91c5ff); color:#0b2343; font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); } .ds-offer-code { display:inline-flex; align-items:center; gap:36px; min-height:52px; padding:8px 21px; border:1px dashed #234f8588; border-radius:6px; color:#0b2343; text-decoration:none; font-family: var(--font-display, \"Space Grotesk\", system-ui, sans-serif); font-size:26px; font-weight:600; line-height:1; letter-spacing:.03em; transition:background .2s; } .ds-offer-code:hover { background:#edf6ff70; } .ds-offer-code:focus-visible { outline:2px solid #0b2343; outline-offset:5px; } .ds-offer-terms { margin:16px 0 0; color:#25486f; font-size:12px; line-height:1.7; } @media(prefers-reduced-motion:reduce) { .ds-offer-code { transition-duration:.01ms; } }"
     },
     {
       "name": "Platform Download Row",
       "kind": "card",
       "refersTo": "platform-row",
       "description": "Flat, full-width download link on the paper section; hover changes fill without moving text.",
-      "html": "<div class=\"ds-download\"><a class=\"ds-platform\" href=\"https://github.com/romanstma-cpu/rom-apps/releases/download/v2.35.11/ROM.PolyBot-Setup-2.35.11.exe\"><strong class=\"ds-platform-title\">Windows <span class=\"ds-platform-arrow\" aria-hidden=\"true\">↓</span></strong><small class=\"ds-platform-note\">Windows 10/11 · 64-bit · 91.6 MB</small></a></div>",
-      "css": ".ds-download { padding:20px; background:#f0f1e9; } .ds-platform { display:flex; flex-direction:column; justify-content:center; gap:9px; min-height:117px; padding:22px 0; border-top:1px solid #253b324d; border-bottom:1px solid #253b324d; color:#19221c; text-decoration:none; font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); transition:background .25s var(--ease-out,cubic-bezier(.16,1,.3,1)); } .ds-platform:hover { background:#dfe7d8; } .ds-platform:focus-visible { outline:2px solid #274536; outline-offset:5px; } .ds-platform-title { display:flex; align-items:center; justify-content:space-between; gap:10px; font-family: var(--font-display, \"Space Grotesk\", system-ui, sans-serif); font-size:29px; font-weight:500; line-height:1.2; letter-spacing:-.03em; } .ds-platform-arrow { display:grid; place-items:center; width:37px; height:37px; border:1px solid #253b324d; border-radius:50%; font-size:22px; } .ds-platform-note { color:#4b5b50; font-size:12px; line-height:1.5; } @media(prefers-reduced-motion:reduce) { .ds-platform { transition-duration:.01ms; } }"
+      "html": "<div class=\"ds-download\"><a class=\"ds-platform\" href=\"https://github.com/romanstma-cpu/rom-apps/releases/download/v2.35.11/ROM.PolyBot-Setup-2.35.11.exe\"><strong class=\"ds-platform-title\">Windows <span class=\"ds-platform-arrow\" aria-hidden=\"true\">\u00e2\u2020\u201c</span></strong><small class=\"ds-platform-note\">Windows 10/11 \u00c2\u00b7 64-bit \u00c2\u00b7 91.6 MB</small></a></div>",
+      "css": ".ds-download { padding:20px; background:#edf3fc; } .ds-platform { display:flex; flex-direction:column; justify-content:center; gap:9px; min-height:117px; padding:22px 0; border-top:1px solid #2447754d; border-bottom:1px solid #2447754d; color:#152540; text-decoration:none; font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); transition:background .25s var(--ease-out,cubic-bezier(.16,1,.3,1)); } .ds-platform:hover { background:#dce9fa; } .ds-platform:focus-visible { outline:2px solid #23559c; outline-offset:5px; } .ds-platform-title { display:flex; align-items:center; justify-content:space-between; gap:10px; font-family: var(--font-display, \"Space Grotesk\", system-ui, sans-serif); font-size:29px; font-weight:500; line-height:1.2; letter-spacing:-.03em; } .ds-platform-arrow { display:grid; place-items:center; width:37px; height:37px; border:1px solid #2447754d; border-radius:50%; font-size:22px; } .ds-platform-note { color:#425976; font-size:12px; line-height:1.5; } @media(prefers-reduced-motion:reduce) { .ds-platform { transition-duration:.01ms; } }"
     },
     {
       "name": "FAQ Disclosure",
@@ -425,15 +245,15 @@
       "refersTo": "faq-disclosure",
       "description": "Native details disclosure with thin dividers and a rotating plus.",
       "html": "<div class=\"ds-faq\"><details class=\"ds-faq-item\"><summary class=\"ds-faq-summary\">Can I use it on my phone?</summary><p class=\"ds-faq-copy\">Polybot is a desktop app for Windows and Apple Silicon Macs. It does not currently have a native iPhone app. ROM Nova works in a mobile browser.</p></details></div>",
-      "css": ".ds-faq { padding:12px; background:var(--bg,#0c100f); color:var(--text,#f2f4ed); font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); } .ds-faq-item { border-top:1px solid var(--line,#c6d9ca26); border-bottom:1px solid var(--line,#c6d9ca26); } .ds-faq-summary { display:flex; align-items:center; justify-content:space-between; gap:18px; min-height:70px; cursor:pointer; list-style:none; font-size:14px; font-weight:500; } .ds-faq-summary::-webkit-details-marker { display:none; } .ds-faq-summary::after { content:\"+\"; color:var(--mint,#c7f568); font-size:24px; font-weight:300; transition:transform .25s var(--ease-out,cubic-bezier(.16,1,.3,1)); } .ds-faq-item[open] .ds-faq-summary::after { transform:rotate(45deg); } .ds-faq-summary:hover { color:var(--mint,#c7f568); } .ds-faq-summary:focus-visible { outline:2px solid var(--mint,#c7f568); outline-offset:5px; } .ds-faq-copy { max-width:68ch; margin:0 28px 22px 0; color:var(--muted,#bac4bc); font-size:13px; line-height:1.8; } @media(prefers-reduced-motion:reduce) { .ds-faq-summary::after { transition-duration:.01ms; } }"
+      "css": ".ds-faq { padding:12px; background:var(--bg,#080f1e); color:var(--text,#f2f6ff); font-family: var(--font-body, \"Segoe UI Variable\", \"Aptos\", system-ui, sans-serif); } .ds-faq-item { border-top:1px solid var(--line,#adc8ef26); border-bottom:1px solid var(--line,#adc8ef26); } .ds-faq-summary { display:flex; align-items:center; justify-content:space-between; gap:18px; min-height:70px; cursor:pointer; list-style:none; font-size:14px; font-weight:500; } .ds-faq-summary::-webkit-details-marker { display:none; } .ds-faq-summary::after { content:\"+\"; color:var(--accent,#91c5ff); font-size:24px; font-weight:300; transition:transform .25s var(--ease-out,cubic-bezier(.16,1,.3,1)); } .ds-faq-item[open] .ds-faq-summary::after { transform:rotate(45deg); } .ds-faq-summary:hover { color:var(--accent,#91c5ff); } .ds-faq-summary:focus-visible { outline:2px solid var(--accent,#91c5ff); outline-offset:5px; } .ds-faq-copy { max-width:68ch; margin:0 28px 22px 0; color:var(--muted,#b5c4db); font-size:13px; line-height:1.8; } @media(prefers-reduced-motion:reduce) { .ds-faq-summary::after { transition-duration:.01ms; } }"
     }
   ],
   "narrative": {
     "northStar": "Signal in focus",
-    "overview": "ROM Apps pairs oversized, compact display type with real product screens and broad changes of color. A green-black opening gives lime actions and the dimensional Polybot preview prominence. A lime referral ribbon, off-white download section, and cobalt Nova chapter establish distinct landmarks before the quieter FAQ and footer.\n\nDepth belongs to the product imagery. Thin geometric signal arcs draw once behind the opening composition; Nova uses static circular outlines. These shapes are decoration, not market data. Product interfaces stay recognizable, and short captions explain what each screenshot actually shows.",
+    "overview": "ROM Apps pairs oversized, compact display type with real product screens and broad changes of color. A midnight navy opening gives ice blue actions and the dimensional Polybot preview prominence. A ice blue referral ribbon, ice-white download section, and cobalt Nova chapter establish distinct landmarks before the quieter FAQ and footer.\n\nDepth belongs to the product imagery. Thin geometric signal arcs draw once behind the opening composition; Nova uses static circular outlines. These shapes are decoration, not market data. Product interfaces stay recognizable, and short captions explain what each screenshot actually shows.",
     "keyCharacteristics": [
       "Large, tightly set Space Grotesk headlines with restrained body copy.",
-      "Lime, off-white, and cobalt chapters within a green-black page.",
+      "Ice blue, ice-white, and cobalt chapters within a midnight navy page.",
       "Real product screenshots in gently dimensional frames.",
       "A single entrance composition followed by a still page.",
       "Native links, buttons, disclosures, scrolling, and modal behavior."
@@ -441,7 +261,7 @@
     "rules": [
       {
         "name": "The Chapter Color Rule",
-        "body": "Resolve shared colors in the section's context: dark green links and focus on paper, white actions on cobalt, lime accents on green-black. Do not apply the root lime blindly to every section.",
+        "body": "Resolve shared colors in the section's context: deep blue links and focus on paper, white actions on cobalt, ice blue accents on midnight navy. Do not apply the root ice blue blindly to every section.",
         "section": "colors"
       },
       {
@@ -458,7 +278,7 @@
     "dos": [
       "Keep the website focused on ROM Polybot and ROM Nova.",
       "Use actual product screens with accurate, nearby state captions.",
-      "Preserve the distinct green-black, lime, paper, and cobalt chapters.",
+      "Preserve the distinct midnight navy, ice blue, paper, and cobalt chapters.",
       "Keep referral terms, platform requirements, and download verification readable.",
       "Preserve native navigation, disclosures, keyboard focus, and image-link fallbacks.",
       "Keep the 320px layout usable and respect reduced-motion preferences."
