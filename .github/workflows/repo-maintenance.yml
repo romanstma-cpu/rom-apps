@@ -1,0 +1,96 @@
+name: Repository maintenance
+
+# Release and branch housekeeping from the Actions tab, for when there is no
+# terminal with gh at hand. Every input is optional; leave one empty to skip it.
+#
+# - Mark latest: the release GitHub serves as "latest". ROM Trader's updater
+#   reads latest.yml from it, so this should be the newest ROM Trader release.
+# - Delete releases: removes each release and its tag.
+# - Delete branches: removes each branch. main, the default branch and any
+#   branch with an open pull request are refused.
+on:
+  workflow_dispatch:
+    inputs:
+      mark_latest:
+        description: "Tag of the release to mark as latest (e.g. v1.15.1)"
+        required: false
+        type: string
+        default: ""
+      delete_releases:
+        description: "Release tags to delete, separated by spaces"
+        required: false
+        type: string
+        default: ""
+      delete_branches:
+        description: "Branches to delete, separated by spaces"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: repo-maintenance
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      MARK_LATEST: ${{ inputs.mark_latest }}
+      DELETE_RELEASES: ${{ inputs.delete_releases }}
+      DELETE_BRANCHES: ${{ inputs.delete_branches }}
+    steps:
+      - name: Mark a release as latest
+        if: inputs.mark_latest != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view "$MARK_LATEST" --repo "$REPO" --json tagName,isDraft,isPrerelease \
+            --jq 'if .isDraft or .isPrerelease then error("\(.tagName) is a draft or prerelease") else .tagName end'
+          gh release edit "$MARK_LATEST" --repo "$REPO" --latest
+          latest=$(gh api "repos/$REPO/releases/latest" --jq .tag_name)
+          test "$latest" = "$MARK_LATEST" || { echo "latest is $latest, not $MARK_LATEST"; exit 1; }
+          echo "latest is now $latest"
+
+      - name: Delete releases and their tags
+        if: inputs.delete_releases != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tag in $DELETE_RELEASES; do
+            if gh release view "$tag" --repo "$REPO" >/dev/null 2>&1; then
+              gh release delete "$tag" --repo "$REPO" --cleanup-tag --yes
+              echo "deleted release $tag"
+            else
+              echo "no release $tag; skipped"
+            fi
+          done
+
+      - name: Delete branches
+        if: inputs.delete_branches != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          default=$(gh api "repos/$REPO" --jq .default_branch)
+          for branch in $DELETE_BRANCHES; do
+            if [ "$branch" = main ] || [ "$branch" = "$default" ]; then
+              echo "refusing to delete $branch"; exit 1
+            fi
+            open=$(gh pr list --repo "$REPO" --state open --head "$branch" --json number --jq length)
+            if [ "$open" != 0 ]; then
+              echo "refusing to delete $branch: it has an open pull request"; exit 1
+            fi
+          done
+          for branch in $DELETE_BRANCHES; do
+            if gh api "repos/$REPO/branches/$branch" >/dev/null 2>&1; then
+              gh api -X DELETE "repos/$REPO/git/refs/heads/$branch"
+              echo "deleted branch $branch"
+            else
+              echo "no branch $branch; skipped"
+            fi
+          done
