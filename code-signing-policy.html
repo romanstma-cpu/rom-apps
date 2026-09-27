@@ -6,11 +6,25 @@
   <title>Download verification &amp; support — ROM Apps</title>
   <meta name="description" content="Verify ROM Polybot downloads, understand unsigned installers, and find support for ROM Polybot and ROM Nova.">
   <meta name="theme-color" content="#090f19">
+  <meta name="color-scheme" content="dark">
   <link rel="canonical" href="https://romapps.xyz/code-signing-policy.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ROM Apps">
+  <meta property="og:url" content="https://romapps.xyz/code-signing-policy.html">
+  <meta property="og:title" content="Download verification &amp; support — ROM Apps">
+  <meta property="og:description" content="Verify ROM Polybot downloads, understand unsigned installers, and find support for ROM Polybot and ROM Nova.">
+  <meta property="og:image" content="https://romapps.xyz/assets/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="ROM Polybot: Markets move. Stay in command. Your Polymarket US trading desk.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Download verification &amp; support — ROM Apps">
+  <meta name="twitter:description" content="Verify ROM Polybot downloads, understand unsigned installers, and find support for ROM Polybot and ROM Nova.">
+  <meta name="twitter:image" content="https://romapps.xyz/assets/og-card.png">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/market-stage.css?v=viewer-2">
+  <link rel="stylesheet" href="assets/market-stage.css?v=polish-3">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -46,9 +60,11 @@ if ($actual -eq $expected) { 'MATCH' } else { 'DOES NOT MATCH — do not install
 
       <section id="verify-mac" aria-labelledby="verify-mac-title">
         <h2 id="verify-mac-title">Verify the Apple Silicon Mac download</h2>
-        <p>For macOS 15 or later on an M-series Mac, download the <a href="https://github.com/romanstma-cpu/rom-apps/releases/download/polybot-mac-47/ROM.PolyBot-2.35.11-arm64.dmg">ROM Polybot 2.35.11 disk image</a>. If it is in Downloads, open Terminal and run:</p>
-<pre><code>shasum -a 256 ~/Downloads/ROM.PolyBot-2.35.11-arm64.dmg</code></pre>
-        <p>Compare the 64-character result with the hash beside the same filename in the <a href="assets/POLYBOT-MAC-CHECKSUMS-2.35.11.txt">published Mac checksum file</a>; letter case does not matter. If they differ, do not open the download. If you saved the disk image elsewhere, change the file path.</p>
+        <p>For macOS 15 or later on an M-series Mac, download the <a href="https://github.com/romanstma-cpu/rom-apps/releases/download/polybot-mac-47/ROM.PolyBot-2.35.11-arm64.dmg">ROM Polybot 2.35.11 disk image</a> and its <a href="assets/POLYBOT-MAC-CHECKSUMS-2.35.11.txt">SHA-256 checksum</a>. If the disk image is in Downloads, this Terminal command compares them:</p>
+<pre><code>cd ~/Downloads &amp;&amp;
+curl -fsSL https://romapps.xyz/assets/POLYBOT-MAC-CHECKSUMS-2.35.11.txt |
+  grep -F 'ROM.PolyBot-2.35.11-arm64.dmg' | shasum -a 256 -c -</code></pre>
+        <p>It prints <code>OK</code> when the file matches. If it prints <code>FAILED</code>, do not open the download. If you saved the disk image elsewhere, change <code>~/Downloads</code> to that folder. To check by hand instead, run <code>shasum -a 256</code> on the file and compare the result with the published hash; letter case does not matter.</p>
         <p>Open the disk image and drag Polybot to Applications. Because this build is not Apple-notarized, macOS may warn before first launch. <a href="https://support.apple.com/102445">Read Apple’s current guidance</a> and decide whether to open it. Apple explains the Privacy &amp; Security “Open Anyway” option for an app you have tried to open and deliberately trust. Do not disable macOS security system-wide. Both installers include the Python runtime.</p>
       </section>
 

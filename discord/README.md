@@ -12,7 +12,7 @@ minute between them.
 
 Discord, left sidebar, **+** → **Create My Own** → **For me and my friends**.
 
-Name it **ROM Apps**. Use `assets/rom-icon.png` from this repo as the icon.
+Name it **ROM Apps**. Use `rom-icon.png` from this folder as the icon.
 
 Then **User Settings → Advanced → Developer Mode** on, right-click the server,
 **Copy Server ID**.
