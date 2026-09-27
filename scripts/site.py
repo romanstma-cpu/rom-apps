@@ -10,14 +10,16 @@ tooling on romapps.xyz. Anything not listed in PUBLIC stays private; a new
 public file has to be added here on purpose.
 
 The checks after staging fail the deploy when a page links to a file that is
-not published, an in-page anchor is missing, the Polybot version, installer
-names and checksum files disagree with each other, or changelog.html is not
-what `changelog` would write from assets/RELEASE-*.md.
+not published, an in-page anchor is missing, a published image is not used
+by any page, stylesheet or script, the Polybot version, installer names and
+checksum files disagree with each other, or changelog.html is not what
+`changelog` would write from assets/RELEASE-*.md.
 
 `downloads` needs the network. It follows every GitHub release link on the
-pages and confirms the update feeds that installed apps read: ROM Nova's on
-its own repository, and (as a warning only, since Trader is retired) ROM
-Trader's `latest.yml` on this repository's latest release.
+pages, confirms that a size printed beside a download link matches the file,
+and checks the update feeds that installed apps read: ROM Nova's on its own
+repository, and (as a warning only, since Trader is retired) ROM Trader's
+`latest.yml` on this repository's latest release.
 """
 from __future__ import annotations
 
@@ -55,6 +57,9 @@ PUBLIC = [
 # Pages whose Polybot version must match the homepage's.
 VERSIONED = ["index.html", "code-signing-policy.html", "assets/market-stage.js"]
 
+# Published images must be used somewhere. nova/ is ROM Nova's own build.
+IMAGES = {".png", ".webp", ".jpg", ".jpeg", ".gif", ".svg", ".avif", ".ico"}
+
 # Update feeds that installed apps read: (repository, name the latest release
 # must carry, whether a problem fails the run). A 404 here means no installed
 # copy can see a new version. Trader is retired and will not ship again, so
@@ -89,7 +94,9 @@ class _Refs(HTMLParser):
         self.refs: list[str] = []
         self.ids: set[str] = set()
         self.jsonld: list[str] = []
+        self.link_text: dict[str, str] = {}
         self._in_jsonld = False
+        self._link: tuple[str, list[str]] | None = None
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
@@ -104,14 +111,22 @@ class _Refs(HTMLParser):
                 "og:image", "twitter:image", "og:url"):
             self.refs.append(a.get("content", ""))
         self._in_jsonld = tag == "script" and a.get("type") == "application/ld+json"
+        if tag == "a" and a.get("href"):
+            self._link = (a["href"], [])
 
     def handle_endtag(self, tag):
         if tag == "script":
             self._in_jsonld = False
+        if tag == "a" and self._link:
+            href, text = self._link
+            self.link_text[href] = self.link_text.get(href, "") + " ".join("".join(text).split())
+            self._link = None
 
     def handle_data(self, data):
         if self._in_jsonld:
             self.jsonld.append(data)
+        if self._link:
+            self._link[1].append(data)
 
 
 def _local_target(site: Path, page: Path, ref: str) -> tuple[Path, str] | None:
@@ -134,6 +149,7 @@ def check(site: Path) -> list[str]:
     problems: list[str] = []
     pages = sorted(site.rglob("*.html"))
     parsed: dict[Path, _Refs] = {}
+    used: set[Path] = set()
     for page in pages:
         p = _Refs()
         p.feed(page.read_text(encoding="utf-8"))
@@ -147,6 +163,7 @@ def check(site: Path) -> list[str]:
                 continue
             target, fragment = hit
             target = target.resolve()
+            used.add(target)
             if site.resolve() not in target.parents and target != site.resolve():
                 problems.append(f"{rel}: {ref} points outside the site")
                 continue
@@ -161,14 +178,24 @@ def check(site: Path) -> list[str]:
         for ref in re.findall(r"url\(\s*['\"]?([^'\")]+)", css.read_text(encoding="utf-8")):
             if ref.startswith(("data:", "http:", "https:", "#")):
                 continue
-            if not (css.parent / ref.split("?")[0]).is_file():
+            target = css.parent / ref.split("?")[0]
+            used.add(target.resolve())
+            if not target.is_file():
                 problems.append(f"{css.relative_to(site)}: url({ref}) is not published")
 
     # Screenshot paths the homepage script swaps in.
     for js in sorted((site / "assets").glob("*.js")):
         for ref in re.findall(r"['\"](assets/[^'\"?]+)", js.read_text(encoding="utf-8")):
+            used.add((site / ref).resolve())
             if not (site / ref).is_file():
                 problems.append(f"{js.relative_to(site)}: {ref} is not published")
+
+    # An image nothing uses is a leftover, such as a retired app's screenshot,
+    # and is still public at its URL.
+    for image in sorted(site.rglob("*")):
+        rel = image.relative_to(site)
+        if image.suffix.lower() in IMAGES and rel.parts[0] != "nova" and image.resolve() not in used:
+            problems.append(f"{rel.as_posix()} is published but no page, stylesheet or script uses it")
 
     problems += _check_versions(site, parsed[(site / "index.html").resolve()])
     problems += _check_changelog(site)
@@ -306,6 +333,8 @@ def render_changelog(root: Path) -> str:
             f'        {notes}{files}\n'
             f'      </section>')
 
+    description = ("What changed in every ROM Polybot release, newest first, "
+                   "with SHA-256 checksums for each version's installers.")
     return f"""<!doctype html>
 <!-- Generated by `python3 scripts/site.py changelog` from assets/RELEASE-*.md
      and the checksum files. Edit those, not this page. -->
@@ -314,13 +343,27 @@ def render_changelog(root: Path) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ROM Polybot release notes — ROM Apps</title>
-  <meta name="description" content="What changed in every ROM Polybot release, newest first, with SHA-256 checksums for each version's installers.">
+  <meta name="description" content="{description}">
   <meta name="theme-color" content="#090f19">
+  <meta name="color-scheme" content="dark">
   <link rel="canonical" href="https://romapps.xyz/changelog.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ROM Apps">
+  <meta property="og:url" content="https://romapps.xyz/changelog.html">
+  <meta property="og:title" content="ROM Polybot release notes">
+  <meta property="og:description" content="{description}">
+  <meta property="og:image" content="https://romapps.xyz/assets/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="ROM Polybot: Markets move. Stay in command. Your Polymarket US trading desk.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ROM Polybot release notes">
+  <meta name="twitter:description" content="{description}">
+  <meta name="twitter:image" content="https://romapps.xyz/assets/og-card.png">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/market-stage.css?v=viewer-2">
+  <link rel="stylesheet" href="assets/market-stage.css?v=polish-3">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -374,14 +417,23 @@ def downloads() -> tuple[list[str], list[str]]:
     problems: list[str] = []
     warnings: list[str] = []
     urls: set[str] = set()
+    sizes: dict[str, str] = {}
     for name in ("index.html", "code-signing-policy.html"):
         p = _Refs()
         p.feed((ROOT / name).read_text(encoding="utf-8"))
         urls |= {r for r in p.refs if re.match(r"https://github\.com/[^/]+/[^/]+/releases/.*download/", r)}
+        for href, text in p.link_text.items():
+            if m := re.search(r"(\d+(?:\.\d+)?) MB", text):
+                sizes[href] = m.group(1)
     for url in sorted(urls):
         try:
             with _open(url) as r:
                 print(f"ok    {r.status}  {url}")
+                span = r.headers.get("Content-Range", "")
+                total = span.rpartition("/")[2] if span else r.headers.get("Content-Length", "")
+            # "MB" on the page is 2^20 bytes, as GitHub and Windows show it.
+            if url in sizes and total.isdigit() and f"{int(total) / 2**20:.1f}" != sizes[url]:
+                problems.append(f"{url} is {int(total) / 2**20:.1f} MB, but the page says {sizes[url]} MB")
         except urllib.error.HTTPError as e:
             problems.append(f"{url} returned {e.code}")
         except urllib.error.URLError as e:

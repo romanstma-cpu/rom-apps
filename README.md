@@ -8,13 +8,13 @@ The website features only **ROM Polybot** and **ROM Nova**. Keep retired apps (R
 
 `.github/workflows/deploy-site.yml` runs `python3 scripts/site.py build _site`, which copies an allowlist of public files (`PUBLIC` in `scripts/site.py`) and then checks them. Nothing else in this repository is published — not `docs/`, `scripts/`, `discord/` or this README. A new public file or folder must be added to `PUBLIC` deliberately.
 
-The check fails the deploy (and pull requests) when a page links to a file that is not published, an in-page anchor is missing, a social-card URL does not resolve, or the Polybot version, installer names and checksum files disagree. Run it locally before pushing:
+The check fails the deploy (and pull requests) when a page links to a file that is not published, an in-page anchor is missing, a social-card URL does not resolve, a published image is not used by any page, stylesheet or script, or the Polybot version, installer names and checksum files disagree. Delete a screenshot when it stops being used; everything in `assets/` is public at its URL. Run it locally before pushing:
 
 ```bash
 python3 scripts/site.py build /tmp/romapps-site   # any new directory
 ```
 
-`.github/workflows/check-downloads.yml` runs `python3 scripts/site.py downloads` daily and when the pages change. It follows every installer link and checks the update feeds that installed apps read. A failed run emails the repository owner.
+`.github/workflows/check-downloads.yml` runs `python3 scripts/site.py downloads` daily and when the pages change. It follows every installer link, checks that a size printed beside a download (such as `91.6 MB`, in 2^20-byte megabytes as GitHub shows them) matches the file, and checks the update feeds that installed apps read. A failed run emails the repository owner.
 
 ## Layout
 
@@ -41,7 +41,7 @@ The desktop source lives on the `build` branch; each release tag (for example `v
 
 When publishing a new version, update together:
 
-1. The version, download links and JSON-LD in `index.html`, and the screenshots in `assets/market-stage.js`. Use `python scripts/make_shots.py <capture.png> <stem>` for each screenshot.
+1. The version, download links, installer sizes and JSON-LD in `index.html`, and the screenshots in `assets/market-stage.js`. Remove any screenshot the page stops using; the build fails on unused images. Use `python scripts/make_shots.py <capture.png> <stem>` for each screenshot.
 2. The links and commands in `code-signing-policy.html`.
 3. The checksum files and `assets/RELEASE-<version>.md`, then `python3 scripts/site.py changelog` to regenerate `changelog.html`.
 4. The social card: point `scripts/og-card.html` at the new overview screenshot and run `python scripts/make_og.py`.

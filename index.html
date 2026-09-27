@@ -6,6 +6,7 @@
   <title>ROM Apps — ROM Polybot &amp; ROM Nova</title>
   <meta name="description" content="Two focused market tools. ROM Polybot brings Polymarket US into one trading desk. ROM Nova puts Solana wallet activity and market research on your radar.">
   <meta name="theme-color" content="#090f19">
+  <meta name="color-scheme" content="dark">
   <link rel="canonical" href="https://romapps.xyz/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="ROM Apps">
@@ -23,7 +24,7 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/market-stage.css?v=viewer-2">
+  <link rel="stylesheet" href="assets/market-stage.css?v=polish-3">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"ROM Polybot","softwareVersion":"2.36.0","operatingSystem":["Windows 10","Windows 11","macOS 15 or later"],"applicationCategory":"FinanceApplication","url":"https://romapps.xyz/#polybot","downloadUrl":"https://github.com/romanstma-cpu/rom-polybot/releases/download/v2.36.0/ROM.PolyBot-Setup-2.36.0.exe","description":"A Polymarket US desktop workspace to scan markets, practice with simulated funds, inspect evidence and choose when to enable live trading.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 </head>
 <body>
@@ -68,11 +69,11 @@
 
     <section class="download-section section-pad" id="download-polybot" aria-labelledby="download-title">
       <div class="wrap download-layout">
-        <div class="section-intro" data-reveal><h2 id="download-title">Make it your desk.</h2><p id="how-it-works">Connect your Polymarket US API, try Practice with simulated funds, then review the evidence before enabling live trading.</p><div class="setup-links"><a class="subtle-link" href="https://polymarket.us/developer" target="_blank" rel="noopener">Get API keys <span aria-hidden="true">↗</span></a><a class="subtle-link" href="changelog.html#v2.36.0">Version 2.36.0 · Release notes</a></div></div>
+        <div class="section-intro" data-reveal><h2 id="download-title">Make it your desk.</h2><p id="how-it-works">Connect your Polymarket US API, try Practice with simulated funds, then review the evidence before enabling live trading.</p><div class="setup-links"><a class="subtle-link" href="https://polymarket.us/developer" target="_blank" rel="noopener">Get API keys <span aria-hidden="true">↗</span><span class="sr-only"> Opens in a new tab.</span></a><a class="subtle-link" href="changelog.html#v2.36.0">Version 2.36.0 · Release notes</a></div></div>
         <div class="download-body" data-reveal>
           <div class="platform-grid">
             <a class="platform-card" href="https://github.com/romanstma-cpu/rom-polybot/releases/download/v2.36.0/ROM.PolyBot-Setup-2.36.0.exe"><strong>Windows <span aria-hidden="true">↓</span><span class="sr-only"> download</span></strong><small>Windows 10/11 · 64-bit · 125.9 MB</small></a>
-            <a class="platform-card" href="https://github.com/romanstma-cpu/rom-polybot/releases/download/v2.36.0/ROM.PolyBot-2.36.0-arm64.dmg"><strong>Mac <span aria-hidden="true">↓</span><span class="sr-only"> download</span></strong><small>Apple Silicon · macOS 15+</small></a>
+            <a class="platform-card" href="https://github.com/romanstma-cpu/rom-polybot/releases/download/v2.36.0/ROM.PolyBot-2.36.0-arm64.dmg"><strong>Mac <span aria-hidden="true">↓</span><span class="sr-only"> download</span></strong><small>Apple Silicon · macOS 15+ · 141.8 MB</small></a>
           </div>
           <p class="download-caution">Installers are unsigned; the Mac build is not Apple-notarized.</p>
           <details class="download-details" id="verify"><summary>Installation &amp; verification</summary><div class="download-support"><a href="code-signing-policy.html">Installation guide <span aria-hidden="true">↗</span></a><a href="assets/SHA256SUMS-Polybot-2.36.0.txt">Windows checksum</a><a href="assets/POLYBOT-MAC-CHECKSUMS-2.36.0.txt">Mac checksum</a></div></details>
@@ -97,10 +98,10 @@
     <section class="questions-section section-pad" id="questions" aria-labelledby="questions-title">
       <div class="wrap questions-layout"><div class="section-intro" data-reveal><h2 id="questions-title">Good to know.</h2><p>A few answers before you get started.</p></div>
         <div class="faq" data-reveal>
-          <details><summary>What do I need for Polybot?</summary><p>A Windows 10 or 11 PC (64-bit), or an Apple Silicon Mac running macOS 15 or later, plus a verified Polymarket US account and its API Key ID and Secret Key. <a href="https://polymarket.us/developer" target="_blank" rel="noopener">Create API keys on Polymarket US <span aria-hidden="true">↗</span></a>. No separate Python install is needed. Wallet-address copy trading is not supported on Polymarket US.</p></details>
+          <details><summary>What do I need for Polybot?</summary><p>A Windows 10 or 11 PC (64-bit), or an Apple Silicon Mac running macOS 15 or later, plus a verified Polymarket US account and its API Key ID and Secret Key. <a href="https://polymarket.us/developer" target="_blank" rel="noopener">Create API keys on Polymarket US <span aria-hidden="true">↗</span><span class="sr-only"> Opens in a new tab.</span></a>. No separate Python install is needed. Wallet-address copy trading is not supported on Polymarket US.</p></details>
           <details><summary>Can I use it on my phone?</summary><p>Polybot is a desktop app for Windows and Apple Silicon Macs. It does not currently have a native iPhone app. ROM Nova works in a mobile browser.</p></details>
           <details><summary>Does Polybot guarantee a profit?</summary><p>No. Signal scores are heuristics, not verified win probabilities. Practice uses simulated fills that can differ from exchange execution. Live authenticated trading and profitability remain unverified, and automated trading can lose money.</p></details>
-          <details><summary>How does the ROMANR offer work?</summary><p>New Polymarket US users can <a href="https://polymarket.us/join/romanr" target="_blank" rel="noopener noreferrer sponsored">view the current offer <span aria-hidden="true">↗</span></a> with code ROMANR. Polymarket sets the amount, eligibility and qualifying steps. It may change or expire, and ROM may receive a referral reward.</p></details>
+          <details><summary>How does the ROMANR offer work?</summary><p>New Polymarket US users can <a href="https://polymarket.us/join/romanr" target="_blank" rel="noopener noreferrer sponsored">view the current offer <span aria-hidden="true">↗</span><span class="sr-only"> Opens in a new tab.</span></a> with code ROMANR. Polymarket sets the amount, eligibility and qualifying steps. It may change or expire, and ROM may receive a referral reward.</p></details>
           <details><summary>Why might my computer warn about the download?</summary><p>The installers are not yet code-signed. Use the published checksums and <a href="code-signing-policy.html">installation guide</a> to verify the file before deciding whether to install it. A matching checksum confirms file integrity, not software safety.</p></details>
         </div>
       </div>
@@ -113,6 +114,6 @@
     <div class="viewer-canvas" id="viewer-canvas" role="region" aria-label="Product screenshot. Scroll to inspect when zoomed." tabindex="-1"><img id="viewer-image" alt="" draggable="false" hidden></div>
     <div class="viewer-footer"><p id="viewer-status" role="status">Loading preview…</p><a id="viewer-original" href="assets/rom-polybot-overview.png" target="_blank" rel="noopener">Open image <span aria-hidden="true">↗</span><span class="sr-only"> in a new tab.</span></a></div>
   </dialog>
-  <script src="assets/market-stage.js?v=viewer-2" defer></script>
+  <script src="assets/market-stage.js?v=polish-3" defer></script>
 </body>
 </html>
