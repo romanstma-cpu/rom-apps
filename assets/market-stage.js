@@ -4,22 +4,22 @@ document.documentElement.classList.add('js-ready');
 
 const previewViews = {
   overview: {
-    image: 'assets/rom-polybot-overview-2.35.11.webp',
-    fullSize: 'assets/rom-polybot-overview-2.35.11.png',
+    image: 'assets/rom-polybot-overview.webp',
+    fullSize: 'assets/rom-polybot-overview.png',
     label: 'Workspace',
     description: 'Your account and strategy at a glance. Trading starts paused.',
     alt: 'ROM Polybot Overview showing its paused strategy, decision cycle, and account metrics',
   },
   practice: {
-    image: 'assets/polybot-practice-2.35.11.webp',
-    fullSize: 'assets/polybot-practice-2.35.11.png',
+    image: 'assets/polybot-practice.webp',
+    fullSize: 'assets/polybot-practice.png',
     label: 'Practice and risk',
     description: 'Set risk limits and start Practice with simulated funds.',
     alt: 'ROM Polybot Strategy setup showing risk settings and separate Start practice and Start live controls',
   },
   evidence: {
-    image: 'assets/polybot-evidence-2.35.11.webp',
-    fullSize: 'assets/polybot-evidence-2.35.11.png',
+    image: 'assets/polybot-evidence.webp',
+    fullSize: 'assets/polybot-evidence.png',
     label: 'Evidence',
     description: 'Inspect results and data limits. Shown before any settled samples.',
     alt: 'ROM Polybot Evidence screen in its initial state with zero settled samples and account diagnostics',

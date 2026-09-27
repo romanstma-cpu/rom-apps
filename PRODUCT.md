@@ -17,7 +17,7 @@ People evaluating market tools, including visitors on iPhones and other mobile d
 ## Capabilities and Constraints
 
 - ROM Polybot is a Polymarket US workspace with market scanning, simulated Practice, risk settings and evidence inspection. It requires Polymarket US API credentials. Trading starts paused; profitability is not established.
-- Current published Polybot downloads are version 2.35.11 for Windows 10/11 x64 and macOS 15+ on Apple Silicon. No Intel Mac download. Installers are unsigned; the Mac build is not notarized.
+- Current published Polybot downloads are version 2.36.0 for Windows 10/11 x64 and macOS 15+ on Apple Silicon. No Intel Mac download. Installers are unsigned; the Mac build is not notarized.
 - ROM Nova is a Solana research workspace with wallet activity. It does not execute trades. Some data is simulated, and its browser app requires sign-in.
 - The referral URL is https://polymarket.us/join/romanr and the code is ROMANR. Keep it prominent. Polymarket controls current reward amounts and eligibility; ROM may receive a referral reward.
 - Preserve existing release URLs, installation guidance, checksums, native browser navigation and the independently deployed Nova app.
@@ -28,7 +28,7 @@ ROM Apps, ROM Polybot and ROM Nova are the product names. The owner authorizes a
 
 ## Evidence on Hand
 
-Real product screenshots are in assets/: rom-polybot-overview-2.35.11.png, polybot-practice-2.35.11.webp, polybot-evidence-2.35.11.webp and rom-nova-radar.webp. Practice shows setup, not an active simulation. Evidence shows initial collection with zero settled samples. Do not invent returns, customers, testimonials or live trading results.
+Real product screenshots are in assets/: rom-polybot-overview.png, polybot-practice.webp, polybot-evidence.webp and rom-nova-radar.webp. Practice shows setup, not an active simulation. Evidence shows initial collection with zero settled samples. Do not invent returns, customers, testimonials or live trading results.
 
 ## Accessibility & Inclusion
 
