@@ -36,9 +36,9 @@
 
       <section id="verify-windows" aria-labelledby="verify-windows-title">
         <h2 id="verify-windows-title">Verify the Windows download</h2>
-        <p>Download the <a href="https://github.com/romanstma-cpu/rom-polybot/releases/download/v2.36.0/ROM.PolyBot-Setup-2.36.0.exe">ROM Polybot 2.36.0 Windows installer</a> and its <a href="assets/SHA256SUMS-Polybot-2.36.0.txt">SHA-256 checksum</a>. If the installer is in your Downloads folder, this PowerShell command compares them:</p>
-<pre><code>$file = Join-Path ([Environment]::GetFolderPath('UserProfile')) 'Downloads\ROM.PolyBot-Setup-2.36.0.exe'
-$expected = (Invoke-RestMethod 'https://romapps.xyz/assets/SHA256SUMS-Polybot-2.36.0.txt').Trim().Split(' ')[0]
+        <p>Download the <a href="https://github.com/romanstma-cpu/rom-polybot/releases/download/v2.36.1/ROM.PolyBot-Setup-2.36.1.exe">ROM Polybot 2.36.1 Windows installer</a> and its <a href="assets/SHA256SUMS-Polybot-2.36.1.txt">SHA-256 checksum</a>. If the installer is in your Downloads folder, this PowerShell command compares them:</p>
+<pre><code>$file = Join-Path ([Environment]::GetFolderPath('UserProfile')) 'Downloads\ROM.PolyBot-Setup-2.36.1.exe'
+$expected = (Invoke-RestMethod 'https://romapps.xyz/assets/SHA256SUMS-Polybot-2.36.1.txt').Trim().Split(' ')[0]
 $actual = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash
 if ($actual -eq $expected) { 'MATCH' } else { 'DOES NOT MATCH — do not install this file' }</code></pre>
         <p>If you saved the installer elsewhere, change the file path. This installer is for Windows 10/11 (64-bit).</p>
@@ -46,9 +46,9 @@ if ($actual -eq $expected) { 'MATCH' } else { 'DOES NOT MATCH — do not install
 
       <section id="verify-mac" aria-labelledby="verify-mac-title">
         <h2 id="verify-mac-title">Verify the Apple Silicon Mac download</h2>
-        <p>For macOS 15 or later on an M-series Mac, download the <a href="https://github.com/romanstma-cpu/rom-polybot/releases/download/v2.36.0/ROM.PolyBot-2.36.0-arm64.dmg">ROM Polybot 2.36.0 disk image</a>. If it is in Downloads, open Terminal and run:</p>
-<pre><code>shasum -a 256 ~/Downloads/ROM.PolyBot-2.36.0-arm64.dmg</code></pre>
-        <p>Compare the 64-character result with the hash beside the same filename in the <a href="assets/POLYBOT-MAC-CHECKSUMS-2.36.0.txt">published Mac checksum file</a>; letter case does not matter. If they differ, do not open the download. If you saved the disk image elsewhere, change the file path.</p>
+        <p>For macOS 15 or later on an M-series Mac, download the <a href="https://github.com/romanstma-cpu/rom-polybot/releases/download/v2.36.1/ROM.PolyBot-2.36.1-arm64.dmg">ROM Polybot 2.36.1 disk image</a>. If it is in Downloads, open Terminal and run:</p>
+<pre><code>shasum -a 256 ~/Downloads/ROM.PolyBot-2.36.1-arm64.dmg</code></pre>
+        <p>Compare the 64-character result with the hash beside the same filename in the <a href="assets/POLYBOT-MAC-CHECKSUMS-2.36.1.txt">published Mac checksum file</a>; letter case does not matter. If they differ, do not open the download. If you saved the disk image elsewhere, change the file path.</p>
         <p>Open the disk image and drag Polybot to Applications. Because this build is not Apple-notarized, macOS may warn before first launch. <a href="https://support.apple.com/102445">Read Apple’s current guidance</a> and decide whether to open it. Apple explains the Privacy &amp; Security “Open Anyway” option for an app you have tried to open and deliberately trust. Do not disable macOS security system-wide. Both installers include the Python runtime.</p>
       </section>
 
@@ -69,7 +69,7 @@ if ($actual -eq $expected) { 'MATCH' } else { 'DOES NOT MATCH — do not install
         <p>Include the app version and a description of the problem. Never post API keys or secret keys in a public issue.</p>
       </section>
 
-      <p class="doc-updated">Updated for Polybot 2.36.0</p>
+      <p class="doc-updated">Updated for Polybot 2.36.1</p>
     </div>
   </main>
 
