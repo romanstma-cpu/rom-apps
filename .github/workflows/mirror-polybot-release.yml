@@ -1,0 +1,81 @@
+name: Mirror a PolyBot release for older installs
+
+# PolyBot 2.35.11 and earlier look for updates in this repository's releases:
+# Windows under a v<version> tag carrying ROM.PolyBot-Setup-<version>.exe, and
+# macOS under a polybot-mac-<n> tag carrying ROM.PolyBot-<version>-arm64.dmg.
+# From 2.36.0, releases are published in romanstma-cpu/rom-polybot and the app
+# checks there instead. Running this once per release copies it here, after
+# verifying both installers against their SHA-256 files, so older installs
+# see the update too. It never marks a release as latest: that slot belongs
+# to ROM Trader's updater.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "PolyBot version to mirror, e.g. 2.36.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ inputs.version }}
+      SOURCE: romanstma-cpu/rom-polybot
+    steps:
+      - name: Download the release and verify both installers
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Not a version: $VERSION"; exit 1; }
+          mkdir mirror && cd mirror
+          gh release download "v$VERSION" --repo "$SOURCE"
+          ls -l
+          for sums in SHA256SUMS-windows-x64.txt SHA256SUMS-mac-apple-silicon.txt; do
+            test -s "$sums"
+            while read -r hash name; do
+              actual=$(sha256sum "$name" | cut -d' ' -f1 | tr a-f A-F)
+              test "$actual" = "${hash^^}" || { echo "$name does not match $sums"; exit 1; }
+            done < "$sums"
+          done
+          test -f "ROM.PolyBot-Setup-$VERSION.exe"
+          test -f "ROM.PolyBot-$VERSION-arm64.dmg"
+
+      - name: Publish the Windows installer as v<version>
+        shell: bash
+        working-directory: mirror
+        run: |
+          set -euo pipefail
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "v$VERSION is already here"; exit 0
+          fi
+          gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --latest=false \
+            --title "ROM PolyBot $VERSION" \
+            --notes "Copied from https://github.com/$SOURCE/releases/tag/v$VERSION so PolyBot 2.35.11 and earlier can see the update. New releases are published there." \
+            "ROM.PolyBot-Setup-$VERSION.exe" SHA256SUMS-windows-x64.txt
+
+      - name: Publish the Mac disk image as polybot-mac-<n>
+        shell: bash
+        working-directory: mirror
+        run: |
+          set -euo pipefail
+          dmg="ROM.PolyBot-$VERSION-arm64.dmg"
+          tags=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 300 --json tagName \
+                   --jq '.[].tagName' | grep -E '^polybot-mac-[0-9]+$' || true)
+          for tag in $tags; do
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets \
+                 --jq '.assets[].name' | grep -qxF "$dmg"; then
+              echo "$dmg is already here as $tag"; exit 0
+            fi
+          done
+          last=$(printf '%s\n' $tags | sed 's/^polybot-mac-//' | sort -n | tail -1)
+          tag="polybot-mac-$(( ${last:-0} + 1 ))"
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --latest=false --prerelease \
+            --title "ROM PolyBot $VERSION (Apple Silicon)" \
+            --notes "Copied from https://github.com/$SOURCE/releases/tag/v$VERSION so PolyBot 2.35.11 and earlier on macOS can see the update." \
+            "$dmg" SHA256SUMS-mac-apple-silicon.txt
+          echo "published $tag"

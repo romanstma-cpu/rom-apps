@@ -41,7 +41,7 @@ The desktop source lives on the `build` branch; each release tag (for example `v
 
 When publishing a new version, update together:
 
-1. The version, download links, installer sizes and JSON-LD in `index.html`, and the screenshots in `assets/market-stage.js`. Delete the previous version's screenshots. Use `python scripts/make_shots.py <capture.png> <stem>` for each screenshot.
+1. The version, download links, installer sizes and JSON-LD in `index.html`, and the screenshots in `assets/market-stage.js`. Remove any screenshot the page stops using; the build fails on unused images. Use `python scripts/make_shots.py <capture.png> <stem>` for each screenshot.
 2. The links and commands in `code-signing-policy.html`.
 3. The checksum files and `assets/RELEASE-<version>.md`, then `python3 scripts/site.py changelog` to regenerate `changelog.html`.
 4. The social card: point `scripts/og-card.html` at the new overview screenshot and run `python scripts/make_og.py`.

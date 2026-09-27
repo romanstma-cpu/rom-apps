@@ -379,7 +379,7 @@ def render_changelog(root: Path) -> str:
       <p class="eyebrow">ROM POLYBOT / RELEASE NOTES</p>
       <h1>What changed, version by version.</h1>
       <p class="doc-intro">Every published ROM Polybot release, newest first, with the SHA-256 checksum files for its installers. The current version is {current}. Release notes describe what changed; they do not show that any version trades profitably.</p>
-      <nav class="doc-toc" aria-label="Related pages"><a href="/#download-polybot">Download {current}</a><a href="code-signing-policy.html">How to verify a download</a><a href="https://github.com/romanstma-cpu/rom-apps/releases">All installers on GitHub</a></nav>
+      <nav class="doc-toc" aria-label="Related pages"><a href="/#download-polybot">Download {current}</a><a href="code-signing-policy.html">How to verify a download</a><a href="https://github.com/romanstma-cpu/rom-polybot/releases">All installers on GitHub</a></nav>
       <nav class="version-index" aria-label="Versions">{index}</nav>
 
 {chr(10).join(entries)}
