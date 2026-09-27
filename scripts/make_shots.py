@@ -1,10 +1,15 @@
 """
-Prepare product screenshots for the site.
+Prepare a product screenshot for the site.
 
-Takes the raw window captures and emits a web-sized PNG plus a WebP for each,
-so the page can serve WebP to browsers that take it and fall back cleanly.
+Takes a window capture and writes a web-sized PNG (the full-size link) plus a
+WebP (what the page displays) into assets/, so a release's screenshots come out
+consistent and small.
 
-    python scripts/make_shots.py <capture-dir>
+    python scripts/make_shots.py <capture.png> <stem>
+    python scripts/make_shots.py capture.png rom-polybot-overview-2.36.0
+
+Needs Pillow (pip install pillow). If the capture is already the PNG in
+assets/, it is left untouched and only the WebP is written.
 """
 
 from __future__ import annotations
@@ -20,11 +25,6 @@ ASSETS = ROOT / "assets"
 # Displayed at most ~1012px wide in the layout; 1600 covers 2x screens with room.
 TARGET_W = 1600
 
-SHOTS = {
-    "live-signals.png": "rom-trader-signals",
-    "live-dashboard.png": "rom-trader-dashboard",
-}
-
 
 def prepare(src: Path, stem: str) -> None:
     img = Image.open(src).convert("RGB")
@@ -34,7 +34,8 @@ def prepare(src: Path, stem: str) -> None:
 
     png = ASSETS / f"{stem}.png"
     webp = ASSETS / f"{stem}.webp"
-    img.save(png, "PNG", optimize=True)
+    if src.resolve() != png.resolve():
+        img.save(png, "PNG", optimize=True)
     img.save(webp, "WEBP", quality=86, method=6)
 
     print(
@@ -45,10 +46,6 @@ def prepare(src: Path, stem: str) -> None:
 
 
 if __name__ == "__main__":
-    cap = Path(sys.argv[1])
-    for fname, stem in SHOTS.items():
-        p = cap / fname
-        if p.exists():
-            prepare(p, stem)
-        else:
-            print(f"missing: {p}")
+    if len(sys.argv) != 3:
+        sys.exit(__doc__)
+    prepare(Path(sys.argv[1]), sys.argv[2])

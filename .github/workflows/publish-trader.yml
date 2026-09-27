@@ -96,14 +96,15 @@ jobs:
             echo "::notice::$TAG already exists here; replacing its assets"
             gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber $FILES
           else
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --latest \
               --title "ROM Trader ${TAG#v}" \
               --notes "Mirrored from [rom-trader $TAG](https://github.com/romanstma-cpu/rom-trader/releases/tag/$TAG), where it was built by CI from the tagged commit. Checksum verified on the way through." \
               $FILES
           fi
 
-      # ROM Convert publishes to its own repo, so a Convert release landing
-      # here would silently take over "latest" and break Trader's updater.
+      # Polybot's installers are also released in this repository. A Polybot
+      # release created without --latest=false silently takes over "latest",
+      # which hides latest.yml from every installed copy of Trader.
       - name: Confirm this is the latest release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

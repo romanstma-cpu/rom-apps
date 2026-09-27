@@ -114,7 +114,7 @@ components:
 
 ROM Apps pairs oversized, compact display type with real product screens and broad changes of color. A green-black opening gives lime actions and the dimensional Polybot preview prominence. A lime referral ribbon, off-white download section, and cobalt Nova chapter establish distinct landmarks before the quieter FAQ and footer.
 
-Depth belongs to the product imagery. Thin geometric signal arcs draw once behind the opening composition; Nova uses static circular outlines. These shapes are decoration, not market data. Product interfaces stay recognizable, and short captions explain what each screenshot actually shows.
+Depth belongs to the product imagery. Thin geometric signal arcs draw once behind the opening composition; Nova uses static circular outlines. These shapes are decoration, not market data. Product interfaces stay recognizable, and short captions explain what each screenshot actually shows. The verification, changelog, and 404 pages reuse the homepage header, footer, and stylesheet; the 404 page uses root-absolute URLs for nested paths.
 
 **Key Characteristics:**
 
@@ -151,7 +151,7 @@ Lime supplies the opening's visual energy, warm paper makes downloads easy to sc
 
 ## Typography
 
-**Display Font:** self-hosted Space Grotesk, with system sans-serif fallback. The variable font covers weights 400–700 and uses `font-display: swap).
+**Display Font:** self-hosted Space Grotesk, with system sans-serif fallback. The variable font covers weights 400–700 and uses `font-display: swap`.
 
 **Body Font:** Segoe UI Variable, Aptos, then the platform sans-serif stack. The homepage does not use a separate monospace family.
 

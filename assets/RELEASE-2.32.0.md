@@ -1,0 +1,1 @@
+Strategy preset correction: replaces stale World Cup and conflicting category assumptions with evidence-gated Edge Stack selection across available categories. Crypto Large Trades is now clearly labeled research-only. Live entries still require chronological holdout evidence after fees.

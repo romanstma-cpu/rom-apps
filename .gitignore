@@ -1,0 +1,9 @@
+# Staged Pages output from scripts/site.py
+_site/
+
+# Local tooling caches
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+.DS_Store
