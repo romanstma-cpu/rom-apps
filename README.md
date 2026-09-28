@@ -33,11 +33,11 @@ python3 scripts/site.py build /tmp/romapps-site   # any new directory
 
 ## Publishing Polybot
 
-The Windows installer is attached to a `v<version>` release here and the Apple Silicon installer to a `polybot-mac-<build>` release. Their SHA-256 hashes go in `assets/SHA256SUMS-Polybot-<version>.txt` and `assets/POLYBOT-MAC-CHECKSUMS-<version>.txt`. Versioned filenames prevent stale browser caches from serving a different build under the same name. Intel Macs are not supported.
+Both installers and their SHA-256 files are published together under a `v<version>` release in `romanstma-cpu/rom-polybot`. The website links to those installers and keeps copies of the hashes in `assets/SHA256SUMS-Polybot-<version>.txt` and `assets/POLYBOT-MAC-CHECKSUMS-<version>.txt`. Versioned filenames prevent stale browser caches from serving a different build under the same name. Intel Macs are not supported.
 
 **Create every Polybot release with `--latest=false`.** This repository's *latest* release is ROM Trader's update feed: installed Trader copies read `latest.yml` from it, and a Polybot release marked latest silently cuts them off. Polybot's own update check does not use *latest*. If it happens anyway, run `gh release edit v1.15.1 --latest` (or the newest Trader tag).
 
-The desktop source lives on the `build` branch; each release tag (for example `v2.35.11`) points at the commit it was built from, and the Apple Silicon workflow there publishes `polybot-mac-<build>` prereleases.
+The desktop source lives on `romanstma-cpu/rom-polybot` `master`. Its version tag points at the commit built by the cross-platform release workflow. This site's "Mirror a PolyBot release for older installs" workflow copies each published release into this repository's legacy update feed for PolyBot 2.35.11 and earlier.
 
 When publishing a new version, update together:
 
