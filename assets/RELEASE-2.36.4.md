@@ -1,0 +1,5 @@
+ROM PolyBot 2.36.4 addresses two entry bottlenecks: fresh trade bursts can trigger debounced signal scans before the normal periodic scan, and qualified live candidates are selected by conservative calibrated edge rather than being discarded by an additional heuristic confidence cutoff.
+
+Large Trade and Momentum scans can respond to new validated US exchange receipts once every 10 seconds, with configured periodic fallbacks preserved. Replay uses the same calibrated selection rules as live trading. Strategy settings now explain which flow-score filters apply to Practice and how live net edge is evaluated.
+
+Fee, quote, depth, market minimum, sizing, drawdown and evidence qualification controls remain in place. Tests cover burst capture, low-score qualified candidates, stale or missing evidence and preserved user filters. No live orders were sent during validation. More timely candidate evaluation does not guarantee entries or profits; live trading still requires qualified evidence and available buying power.
