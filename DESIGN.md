@@ -112,7 +112,7 @@ components:
 
 **Creative North Star: "Signal in focus"**
 
-ROM Apps pairs oversized, compact display type with real product screens and broad changes of color. A midnight navy opening gives ice blue actions and the dimensional Polybot preview prominence. A ice blue referral ribbon, ice-white download section, and cobalt Nova chapter establish distinct landmarks before the quieter FAQ and footer.
+ROM Apps pairs oversized, compact display type with real product screens and broad changes of color. A midnight navy opening gives ice blue actions and the dimensional Polybot preview prominence. An ice blue referral ribbon, a numbered capabilities chapter, an ice-white download section, and a cobalt Nova chapter establish distinct landmarks before the quieter FAQ and footer.
 
 Depth belongs to the product imagery. Thin geometric signal arcs draw once behind the opening composition; Nova uses static circular outlines. These shapes are decoration, not market data. Product interfaces stay recognizable, and short captions explain what each screenshot actually shows. The verification, changelog, and 404 pages reuse the homepage header, footer, and stylesheet; the 404 page uses root-absolute URLs for nested paths.
 
@@ -171,6 +171,8 @@ The main container is capped at 1320px. It uses 48px side gutters by default, 32
 
 Above 900px, the opening places its text stack and product preview in two columns, with the preview given more width. At 900px and below, the preview moves beneath a two-column text introduction; this is the 768px layout. At 650px and below, the introduction becomes one column, the preview uses the full container width, and its perspective tilt is removed. The compact 360px layout makes the main hero action full width.
 
+The capabilities chapter places its headline and one-sentence summary on a single row, then four numbered capabilities in equal columns separated by thin rules. At 900px and below the summary moves beneath the headline and the capabilities form two columns; at 650px and below they stack into one column divided by rules.
+
 The referral ribbon spans the viewport. Its copy, linked code, and disclosure occupy three columns on desktop, then reflow into fewer columns. On phones the terms occupy a full-width row beneath the code. Downloads place introductory copy beside equally weighted Windows and Mac rows. Nova pairs copy with its screen; FAQ pairs a short introduction with native disclosures. Downloads, Nova, and FAQ become single-column sections at 650px.
 
 The header is sticky, with visible product navigation and a Get Polybot action. On phones, the redundant Polybot link and APPS suffix are hidden while Nova and the download action remain visible. Anchor scroll padding accounts for the header. The footer closes with a large ice blue signoff and a compact link row.
@@ -203,13 +205,17 @@ The Polybot preview uses native buttons for Workspace, Practice & risk, and Evid
 
 Only the real screens in `assets/` are used. Practice shows setup; Evidence shows the initial state before settled samples. The decorative signal paths are hidden from assistive technology.
 
+### Capabilities
+
+Four numbered, flat columns — scanning, Practice, limits, and decision history — each with a short title and one or two sentences. Every claim describes behavior the shipped app has; nothing describes performance. A dotted note beneath states what live orders require. The section is an ordered list, so the numbers are decorative and hidden from assistive technology.
+
 ### Referral ribbon
 
 The ROMANR code is a real link to the current Polymarket US offer, displayed within the full-width ice blue ribbon. Its adjacent reward disclosure remains readable at all sizes. Hover adds a light wash within the dashed code outline.
 
 ### Download rows and disclosures
 
-Windows and Mac use equally prominent full-row links, separated by thin rules. Platform requirements sit beneath each name. Hover changes the row background without shifting its text. Unsigned and non-notarized status remains visible beside the downloads. Installation guidance and checksums use a native details disclosure; API keys and release notes remain ordinary links.
+Windows and Mac use equally prominent full-row links, separated by thin rules. Platform requirements and installer sizes sit beneath each name. When the script recognises the visitor's desktop platform it adds a small "For this PC" or "For this Mac" label and a faint row tint; both rows stay equally usable, and nothing changes without JavaScript or on phones. A Mac that reports an Intel processor gets a short note instead of a label. Hover changes the row background without shifting its text. Unsigned and non-notarized status remains visible beside the downloads. Installation guidance and checksums use a native details disclosure; API keys and release notes remain ordinary links.
 
 On phones, the share section offers the native share sheet when available, clipboard copying as a fallback, and a visible address if neither is available. Without JavaScript the address remains usable and the inactive share button is hidden.
 
@@ -227,6 +233,7 @@ Both products share a native modal image viewer when supported. It has a visible
 - Use actual product screens with accurate, nearby state captions.
 - Preserve the distinct midnight navy, ice blue, paper, and cobalt chapters.
 - Keep referral terms, platform requirements, and download verification readable.
+- Keep capability copy to what the shipped app does, and keep live-trading gates beside it.
 - Preserve native navigation, disclosures, keyboard focus, and image-link fallbacks.
 - Keep the 320px layout usable and respect reduced-motion preferences.
 

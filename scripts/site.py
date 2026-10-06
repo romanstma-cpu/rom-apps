@@ -52,6 +52,13 @@ PUBLIC = [
     "whalenova",
 ]
 
+# Every page loads only its own files. A page that needs another origin, or
+# an inline script or style attribute, has to change this on purpose.
+CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+       "font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'")
+# The site's own pages. Nova is a separate app with its own build.
+CSP_PAGES = ["index.html", "404.html", "code-signing-policy.html", "changelog.html"]
+
 # Pages whose Polybot version must match the homepage's.
 VERSIONED = ["index.html", "code-signing-policy.html", "assets/market-stage.js"]
 
@@ -114,6 +121,20 @@ class _Refs(HTMLParser):
             self.jsonld.append(data)
 
 
+def polybot_version(home: _Refs) -> str:
+    """The Polybot version the homepage's structured data declares.
+
+    The JSON-LD is either a single SoftwareApplication or an @graph holding
+    it next to the organization, the site and ROM Nova.
+    """
+    data = json.loads("".join(home.jsonld))
+    nodes = data.get("@graph", [data]) if isinstance(data, dict) else data
+    for node in nodes:
+        if node.get("@type") == "SoftwareApplication" and node.get("name") == "ROM Polybot":
+            return node["softwareVersion"]
+    raise KeyError("softwareVersion")
+
+
 def _local_target(site: Path, page: Path, ref: str) -> tuple[Path, str] | None:
     """Map a reference to (file in the staged site, fragment), or None if external."""
     parts = urlsplit(ref)
@@ -170,6 +191,10 @@ def check(site: Path) -> list[str]:
             if not (site / ref).is_file():
                 problems.append(f"{js.relative_to(site)}: {ref} is not published")
 
+    for name in CSP_PAGES:
+        if f'<meta http-equiv="Content-Security-Policy" content="{CSP}">' not in (site / name).read_text(encoding="utf-8"):
+            problems.append(f"{name}: missing the site Content-Security-Policy (CSP in scripts/site.py)")
+
     problems += _check_versions(site, parsed[(site / "index.html").resolve()])
     problems += _check_changelog(site)
 
@@ -182,9 +207,9 @@ def check(site: Path) -> list[str]:
 def _check_versions(site: Path, home: _Refs) -> list[str]:
     problems: list[str] = []
     try:
-        version = json.loads("".join(home.jsonld))["softwareVersion"]
-    except (ValueError, KeyError):
-        return ["index.html: the SoftwareApplication JSON-LD has no softwareVersion"]
+        version = polybot_version(home)
+    except (ValueError, KeyError, AttributeError):
+        return ["index.html: the ROM Polybot SoftwareApplication JSON-LD has no softwareVersion"]
     for name in VERSIONED:
         text = (site / name).read_text(encoding="utf-8")
         for other in sorted(set(re.findall(r"(?<![\d.])2\.\d+\.\d+(?![\d.])", text)) - {version}):
@@ -286,7 +311,7 @@ def render_changelog(root: Path) -> str:
     """changelog.html, built from assets/RELEASE-*.md and the checksum files."""
     home = _Refs()
     home.feed((root / "index.html").read_text(encoding="utf-8"))
-    current = json.loads("".join(home.jsonld))["softwareVersion"]
+    current = polybot_version(home)
     releases = _releases(root / "assets")
     order = sorted(releases, key=lambda v: tuple(int(x) for x in v.split(".")), reverse=True)
 
@@ -313,6 +338,7 @@ def render_changelog(root: Path) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="{CSP}">
   <title>ROM Polybot release notes — ROM Apps</title>
   <meta name="description" content="What changed in every ROM Polybot release, newest first, with SHA-256 checksums for each version's installers.">
   <meta name="theme-color" content="#080f1e">
@@ -320,7 +346,7 @@ def render_changelog(root: Path) -> str:
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/market-stage.css?v=blue-1">
+  <link rel="stylesheet" href="assets/market-stage.css?v=blue-2">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>

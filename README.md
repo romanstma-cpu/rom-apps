@@ -41,7 +41,7 @@ The desktop source lives on `romanstma-cpu/rom-polybot` `master`. Its version ta
 
 When publishing a new version, update together:
 
-1. The version, download links and JSON-LD in `index.html`, and the screenshots in `assets/market-stage.js`. Use `python scripts/make_shots.py <capture.png> <stem>` for each screenshot.
+1. The version, download links, installer sizes and JSON-LD in `index.html`, and the screenshots in `assets/market-stage.js`. Use `python scripts/make_shots.py <capture.png> <stem>` for each screenshot.
 2. The links and commands in `code-signing-policy.html`.
 3. The checksum files and `assets/RELEASE-<version>.md`, then `python3 scripts/site.py changelog` to regenerate `changelog.html`.
 4. The social card: point `scripts/og-card.html` at the new overview screenshot and run `python scripts/make_og.py`.
@@ -59,3 +59,5 @@ Trader is retired from the website, but installed copies still check this reposi
 ## Page requirements
 
 Local links and anchors, image loading, a 320px mobile layout without horizontal scrolling, product and version references, and download integrity. There are no external font, animation or analytics scripts on the site.
+
+Every page except the mirrored Nova build carries the Content-Security-Policy defined as `CSP` in `scripts/site.py`, which allows only the site's own files; the build fails if a page lacks it. A page that genuinely needs another origin, an inline script or a `style` attribute must change that policy on purpose.

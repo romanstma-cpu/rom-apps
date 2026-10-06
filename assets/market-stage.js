@@ -207,6 +207,36 @@ if ('IntersectionObserver' in window && !reducedMotion.matches) {
   sections.forEach((section) => observer.observe(section));
 }
 
+// Label the visitor's own installer. Both rows stay equally usable and nothing
+// else changes, so a wrong guess costs a label, never a download.
+async function markPlatform() {
+  const hints = navigator.userAgentData;
+  if (hints?.mobile) return;
+  const platform = hints?.platform || navigator.platform || '';
+  // iPadOS reports a Mac platform; a touch screen tells it apart.
+  const os = /^Win/i.test(platform) ? 'windows'
+    : /^Mac/i.test(platform) && navigator.maxTouchPoints < 2 ? 'mac' : null;
+  const card = os && document.querySelector(`.platform-card[data-platform="${os}"]`);
+  if (!card) return;
+  let architecture = '';
+  try {
+    architecture = (await hints?.getHighEntropyValues?.(['architecture']))?.architecture || '';
+  } catch {
+    // Browsers without client hints simply skip the Intel check.
+  }
+  const note = document.querySelector('#platform-note');
+  if (os === 'mac' && architecture === 'x86') {
+    if (note) note.textContent = 'This Mac appears to use an Intel processor. Polybot needs a Mac with Apple Silicon.';
+    return;
+  }
+  const tag = document.createElement('span');
+  tag.className = 'platform-tag';
+  tag.textContent = os === 'mac' ? 'For this Mac' : 'For this PC';
+  card.querySelector('.platform-name')?.append(tag);
+  card.setAttribute('data-detected', '');
+}
+markPlatform();
+
 document.querySelector('#share-download')?.addEventListener('click', async () => {
   const status = document.querySelector('#share-status');
   const url = 'https://romapps.xyz/#download-polybot';
