@@ -37,7 +37,7 @@ Both installers and their SHA-256 files are published together under a `v<versio
 
 **Create every Polybot release with `--latest=false`.** This repository's *latest* release is ROM Trader's update feed: installed Trader copies read `latest.yml` from it, and a Polybot release marked latest silently cuts them off. Polybot's own update check does not use *latest*. If it happens anyway, run `gh release edit v1.15.1 --latest` (or the newest Trader tag).
 
-The desktop source lives on `romanstma-cpu/rom-polybot` `master`. Its version tag points at the commit built by the cross-platform release workflow. This site's "Mirror a PolyBot release for older installs" workflow copies each published release into this repository's legacy update feed for PolyBot 2.35.11 and earlier.
+The desktop source lives on `romanstma-cpu/rom-polybot` `master`. Its version tag points at the commit built by the cross-platform release workflow. This site's "Mirror a PolyBot release for older installs" workflow copies each published release into this repository's legacy update feed for PolyBot 2.35.11 and earlier. It runs by itself when a push to `main` changes the version in `index.html`, and daily as a fallback; it can also be run by hand for any version.
 
 When publishing a new version, update together:
 

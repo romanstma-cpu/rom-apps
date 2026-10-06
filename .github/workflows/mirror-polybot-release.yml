@@ -8,13 +8,28 @@ name: Mirror a PolyBot release for older installs
 # verifying both installers against their SHA-256 files, so older installs
 # see the update too. It never marks a release as latest: that slot belongs
 # to ROM Trader's updater.
+#
+# It runs by itself: a push to main that changes index.html mirrors the
+# version the homepage now offers, and a daily run catches a release that was
+# published after the site changed. Both read the version from the homepage's
+# JSON-LD and finish in seconds when that version is already here. A manual
+# run can mirror any version.
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "PolyBot version to mirror, e.g. 2.36.0"
-        required: true
+        description: "PolyBot version to mirror, e.g. 2.36.0 (empty: the homepage's version)"
+        required: false
         type: string
+  push:
+    branches: [main]
+    paths: [index.html]
+  schedule:
+    - cron: "41 6 * * *"
+
+concurrency:
+  group: mirror-polybot-release
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -24,14 +39,39 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      VERSION: ${{ inputs.version }}
+      REQUESTED: ${{ inputs.version }}
       SOURCE: romanstma-cpu/rom-polybot
     steps:
-      - name: Download the release and verify both installers
+      - uses: actions/checkout@v4
+
+      - name: Choose the version and skip it if it is already here
         shell: bash
         run: |
           set -euo pipefail
+          VERSION="${REQUESTED:-}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(grep -o '"softwareVersion":"[0-9.]*"' index.html | head -1 | cut -d'"' -f4)
+          fi
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Not a version: $VERSION"; exit 1; }
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          dmg="ROM.PolyBot-$VERSION-arm64.dmg"
+          win=false; mac=false
+          gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 && win=true
+          mac_assets=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --paginate             --jq '.[] | select(.tag_name | startswith("polybot-mac-")) | .assets[].name')
+          grep -qxF "$dmg" <<<"$mac_assets" && mac=true
+          if $win && $mac; then
+            echo "PolyBot $VERSION is already mirrored for both platforms."
+            echo "SKIP=true" >> "$GITHUB_ENV"
+          elif ! gh release view "v$VERSION" --repo "$SOURCE" >/dev/null 2>&1; then
+            echo "::warning::$SOURCE has no v$VERSION release yet; the daily run will retry."
+            echo "SKIP=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Download the release and verify both installers
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
           mkdir mirror && cd mirror
           gh release download "v$VERSION" --repo "$SOURCE"
           ls -l
@@ -46,6 +86,7 @@ jobs:
           test -f "ROM.PolyBot-$VERSION-arm64.dmg"
 
       - name: Publish the Windows installer as v<version>
+        if: env.SKIP != 'true'
         shell: bash
         working-directory: mirror
         run: |
@@ -59,6 +100,7 @@ jobs:
             "ROM.PolyBot-Setup-$VERSION.exe" SHA256SUMS-windows-x64.txt
 
       - name: Publish the Mac disk image as polybot-mac-<n>
+        if: env.SKIP != 'true'
         shell: bash
         working-directory: mirror
         run: |
