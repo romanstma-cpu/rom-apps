@@ -5,8 +5,8 @@ Internal note (not published; `docs/` is outside the site allowlist).
 ## Now: free download
 
 - The homepage has a ROM Recoil chapter (`index.html#recoil`) with a direct download.
-- The zip lives on the `recoil-v1.2.0` release of this repository, created with **make_latest = false** so ROM Trader's update feed (this repository's latest release) is untouched.
-- The checksum is copied to `assets/SHA256SUMS-Recoil-1.2.0.txt`.
+- The zip lives on the `recoil-v1.3.0` release of this repository (1.2.0 is still there for reference), created with **make_latest = false** so ROM Trader's update feed (this repository's latest release) is untouched.
+- The checksum is copied to `assets/SHA256SUMS-Recoil-1.3.0.txt`.
 - In the app, `Store.PaywallEnabled = false`: no activation screen and no license checks.
 
 ## Later: charging for it
