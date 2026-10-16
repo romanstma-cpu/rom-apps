@@ -25,7 +25,7 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/market-stage.css?v=rom-5">
+  <link rel="stylesheet" href="assets/market-stage.css?v=rom-6">
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://romapps.xyz/#org","name":"ROM Apps","url":"https://romapps.xyz/","logo":"https://romapps.xyz/apple-touch-icon.png","sameAs":["https://github.com/romanstma-cpu"]},{"@type":"WebSite","@id":"https://romapps.xyz/#site","name":"ROM Apps","url":"https://romapps.xyz/","publisher":{"@id":"https://romapps.xyz/#org"}},{"@type":"SoftwareApplication","name":"ROM Polybot","softwareVersion":"2.36.6","operatingSystem":["Windows 10","Windows 11","macOS 15 or later"],"applicationCategory":"FinanceApplication","url":"https://romapps.xyz/#polybot","downloadUrl":"https://github.com/romanstma-cpu/rom-polybot/releases/download/v2.36.6/ROM.PolyBot-Setup-2.36.6.exe","releaseNotes":"https://romapps.xyz/changelog.html#v2.36.6","screenshot":"https://romapps.xyz/assets/rom-polybot-overview.png","description":"A Polymarket US desktop workspace to scan markets, practice with simulated funds, inspect evidence and choose when to enable live trading.","publisher":{"@id":"https://romapps.xyz/#org"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"SoftwareApplication","name":"ROM Recoil","softwareVersion":"1.6.0","operatingSystem":["Windows 10","Windows 11"],"applicationCategory":"GameApplication","url":"https://romapps.xyz/recoil/","downloadUrl":"https://github.com/romanstma-cpu/rom-apps/releases/download/recoil-v1.6.0/ROM-Recoil-1.6.0-win-x64.zip","description":"Free recoil control for Rainbow Six Siege on Windows.","publisher":{"@id":"https://romapps.xyz/#org"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"WebApplication","name":"ROM Nova","url":"https://romapps.xyz/nova/","applicationCategory":"FinanceApplication","operatingSystem":"Web browser, Windows","description":"A Solana research workspace for following wallet activity. Research only; it does not execute trades.","publisher":{"@id":"https://romapps.xyz/#org"}}]}</script>
 </head>
 <body>
@@ -45,35 +45,20 @@
           <p class="chapter-label"><span>01</span><img src="assets/app-polybot-small.png" width="22" height="22" alt="">ROM Polybot</p>
           <h1 id="hero-title" data-split>A desktop app for <span class="title-accent">Polymarket US.</span></h1>
           <div class="hero-side">
-            <p><strong>ROM Polybot</strong> connects to your Polymarket US account, watches the US markets and their large trades, and lets you run a strategy on $1,000 of practice money. Live trading starts paused.</p>
+            <p><strong>ROM Polybot</strong> watches Polymarket US, practices on $1,000 of play money, and never trades until you say go.</p>
             <div class="hero-actions"><a class="button button-primary" href="#download-polybot">Download Polybot <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m-6-6 6 6 6-6"/></svg></a><a class="hero-secondary" href="#inside-polybot">How it works <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a></div>
             <p class="hero-platforms">Free · Windows 10/11 and Apple Silicon Macs</p>
+            <details class="read-more"><summary><span class="rm-open">Read more</span><span class="rm-close">Show less</span></summary><div class="read-more-body"><p>Polybot connects with your Polymarket US API keys, scans the US markets and their large trades, and runs your strategy on a simulated $1,000 kept apart from your real money.</p><p>Live trading starts paused and only begins when you switch it on, inside the limits you set.</p></div></details>
           </div>
         </div>
 
         <div class="product-theater">
-          <div class="terminal-stage" aria-label="ROM Polybot desktop preview">
+          <div class="terminal-stage" aria-label="ROM Polybot showcase">
             <div class="preview-brand"><span><img src="assets/app-polybot-small.png" width="28" height="28" alt="">ROM Polybot</span><span class="preview-version">v2.36.6</span></div>
-            <div class="preview-controls" role="group" aria-label="Choose an app screenshot">
-              <button type="button" class="preview-choice" data-preview="overview" aria-pressed="true">Workspace</button>
-              <button type="button" class="preview-choice" data-preview="practice" aria-pressed="false">Practice &amp; risk</button>
-              <button type="button" class="preview-choice" data-preview="evidence" aria-pressed="false">Evidence</button>
-            </div>
-            <a class="terminal-preview" id="preview-image-link" href="assets/rom-polybot-overview.png" target="_blank" rel="noopener" aria-label="View full-size Workspace screenshot (opens in a new tab)"><img id="preview-image" src="assets/rom-polybot-overview.webp" width="1440" height="900" alt="ROM Polybot Overview showing its paused strategy, decision cycle, and account metrics" fetchpriority="high"></a>
-            <div class="preview-caption"><p id="preview-description" aria-live="polite" aria-atomic="true">Your account and strategy at a glance. Trading starts paused.</p><a id="preview-full-size" href="assets/rom-polybot-overview.png" target="_blank" rel="noopener">Expand <span aria-hidden="true">↗</span><span class="sr-only"> screenshot. Opens in a new tab.</span></a></div>
-            <p class="preview-status" id="preview-status" role="status"></p>
+            <a class="terminal-preview" href="assets/rom-polybot-overview.png" target="_blank" rel="noopener" data-viewer="ROM Polybot · Workspace" data-viewer-src="assets/rom-polybot-overview.webp" aria-label="View the full ROM Polybot screen (opens in a new tab)"><img src="assets/polybot-showcase-1.webp" width="1600" height="1000" alt="ROM Polybot's strategy terminal showing Main strategy: paused, with its signal, quote, risk and route steps" fetchpriority="high"></a>
+            <div class="preview-caption"><p>Made from real Polybot screens. Trading starts paused.</p><a href="assets/rom-polybot-overview.png" target="_blank" rel="noopener" data-viewer="ROM Polybot · Workspace" data-viewer-src="assets/rom-polybot-overview.webp">Full screen <span aria-hidden="true">↗</span><span class="sr-only"> opens in a new tab.</span></a></div>
           </div>
-          <p class="product-footnote">Screens from the app itself, not mockups.</p>
         </div>
-      </div>
-      <div class="wrap">
-        <dl class="spec-strip" aria-label="ROM Polybot at a glance">
-          <div><dt>Market</dt><dd>Polymarket US</dd></div>
-          <div><dt>Practice balance</dt><dd>$1,000, simulated</dd></div>
-          <div><dt>Live trading</dt><dd>Off until you enable it</dd></div>
-          <div><dt>Runs on</dt><dd>Windows, Apple Silicon</dd></div>
-          <div><dt>Price</dt><dd>Free</dd></div>
-        </dl>
       </div>
     </section>
 
@@ -85,20 +70,19 @@
 
     <section class="inside-section section-pad" id="inside-polybot" aria-labelledby="inside-title">
       <div class="wrap">
-        <div class="inside-head" data-reveal><h2 id="inside-title" data-split>How Polybot <span class="title-accent">works</span></h2><p>Market scanning, practice, risk limits and a record of every decision, in one desktop app.</p></div>
-        <ol class="capability-list" role="list" data-reveal>
+        <div class="inside-head" data-reveal><h2 id="inside-title" data-split>How Polybot <span class="title-accent">works</span></h2><p>Everything it checks before a trade, in one app.</p></div>
+        <details class="read-more read-more-wide"><summary><span class="rm-open">Read more</span><span class="rm-close">Show less</span></summary><div class="read-more-body"><ol class="capability-list" role="list">
           <li><span class="capability-index" aria-hidden="true">01</span><h3>Scan the US market</h3><p>Watch Polymarket US markets, large trades and momentum from the authenticated US trade stream.</p></li>
           <li><span class="capability-index" aria-hidden="true">02</span><h3>Practice on $1,000</h3><p>Run your strategy on a simulated balance kept apart from your real account. Practice fills are estimates.</p></li>
           <li><span class="capability-index" aria-hidden="true">03</span><h3>Limits you set</h3><p>Cap each position, total exposure and daily loss, and hold cash back. While live, an emergency stop sits in the title bar.</p></li>
           <li><span class="capability-index" aria-hidden="true">04</span><h3>A reason for every decision</h3><p>Decision history shows why each candidate was skipped, practiced or sent, and what live trading still needs.</p></li>
-        </ol>
-        <p class="inside-note" data-reveal>Live orders stay off until your account is connected, limits are saved, evidence qualifies and buying power is available.</p>
+        </ol><p class="inside-note">Live orders stay off until your account is connected, limits are saved, evidence qualifies and buying power is available.</p></div></details>
       </div>
     </section>
 
     <section class="download-section section-pad" id="download-polybot" aria-labelledby="download-title">
       <div class="wrap download-layout">
-        <div class="section-intro" data-reveal><h2 id="download-title" data-split>Download<br>Polybot</h2><p id="how-it-works">Connect your Polymarket US API keys, set your limits, and run Practice before you decide whether to trade live.</p><div class="setup-links"><a class="subtle-link" href="https://polymarket.us/developer" target="_blank" rel="noopener">Get API keys <span aria-hidden="true">↗</span></a><a class="subtle-link" href="changelog.html#v2.36.6">v2.36.6 · Candidate selection</a></div><p class="download-risk">Trading involves risk. Returns are not guaranteed.</p></div>
+        <div class="section-intro" data-reveal><h2 id="download-title" data-split>Download<br>Polybot</h2><p id="how-it-works">Add your API keys, set your limits, and practice before you go live.</p><div class="setup-links"><a class="subtle-link" href="https://polymarket.us/developer" target="_blank" rel="noopener">Get API keys <span aria-hidden="true">↗</span></a><a class="subtle-link" href="changelog.html#v2.36.6">v2.36.6 · Candidate selection</a></div><p class="download-risk">Trading involves risk. Returns are not guaranteed.</p></div>
         <div class="download-body" data-reveal>
           <div class="platform-grid">
             <a class="platform-card" data-platform="windows" href="https://github.com/romanstma-cpu/rom-polybot/releases/download/v2.36.6/ROM.PolyBot-Setup-2.36.6.exe"><strong><span class="platform-name">Windows</span> <span aria-hidden="true">↓</span><span class="sr-only"> download</span></strong><small>Windows 10/11 · 64-bit · 125.9 MB</small></a>
@@ -116,11 +100,11 @@
         <div class="nova-copy">
           <p class="chapter-label"><span>02</span><img src="assets/app-nova.png" width="22" height="22" alt="">ROM Nova</p>
           <h2 id="nova-title" data-split>Research Solana<br>wallet activity.</h2>
-          <p class="nova-description"><strong>ROM Nova</strong> shows Solana wallet and market activity on one radar, in your browser or on Windows. It is a research tool and never places trades.</p>
+          <p class="nova-description"><strong>ROM Nova</strong> puts Solana's biggest wallets on one radar. Research only; it never trades.</p>
           <div class="nova-actions"><a class="button button-primary" href="nova/">Open Nova <span aria-hidden="true">↗</span></a><a class="subtle-link" href="https://github.com/romanstma-cpu/rom-nova/releases/latest/download/ROM-Nova-Setup.exe">Windows download <span aria-hidden="true">↓</span></a></div>
-          <p class="nova-note">Research only; no trade execution. Some data is simulated. The browser app requires sign-in.</p>
+          <details class="read-more"><summary><span class="rm-open">Read more</span><span class="rm-close">Show less</span></summary><div class="read-more-body"><p>Nova follows wallet and market activity across Solana, flags whales entering new launches and keeps a journal of the wallets you track. It runs in your browser or on Windows.</p><p>Some of its data is simulated, and the browser app needs sign-in.</p></div></details>
         </div>
-        <figure class="nova-visual"><a href="assets/rom-nova-radar.webp" target="_blank" rel="noopener" aria-label="View full-size ROM Nova radar screenshot (opens in a new tab)"><img src="assets/rom-nova-radar.webp" width="1586" height="993" loading="lazy" alt="ROM Nova radar showing observed Solana wallets and market activity"></a><figcaption><span>Actual Nova screen</span><a href="assets/rom-nova-radar.webp" target="_blank" rel="noopener">Expand <span aria-hidden="true">↗</span><span class="sr-only"> screenshot. Opens in a new tab.</span></a></figcaption></figure>
+        <figure class="nova-visual"><a href="assets/rom-nova-radar.webp" target="_blank" rel="noopener" data-viewer="ROM Nova · Radar" data-viewer-src="assets/rom-nova-radar.webp" aria-label="View the full ROM Nova screen (opens in a new tab)"><img src="assets/nova-showcase-1.webp" width="1600" height="1000" loading="lazy" alt="ROM Nova's whale radar: a live ticker, top tracked wallets and whales entering new launches"></a><figcaption><span>Made from real Nova screens</span><a href="assets/rom-nova-radar.webp" target="_blank" rel="noopener" data-viewer="ROM Nova · Radar" data-viewer-src="assets/rom-nova-radar.webp">Full screen <span aria-hidden="true">↗</span><span class="sr-only"> opens in a new tab.</span></a></figcaption></figure>
       </div>
     </section>
 
@@ -129,12 +113,12 @@
         <div class="recoil-copy">
           <p class="chapter-label"><span>03</span><img src="assets/app-recoil.png" width="22" height="22" alt="">ROM Recoil</p>
           <h2 id="recoil-title" data-split>Recoil control for <span class="title-accent">Rainbow Six Siege.</span></h2>
-          <p class="recoil-description"><strong>ROM Recoil</strong> moves your aim down while you hold fire, by the amount you set. Save a setting per operator and switch it on or off in-game with one key. Free for Windows.</p>
+          <p class="recoil-description"><strong>ROM Recoil</strong> holds your spray steady in Rainbow Six Siege. Set it once, toggle it with one key.</p>
           <div class="recoil-actions"><a class="button button-primary" href="recoil/">Explore Recoil <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a><a class="subtle-link" href="https://github.com/romanstma-cpu/rom-apps/releases/download/recoil-v1.6.0/ROM-Recoil-1.6.0-win-x64.zip">Download v1.6.0 <span aria-hidden="true">↓</span></a></div>
-          <p class="recoil-meta">Windows 10/11 · 64-bit · 66.9 MB zip · No account</p>
-          <p class="recoil-note">Macros can break a game's terms of service. Use at your own risk.</p>
+          <p class="recoil-meta">Free · Windows 10/11 · Use at your own risk</p>
+          <details class="read-more"><summary><span class="rm-open">Read more</span><span class="rm-close">Show less</span></summary><div class="read-more-body"><p>It moves your aim down while you hold fire, by the amount you set. Save a setting per operator, switch it on or off in-game with one key, and watch a live readout of the pull.</p><p>A 66.9 MB zip with no installer and no account. Macros can break a game's terms of service.</p></div></details>
         </div>
-        <figure class="hud-frame"><a href="assets/rom-recoil-main-1.6.0.png" target="_blank" rel="noopener" data-viewer="ROM Recoil · Main screen" data-viewer-src="assets/rom-recoil-main-1.6.0.webp" aria-label="View full-size ROM Recoil screenshot (opens in a new tab)"><img src="assets/rom-recoil-main-1.6.0.webp" width="1600" height="1005" loading="lazy" alt="ROM Recoil switched on and armed, with the Ash – R4-C profile, vertical pull 62, horizontal pull 4 right and strength 2.5"></a><figcaption><span>Actual Recoil screen · On and armed</span><a href="assets/rom-recoil-main-1.6.0.png" target="_blank" rel="noopener" data-viewer="ROM Recoil · Main screen" data-viewer-src="assets/rom-recoil-main-1.6.0.webp">Expand <span aria-hidden="true">↗</span><span class="sr-only"> screenshot. Opens in a new tab.</span></a></figcaption></figure>
+        <figure class="hud-frame"><a href="assets/rom-recoil-main-1.6.0.png" target="_blank" rel="noopener" data-viewer="ROM Recoil · Main screen" data-viewer-src="assets/rom-recoil-main-1.6.0.webp" aria-label="View full-size ROM Recoil screenshot (opens in a new tab)"><img src="assets/recoil-showcase-1.webp" width="1600" height="1000" loading="lazy" alt="ROM Recoil armed, its live pull readout showing 712 counts per second, with the vertical pull and strength sliders"></a><figcaption><span>Made from real Recoil screens</span><a href="assets/rom-recoil-main-1.6.0.png" target="_blank" rel="noopener" data-viewer="ROM Recoil · Main screen" data-viewer-src="assets/rom-recoil-main-1.6.0.webp">Full screen <span aria-hidden="true">↗</span><span class="sr-only"> opens in a new tab.</span></a></figcaption></figure>
       </div>
     </section>
 

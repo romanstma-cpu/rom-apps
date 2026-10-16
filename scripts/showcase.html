@@ -1,0 +1,87 @@
+<!doctype html>
+<!-- 1600 x 1000 showcase images, composed only from real app screenshots: the full screen tilted
+     behind, its most telling parts enlarged in front. Render with: python scripts/make_showcase.py -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "Space Grotesk"; src: url("../assets/fonts/space-grotesk-latin-variable.woff2") format("woff2"); font-weight: 400 700; }
+  * { box-sizing: border-box; }
+  html, body { width: 1600px; height: 1000px; margin: 0; overflow: hidden; }
+  body { position: relative; font-family: "Segoe UI Variable", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .scene { position: absolute; inset: 0; display: none; overflow: hidden; }
+  body[data-scene="polybot"] .polybot, body[data-scene="nova"] .nova, body[data-scene="recoil"] .recoil { display: block; }
+
+  .back { position: absolute; border-radius: 18px; overflow: hidden; box-shadow: 0 60px 120px #000c; transform-origin: center; }
+  .back img { display: block; width: 100%; }
+  .back::after { content: ""; position: absolute; inset: 0; }
+  .crop { position: absolute; border-radius: 14px; background-repeat: no-repeat; box-shadow: 0 40px 90px #000d, 0 0 0 1px var(--edge), 0 0 60px var(--glow); }
+  .tag { position: absolute; display: inline-flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 99px; font: 600 15px/1 "SFMono-Regular", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; backdrop-filter: blur(8px); }
+  .tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 12px currentColor; }
+  .rings { position: absolute; border-radius: 50%; border: 1px solid var(--ring); }
+
+  /* ---------------- Polybot: the strategy terminal and its pipeline ---------------- */
+  .polybot { background: radial-gradient(ellipse at 72% 30%, #2a6fd655, transparent 60%), radial-gradient(ellipse at 10% 90%, #1b3f7a55, transparent 55%), #070d1b; --edge: #91c5ff55; --glow: #3d8cff2e; --ring: #91c5ff1c; }
+  .polybot .back { left: 520px; top: 70px; width: 1180px; opacity: .42; transform: perspective(1900px) rotateY(-20deg) rotateZ(2deg); }
+  .polybot .back::after { background: linear-gradient(90deg, #070d1b, transparent 40%); }
+  .pb-terminal { left: 70px; top: 310px; width: 1048px; height: 276px; background-image: url("../assets/rom-polybot-overview.png"); background-size: 1325px 828px; background-position: -236px -197px; transform: perspective(1600px) rotateY(9deg) rotateX(3deg); }
+  .pb-pipeline { left: 300px; top: 680px; width: 1000px; height: 82px; background-image: url("../assets/rom-polybot-overview.png"); background-size: 1325px 828px; background-position: -262px -472px; transform: perspective(1600px) rotateY(9deg) rotateX(3deg); }
+  .pb-steps { left: 300px; top: 805px; width: 1000px; height: 52px; background-image: url("../assets/rom-polybot-overview.png"); background-size: 1325px 828px; background-position: -262px -586px; opacity: .92; transform: perspective(1600px) rotateY(9deg) rotateX(3deg); }
+  .polybot .tag { color: #91c5ff; background: #0b1a33cc; border: 1px solid #91c5ff44; }
+
+  /* ---------------- Nova: tracked wallets, discoveries and the live ticker ---------------- */
+  .nova { background: radial-gradient(ellipse at 70% 40%, #2747ff66, transparent 58%), radial-gradient(ellipse at 15% 80%, #142fc455, transparent 55%), #060b2a; --edge: #9db4ff55; --glow: #3a5bff33; --ring: #b6d4ff26; }
+  .nova .back { left: 560px; top: 60px; width: 1120px; opacity: .38; transform: perspective(1900px) rotateY(-22deg) rotateZ(-1.5deg); }
+  .nova .back::after { background: linear-gradient(90deg, #060b2a, transparent 45%); }
+  .nv-wallets { left: 790px; top: 330px; width: 716px; height: 378px; background-image: url("../assets/rom-nova-radar.webp"); background-size: 1665px 1043px; background-position: -924px -451px; transform: perspective(1600px) rotateY(-8deg); }
+  .nv-ticker { left: 90px; top: 200px; width: 860px; height: 52px; background-image: url("../assets/rom-nova-radar.webp"); background-size: 2538px 1589px; background-position: -632px -10px; }
+  .nv-discover { left: 110px; top: 640px; width: 620px; height: 216px; background-image: url("../assets/rom-nova-radar.webp"); background-size: 2141px 1341px; background-position: -250px -1087px; transform: perspective(1600px) rotateY(10deg); }
+  .nova .tag { color: #c5d3ff; background: #0b1450cc; border: 1px solid #9db4ff44; }
+
+  /* ---------------- Recoil: the armed power button, the pull readout and the sliders ---------------- */
+  .recoil { background: radial-gradient(ellipse at 30% 45%, #1d63c466, transparent 55%), radial-gradient(ellipse at 85% 20%, #63f0ff22, transparent 50%), #050a16; --edge: #63f0ff55; --glow: #3b9eff33; --ring: #3b9eff30; }
+  .recoil .back { left: 640px; top: 120px; width: 1080px; opacity: .4; transform: perspective(1900px) rotateY(-22deg) rotateZ(1.5deg); }
+  .recoil .back::after { background: linear-gradient(90deg, #050a16, transparent 45%); }
+  .rc-power { left: 150px; top: 70px; width: 440px; height: 837px; background-image: url("../assets/rom-recoil-main-1.6.0.png"); background-size: 1520px 955px; background-position: -31px -86px; transform: perspective(1600px) rotateY(10deg); }
+  .rc-readout { left: 700px; top: 250px; width: 444px; height: 94px; border-radius: 16px; background-image: url("../assets/rom-recoil-main-1.6.0.png"); background-size: 3680px 2312px; background-position: -2734px -287px; }
+  .rc-slider { left: 700px; top: 420px; width: 800px; height: 92px; background-image: url("../assets/rom-recoil-main-1.6.0.png"); background-size: 1338px 840px; background-position: -462px -154px; transform: perspective(1600px) rotateY(-6deg); }
+  .rc-strength { left: 700px; top: 560px; width: 800px; height: 92px; background-image: url("../assets/rom-recoil-main-1.6.0.png"); background-size: 1338px 840px; background-position: -462px -450px; transform: perspective(1600px) rotateY(-6deg); }
+  .recoil .tag { color: #8ff4ff; background: #06142acc; border: 1px solid #63f0ff44; }
+</style>
+</head>
+<body>
+  <div class="scene polybot">
+    <div class="rings" style="left:900px;top:-260px;width:1100px;height:1100px"></div>
+    <div class="rings" style="left:1020px;top:-140px;width:860px;height:860px"></div>
+    <div class="back"><img src="../assets/rom-polybot-overview.png" alt=""></div>
+    <div class="crop pb-terminal"></div>
+    <div class="crop pb-pipeline"></div>
+    <div class="crop pb-steps"></div>
+    <span class="tag" style="left:96px;top:236px">Trading paused until you start it</span>
+  </div>
+
+  <div class="scene nova">
+    <div class="rings" style="left:820px;top:-180px;width:1000px;height:1000px"></div>
+    <div class="rings" style="left:960px;top:-40px;width:720px;height:720px;border-style:dashed"></div>
+    <div class="rings" style="left:1100px;top:100px;width:440px;height:440px"></div>
+    <div class="back"><img src="../assets/rom-nova-radar.webp" alt=""></div>
+    <div class="crop nv-ticker"></div>
+    <div class="crop nv-wallets"></div>
+    <div class="crop nv-discover"></div>
+    <span class="tag" style="left:110px;top:560px">Whales entering launches</span>
+    <span class="tag" style="left:818px;top:262px">Top tracked wallets</span>
+  </div>
+
+  <div class="scene recoil">
+    <div class="rings" style="left:-90px;top:-40px;width:920px;height:920px"></div>
+    <div class="rings" style="left:30px;top:80px;width:680px;height:680px;border-style:dashed"></div>
+    <div class="back"><img src="../assets/rom-recoil-main-1.6.0.png" alt=""></div>
+    <div class="crop rc-power"></div>
+    <div class="crop rc-readout"></div>
+    <div class="crop rc-slider"></div>
+    <div class="crop rc-strength"></div>
+    <span class="tag" style="left:704px;top:180px">Live pull readout</span>
+  </div>
+  <script>document.body.dataset.scene = location.hash.slice(1) || 'polybot';</script>
+</body>
+</html>

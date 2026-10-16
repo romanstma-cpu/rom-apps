@@ -26,7 +26,7 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/market-stage.css?v=rom-5">
+  <link rel="stylesheet" href="/assets/market-stage.css?v=rom-6">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"ROM Recoil","softwareVersion":"1.6.0","operatingSystem":["Windows 10","Windows 11"],"applicationCategory":"GameApplication","url":"https://romapps.xyz/recoil/","downloadUrl":"https://github.com/romanstma-cpu/rom-apps/releases/download/recoil-v1.6.0/ROM-Recoil-1.6.0-win-x64.zip","releaseNotes":"https://github.com/romanstma-cpu/rom-apps/releases/tag/recoil-v1.6.0","screenshot":"https://romapps.xyz/assets/rom-recoil-main-1.6.0.png","description":"Free recoil control for Rainbow Six Siege on Windows: vertical and horizontal pull, strength, profiles per operator and a one-key toggle.","publisher":{"@type":"Organization","name":"ROM Apps","url":"https://romapps.xyz/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 </head>
 <body class="recoil-page">
@@ -44,16 +44,17 @@
         <div class="rc-hero-copy">
           <p class="chapter-label"><span>03</span><img src="/assets/app-recoil.png" width="22" height="22" alt="">ROM Recoil</p>
           <h1 id="hero-title" data-split>Recoil control for <span class="title-accent">Rainbow Six Siege.</span></h1>
-          <p class="rc-lede"><strong>ROM Recoil</strong> moves your aim down while you hold fire, by the amount you set. Save a setting per operator and switch it on or off in-game with one key.</p>
+          <p class="rc-lede"><strong>ROM Recoil</strong> holds your spray steady in Rainbow Six Siege. Set it once, toggle it with one key.</p>
           <div class="hero-actions"><a class="button button-primary" href="https://github.com/romanstma-cpu/rom-apps/releases/download/recoil-v1.6.0/ROM-Recoil-1.6.0-win-x64.zip">Download free <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m-6-6 6 6 6-6"/></svg></a><a class="hero-secondary" href="#how">How it works <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a></div>
           <p class="recoil-meta">v1.6.0 · Windows 10/11 · 64-bit · 66.9 MB zip · No account</p>
+          <details class="read-more"><summary><span class="rm-open">Read more</span><span class="rm-close">Show less</span></summary><div class="read-more-body"><p>It moves your aim down while you hold fire, by the amount you set: vertical pull for the kick, horizontal pull for drift, strength for how hard. Save a setting per operator and switch it on or off in-game with one key.</p><p>Macros can break a game's terms of service. Use it at your own risk.</p></div></details>
         </div>
         <div class="rc-visual">
           <svg class="reticle" viewBox="-300 -300 600 600" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="1.2"><circle r="286" pathLength="1"/><circle class="reticle-fine" r="236" pathLength="1"/><path pathLength="1" d="M0-300V-246M0 246V300M-300 0H-246M246 0H300"/><path class="reticle-fine" pathLength="1" d="M-202-202-186-186M202-202 186-186M-202 202-186 186M202 202 186 186"/></g></svg>
           <figure class="hud-frame">
             <span class="frame-sweep" aria-hidden="true"></span>
-            <a href="/assets/rom-recoil-main-1.6.0.png" target="_blank" rel="noopener" data-viewer="ROM Recoil · Main screen" data-viewer-src="/assets/rom-recoil-main-1.6.0.webp" aria-label="View full-size ROM Recoil screenshot (opens in a new tab)"><img src="/assets/rom-recoil-main-1.6.0.webp" width="1600" height="1005" fetchpriority="high" alt="ROM Recoil switched on and armed, with the Ash – R4-C profile, vertical pull 62, horizontal pull 4 right and strength 2.5"></a>
-            <figcaption><span>Actual Recoil screen · On and armed</span><a href="/assets/rom-recoil-main-1.6.0.png" target="_blank" rel="noopener" data-viewer="ROM Recoil · Main screen" data-viewer-src="/assets/rom-recoil-main-1.6.0.webp">Expand <span aria-hidden="true">↗</span><span class="sr-only"> screenshot. Opens in a new tab.</span></a></figcaption>
+            <a href="/assets/rom-recoil-main-1.6.0.png" target="_blank" rel="noopener" data-viewer="ROM Recoil · Main screen" data-viewer-src="/assets/rom-recoil-main-1.6.0.webp" aria-label="View full-size ROM Recoil screenshot (opens in a new tab)"><img src="/assets/recoil-showcase-1.webp" width="1600" height="1000" fetchpriority="high" alt="ROM Recoil armed, its live pull readout showing 712 counts per second, with the vertical pull and strength sliders"></a>
+            <figcaption><span>Made from real Recoil screens</span><a href="/assets/rom-recoil-main-1.6.0.png" target="_blank" rel="noopener" data-viewer="ROM Recoil · Main screen" data-viewer-src="/assets/rom-recoil-main-1.6.0.webp">Full screen <span aria-hidden="true">↗</span><span class="sr-only"> screenshot. Opens in a new tab.</span></a></figcaption>
           </figure>
         </div>
       </div>
@@ -70,14 +71,13 @@
 
     <section class="rc-how section-pad" id="how" aria-labelledby="how-title">
       <div class="wrap">
-        <div class="inside-head" data-reveal><h2 id="how-title" data-split>How it <span class="title-accent">works</span></h2><p>Three sliders set the pull. Profiles keep a tuning per operator, and a hotkey switches it without leaving the game.</p></div>
-        <ol class="capability-list" role="list" data-reveal>
+        <div class="inside-head" data-reveal><h2 id="how-title" data-split>How it <span class="title-accent">works</span></h2><p>Three sliders, a profile per operator, one hotkey.</p></div>
+        <details class="read-more read-more-wide"><summary><span class="rm-open">Read more</span><span class="rm-close">Show less</span></summary><div class="read-more-body"><ol class="capability-list" role="list">
           <li><span class="capability-index" aria-hidden="true">01</span><h3>Tune the pull</h3><p>Vertical pull counters upward kick, horizontal pull counters drift, and strength sets how hard it pulls. A live readout shows how fast that is, and the reticle points the way it pulls.</p></li>
           <li><span class="capability-index" aria-hidden="true">02</span><h3>Save per operator</h3><p>Keep a profile for each operator or gun and switch with a click. Reset or delete by mistake? Undo puts it back.</p></li>
           <li><span class="capability-index" aria-hidden="true">03</span><h3>Toggle in-game</h3><p>F1 by default, or any key or mouse 3–5, with an optional sound cue. Pull on every shot, or only while you aim and fire.</p></li>
           <li><span class="capability-index" aria-hidden="true">04</span><h3>Know its state</h3><p>The status reads Armed, Pulling, Standing by or Input blocked, so you can tell at a glance whether it's working.</p></li>
-        </ol>
-        <p class="inside-note" data-reveal>It pulls in any window except its own. Settings → Only in Rainbow Six Siege limits it to the game.</p>
+        </ol><p class="inside-note">It pulls in any window except its own. Settings → Only in Rainbow Six Siege limits it to the game.</p></div></details>
       </div>
     </section>
 
