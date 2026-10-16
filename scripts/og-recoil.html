@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- 1200 x 630 social preview for /recoil/. Render with: python scripts/make_og.py scripts/og-recoil.html assets/og-recoil.png -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "Space Grotesk"; src: url("../assets/fonts/space-grotesk-latin-variable.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+  * { box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
+  body { position: relative; color: #f2f6ff; background: radial-gradient(ellipse at 76% 46%, #1d63c466, transparent 60%), #060c19; font-family: "Segoe UI Variable", "Aptos", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .grid { position: absolute; inset: 0; background: linear-gradient(#91c5ff10 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(90deg, #91c5ff10 1px, transparent 1px) 0 0 / 48px 48px; -webkit-mask-image: radial-gradient(ellipse at 74% 50%, #000 12%, transparent 70%); mask-image: radial-gradient(ellipse at 74% 50%, #000 12%, transparent 70%); }
+  .reticle { position: absolute; left: 935px; top: 318px; width: 760px; height: 760px; transform: translate(-50%, -50%); color: #3b9eff; opacity: .32; }
+  .brand { position: absolute; top: 38px; left: 58px; display: flex; align-items: center; gap: 12px; font: 650 23px/1 "Space Grotesk", sans-serif; letter-spacing: -.02em; }
+  .brand img { width: 39px; height: 39px; border-radius: 9px; }
+  .brand span { color: #b5c4db; font-weight: 400; }
+  .copy { position: absolute; top: 150px; left: 58px; width: 520px; }
+  .eyebrow { display: flex; align-items: center; gap: 11px; margin: 0 0 26px; font: 600 19px/1 "Space Grotesk", sans-serif; }
+  .eyebrow img { width: 34px; height: 34px; border-radius: 8px; }
+  .eyebrow span { padding: 6px 11px; border: 1px solid #91c5ff59; border-radius: 99px; color: #91c5ff; font: 650 13px/1 "Segoe UI Variable", sans-serif; }
+  h1 { margin: 0; font: 500 76px/.99 "Space Grotesk", sans-serif; letter-spacing: -.04em; }
+  h1 span { color: #91c5ff; }
+  .copy p { max-width: 34ch; margin: 26px 0 0; color: #b5c4db; font-size: 18px; line-height: 1.55; }
+  .availability { position: absolute; bottom: 46px; left: 58px; display: flex; align-items: center; gap: 10px; color: #9eafca; font-size: 14px; }
+  .availability::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #91c5ff; }
+  .frame { position: absolute; left: 610px; top: 132px; width: 640px; padding: 10px 10px 4px; border: 1px solid #91c5ff2e; border-radius: 12px; background: linear-gradient(160deg, #11223d, #0a1426); box-shadow: 0 40px 90px #000a, 0 0 90px #2d7fe024; }
+  .frame::before, .frame::after { content: ""; position: absolute; width: 28px; height: 28px; border: 2px solid #3b9eff; }
+  .frame::before { top: -8px; left: -8px; border-right: 0; border-bottom: 0; border-top-left-radius: 5px; }
+  .frame::after { right: -8px; bottom: -8px; border-left: 0; border-top: 0; border-bottom-right-radius: 5px; }
+  .frame img { display: block; width: 100%; border-radius: 6px; }
+  .frame p { margin: 0; padding: 9px 3px 5px; color: #9eafca; font-size: 12px; }
+  .frame p::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: #3ddc97; }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <svg class="reticle" viewBox="-300 -300 600 600" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="1.2"><circle r="286"/><circle r="236" opacity=".55"/><path d="M0-300V-246M0 246V300M-300 0H-246M246 0H300"/></g></svg>
+  <div class="brand"><img src="../assets/rom-icon-nav.png" alt="">ROM <span>APPS</span></div>
+  <div class="copy">
+    <p class="eyebrow"><img src="../assets/app-recoil.png" alt="">ROM Recoil <span>Free · Windows</span></p>
+    <h1>Steady spray.<br><span>Every round.</span></h1>
+    <p>Recoil control for Rainbow Six Siege. Tune the pull, save it per operator, toggle it with one key.</p>
+  </div>
+  <div class="availability">Free download · Windows 10/11 · romapps.xyz/recoil</div>
+  <div class="frame">
+    <img src="../assets/rom-recoil-main-1.5.0.webp" alt="">
+    <p>Actual Recoil screen · On and armed</p>
+  </div>
+</body>
+</html>

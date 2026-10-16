@@ -6,6 +6,7 @@ colours and product screenshot, so it cannot drift from the page. This script
 screenshots it with the Chrome or Edge you already have, in headless mode.
 
     python scripts/make_og.py
+    python scripts/make_og.py scripts/og-recoil.html assets/og-recoil.png   # another card
     CHROME="C:/path/to/chrome.exe" python scripts/make_og.py   # pick a browser
 
 Needs Pillow or FFmpeg for cropping the browser screenshot. Social platforms
@@ -78,6 +79,11 @@ def crop_card(shot: Path) -> None:
 
 
 def main() -> None:
+    global TEMPLATE, OUT
+    if len(sys.argv) == 3:
+        TEMPLATE, OUT = (ROOT / sys.argv[1]).resolve(), (ROOT / sys.argv[2]).resolve()
+    elif len(sys.argv) != 1:
+        sys.exit(__doc__)
     browser = find_browser()
     # Headless Chrome reserves part of the window for browser UI it does not
     # draw, so the page area is shorter than --window-size by a version-

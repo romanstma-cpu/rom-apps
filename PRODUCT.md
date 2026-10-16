@@ -22,7 +22,7 @@ People evaluating market tools, including visitors on iPhones and other mobile d
 - The referral URL is https://polymarket.us/join/romanr and the code is ROMANR. Keep it prominent. Polymarket controls current reward amounts and eligibility; ROM may receive a referral reward.
 - Preserve existing release URLs, installation guidance, checksums, native browser navigation and the independently deployed Nova app.
 
-- ROM Recoil is a free Windows 10/11 (64-bit) recoil-control app for Rainbow Six Siege, shown in its own homepage chapter (`#recoil`) with an ember accent, like Nova uses cobalt. The zip is attached to the `recoil-v<version>` release on this repository; its checksum is `assets/SHA256SUMS-Recoil-<version>.txt`. It is unsigned. Do not claim it is undetectable; keep the use-at-your-own-risk note. A paywall exists in the app but is switched off.
+- ROM Recoil is a free Windows 10/11 (64-bit) recoil-control app for Rainbow Six Siege. It has its own page (`/recoil/`) and a short homepage chapter (`#recoil`) that links to it. Both use the site's blue system with a heads-up-display treatment (grid, reticle, Azure corner brackets); screenshots use the app's Azure accent. Installed copies open `/recoil/#download` from their Update button. The zip is attached to the `recoil-v<version>` release on this repository; its checksum is `assets/SHA256SUMS-Recoil-<version>.txt`. It is unsigned. Do not claim it is undetectable; keep the use-at-your-own-risk note. A paywall exists in the app but is switched off.
 
 ## Brand Commitments
 

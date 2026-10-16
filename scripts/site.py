@@ -11,7 +11,8 @@ public file has to be added here on purpose.
 
 The checks after staging fail the deploy when a page links to a file that is
 not published, an in-page anchor is missing, the Polybot version, installer
-names and checksum files disagree with each other, or changelog.html is not
+names and checksum files disagree with each other, a Recoil link or checksum
+disagrees with assets/recoil-latest.json, or changelog.html is not
 what `changelog` would write from assets/RELEASE-*.md.
 
 `downloads` needs the network. It follows every GitHub release link on the
@@ -49,6 +50,7 @@ PUBLIC = [
     "apple-touch-icon.png",
     "assets",
     "nova",
+    "recoil",
     "whalenova",
 ]
 
@@ -57,7 +59,10 @@ PUBLIC = [
 CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
        "font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'")
 # The site's own pages. Nova is a separate app with its own build.
-CSP_PAGES = ["index.html", "404.html", "code-signing-policy.html", "changelog.html"]
+CSP_PAGES = ["index.html", "404.html", "code-signing-policy.html", "changelog.html", "recoil/index.html"]
+
+# Pages that link the ROM Recoil download; all must name the version in assets/recoil-latest.json.
+RECOIL_PAGES = ["index.html", "recoil/index.html", "code-signing-policy.html"]
 
 # Pages whose Polybot version must match the homepage's.
 VERSIONED = ["index.html", "code-signing-policy.html", "assets/market-stage.js"]
@@ -196,6 +201,7 @@ def check(site: Path) -> list[str]:
             problems.append(f"{name}: missing the site Content-Security-Policy (CSP in scripts/site.py)")
 
     problems += _check_versions(site, parsed[(site / "index.html").resolve()])
+    problems += _check_recoil(site)
     problems += _check_changelog(site)
 
     for private in ("docs", "scripts", "discord", ".github", "README.md", "DESIGN.md"):
@@ -227,6 +233,31 @@ def _check_versions(site: Path, home: _Refs) -> list[str]:
             problems.append(f"{sums} has no SHA-256 line for {installer}")
         if not any(r.endswith("/" + installer) for r in home.refs):
             problems.append(f"index.html does not link {installer}")
+    return problems
+
+
+def _check_recoil(site: Path) -> list[str]:
+    """Every Recoil link and checksum must match assets/recoil-latest.json, which installed copies read."""
+    try:
+        version = json.loads((site / "assets/recoil-latest.json").read_text(encoding="utf-8"))["version"]
+    except (OSError, ValueError, KeyError):
+        return ["assets/recoil-latest.json has no version"]
+    problems: list[str] = []
+    zipname = f"ROM-Recoil-{version}-win-x64.zip"
+    sums = site / f"assets/SHA256SUMS-Recoil-{version}.txt"
+    if not sums.is_file():
+        problems.append(f"{sums.relative_to(site)} is missing for the current Recoil version")
+    elif not re.search(rf"^[0-9A-Fa-f]{{64}}\s+\*?{re.escape(zipname)}\s*$", sums.read_text(encoding="utf-8"), re.M):
+        problems.append(f"{sums.relative_to(site)} has no SHA-256 line for {zipname}")
+    for name in RECOIL_PAGES:
+        text = (site / name).read_text(encoding="utf-8")
+        for kind, pattern in (("release", r"recoil-v(\d+\.\d+\.\d+)"), ("checksum", r"SHA256SUMS-Recoil-(\d+\.\d+\.\d+)"),
+                              ("zip", r"ROM-Recoil-(\d+\.\d+\.\d+)-win-x64")):
+            for other in sorted(set(re.findall(pattern, text)) - {version}):
+                problems.append(f"{name}: links Recoil {other} ({kind}), but assets/recoil-latest.json says {version}")
+    for name in ("index.html", "recoil/index.html"):
+        if f"/recoil-v{version}/{zipname}" not in (site / name).read_text(encoding="utf-8"):
+            problems.append(f"{name} does not link {zipname}")
     return problems
 
 
@@ -346,14 +377,14 @@ def render_changelog(root: Path) -> str:
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/market-stage.css?v=blue-3">
+  <link rel="stylesheet" href="assets/market-stage.css?v=blue-4">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
   <header class="site-header">
     <nav class="wrap nav" aria-label="Main navigation">
       <a class="brand" href="/" aria-label="ROM Apps home"><img src="assets/rom-icon-nav.png" width="36" height="36" alt=""><span>ROM<span class="brand-apps"> APPS</span></span></a>
-      <div class="nav-links"><a href="/#polybot">Polybot</a><a href="/#nova-h">Nova</a><a href="/#recoil">Recoil</a><a class="nav-cta" href="/#download-polybot">Get Polybot <span aria-hidden="true">↗</span></a></div>
+      <div class="nav-links"><a href="/#polybot">Polybot</a><a href="/#nova-h">Nova</a><a href="/recoil/">Recoil</a><a class="nav-cta" href="/#download-polybot">Get Polybot <span aria-hidden="true">↗</span></a></div>
     </nav>
   </header>
 
@@ -400,7 +431,7 @@ def downloads() -> tuple[list[str], list[str]]:
     problems: list[str] = []
     warnings: list[str] = []
     urls: set[str] = set()
-    for name in ("index.html", "code-signing-policy.html"):
+    for name in ("index.html", "code-signing-policy.html", "recoil/index.html"):
         p = _Refs()
         p.feed((ROOT / name).read_text(encoding="utf-8"))
         urls |= {r for r in p.refs if re.match(r"https://github\.com/[^/]+/[^/]+/releases/.*download/", r)}

@@ -112,9 +112,9 @@ components:
 
 **Creative North Star: "Signal in focus"**
 
-ROM Apps pairs oversized, compact display type with real product screens and broad changes of color. A midnight navy opening gives ice blue actions and the dimensional Polybot preview prominence. An ice blue referral ribbon, a numbered capabilities chapter, an ice-white download section, and a cobalt Nova chapter establish distinct landmarks before the quieter FAQ and footer.
+ROM Apps pairs oversized, compact display type with real product screens and broad changes of color. A midnight navy opening gives ice blue actions and the dimensional Polybot preview prominence. An ice blue referral ribbon, a numbered capabilities chapter, an ice-white download section, a cobalt Nova chapter and a heads-up-display Recoil chapter establish distinct landmarks before the quieter FAQ and footer.
 
-Depth belongs to the product imagery. Thin geometric signal arcs draw once behind the opening composition; Nova uses static circular outlines. These shapes are decoration, not market data. Product interfaces stay recognizable, and short captions explain what each screenshot actually shows. The verification, changelog, and 404 pages reuse the homepage header, footer, and stylesheet; the 404 page uses root-absolute URLs for nested paths.
+Depth belongs to the product imagery. Thin geometric signal arcs draw once behind the opening composition; Nova uses static circular outlines. These shapes are decoration, not market data. Product interfaces stay recognizable, and short captions explain what each screenshot actually shows. The verification, changelog, 404 and ROM Recoil (`/recoil/`) pages reuse the homepage header, footer, and stylesheet; the 404 and Recoil pages use root-absolute URLs for nested paths.
 
 **Key Characteristics:**
 
@@ -140,6 +140,7 @@ Ice blue supplies the opening's visual energy, blue-tinted paper makes downloads
 
 - **Nova Cobalt** fills the Nova chapter. **Nova Stage** supports its actual radar screenshot; **Nova Muted** and **White** distinguish supporting copy and primary content.
 - Nova locally changes the shared accent roles to white. Its launch action is white with cobalt text.
+- **Recoil HUD** keeps the midnight family: a deeper navy (#060c19), a faint 56px grid masked to a soft ellipse, and the app's own Azure (#3b9eff) for screenshot corner brackets, the reticle, data labels and the tuning preview. Actions stay ice blue, so Recoil reads as part of the same site. Its screenshots use the app's Azure accent.
 
 ### Neutral
 
@@ -181,7 +182,7 @@ The header is sticky, with visible product navigation and a Get Polybot action. 
 
 The Polybot frame uses a broad black shadow, a 1400px perspective context, a slight Y rotation, and a one-degree Z rotation. Nova's frame has a blue-tinted shadow and a two-degree tilt. These are object treatments for screenshots; download and FAQ rows remain flat. At 900px and below both product frames are level.
 
-The signal arcs draw once over 4.4 seconds. The desktop Polybot frame enters over 1.5 seconds; the level tablet frame uses a 1.1-second upward entrance. Lower sections move upward once as they enter the viewport over 0.8 seconds, with their content always visible. Screenshot switching fades over 0.4 seconds. Nova's image grows slightly inside its fixed boundary on hover.
+The signal arcs, and the Recoil page's reticle, draw once over 4.4 seconds. The desktop Polybot frame enters over 1.5 seconds; the level tablet frame uses a 1.1-second upward entrance. Lower sections move upward once as they enter the viewport over 0.8 seconds, with their content always visible. Screenshot switching fades over 0.4 seconds. Nova's image grows slightly inside its fixed boundary on hover.
 
 The native image viewer uses a dark surface, a broad shadow, and a blurred backdrop. Its brief opening transition does not change the page's scroll position. Exact motion and shadow values are in the sidecar.
 
@@ -219,6 +220,10 @@ Windows and Mac use equally prominent full-row links, separated by thin rules. P
 
 On phones, the share section offers the native share sheet when available, clipboard copying as a fallback, and a visible address if neither is available. Without JavaScript the address remains usable and the inactive share button is hidden.
 
+### ROM Recoil page
+
+A hero with the screenshot in a bracketed HUD frame, a five-item spec strip of real ranges, the numbered capabilities pattern, a tuning preview, two screenshots, the ice-white download chapter with a single Windows row and checksum steps, and a Recoil FAQ. The tuning preview is three native range inputs and a static reticle; its readout applies the app's real formula (every 12 ms, slider ÷ 10 × 0.55 × strength counts) and says that turn distance depends on sensitivity. It is hidden until its script runs. Any screenshot link opts into the shared viewer with `data-viewer`.
+
 ### FAQ and image viewer
 
 FAQ rows are native details/summary elements with a plus that rotates when open. They preserve keyboard behavior and work without JavaScript.
@@ -229,7 +234,7 @@ Both products share a native modal image viewer when supported. It has a visible
 
 ### Do
 
-- Keep the website focused on ROM Polybot and ROM Nova.
+- Keep the website focused on ROM Polybot, ROM Nova and ROM Recoil.
 - Use actual product screens with accurate, nearby state captions.
 - Preserve the distinct midnight navy, ice blue, paper, and cobalt chapters.
 - Keep referral terms, platform requirements, and download verification readable.
@@ -243,4 +248,5 @@ Both products share a native modal image viewer when supported. It has a visible
 - Invent returns, customer counts, testimonials, or successful live-trading claims.
 - Imply that the Practice setup screen is an active simulation or that the initial Evidence screen contains settled results.
 - Add automatic screenshot cycling or continuously looping decoration.
+- Present the Recoil tuning preview's counts as accuracy, in-game results or detection safety, or claim Recoil is undetectable.
 - Hide essential download information behind JavaScript or change the independent Nova application's visual system here.

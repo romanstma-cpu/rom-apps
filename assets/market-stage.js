@@ -104,6 +104,11 @@ if (viewer && typeof viewer.showModal === 'function') {
   let backdropPress = false;
 
   function imageInfo(link) {
+    // Any screenshot link can opt in with data-viewer="<title>" (and data-viewer-src for the image to show).
+    if (link.dataset.viewer) {
+      const image = link.closest('figure')?.querySelector('img');
+      return {title: link.dataset.viewer, src: link.dataset.viewerSrc || link.href, alt: image?.alt || ''};
+    }
     if (link.closest('.nova-visual')) {
       const image = document.querySelector('.nova-visual img');
       return {title: 'ROM Nova · Radar', src: image.currentSrc || image.src, alt: image.alt};
@@ -149,7 +154,7 @@ if (viewer && typeof viewer.showModal === 'function') {
     }
   }
 
-  for (const link of document.querySelectorAll('#preview-image-link, #preview-full-size, .nova-visual a')) {
+  for (const link of document.querySelectorAll('#preview-image-link, #preview-full-size, .nova-visual a, [data-viewer]')) {
     link.setAttribute('aria-haspopup', 'dialog');
     link.setAttribute('aria-controls', 'image-viewer');
     link.setAttribute('aria-label', `${link.querySelector('img') ? 'Open' : 'Expand'} ${imageInfo(link).title} screenshot preview`);
@@ -193,6 +198,20 @@ if (viewer && typeof viewer.showModal === 'function') {
     opener?.focus({preventScroll: true});
   });
 }
+
+// Some embedded browsers (in-app browsers, webviews) skip the jump to #section when a link arrives
+// from another page. If the page is still at the top once it has loaded, make that jump once.
+window.addEventListener('load', () => {
+  let target = null;
+  try {
+    target = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  } catch {
+    return; // a malformed hash: leave the page where it is
+  }
+  if (target && window.scrollY === 0 && target.getBoundingClientRect().top > innerHeight / 2) {
+    target.scrollIntoView({block: 'start', behavior: 'instant'});
+  }
+});
 
 if ('IntersectionObserver' in window && !reducedMotion.matches) {
   const sections = document.querySelectorAll('[data-reveal]');
