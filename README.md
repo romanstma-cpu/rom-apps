@@ -50,7 +50,7 @@ When publishing a new version, update together:
 
 ## Publishing ROM Recoil
 
-ROM Recoil (source in the separate `RomRecoil` folder) is a free download in the homepage `#recoil` chapter. Build it with `RomRecoil/tools/release.ps1`, which writes the zip and `SHA256SUMS-Recoil-<version>.txt`. Attach both to a `recoil-v<version>` release on this repository — **not marked latest** (see Trader's feed below) — copy the checksum file into `assets/`, and update the version, size and links in the `#recoil` section of `index.html`.
+ROM Recoil (source in the separate `RomRecoil` folder) is a free download in the homepage `#recoil` chapter. Build it with `RomRecoil/tools/release.ps1`, which writes the zip and `SHA256SUMS-Recoil-<version>.txt`. Attach both to a `recoil-v<version>` release on this repository — **not marked latest** (see Trader's feed below) — copy the checksum file into `assets/`, update the version, size and links in the `#recoil` section of `index.html`, and set the version in `assets/recoil-latest.json` (installed copies read it to offer the update).
 
 ## Updating Nova
 
