@@ -8,7 +8,7 @@ web
 
 ## Product Purpose
 
-The public home and download site for ROM Polybot and ROM Nova. The owner wants an impressive, uncluttered, professional site that makes visitors interested in downloading the products. Only these two products belong in the catalog.
+The public home and download site for ROM Polybot, ROM Nova and ROM Recoil. The owner wants an impressive, uncluttered, professional site that makes visitors interested in the products. Only these three products belong in the catalog.
 
 ## Users
 
@@ -21,6 +21,8 @@ People evaluating market tools, including visitors on iPhones and other mobile d
 - ROM Nova is a Solana research workspace with wallet activity. It does not execute trades. Some data is simulated, and its browser app requires sign-in.
 - The referral URL is https://polymarket.us/join/romanr and the code is ROMANR. Keep it prominent. Polymarket controls current reward amounts and eligibility; ROM may receive a referral reward.
 - Preserve existing release URLs, installation guidance, checksums, native browser navigation and the independently deployed Nova app.
+
+- ROM Recoil is a free Windows 10/11 (64-bit) recoil-control app for Rainbow Six Siege, shown in its own homepage chapter (`#recoil`) with an ember accent, like Nova uses cobalt. The zip is attached to the `recoil-v<version>` release on this repository; its checksum is `assets/SHA256SUMS-Recoil-<version>.txt`. It is unsigned. Do not claim it is undetectable; keep the use-at-your-own-risk note. A paywall exists in the app but is switched off.
 
 ## Brand Commitments
 

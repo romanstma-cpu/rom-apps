@@ -2,7 +2,7 @@
 
 The public site at https://romapps.xyz, served by GitHub Pages from `main`. It is static HTML and CSS with a small local script for screenshot selection, the enlarged preview, motion and mobile sharing; there is no build step or client-side framework.
 
-The website features only **ROM Polybot** and **ROM Nova**. Keep retired apps (ROM Trader, ROM Scribe, ROM Convert) out of the public catalog, metadata and support pages. This repository still hosts ROM Trader's update feed for copies already installed; see below.
+The website features **ROM Polybot**, **ROM Nova** and **ROM Recoil**. Keep retired apps (ROM Trader, ROM Scribe, ROM Convert) out of the public catalog, metadata and support pages. This repository still hosts ROM Trader's update feed for copies already installed; see below.
 
 ## What gets published
 
@@ -47,6 +47,10 @@ When publishing a new version, update together:
 4. The social card: point `scripts/og-card.html` at the new overview screenshot and run `python scripts/make_og.py`.
 
 `scripts/site.py build` fails if these disagree. Verify the downloaded artifact against the locally built installer before announcing it. Check the live Polymarket US referral page before changing offer copy; the offer amount and terms are controlled by Polymarket US.
+
+## Publishing ROM Recoil
+
+ROM Recoil (source in the separate `RomRecoil` folder) is a free download in the homepage `#recoil` chapter. Build it with `RomRecoil/tools/release.ps1`, which writes the zip and `SHA256SUMS-Recoil-<version>.txt`. Attach both to a `recoil-v<version>` release on this repository — **not marked latest** (see Trader's feed below) — copy the checksum file into `assets/`, and update the version, size and links in the `#recoil` section of `index.html`.
 
 ## Updating Nova
 
