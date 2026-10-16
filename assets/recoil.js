@@ -17,6 +17,8 @@ if (tuner) {
   const maxRate = perSecond(100, 10);
   const format = new Intl.NumberFormat('en-US', {maximumFractionDigits: 0});
 
+  let current = {ux: 0, uy: 0, length: 0};
+
   const sideText = (v) => (v === 0 ? 'Centered' : v > 0 ? `${v} right` : `${-v} left`);
 
   function describe(dx, dy) {
@@ -58,6 +60,7 @@ if (tuner) {
     const length = total === 0 ? 0 : 96 * Math.sqrt(Math.min(1, total / maxRate));
     const ux = total === 0 ? 0 : dx / total;
     const uy = total === 0 ? 0 : dy / total;
+    current = {ux, uy, length};
     vector.setAttribute('x2', (ux * length).toFixed(2));
     vector.setAttribute('y2', (uy * length).toFixed(2));
     trail.forEach((dot, i) => {
@@ -67,6 +70,55 @@ if (tuner) {
       dot.setAttribute('opacity', total === 0 ? '0' : String(0.25 + 0.15 * i));
     });
   }
+
+  // Hold the scope (pointer, or Space/Enter) to watch the pull: a dot runs out along the vector,
+  // faster for a stronger tuning, and starts over like a new spray.
+  const button = tuner.querySelector('#scope-button');
+  const dot = tuner.querySelector('#scope-dot');
+  const path = tuner.querySelector('#scope-path');
+  let holding = false;
+  let holdStart = 0;
+  let holdFrame = 0;
+
+  function holdTick(now) {
+    if (!holding) return;
+    const cycle = ((now - holdStart) / 1600) % 1;
+    const reach = current.length * Math.min(1, cycle * 1.15);
+    const x = (current.ux * reach).toFixed(2);
+    const y = (current.uy * reach).toFixed(2);
+    dot.setAttribute('cx', x);
+    dot.setAttribute('cy', y);
+    dot.setAttribute('opacity', cycle < 0.9 ? '1' : String(1 - (cycle - 0.9) / 0.1));
+    path.setAttribute('x2', x);
+    path.setAttribute('y2', y);
+    holdFrame = requestAnimationFrame(holdTick);
+  }
+  function startHold() {
+    if (holding || !current.length) return;
+    holding = true;
+    button.classList.add('is-holding');
+    holdStart = performance.now();
+    holdFrame = requestAnimationFrame(holdTick);
+  }
+  function stopHold() {
+    holding = false;
+    cancelAnimationFrame(holdFrame);
+    button.classList.remove('is-holding');
+    dot.setAttribute('opacity', '0');
+    path.setAttribute('x2', '0');
+    path.setAttribute('y2', '0');
+  }
+  button.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+    button.setPointerCapture?.(event.pointerId);
+    startHold();
+  });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture', 'blur']) button.addEventListener(type, stopHold);
+  button.addEventListener('keydown', (event) => {
+    if ((event.key === ' ' || event.key === 'Enter') && !event.repeat) { event.preventDefault(); startHold(); }
+  });
+  button.addEventListener('keyup', (event) => { if (event.key === ' ' || event.key === 'Enter') stopHold(); });
+  button.addEventListener('click', (event) => event.preventDefault());
 
   [down, side, strength].forEach((input) => input.addEventListener('input', update));
   update();

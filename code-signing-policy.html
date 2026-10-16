@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=1280">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <title>Download verification &amp; support — ROM Apps</title>
   <meta name="description" content="Verify ROM Polybot and ROM Recoil downloads, understand unsigned installers, and find support for ROM Polybot, ROM Nova and ROM Recoil.">
@@ -11,7 +11,7 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/market-stage.css?v=blue-4">
+  <link rel="stylesheet" href="assets/market-stage.css?v=rom-5">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -25,7 +25,7 @@
   <main id="main" tabindex="-1">
     <div class="wrap doc">
       <p class="eyebrow">VERIFICATION &amp; SUPPORT</p>
-      <h1>Know what you’re downloading.</h1>
+      <h1>Check a download before you open it.</h1>
       <p class="doc-intro">Verification information, product requirements and a direct route to support.</p>
       <nav class="doc-toc" aria-label="On this page"><a href="#signing">Installer signing</a><a href="#verify-windows">Verify on Windows</a><a href="#verify-mac">Verify on Mac</a><a href="#nova">ROM Nova</a><a href="#recoil">ROM Recoil</a><a href="#accounts">Trading accounts</a><a href="#get-help">Get help</a></nav>
 
@@ -62,7 +62,7 @@ actual=$(shasum -a 256 ~/Downloads/ROM.PolyBot-2.36.6-arm64.dmg | awk '{print $1
 
       <section id="recoil" aria-labelledby="recoil-title">
         <h2 id="recoil-title">ROM Recoil</h2>
-        <p>ROM Recoil is a zip, not an installer, and it isn’t code-signed either, so Windows SmartScreen may warn before RomRecoil.exe opens. Download it from the <a href="recoil/#download">ROM Recoil page</a>, where a PowerShell command compares the zip with its <a href="assets/SHA256SUMS-Recoil-1.5.0.txt">SHA-256 checksum</a>. Macros can break a game’s terms of service; use it at your own risk.</p>
+        <p>ROM Recoil is a zip, not an installer, and it isn’t code-signed either, so Windows SmartScreen may warn before RomRecoil.exe opens. Download it from the <a href="recoil/#download">ROM Recoil page</a>, where a PowerShell command compares the zip with its <a href="assets/SHA256SUMS-Recoil-1.6.0.txt">SHA-256 checksum</a>. Macros can break a game’s terms of service; use it at your own risk.</p>
       </section>
 
       <section id="accounts" aria-labelledby="accounts-title">

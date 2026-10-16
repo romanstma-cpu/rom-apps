@@ -22,7 +22,7 @@ People evaluating market tools, including visitors on iPhones and other mobile d
 - The referral URL is https://polymarket.us/join/romanr and the code is ROMANR. Keep it prominent. Polymarket controls current reward amounts and eligibility; ROM may receive a referral reward.
 - Preserve existing release URLs, installation guidance, checksums, native browser navigation and the independently deployed Nova app.
 
-- ROM Recoil is a free Windows 10/11 (64-bit) recoil-control app for Rainbow Six Siege. It has its own page (`/recoil/`) and a short homepage chapter (`#recoil`) that links to it. Both use the site's blue system with a heads-up-display treatment (grid, reticle, Azure corner brackets); screenshots use the app's Azure accent. Installed copies open `/recoil/#download` from their Update button. The zip is attached to the `recoil-v<version>` release on this repository; its checksum is `assets/SHA256SUMS-Recoil-<version>.txt`. It is unsigned. Do not claim it is undetectable; keep the use-at-your-own-risk note. A paywall exists in the app but is switched off.
+- ROM Recoil is a free Windows 10/11 (64-bit) recoil-control app for Rainbow Six Siege. It has its own page (`/recoil/`) and a short homepage chapter (`#recoil`) that links to it. Both use the site's blue system with a heads-up-display treatment (grid, reticle, Azure corner brackets); screenshots use the app's Azure accent. Its icon (1.6.0+) is the ROM "R" in Recoil's own style: dark tile with an Azure-to-cyan glowing border, a faint HUD grid, the R in an Azure-to-ice gradient and a cyan reticle in the top-right corner. Installed copies open `/recoil/#download` from their Update button. The zip is attached to the `recoil-v<version>` release on this repository; its checksum is `assets/SHA256SUMS-Recoil-<version>.txt`. It is unsigned. Do not claim it is undetectable; keep the use-at-your-own-risk note. A paywall exists in the app but is switched off.
 
 ## Brand Commitments
 
@@ -34,4 +34,8 @@ Real product screenshots are in assets/: rom-polybot-overview.png, polybot-pract
 
 ## Accessibility & Inclusion
 
-Mobile-readable and functional, including at 320px. Native links and disclosures, keyboard access, reduced-motion support, and readable text are baseline requirements. Downloads and product information must work without JavaScript.
+**Desktop (PC) visitors only, for now** (owner's decision, 2026-10-16): every page uses a fixed 1280 px viewport, so phones and tablets get the desktop layout zoomed to fit, and phone-only content (share-to-computer, phone FAQ) is gone. The phone CSS is kept for later; switching back is the viewport tag. Native links and disclosures, keyboard access, reduced-motion support, and readable text are baseline requirements. Downloads and product information must work without JavaScript.
+
+## Voice
+
+Say what each product does, plainly and specifically. No two-fragment slogans ("Your next move. In focus."), no filler triplets, no vague promises. Headings can be plain statements or labels ("How Polybot works", "Questions"); facts belong in the spec strips.

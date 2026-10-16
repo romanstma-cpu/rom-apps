@@ -459,11 +459,6 @@ html.motion-ready [data-reveal].is-visible { transform: none; }
 .reticle { position: absolute; z-index: -1; top: 50%; left: 50%; width: 132%; aspect-ratio: 1; color: var(--azure); opacity: .3; transform: translate(-50%, -50%); pointer-events: none; }
 .reticle :is(circle, path) { stroke-dasharray: 1; animation: signal-draw 4.4s var(--ease-out) both; }
 .reticle .reticle-fine { opacity: .55; }
-.rc-specs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; padding: 0; border-top: 1px solid var(--line); }
-.rc-specs > div { padding: 22px 20px 26px 0; }
-.rc-specs > div + div { padding-left: 20px; border-left: 1px solid var(--line); }
-.rc-specs dt { margin: 0 0 9px; color: var(--azure); font: 600 11px/1 var(--font-data); letter-spacing: .1em; text-transform: uppercase; }
-.rc-specs dd { margin: 0; font: 500 19px/1.3 var(--font-display); letter-spacing: -.02em; }
 .rc-how { background: linear-gradient(180deg, #0b1630, var(--bg) 75%); }
 .rc-how .capability-index { color: var(--azure); }
 
@@ -510,7 +505,6 @@ html.motion-ready [data-reveal].is-visible { transform: none; }
 @media (max-width: 1150px) {
   .rc-hero-inner { gap: 34px; min-height: 620px; padding-block: 76px; }
   .rc-hero h1 { font-size: 58px; }
-  .rc-specs dd { font-size: 17px; }
   .rc-panel { grid-template-columns: 180px minmax(0, 1fr); gap: 26px; padding: 22px; }
 }
 @media (max-width: 900px) {
@@ -522,9 +516,6 @@ html.motion-ready [data-reveal].is-visible { transform: none; }
   .rc-hero-copy > .hero-actions { margin-top: 30px; }
   .rc-visual { width: 92%; margin-inline: auto; }
   .reticle { width: 115%; }
-  .rc-specs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .rc-specs > div:nth-child(4) { padding-left: 0; border-left: 0; }
-  .rc-specs > div:nth-child(n+4) { border-top: 1px solid var(--line); }
   .rc-tuner-layout { grid-template-columns: 1fr; gap: 36px; }
   .rc-screens-head { flex-direction: column; align-items: flex-start; gap: 20px; margin-bottom: 40px; }
   .rc-gallery { gap: 26px; }
@@ -538,13 +529,8 @@ html.motion-ready [data-reveal].is-visible { transform: none; }
   .rc-hero .hero-actions .button { width: 100%; justify-content: space-between; }
   .rc-visual { width: 100%; }
   .reticle { width: 150%; opacity: .2; }
-  .rc-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .rc-specs > div, .rc-specs > div + div { padding: 18px 14px 20px 0; border-left: 0; border-top: 1px solid var(--line); }
-  .rc-specs > div:nth-child(even) { padding-left: 14px; border-left: 1px solid var(--line); }
-  .rc-specs > div:last-child { grid-column: 1 / -1; padding-left: 0; border-left: 0; }
-  .rc-specs dd { font-size: 16px; }
   .rc-panel { grid-template-columns: 1fr; gap: 22px; padding: 18px; }
-  .rc-scope { width: min(200px, 70%); margin-inline: auto; }
+  .rc-scope-wrap { width: min(200px, 70%); margin-inline: auto; }
   .rc-readout strong { font-size: 25px; }
   .rc-screens-head h2 { font-size: 49px; }
   .rc-gallery { grid-template-columns: 1fr; gap: 30px; }
@@ -559,6 +545,122 @@ html.motion-ready [data-reveal].is-visible { transform: none; }
 }
 @media print {
   .rc-tuner, .reticle { display: none !important; }
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Motion and finish (assets/motion.js drives the moving parts). The page reads and works without any
+   of it; reduced-motion visitors get none of it.
+   ------------------------------------------------------------------------------------------------ */
+
+/* Page-to-page cross-fade where the browser supports it; the header stays put. */
+@view-transition { navigation: auto; }
+.site-header { view-transition-name: site-header; }
+::view-transition-old(root) { animation: vt-out .26s var(--ease-out) both; }
+::view-transition-new(root) { animation: vt-in .46s var(--ease-out) both; }
+@keyframes vt-out { to { opacity: 0; transform: translateY(-8px); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(14px); } }
+
+/* Header: glass once the page scrolls, with a reading-progress line along its edge. */
+.site-header { transition: background-color .35s, backdrop-filter .35s, -webkit-backdrop-filter .35s; }
+.site-header.is-scrolled { background: #080f1ecc; -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
+.site-header::after { content: ""; position: absolute; left: 0; bottom: -1px; width: 100%; height: 2px; background: linear-gradient(90deg, #3b9eff, #91c5ff 60%, #63f0ff); transform: scaleX(var(--progress, 0)); transform-origin: 0 50%; pointer-events: none; }
+
+/* Numbered product chapters: 01 Polybot, 02 Nova, 03 Recoil. */
+.chapter-label { display: inline-flex; align-items: center; gap: 11px; margin: 0 0 26px; color: var(--muted); font: 600 12px/1 var(--font-data); letter-spacing: .14em; text-transform: uppercase; }
+.chapter-label span { display: inline-flex; align-items: center; gap: 12px; color: var(--accent); }
+.chapter-label span::after { content: ""; width: 26px; height: 1px; background: currentColor; opacity: .55; }
+.chapter-label img { border-radius: 6px; }
+.inline-link { color: var(--accent); text-decoration: underline; text-underline-offset: 4px; }
+
+/* Facts strip (homepage hero and the Recoil page). */
+.spec-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.spec-strip > div { padding: 22px 20px 26px 0; }
+.spec-strip > div + div { padding-left: 20px; border-left: 1px solid var(--line); }
+.spec-strip dt { margin: 0 0 9px; color: var(--azure, #3b9eff); font: 600 11px/1 var(--font-data); letter-spacing: .1em; text-transform: uppercase; }
+.spec-strip dd { margin: 0; font: 500 19px/1.3 var(--font-display); letter-spacing: -.02em; }
+.hero .spec-strip { --azure: #78b8ff; }
+.hero h1 { max-width: 12ch; font-size: clamp(54px, 5.5vw, 82px); }
+
+/* Footer: the three apps as large links. */
+.footer-products { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.footer-products a { position: relative; display: flex; align-items: baseline; gap: 16px; padding: 38px 0 34px; color: var(--text); font: 500 clamp(36px, 5.6vw, 82px)/1 var(--font-display); letter-spacing: -.045em; transition: color .3s; }
+.footer-products a + a { padding-left: 28px; border-left: 1px solid var(--line); }
+.footer-products span { color: var(--accent); font: 600 12px/1 var(--font-data); letter-spacing: .12em; transform: translateY(-1.4em); }
+.footer-products a::after { content: "↗"; margin-left: auto; padding-right: 6px; font-size: .38em; opacity: 0; transform: translate(-8px, 8px); transition: opacity .3s, transform .45s var(--ease-out); }
+.footer-products a:hover { color: var(--accent); }
+.footer-products a:hover::after, .footer-products a:focus-visible::after { opacity: 1; transform: none; }
+
+/* Headings that rise in word by word (split by motion.js; untouched without it). */
+.split-word { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .1em; margin-bottom: -.1em; }
+.split-word > span { display: inline-block; transform: translateY(104%); transition: transform 1.05s var(--ease-out); transition-delay: calc(var(--i, 0) * 60ms); }
+.is-revealed .split-word > span { transform: none; }
+
+/* Living backgrounds: canvases drawn by motion.js; the static art stays as the no-script version. */
+.field-canvas { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity 1.4s; }
+.field-canvas.is-live { opacity: 1; }
+.hero.has-field .signal-art { opacity: 0; transition: opacity .8s; }
+.hud-canvas { position: absolute; z-index: -1; top: 50%; left: 50%; width: 136%; aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; opacity: 0; transition: opacity 1.2s; }
+.hud-canvas.is-live { opacity: 1; }
+.rc-visual.has-field .reticle { opacity: 0; transition: opacity .6s; }
+
+/* Pointer depth on product frames: tilt plus a glare that follows the cursor. */
+.product-theater, .nova-showcase, .recoil-showcase, .rc-visual, .rc-gallery { perspective: 1400px; }
+.tilt { transition: rotate .7s var(--ease-out); }
+.tilt.is-tilting { transition: rotate .14s linear; }
+.glare { position: absolute; z-index: 3; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .4s; background: radial-gradient(560px circle at var(--gx, 50%) var(--gy, 0%), #ffffff24, transparent 46%); mix-blend-mode: screen; }
+.tilt.is-tilting .glare { opacity: 1; }
+
+/* A bright arc that runs around the Recoil hero frame. */
+@property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.frame-sweep { position: absolute; z-index: 2; inset: -1px; padding: 1.5px; border-radius: 13px; pointer-events: none; background: conic-gradient(from var(--sweep), transparent 0 70%, #3b9eff 84%, #8ff4ff 92%, transparent 100%); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: frame-sweep 7s linear infinite; }
+@keyframes frame-sweep { to { --sweep: 360deg; } }
+
+/* Cursor spotlight on cards and rows. */
+.spot { position: relative; isolation: isolate; }
+.spot::before { content: ""; position: absolute; z-index: -1; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .45s; background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), #91c5ff17, transparent 62%); }
+.download-section .spot::before { background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), #23559c17, transparent 62%); }
+.spot:hover::before { opacity: 1; }
+
+/* Buttons lean toward the pointer. */
+.button, .nav-links .nav-cta { transition: transform .25s var(--ease-out), background .25s var(--ease-out), translate .5s var(--ease-out); }
+
+/* Recoil tuning preview: hold the scope to watch the pull. */
+.scope-button { display: block; width: 100%; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: crosshair; touch-action: none; -webkit-tap-highlight-color: transparent; }
+.scope-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+.scope-button .scope-ring:first-child { transition: stroke .3s; }
+.scope-button.is-holding .scope-ring:first-child { stroke: #63f0ff; }
+.rc-scope .scope-dot { fill: #8ff4ff; }
+.rc-scope .scope-path { stroke: #63f0ff; stroke-width: 2; stroke-linecap: round; opacity: .6; }
+.scope-hint { margin: 10px 0 0; color: var(--dim); font: 600 10.5px/1 var(--font-data); letter-spacing: .1em; text-align: center; text-transform: uppercase; }
+
+@media (max-width: 900px) {
+  .spec-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .spec-strip > div:nth-child(4) { padding-left: 0; border-left: 0; }
+  .spec-strip > div:nth-child(n+4) { border-top: 1px solid var(--line); }
+  .hero h1 { max-width: 11ch; font-size: clamp(48px, 7vw, 64px); }
+}
+@media (max-width: 650px) {
+  .spec-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .spec-strip > div, .spec-strip > div + div { padding: 18px 14px 20px 0; border-left: 0; border-top: 1px solid var(--line); }
+  .spec-strip > div:nth-child(even) { padding-left: 14px; border-left: 1px solid var(--line); }
+  .spec-strip > div:last-child { grid-column: 1 / -1; padding-left: 0; border-left: 0; }
+  .spec-strip dd { font-size: 16px; }
+  .hero h1 { max-width: 11ch; font-size: clamp(42px, 12vw, 58px); }
+  .footer-products { grid-template-columns: 1fr; }
+  .footer-products a, .footer-products a + a { padding: 22px 0; padding-left: 0; border-left: 0; font-size: 44px; }
+  .footer-products a + a { border-top: 1px solid var(--line); }
+  .footer-products a::after { opacity: .7; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+  .split-word > span { transform: none !important; transition: none; }
+  .frame-sweep, .field-canvas, .hud-canvas, .glare { display: none; }
+}
+@media (forced-colors: active) {
+  .frame-sweep, .field-canvas, .hud-canvas, .glare, .site-header::after { display: none; }
+}
+@media print {
+  .frame-sweep, .field-canvas, .hud-canvas, .glare { display: none !important; }
 }
 
 /* Document pages (verification, 404) reuse the homepage header, footer and tokens. */

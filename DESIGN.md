@@ -114,7 +114,7 @@ components:
 
 ROM Apps pairs oversized, compact display type with real product screens and broad changes of color. A midnight navy opening gives ice blue actions and the dimensional Polybot preview prominence. An ice blue referral ribbon, a numbered capabilities chapter, an ice-white download section, a cobalt Nova chapter and a heads-up-display Recoil chapter establish distinct landmarks before the quieter FAQ and footer.
 
-Depth belongs to the product imagery. Thin geometric signal arcs draw once behind the opening composition; Nova uses static circular outlines. These shapes are decoration, not market data. Product interfaces stay recognizable, and short captions explain what each screenshot actually shows. The verification, changelog, 404 and ROM Recoil (`/recoil/`) pages reuse the homepage header, footer, and stylesheet; the 404 and Recoil pages use root-absolute URLs for nested paths.
+Depth belongs to the product imagery and to two living backgrounds: a signal field behind the Polybot opening (flowing curves with light pulses travelling along them) and a HUD radar behind the Recoil hero. Nova uses static circular outlines. These shapes are decoration, not market or game data. Products are numbered chapters (01 Polybot, 02 Nova, 03 Recoil) with a mono label and the app icon. Product interfaces stay recognizable, and short captions explain what each screenshot actually shows. The verification, changelog, 404 and ROM Recoil (`/recoil/`) pages reuse the homepage header, footer, and stylesheet; the 404 and Recoil pages use root-absolute URLs for nested paths.
 
 **Key Characteristics:**
 
@@ -168,7 +168,7 @@ The display face carries the identity through compact line height, modest weight
 
 ## Layout
 
-The main container is capped at 1320px. It uses 48px side gutters by default, 32px at 1150px and below, 20px at 650px and below, and 16px at 360px and below. Section padding steps from 104px to 75px and then 65px.
+**The site targets desktop PCs for now:** every page sets a fixed 1280 px viewport, so the breakpoints below apply only to narrow desktop windows; phones get the desktop layout zoomed to fit. The main container is capped at 1320px. It uses 48px side gutters by default, 32px at 1150px and below, 20px at 650px and below, and 16px at 360px and below. Section padding steps from 104px to 75px and then 65px.
 
 Above 900px, the opening places its text stack and product preview in two columns, with the preview given more width. At 900px and below, the preview moves beneath a two-column text introduction; this is the 768px layout. At 650px and below, the introduction becomes one column, the preview uses the full container width, and its perspective tilt is removed. The compact 360px layout makes the main hero action full width.
 
@@ -182,11 +182,11 @@ The header is sticky, with visible product navigation and a Get Polybot action. 
 
 The Polybot frame uses a broad black shadow, a 1400px perspective context, a slight Y rotation, and a one-degree Z rotation. Nova's frame has a blue-tinted shadow and a two-degree tilt. These are object treatments for screenshots; download and FAQ rows remain flat. At 900px and below both product frames are level.
 
-The signal arcs, and the Recoil page's reticle, draw once over 4.4 seconds. The desktop Polybot frame enters over 1.5 seconds; the level tablet frame uses a 1.1-second upward entrance. Lower sections move upward once as they enter the viewport over 0.8 seconds, with their content always visible. Screenshot switching fades over 0.4 seconds. Nova's image grows slightly inside its fixed boundary on hover.
+With scripts and full motion, `assets/motion.js` replaces the static arcs with the signal-field canvas and the Recoil reticle with the HUD canvas; both draw only while on screen and the tab is visible, and the static SVG stays as the no-script and reduced-motion version (it draws once over 4.4 seconds). The desktop Polybot frame enters over 1.5 seconds; the level tablet frame uses a 1.1-second upward entrance. Lower sections move upward once as they enter the viewport over 0.8 seconds, with their content always visible. Screenshot switching fades over 0.4 seconds. Nova's image grows slightly inside its fixed boundary on hover.
 
 The native image viewer uses a dark surface, a broad shadow, and a blurred backdrop. Its brief opening transition does not change the page's scroll position. Exact motion and shadow values are in the sidecar.
 
-**The Motion Settles Rule.** Motion finishes: no automatic screenshot cycling, continuous decorative loop, pointer tracking, or replay control. Reduced-motion disables the signal and preview entrance animations, removes the Polybot tilt, and makes smooth scrolling immediate; other transitions are reduced to near-instant changes.
+**The Motion Rule.** Motion is rich but never in the way: headings marked `data-split` rise in word by word once; product frames tilt in 3D toward the pointer with a glare; cards and rows get a cursor spotlight; primary buttons lean toward the pointer; the header turns to glass with a reading-progress line; pages cross-fade (view transitions); a light runs around the Recoil hero frame. Pointer effects need a real mouse. No automatic screenshot cycling. Reduced motion turns all of it off (static art, instant headings, no view transitions), and every heading becomes visible even if the reveal observer never fires.
 
 ## Shapes
 
@@ -220,9 +220,13 @@ Windows and Mac use equally prominent full-row links, separated by thin rules. P
 
 On phones, the share section offers the native share sheet when available, clipboard copying as a fallback, and a visible address if neither is available. Without JavaScript the address remains usable and the inactive share button is hidden.
 
+### Chapter labels, spec strips and footer
+
+A chapter label is `01 ── [icon] ROM POLYBOT` in the data font. Spec strips (`.spec-strip`) hold real facts in five columns beneath a hero. The footer opens with the three apps as large numbered links.
+
 ### ROM Recoil page
 
-A hero with the screenshot in a bracketed HUD frame, a five-item spec strip of real ranges, the numbered capabilities pattern, a tuning preview, two screenshots, the ice-white download chapter with a single Windows row and checksum steps, and a Recoil FAQ. The tuning preview is three native range inputs and a static reticle; its readout applies the app's real formula (every 12 ms, slider ÷ 10 × 0.55 × strength counts) and says that turn distance depends on sensitivity. It is hidden until its script runs. Any screenshot link opts into the shared viewer with `data-viewer`.
+A hero with the screenshot in a bracketed HUD frame, a five-item spec strip of real ranges, the numbered capabilities pattern, a tuning preview, two screenshots, the ice-white download chapter with a single Windows row and checksum steps, and a Recoil FAQ. The tuning preview is three native range inputs and a static reticle; its readout applies the app's real formula (every 12 ms, slider ÷ 10 × 0.55 × strength counts) and says that turn distance depends on sensitivity. It is hidden until its script runs; holding the scope (pointer, or Space/Enter) runs a dot out along the pull vector like a spray. Any screenshot link opts into the shared viewer with `data-viewer`.
 
 ### FAQ and image viewer
 
@@ -240,13 +244,14 @@ Both products share a native modal image viewer when supported. It has a visible
 - Keep referral terms, platform requirements, and download verification readable.
 - Keep capability copy to what the shipped app does, and keep live-trading gates beside it.
 - Preserve native navigation, disclosures, keyboard focus, and image-link fallbacks.
-- Keep the 320px layout usable and respect reduced-motion preferences.
+- Design for desktop PCs for now (fixed 1280 px viewport) and respect reduced-motion preferences.
 
 ### Don't
 
 - Present decorative signal arcs as prices, performance, or live market data.
 - Invent returns, customer counts, testimonials, or successful live-trading claims.
 - Imply that the Practice setup screen is an active simulation or that the initial Evidence screen contains settled results.
-- Add automatic screenshot cycling or continuously looping decoration.
+- Add automatic screenshot cycling, or motion that runs when reduced motion is requested or off screen.
+- Write slogan headings (two short fragments with periods), filler triplets or vague promises.
 - Present the Recoil tuning preview's counts as accuracy, in-game results or detection safety, or claim Recoil is undetectable.
 - Hide essential download information behind JavaScript or change the independent Nova application's visual system here.

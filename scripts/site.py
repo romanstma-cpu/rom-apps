@@ -368,7 +368,7 @@ def render_changelog(root: Path) -> str:
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=1280">
   <meta http-equiv="Content-Security-Policy" content="{CSP}">
   <title>ROM Polybot release notes — ROM Apps</title>
   <meta name="description" content="What changed in every ROM Polybot release, newest first, with SHA-256 checksums for each version's installers.">
@@ -377,7 +377,7 @@ def render_changelog(root: Path) -> str:
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/space-grotesk-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/market-stage.css?v=blue-4">
+  <link rel="stylesheet" href="assets/market-stage.css?v=rom-5">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -391,7 +391,7 @@ def render_changelog(root: Path) -> str:
   <main id="main" tabindex="-1">
     <div class="wrap doc">
       <p class="eyebrow">ROM POLYBOT / RELEASE NOTES</p>
-      <h1>What changed, version by version.</h1>
+      <h1>Polybot release notes</h1>
       <p class="doc-intro">Every published ROM Polybot release, newest first, with the SHA-256 checksum files for its installers. The current version is {current}. Release notes describe what changed; they do not show that any version trades profitably.</p>
       <nav class="doc-toc" aria-label="Related pages"><a href="/#download-polybot">Download {current}</a><a href="code-signing-policy.html">How to verify a download</a><a href="https://github.com/romanstma-cpu/rom-polybot/releases">All installers on GitHub</a></nav>
       <nav class="version-index" aria-label="Versions">{index}</nav>
